@@ -24,4 +24,9 @@ getMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                     const imageDescriptor &keysDescriptors2,
                     SiftMatchGPU *matcher);
 
+std::vector<std::pair<int,int>>
+getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
+                             const imageDescriptor &keysDescriptors2,
+                             SiftMatchGPU *matcher);
+
 #endif //TEST_SIFTGPU_FEATURES_H

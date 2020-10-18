@@ -1,14 +1,33 @@
 #pragma once
 #ifndef TEST_SIFTGPU_CG_H
 #define TEST_SIFTGPU_CG_H
+
 #include "vertexCG.h"
 
-typedef struct CorrespondenceGraph {
+typedef struct Match {
+    int frameNumber;
+    std::vector<std::pair<int,int>> matchNumbers;
+//    int keypointNumber;
+//    int correspondingKeypointNumber;
 
-    std::vector<vertexCG*> verticesOfCorrespondence;
-    int maxVertexDegree = 80;
-    std::vector<std::vector<std::vector<std::pair<int,int>>>> keypointsMatches;
-    CorrespondenceGraph(const std::string& pathToImageDirectoryRGB, const std::string& pathToImageDirectoryD);
+    Match(int newFrameNumber, const std::vector<std::pair<int,int>>& newMatchNumbers) :
+            frameNumber(newFrameNumber),
+            matchNumbers(newMatchNumbers)
+            {};
+} Match;
+
+typedef struct CorrespondenceGraph {
+    std::unique_ptr<SiftMatchGPU> matcher;
+    SiftGPU sift;
+    std::vector<vertexCG> verticesOfCorrespondence;
+    std::vector<std::vector<int>> correspondences;
+    int maxVertexDegree = 10;
+//    std::vector<imageDescriptor> allKeysDescriptors;
+    std::vector<std::vector<std::vector<std::pair<int, int>>>> keypointsMatches;
+    std::vector<std::vector<Match>> matches;
+    CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD);
+
+    int findCorrespondences();
 } CorrespondenceGraph;
 
 #endif //TEST_SIFTGPU_CG_H

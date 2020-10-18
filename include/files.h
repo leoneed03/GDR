@@ -7,6 +7,8 @@
 #include <vector>
 #include <dirent.h>
 #include <memory>
+#include <boost/timer.hpp>
+
 #include "assert.h"
 std::vector<std::string> readRgbData(std::string pathToRGB);
 
