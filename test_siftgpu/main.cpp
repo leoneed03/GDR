@@ -7,96 +7,9 @@
 #include <dirent.h>
 
 //#include <experimental/filesystem>
-
 #include <GL/gl.h>
 
-std::vector<std::string> readRgbData(std::string pathToRGB) {
-    DIR *pDIR;
-    struct dirent *entry;
-    std::vector<std::string> RgbImages;
-    std::cout << "start reading" << std::endl;
-    if ((pDIR = opendir(pathToRGB.data())) != nullptr) {
-        int imageCounter = 0;
-        while ((entry = readdir(pDIR)) != nullptr) {
-            if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..") {
-                continue;
-            }
-            std::string absolutePathToRgbImage = pathToRGB + "/" + entry->d_name;
-            std::cout << ++imageCounter << ": " << absolutePathToRgbImage << "\n";
-            RgbImages.emplace_back(absolutePathToRgbImage);
-        }
-        closedir(pDIR);
-    } else {
-        std::cout << "Unable to open" << std::endl;
-    }
-    return RgbImages;
-}
-
-
-std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
-        SiftGPU &sift,
-        std::string pathToTheImage) {
-
-    sift.RunSIFT(pathToTheImage.data());
-    int num1 = sift.GetFeatureNum();
-    std::vector<float> descriptors1(128 * num1);
-    std::vector<SiftGPU::SiftKeypoint> keys1(num1);
-    sift.GetFeatureVector(&keys1[0], &descriptors1[0]);
-    std::cout << num1 << " -- totally" << std::endl;
-    return {keys1, descriptors1};
-}
-
-using imageDescriptor = std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>;
-
-std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> getKeypointsDescriptorsAllImages(
-        SiftGPU &sift,
-        std::string pathToTheDirectory) {
-    std::vector<std::string> pathsToAllImages = readRgbData(pathToTheDirectory);
-    std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keypointsAndDescriptorsAllImages;
-    keypointsAndDescriptorsAllImages.reserve(pathsToAllImages.size());
-    for (const auto &pathToTheImage: pathsToAllImages) {
-        keypointsAndDescriptorsAllImages.emplace_back(getKeypointsDescriptorsOneImage(sift, pathToTheImage));
-    }
-    return keypointsAndDescriptorsAllImages;
-}
-
-std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>>
-    getMatchesKeypoints(const imageDescriptor &keysDescriptors1,
-                        const imageDescriptor &keysDescriptors2,
-                        SiftMatchGPU* matcher) {
-    auto descriptors1 = keysDescriptors1.second;
-    auto descriptors2 = keysDescriptors2.second;
-
-    auto keys1 = keysDescriptors1.first;
-    auto keys2 = keysDescriptors2.first;
-
-    auto num1 = keys1.size();
-    auto num2 = keys2.size();
-
-    assert(num1 * 128 == descriptors1.size());
-    assert(num2 * 128 == descriptors2.size());
-
-    matcher->SetDescriptors(0, num1, &descriptors1[0]); //image 1
-    matcher->SetDescriptors(1, num2, &descriptors2[0]); //image 2
-
-
-    std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>> matchingKeypoints;
-    int (*match_buf)[2] = new int[num1][2];
-    //use the default thresholds. Check the declaration in SiftGPU.h
-    int num_match = matcher->GetSiftMatch(num1, match_buf);
-    matchingKeypoints.first.reserve(num_match);
-    matchingKeypoints.second.reserve(num_match);
-
-    for (int i = 0; i < num_match; ++i) {
-       /* std::cout << i << " -> keypoint on the 1st image " << match_buf[i][0] << " keypoint on the 2nd image "
-                  << match_buf[i][1] << std::endl;*/
-        matchingKeypoints.first.emplace_back(keys1[match_buf[i][0]]);
-        matchingKeypoints.second.emplace_back(keys2[match_buf[i][1]]);
-    }
-    delete [] match_buf;
-
-    return matchingKeypoints;
-}
+#include "../include/features.h"
 
 using namespace std;
 
@@ -122,17 +35,6 @@ int main(int argc, char **argv) {
 
     cout << "running sift" << endl;
     boost::timer timer;
-    /*
-    sift.RunSIFT("/home/leoneed/Desktop/dataset/rgbd2/office1.png");
-    cout << "siftgpu::runsift() cost time=" << timer.elapsed() << endl;
-
-    int num1 = sift.GetFeatureNum();
-    vector<float> descriptors1(128 * num1);
-    vector<SiftGPU::SiftKeypoint> keys1(num1);
-    cout << "Feature number=" << num1 << endl;
-
-    timer.restart();
-    sift.GetFeatureVector(&keys1[0], &descriptors1[0]);*/
     auto keysDescriptors = getKeypointsDescriptorsOneImage(sift, "/home/leoneed/Desktop/dataset/rgbd2/office1.png");
     cout << "siftgpu::getFeatureVector() cost time=" << timer.elapsed() << endl;
     auto keys1 = keysDescriptors.first;
@@ -154,36 +56,6 @@ int main(int argc, char **argv) {
     matcher->VerifyContextGL(); //must call once
     auto keysDescriptorsAll = getKeypointsDescriptorsAllImages(sift, "../data/rgbdoffice/rgb");
 
-    /*{
-        imageDescriptor keysDescriptors1 = keysDescriptorsAll[11];
-        auto keysDesctiptors2 = keysDescriptorsAll[35];
-
-        auto descriptors11 = keysDescriptors1.second;
-        auto descriptors22 = keysDescriptors2.second;
-
-        auto keys11 = keysDescriptors1.first;
-        auto keys22 = keysDescriptors2.first;
-
-        auto num11 = keys11.size();
-        auto num22 = keys22.size();
-
-        matcher->SetDescriptors(0, num11, &descriptors11[0]); //image 1
-        matcher->SetDescriptors(1, num22, &descriptors22[0]); //image 2
-
-
-        int (*match_buf)[2] = new int[num11][2];
-        //use the default thresholds. Check the declaration in SiftGPU.h
-        int num_match = matcher->GetSiftMatch(num11, match_buf);
-        std::cout << num_match << " sift matches were found;\n";
-
-        for (int i = 0; i < num_match; ++i) {
-            std::cout << i << " -> keypoint on the 1st image " << match_buf[i][0] << " keypoint on the 2nd image "
-                      << match_buf[i][1] << std::endl;
-        }
-
-        delete[] match_buf;
-    }*/
-
     int a = 2, b = 17;
     {
         std::cout << a << " match " << b << std::endl;
@@ -191,7 +63,6 @@ int main(int argc, char **argv) {
         std::cout << "totally matched matchingKeypoints: " << matchingKetpoints.first.size() << " and "
                   << matchingKetpoints.second.size() << std::endl;
     }
-
 
     {
         a = 17;
