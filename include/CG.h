@@ -6,14 +6,13 @@
 
 typedef struct Match {
     int frameNumber;
-    std::vector<std::pair<int,int>> matchNumbers;
+    std::vector<std::pair<int, int>> matchNumbers;
 //    int keypointNumber;
 //    int correspondingKeypointNumber;
 
-    Match(int newFrameNumber, const std::vector<std::pair<int,int>>& newMatchNumbers) :
+    Match(int newFrameNumber, const std::vector<std::pair<int, int>> &newMatchNumbers) :
             frameNumber(newFrameNumber),
-            matchNumbers(newMatchNumbers)
-            {};
+            matchNumbers(newMatchNumbers) {};
 } Match;
 
 typedef struct CorrespondenceGraph {
@@ -26,9 +25,11 @@ typedef struct CorrespondenceGraph {
 //    std::vector<imageDescriptor> allKeysDescriptors;
     std::vector<std::vector<std::vector<std::pair<int, int>>>> keypointsMatches;
     std::vector<std::vector<Match>> matches;
+
     CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD);
 
     int findCorrespondences();
+
     void decreaseDensity();
 } CorrespondenceGraph;
 

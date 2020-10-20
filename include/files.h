@@ -10,6 +10,7 @@
 #include <boost/timer.hpp>
 
 #include "assert.h"
+
 std::vector<std::string> readRgbData(std::string pathToRGB);
 
 #endif

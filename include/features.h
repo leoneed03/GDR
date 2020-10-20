@@ -24,7 +24,7 @@ getMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                     const imageDescriptor &keysDescriptors2,
                     SiftMatchGPU *matcher);
 
-std::vector<std::pair<int,int>>
+std::vector<std::pair<int, int>>
 getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                              const imageDescriptor &keysDescriptors2,
                              SiftMatchGPU *matcher);

@@ -22,7 +22,7 @@ void opencv() {
 
 }
 
-int trysift() {
+int trysift1() {
 
     SiftGPU sift;
     char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};

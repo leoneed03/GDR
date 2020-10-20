@@ -4,16 +4,19 @@
 #include <opencv2/opencv.hpp>
 
 #define DEBUG_PRINT 1
+
 void c(std::string output) {
     if (DEBUG_PRINT) {
         std::cout << output << std::endl;
     }
 }
+
 void c(int output) {
     if (DEBUG_PRINT) {
         std::cout << output << std::endl;
     }
 }
+
 int CorrespondenceGraph::findCorrespondences() {
 
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
@@ -51,6 +54,7 @@ void CorrespondenceGraph::decreaseDensity() {
         }
     }
 }
+
 CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
                                          const std::string &pathToImageDirectoryD) {
 
@@ -86,8 +90,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         auto keypointAndDescriptor = keysDescriptorsAll[currentImage];
         c("keypoint");
         c(currentImage);
-        std::vector<SiftGPU::SiftKeypoint>& keypoints = keypointAndDescriptor.first;
-        std::vector<float>& descriptors = keypointAndDescriptor.second;
+        std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
+        std::vector<float> &descriptors = keypointAndDescriptor.second;
         std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
         std::vector<float> descriptorsKnownDepth;
         std::vector<int> depths;
@@ -104,11 +108,13 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                 }
             }
         }
-        vertexCG currentVertex(currentImage, keypointsKnownDepth, descriptorsKnownDepth, depths, imagesRgb[currentImage],
+        vertexCG currentVertex(currentImage, keypointsKnownDepth, descriptorsKnownDepth, depths,
+                               imagesRgb[currentImage],
                                imagesD[currentImage]);
         verticesOfCorrespondence.push_back(currentVertex);
         assert(keypointsKnownDepth.size() == depths.size());
-        assert(verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].depths.size() == verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
+        assert(verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].depths.size() ==
+               verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
     }
     std::cout << "vertices written" << std::endl;
     matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());

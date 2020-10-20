@@ -18,11 +18,11 @@ typedef struct vertexCG {
     std::string pathToDimage;
 
     vertexCG(int newIndex,
-             const std::vector<SiftGPU::SiftKeypoint>& newKeypoints,
+             const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
              const std::vector<float> &newDescriptors,
-             const std::vector<int>& newDepths,
-             const std::string& newPathRGB,
-             const std::string& newPathD);
+             const std::vector<int> &newDepths,
+             const std::string &newPathRGB,
+             const std::string &newPathD);
 } vertexCG;
 
 #endif //TEST_SIFTGPU_VERTEXCG_H
