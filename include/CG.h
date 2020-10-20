@@ -19,6 +19,7 @@ typedef struct Match {
 typedef struct CorrespondenceGraph {
     std::unique_ptr<SiftMatchGPU> matcher;
     SiftGPU sift;
+    int maxSift = 4096;
     std::vector<vertexCG> verticesOfCorrespondence;
     std::vector<std::vector<int>> correspondences;
     int maxVertexDegree = 10;
@@ -28,6 +29,7 @@ typedef struct CorrespondenceGraph {
     CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD);
 
     int findCorrespondences();
+    void decreaseDensity();
 } CorrespondenceGraph;
 
 #endif //TEST_SIFTGPU_CG_H

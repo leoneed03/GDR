@@ -1,4 +1,5 @@
 #include "../include/files.h"
+#include <algorithm>
 
 std::vector<std::string> readRgbData(std::string pathToRGB) {
     DIR *pDIR;
@@ -12,12 +13,16 @@ std::vector<std::string> readRgbData(std::string pathToRGB) {
                 continue;
             }
             std::string absolutePathToRgbImage = pathToRGB + "/" + entry->d_name;
-            std::cout << ++imageCounter << ": " << absolutePathToRgbImage << "\n";
+//            std::cout << ++imageCounter << ": " << absolutePathToRgbImage << "\n";
             RgbImages.emplace_back(absolutePathToRgbImage);
         }
         closedir(pDIR);
     } else {
         std::cout << "Unable to open" << std::endl;
+    }
+    std::sort(RgbImages.begin(), RgbImages.end());
+    for (int i = 0; i < RgbImages.size(); ++i) {
+        std::cout << i + 1 << "::" << RgbImages[i] << std::endl;
     }
     return RgbImages;
 }
