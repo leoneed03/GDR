@@ -1,7 +1,6 @@
 #include "../include/CG.h"
 
 #include <algorithm>
-#include <opencv2/opencv.hpp>
 
 #define DEBUG_PRINT 1
 
@@ -41,6 +40,49 @@ int CorrespondenceGraph::findCorrespondences() {
     return 0;
 }
 
+cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexInList) {
+
+    std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
+    const auto& match = matches[vertexFrom][vertexInList];
+    int minSize = match.matchNumbers.size();
+    pointsFromImage1.reserve(minSize);
+    pointsFromImage2.reserve(minSize);
+
+    for (int i = 0; i < minSize; ++i) {
+        auto point = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
+        pointsFromImage1.push_back({point.y, point.x});
+    }
+    for (int i = 0; i < minSize; ++i) {
+        auto point = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
+        pointsFromImage2.push_back({point.y, point.x});
+    }
+    assert(pointsFromImage1.size() == pointsFromImage2.size());
+    if (DEBUG_PRINT)
+        std::cout << "find essential matrix" << std::endl;
+    auto cameraMotion = cv::findEssentialMat(pointsFromImage1, pointsFromImage2, cameraMatrix);
+    if (DEBUG_PRINT)
+        std::cout << "found essential matrix" << std::endl;
+    return cameraMotion;
+}
+int CorrespondenceGraph::findEssentialMatrices() {
+
+    for (int i = 0; i < matches.size(); ++i) {
+        for (int j = 0; j < matches[i].size(); ++j) {
+
+            const auto &match = matches[i][j];
+            const auto &frameFrom = verticesOfCorrespondence[i];
+            const auto &frameTo = verticesOfCorrespondence[match.frameNumber];
+            if (DEBUG_PRINT) {
+                std::cout << "check this " << frameFrom.index << " -> " << frameTo.index << std::endl;
+            }
+            auto cameraMotion = getEssentialMatrixTwoImagesMatched(i, j);
+            essentialMatrices[i].push_back(essentialMatrix(cameraMotion, frameFrom, frameTo));
+        }
+    }
+
+    return 0;
+}
+
 void CorrespondenceGraph::decreaseDensity() {
     for (std::vector<Match> &correspondenceList: matches) {
 
@@ -55,6 +97,37 @@ void CorrespondenceGraph::decreaseDensity() {
     }
 }
 
+cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImages(const CorrespondenceGraph &CG, const vertexCG &frame1,
+                                                         const vertexCG &frame2) {
+    std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
+
+//    std::vector<std::vector<float>> cameraMatrix_ = {{CG.fx, 0,     CG.cx},
+//                                                    {0,     CG.fy, CG.cy},
+//                                                    {0,     0,     1}};
+//    cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << CG.fx, 0, CG.cx, 0, CG.fy, CG.cy, 0, 0, 1);
+    ////////////////////std::cout << CG.cameraMatrix << std::endl;
+//    std::vector<float> cameraMatrix = {CG.fx, 0,     CG.cx,
+//                                                    0,     CG.fy, CG.cy,
+//                                                    0,     0,     1};
+    int minSize = std::min(frame1.keypoints.size(), frame2.keypoints.size());
+    std::cout << frame1.keypoints.size() << " and " << frame2.keypoints.size() << " min size " << minSize << std::endl;
+    for (int i = 0; i < minSize; ++i) {
+        auto point = frame1.keypoints[i];
+        pointsFromImage1.push_back({point.y, point.x});
+    }
+    for (int i = 0; i < minSize; ++i) {
+        auto point = frame2.keypoints[i];
+        pointsFromImage2.push_back({point.y, point.x});
+    }
+    assert(pointsFromImage1.size() == pointsFromImage2.size());
+    if (DEBUG_PRINT)
+        std::cout << "find essential matrix" << std::endl;
+    auto cameraMotion = cv::findEssentialMat(pointsFromImage1, pointsFromImage2, CG.cameraMatrix);
+    if (DEBUG_PRINT)
+        std::cout << "found essential matrix" << std::endl;
+    return cameraMotion;
+}
+
 CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
                                          const std::string &pathToImageDirectoryD) {
 
@@ -63,7 +136,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
     assert(imagesRgb.size() == imagesD.size());
-
+    essentialMatrices = std::vector<std::vector<essentialMatrix>>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
     char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
@@ -123,6 +196,30 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     std::cout << "trying to find corr" << std::endl;
     findCorrespondences();
     decreaseDensity();
+
+//    std::cout << "before camera motion " << std::endl;
+//    auto cameraMotion = getEssentialMatrixTwoImagesMatched(*this, verticesOfCorrespondence[0], verticesOfCorrespondence[1]);
+//    std::cout << "after camera motion " << std::endl;
+//    auto cm1 = cameraMotion.at<float>(0);
+//    for (auto it = cameraMotion.begin<float>(); it != cameraMotion.end<float>(); ++it) {
+//        std::cout << it-> << std::endl;
+//    }
+//    std::cout << "0, 0 " << cameraMotion.at<float>(0) << std::endl;
+//    std::cout << "0, 1 " << cameraMotion.at<float>(0) << std::endl;
+//    std::cout << "0, 2 " << cameraMotion.at<float>(0, 2) << std::endl;
+//    std::cout << cameraMotion << std::endl;
+    findEssentialMatrices();
+    for (int i = 0; i < essentialMatrices.size(); ++i) {
+        for (int j = 0; j < essentialMatrices[i].size(); ++j) {
+            std::cout << "                          " << std::setw(4) << i << std::setw(4) << j << std::endl;
+            std::cout << "                          " << std::setw(4) << essentialMatrices[i][j].vertexFrom.index
+                      << std::setw(4) << essentialMatrices[i][j].vertexTo.index << std::endl;
+            std::cout << essentialMatrices[i][j].innerEssentialMatrix << std::endl;
+            std::cout << "______________________________________________________________________________________________________" << std::endl;
+        }
+    }
+    return;
+
 
     auto testImage = verticesOfCorrespondence[10];
     cv::Mat image = cv::imread(testImage.pathToRGBimage);

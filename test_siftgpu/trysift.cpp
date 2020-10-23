@@ -54,6 +54,24 @@ int trysift() {
     return 0;
 }
 
+void getMatch(const std::string& path1, const std::string& path2) {
+    SiftGPU sift;
+    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
+//    char *myargv[4] = {"-fo", "-1", "-v", "1"};
+    sift.ParseParam(5, myargv);
+
+    int support = sift.CreateContextGL();
+    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
+        return;
+    }
+    sift.RunSIFT(path1.data());
+    int num = sift.GetFeatureNum();
+    std::vector<float> descriptors(128 * num);
+    std::vector<SiftGPU::SiftKeypoint> keys(num);
+
+    sift.GetFeatureVector(&keys[0], &descriptors[0]);
+
+}
 int main() {
     return trysift();
 }

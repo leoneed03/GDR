@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(test_siftgpu)
+set(CMAKE_CXX_STANDARD 17)
 
-# OpenCV依赖
-find_package( OpenCV REQUIRED )
+# OpenCV
+find_package(OpenCV REQUIRED)
 
 # OpenGL
 find_package(OpenGL REQUIRED)
@@ -13,16 +14,21 @@ find_package(GLUT REQUIRED)
 # Glew
 find_package(GLEW REQUIRED)
 
-# SiftGPU：手动设置其头文件与库文件所在位置
-include_directories("/home/leoneed/Desktop/testsiftcuda/siftgpu/src/SiftGPU/" ${OpenGL_INCLUDE_DIR} ${CUDA_INCLUDE_DIR})
-set(SIFTGPU_LIBS "/home/leoneed/Desktop/testsiftcuda/siftgpu/bin/libsiftgpu.so")
+# SiftGPU
+include_directories("../siftgpu/src/SiftGPU/" ${OpenGL_INCLUDE_DIR} ${CUDA_INCLUDE_DIR})
+set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/../siftgpu/bin/libsiftgpu.so")
 
-add_executable( testSIFTGPU main.cpp )
-
-target_link_libraries( testSIFTGPU
-    ${OpenCV_LIBS}
-    ${SIFTGPU_LIBS}
-    ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
-    ${CUDA_LIB_PATH}
-)
-
+add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h)
+add_executable(trySIFT trysift.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h)
+target_link_libraries(testSIFTGPU
+        ${OpenCV_LIBS}
+        ${SIFTGPU_LIBS}
+        ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
+        ${CUDA_LIB_PATH}
+        )
+target_link_libraries(trySIFT
+        ${OpenCV_LIBS}
+        ${SIFTGPU_LIBS}
+        ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
+        ${CUDA_LIB_PATH}
+        )
