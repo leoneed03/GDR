@@ -40,16 +40,26 @@ int CorrespondenceGraph::findCorrespondences() {
     return 0;
 }
 
-void MyLine( cv::Mat& img, cv::Point start, cv::Point end )
-{
+void MyLine(cv::Mat &img, cv::Point start, cv::Point end) {
     int thickness = 2;
     int lineType = cv::LINE_8;
-    line( img,
-          start,
-          end,
-          cv::Scalar( 255, 255, 255 ),
-          thickness,
-          lineType );
+    line(img,
+         start,
+         end,
+         cv::Scalar(255, 255, 255),
+         thickness,
+         lineType);
+}
+
+void MyLine2(cv::Mat &img, cv::Point start, cv::Point end) {
+    int thickness = 2;
+    int lineType = cv::LINE_8;
+    line(img,
+         start,
+         end,
+         cv::Scalar(215, 215, 215),
+         thickness,
+         lineType);
 }
 
 cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexInList) {
@@ -96,7 +106,10 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     assert(matchingKeypoints.first.size() == matchingKeypoints.second.size());
     delete[] match_buf;
     std::vector<cv::Point2f> leftPtsgpu, rightPtsgpu;
+
     cv::Mat imageWithLines = cv::imread(frame1.pathToRGBimage);
+    cv::Mat imageWithLines2 = cv::imread(frame1.pathToRGBimage);
+    cv::Mat imageWithLinesDepthKnown = cv::imread(frame1.pathToRGBimage);
     for (size_t i = 0; i < matchingKeypoints.first.size(); ++i) {
         cv::Point2f p1 = {matchingKeypoints.first[i].x, matchingKeypoints.first[i].y};
         cv::Point2f p2 = {matchingKeypoints.second[i].x, matchingKeypoints.second[i].y};
@@ -149,7 +162,14 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     for (size_t i = 0; i < matchesLocal.size(); i++) {
         leftPts.push_back(keypts1[matchesLocal[i].queryIdx].pt);
         rightPts.push_back(keypts2[matchesLocal[i].trainIdx].pt);
+        MyLine2(imageWithLines2, keypts1[matchesLocal[i].queryIdx].pt, keypts2[matchesLocal[i].trainIdx].pt);
     }
+
+
+    cv::imshow("ORB ", imageWithLines2);
+
+    cv::waitKey(0);
+//    cv::destroyAllWindows();
     cv::Mat status;
     cv::Mat E = findEssentialMat(
             leftPts,     //points from left image
@@ -176,21 +196,36 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     pointsFromImage2.reserve(minSize);
 
     for (int i = 0; i < minSize; ++i) {
-        const auto &point = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
-        pointsFromImage1.push_back({point.y, point.x});
-//        pointsFromImage1.push_back({point.x, point.y});
+        const auto &point1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
+        const cv::Point2f p1 = {point1.x, point1.y};
+//        pointsFromImage1.push_back({point1.y, point1.x});
+        pointsFromImage1.push_back(p1);
+        const auto &point2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
+//        pointsFromImage2.push_back({point2.y, point2.x});
+        const cv::Point2f p2 = {point2.x, point2.y};
+        pointsFromImage2.push_back(p2);
+        MyLine2(imageWithLinesDepthKnown, p1, p2);
+
 //        auto train = point.;
     }
     for (int i = 0; i < minSize; ++i) {
-        const auto& point = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
-        pointsFromImage2.push_back({point.y, point.x});
-//        pointsFromImage2.push_back({point.x, point.y});
     }
+
+    cv::imshow("Known Depths ", imageWithLinesDepthKnown);
+
+    cv::waitKey(0);
+    cv::destroyAllWindows();
 
     assert(pointsFromImage1.size() == pointsFromImage2.size());
     if (DEBUG_PRINT)
         std::cout << "find essential matrix" << std::endl;
-    auto cameraMotion = cv::findEssentialMat(pointsFromImage1, pointsFromImage2, cameraMatrix);
+    auto cameraMotion = cv::findEssentialMat(pointsFromImage1,
+                                             pointsFromImage2,
+                                             cameraMatrix,
+                                             cv::RANSAC,  //use RANSAC for a robust solution
+                                             0.999,        //desired solution confidence level
+                                             1.0,          //point-to-epipolar-line threshold
+                                             status);
     std::cout << Egpu << std::endl;
     std::cout << "with depth is " << std::endl;
     std::cout << cameraMotion << std::endl;
