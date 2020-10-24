@@ -28,7 +28,7 @@ typedef struct CorrespondenceGraph {
     int maxSift = 4096;
     std::vector<vertexCG> verticesOfCorrespondence;
     std::vector<std::vector<int>> correspondences;
-    int maxVertexDegree = 10;
+    int maxVertexDegree = 5;
 //    std::vector<imageDescriptor> allKeysDescriptors;
     std::vector<std::vector<std::vector<std::pair<int, int>>>> keypointsMatches;
     std::vector<std::vector<Match>> matches;
