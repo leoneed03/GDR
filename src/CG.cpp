@@ -26,7 +26,7 @@ int CorrespondenceGraph::findCorrespondences() {
             std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
                     std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
                     std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
-                    matcher.get());
+                    siftModule.matcher.get());
             if (DEBUG_PRINT)
                 std::cout << "total matches " << matchingNumbers.size() << std::endl;
             matches[i].push_back({j, matchingNumbers});
@@ -68,23 +68,23 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     const auto &frame1 = verticesOfCorrespondence[vertexFrom];
     const auto &frame2 = verticesOfCorrespondence[matches[vertexFrom][vertexInList].frameNumber];
 
-    sift.RunSIFT(frame1.pathToRGBimage.data());
-    int num1 = sift.GetFeatureNum();
+    siftModule.sift.RunSIFT(frame1.pathToRGBimage.data());
+    int num1 = siftModule.sift.GetFeatureNum();
     std::vector<float> descriptors1(128 * num1);
     std::vector<SiftGPU::SiftKeypoint> keys1(num1);
-    sift.GetFeatureVector(&keys1[0], &descriptors1[0]);
+    siftModule.sift.GetFeatureVector(&keys1[0], &descriptors1[0]);
 
-    sift.RunSIFT(frame2.pathToRGBimage.data());
-    int num2 = sift.GetFeatureNum();
+    siftModule.sift.RunSIFT(frame2.pathToRGBimage.data());
+    int num2 = siftModule.sift.GetFeatureNum();
     std::vector<float> descriptors2(128 * num2);
     std::vector<SiftGPU::SiftKeypoint> keys2(num2);
-    sift.GetFeatureVector(&keys2[0], &descriptors2[0]);
+    siftModule.sift.GetFeatureVector(&keys2[0], &descriptors2[0]);
 
     assert(num1 * 128 == descriptors1.size());
     assert(num2 * 128 == descriptors2.size());
 
-    matcher->SetDescriptors(0, num1, &descriptors1[0]); //image 1
-    matcher->SetDescriptors(1, num2, &descriptors2[0]); //image 2
+    siftModule.matcher->SetDescriptors(0, num1, &descriptors1[0]); //image 1
+    siftModule.matcher->SetDescriptors(1, num2, &descriptors2[0]); //image 2
 
 
     std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>> matchingKeypoints;
@@ -93,7 +93,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
 //    std::vector<int*> matchBuff(num1, int[2] {}/*std::vector<int>(2)*/);
     int (*match_buf)[2] = new int[num1][2];
     //use the default thresholds. Check the declaration in SiftGPU.h
-    int num_match = matcher->GetSiftMatch(num1, match_buf);
+    int num_match = siftModule.matcher->GetSiftMatch(num1, match_buf);
     matchingKeypoints.first.reserve(num_match);
     matchingKeypoints.second.reserve(num_match);
 
@@ -130,7 +130,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     cv::Mat Egpu = findEssentialMat(
             leftPtsgpu,     //points from left image
             rightPtsgpu,    //points from right image
-            cameraMatrix,
+            cameraRgbd.cameraMatrix,
 
 
             cv::RANSAC,  //use RANSAC for a robust solution
@@ -174,7 +174,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     cv::Mat E = findEssentialMat(
             leftPts,     //points from left image
             rightPts,    //points from right image
-            cameraMatrix,
+            cameraRgbd.cameraMatrix,
 
 
             cv::RANSAC,  //use RANSAC for a robust solution
@@ -221,7 +221,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
         std::cout << "find essential matrix" << std::endl;
     auto cameraMotion = cv::findEssentialMat(pointsFromImage1,
                                              pointsFromImage2,
-                                             cameraMatrix,
+                                             cameraRgbd.cameraMatrix,
                                              cv::RANSAC,  //use RANSAC for a robust solution
                                              0.999,        //desired solution confidence level
                                              1.0,          //point-to-epipolar-line threshold
@@ -309,7 +309,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImages(const CorrespondenceGra
 
             rightPts,    //points from right image
 
-            CG.cameraMatrix
+            CG.cameraRgbd.cameraMatrix
 
 //
 //            cv::RANSAC,  //use RANSAC for a robust solution
@@ -348,7 +348,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImages(const CorrespondenceGra
     assert(pointsFromImage1.size() == pointsFromImage2.size());
     if (DEBUG_PRINT)
         std::cout << "find_ essential matrix" << std::endl;
-    auto cameraMotion = cv::findEssentialMat(pointsFromImage1, pointsFromImage2, CG.cameraMatrix);
+    auto cameraMotion = cv::findEssentialMat(pointsFromImage1, pointsFromImage2, CG.cameraRgbd.cameraMatrix);
     std::cout << E << std::endl;
     std::cout << "our matrix " << std::endl;
     std::cout << cameraMotion << std::endl;
@@ -358,8 +358,10 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImages(const CorrespondenceGra
 }
 
 CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
-                                         const std::string &pathToImageDirectoryD) {
+                                         const std::string &pathToImageDirectoryD,
+                                         float fx, float cx, float fy, float cy): cameraRgbd({fx, cx, fy, cy}) {
 
+//    cameraRgbd = CameraRGBD(fx, cx, fy, cy);
     std::vector<std::string> imagesRgb = readRgbData(pathToImageDirectoryRGB);
     std::vector<std::string> imagesD = readRgbData(pathToImageDirectoryD);
 
@@ -370,8 +372,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
 //    char *myargv[5] = {"-fo", "-1", "-v", "1"};
-    sift.ParseParam(5, myargv);
-    int support = sift.CreateContextGL();
+    siftModule.sift.ParseParam(5, myargv);
+    int support = siftModule.sift.CreateContextGL();
     std::cout << "Checking" << std::endl;
     if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
         std::cerr << "SiftGPU is not supported!" << std::endl;
@@ -379,12 +381,12 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     boost::timer timer;
 
-    matcher = std::unique_ptr<SiftMatchGPU>(new SiftMatchGPU(maxSift));
-    matcher->VerifyContextGL();
+//    matcher = std::unique_ptr<SiftMatchGPU>(new SiftMatchGPU(maxSift));
+    siftModule.matcher->VerifyContextGL();
 
     c("before sift");
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
-            getKeypointsDescriptorsAllImages(sift, pathToImageDirectoryRGB);
+            getKeypointsDescriptorsAllImages(siftModule.sift, pathToImageDirectoryRGB);
     c("sift done");
 //    int incremental = 0;
     verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
@@ -395,6 +397,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
         std::vector<float> &descriptors = keypointAndDescriptor.second;
         std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
+        std::vector<keypointWithDepth> keypointsKnownDepths;
         std::vector<float> descriptorsKnownDepth;
         std::vector<int> depths;
         cv::Mat depthImage = imread(imagesD[currentImage], cv::IMREAD_GRAYSCALE);
@@ -402,15 +405,18 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         for (int i = 0; i < keypoints.size(); ++i) {
             int posInDescriptorVector = 128 * i;
             int currentKeypointDepth = depthImage.at<uchar>((int) keypoints[i].y, (int) keypoints[i].x);
+            depths.push_back(currentKeypointDepth);
+            keypointsKnownDepth.push_back(keypoints[i]);
+            std::vector<float> currentDepths;
+            for (int descriptorCounter = 0; descriptorCounter < 128; ++descriptorCounter) {
+                descriptorsKnownDepth.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
+                currentDepths.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
+            }
             if (currentKeypointDepth > 0) {
-                depths.push_back(currentKeypointDepth);
-                keypointsKnownDepth.push_back(keypoints[i]);
-                for (int descriptorCounter = 0; descriptorCounter < 128; ++descriptorCounter) {
-                    descriptorsKnownDepth.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
-                }
+                keypointsKnownDepths.push_back({keypoints[i], (float) currentKeypointDepth, currentDepths});
             }
         }
-        vertexCG currentVertex(currentImage, keypointsKnownDepth, descriptorsKnownDepth, depths,
+        vertexCG currentVertex(currentImage, keypointsKnownDepths, keypointsKnownDepth, descriptorsKnownDepth, depths,
                                imagesRgb[currentImage],
                                imagesD[currentImage]);
         verticesOfCorrespondence.push_back(currentVertex);
@@ -490,7 +496,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         auto matchingKeypoints = getMatchesKeypoints(
                 std::make_pair(verticesOfCorrespondence[a].keypoints, verticesOfCorrespondence[a].descriptors),
                 std::make_pair(verticesOfCorrespondence[b].keypoints, verticesOfCorrespondence[b].descriptors),
-                matcher.get());
+                siftModule.matcher.get());
         std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
                   << matchingKeypoints.second.size() << std::endl;
         --a;
@@ -498,7 +504,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     }
     {
         std::cout << a << " match " << b << std::endl;
-        auto matchingKeypoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b], matcher.get());
+        auto matchingKeypoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b], siftModule.matcher.get());
         std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
                   << matchingKeypoints.second.size() << std::endl;
     }
@@ -508,7 +514,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         b = 33;
 
         std::cout << a << " match " << b << std::endl;
-        auto matchingKetpoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b], matcher.get());
+        auto matchingKetpoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b], siftModule.matcher.get());
         std::cout << "totally matched matchingKeypoints: " << matchingKetpoints.first.size() << " and "
                   << matchingKetpoints.second.size() << std::endl;
     }

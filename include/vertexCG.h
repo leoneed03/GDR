@@ -8,16 +8,24 @@
 #include <SiftGPU.h>
 #include "features.h"
 
+typedef struct keypointWithDepth {
+    SiftGPU::SiftKeypoint keypoint;
+    float depth;
+    std::vector<float> descriptors;
+    keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, float newDepth, const std::vector<float>& newDescriptors);
+} keypointWithDepth;
 typedef struct vertexCG {
 
     int index;
+    std::vector<keypointWithDepth> keypointsWithDepths;
     std::vector<SiftGPU::SiftKeypoint> keypoints;
     std::vector<float> descriptors;
-    std::vector<int> depths; //TODO
+    std::vector<int> depths;
     std::string pathToRGBimage;
     std::string pathToDimage;
 
     vertexCG(int newIndex,
+             const std::vector<keypointWithDepth> &newKeypointsWithDepths,
              const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
              const std::vector<float> &newDescriptors,
              const std::vector<int> &newDepths,

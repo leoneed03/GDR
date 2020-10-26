@@ -99,8 +99,11 @@ int main(int argc, char **argv) {
     std::cout << "Total max brightness " << maxBrightness << std::endl;
     std::cout << "min brightness " << minBrightness << std::endl;
     */
-
-
-    CorrespondenceGraph correspondenceGraph("../data/rgbdoffice/rgb", "../data/rgbdoffice/depth");
+//
+//    float fx = 525.0;
+//    float fy = 525.0;
+//    float cx = 319.5;
+//    float cy = 239.5;
+    CorrespondenceGraph correspondenceGraph("../data/rgbdoffice/rgb", "../data/rgbdoffice/depth", 525.0, 319.5, 525.0, 239.5);
     return 0;
 }

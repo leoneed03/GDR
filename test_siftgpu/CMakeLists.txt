@@ -18,7 +18,7 @@ find_package(GLEW REQUIRED)
 include_directories("../siftgpu/src/SiftGPU/" ${OpenGL_INCLUDE_DIR} ${CUDA_INCLUDE_DIR})
 set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/../siftgpu/bin/libsiftgpu.so")
 
-add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h)
+add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h ../src/cameraRGBD.cpp ../include/cameraRGBD.h ../src/siftModule.cpp ../include/siftModule.h)
 add_executable(trySIFT trysift.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h)
 target_link_libraries(testSIFTGPU
         ${OpenCV_LIBS}
