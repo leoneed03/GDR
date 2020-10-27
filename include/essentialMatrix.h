@@ -11,7 +11,9 @@ typedef struct essentialMatrix {
     cv::Mat innerEssentialMatrix;
     const vertexCG& vertexFrom;
     const vertexCG& vertexTo;
-    essentialMatrix(const cv::Mat& newInnerEssentialMatrix, const vertexCG& newVertexFrom, const vertexCG& newVertexTo);
+    cv::Mat R;
+    cv::Mat t;
+    essentialMatrix(const cv::Mat& newInnerEssentialMatrix, const vertexCG& newVertexFrom, const vertexCG& newVertexTo, const cv::Mat& newR, const cv::Mat& newT);
 } essentialMatrix;
 
 #endif

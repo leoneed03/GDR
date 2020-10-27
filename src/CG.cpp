@@ -1,7 +1,7 @@
 #include "../include/CG.h"
 
 #include <algorithm>
-
+#include <cmath>
 #define DEBUG_PRINT 1
 
 void c(std::string output) {
@@ -14,6 +14,24 @@ void c(int output) {
     if (DEBUG_PRINT) {
         std::cout << output << std::endl;
     }
+}
+
+int essentialMatricesAreEqual(const cv::Mat& matrixLeft, const cv::Mat& matrixRight, float epsilon) {
+    if (matrixLeft.cols != matrixRight.cols) {
+        return 1;
+    }
+    if (matrixLeft.rows != matrixRight.rows) {
+        return 2;
+    }
+    for (int i = 0; i < matrixLeft.cols; ++i) {
+        for (int j = 0; j < matrixRight.rows; ++j) {
+            if (std::abs(matrixLeft.at<uchar>(j, i) - matrixRight.at<uchar>(j, i)) > epsilon) {
+                return 3;
+            }
+        }
+    }
+    return 0;
+
 }
 
 int CorrespondenceGraph::findCorrespondences() {
@@ -108,6 +126,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     std::vector<cv::Point2f> leftPtsgpu, rightPtsgpu;
 
     cv::Mat imageWithLines = cv::imread(frame1.pathToRGBimage);
+    cv::Mat imageWithLinesTo = cv::imread(frame2.pathToRGBimage);
     cv::Mat imageWithLines2 = cv::imread(frame1.pathToRGBimage);
     cv::Mat imageWithLinesDepthKnown = cv::imread(frame1.pathToRGBimage);
     for (size_t i = 0; i < matchingKeypoints.first.size(); ++i) {
@@ -116,7 +135,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
         leftPtsgpu.push_back(p1);
         rightPtsgpu.push_back(p2);
         MyLine(imageWithLines, p1, p2);
-
+        MyLine(imageWithLinesTo, p1, p2);
 
 //        leftPtsgpu.push_back({matchingKeypoints.first[i].y, matchingKeypoints.first[i].x});
 //        rightPtsgpu.push_back({matchingKeypoints.second[i].y, matchingKeypoints.second[i].x});
@@ -124,9 +143,15 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     }
 
     cv::imshow("Well..", imageWithLines);
-
+    cv::waitKey(0);
+    cv::imshow("Image to", imageWithLinesTo);
     cv::waitKey(0);
     cv::Mat status1;
+    float lfx = 525.0;
+    float lfy = 525.0;
+    float lcx = 319.5;
+    float lcy = 239.5;
+    cv::Mat cameraMatrixLocal = (cv::Mat_<double>(3, 3) << lfx, 0, lcx, 0, lfy, lcy, 0, 0, 1);
     cv::Mat Egpu = findEssentialMat(
             leftPtsgpu,     //points from left image
             rightPtsgpu,    //points from right image
@@ -226,11 +251,15 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
                                              0.999,        //desired solution confidence level
                                              1.0,          //point-to-epipolar-line threshold
                                              status);
+
     std::cout << Egpu << std::endl;
     std::cout << "with depth is " << std::endl;
     std::cout << cameraMotion << std::endl;
     std::cout << " but prev is " << std::endl;
     std::cout << E << std::endl;
+    assert(essentialMatricesAreEqual(Egpu, cameraMotion, 0.00001) == 0);
+
+//    assert(essentialMatricesAreEqual(E, cameraMotion, 0.00001) == 0);
     if (DEBUG_PRINT) {
         std::cout << "found essential matrix" << std::endl << std::endl << std::endl;
     }
@@ -249,8 +278,9 @@ int CorrespondenceGraph::findEssentialMatrices() {
                 std::cout << "check this " << frameFrom.index << " -> " << frameTo.index << std::endl;
             }
             assert(frameTo.index != frameFrom.index);
-            auto cameraMotion = getEssentialMatrixTwoImagesMatched(i, j);
-            essentialMatrices[i].push_back(essentialMatrix(cameraMotion, frameFrom, frameTo));
+            cv::Mat R, t;
+            auto cameraMotion = getEssentialMatrixTwoImages(i, j, R, t);
+            essentialMatrices[i].push_back(essentialMatrix(cameraMotion, frameFrom, frameTo, R, t));
         }
     }
 
@@ -271,89 +301,38 @@ void CorrespondenceGraph::decreaseDensity() {
     }
 }
 
-cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImages(const CorrespondenceGraph &CG, const vertexCG &frame1,
-                                                         const vertexCG &frame2) {
-    std::vector<cv::KeyPoint> keypts1, keypts2;
-
-    cv::Mat desc1, desc2;
-    cv::Ptr<cv::Feature2D> orb = cv::ORB::create(4096);
-    cv::Mat img1 = cv::imread(frame1.pathToDimage);
-    cv::Mat img2 = cv::imread(frame1.pathToDimage);
-    orb->detectAndCompute(img1, cv::noArray(), keypts1, desc1);
-    orb->detectAndCompute(img2, cv::noArray(), keypts2, desc2);
-// matching descriptors
-    cv::Ptr<cv::DescriptorMatcher> matcherLocal = cv::DescriptorMatcher::create("BruteForce-Hamming");
-    std::vector<cv::DMatch> matches;
-    matcherLocal->match(desc1, desc2, matches);
-    std::vector<cv::Point2f> leftPts, rightPts;
-
-    for (size_t i = 0; i < matches.size(); i++) {
-
-        // queryIdx is the "left" image
-
-        leftPts.push_back(keypts1[matches[i].queryIdx].pt);
-
-        // trainIdx is the "right" image
-
-        rightPts.push_back(keypts2[matches[i].trainIdx].pt);
-
-    }
-
-//robustly find the Essential Matrix
-
-    cv::Mat status;
-
-    cv::Mat E = findEssentialMat(
-
-            leftPts,     //points from left image
-
-            rightPts,    //points from right image
-
-            CG.cameraRgbd.cameraMatrix
-
-//
-//            cv::RANSAC,  //use RANSAC for a robust solution
-//
-//            0.999,        //desired solution confidence level
-//
-//            1.0,          //point-to-epipolar-line threshold
-//
-//            status
-    );     //binary vector for inliers
-
-
-
-
+int CorrespondenceGraph::findRotationsTranslations() {
+    return 0;
+}
+int CorrespondenceGraph::findRotationTranslation(int vertexFrom, int vertexInList) {
+    return 0;
+}
+cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, cv::Mat& outR, cv::Mat& outT) {
 
     std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
+    const auto &match = matches[vertexFrom][vertexInList];
+    int minSize = match.matchNumbers.size();
+    pointsFromImage1.reserve(minSize);
+    pointsFromImage2.reserve(minSize);
 
-//    std::vector<std::vector<float>> cameraMatrix_ = {{CG.fx, 0,     CG.cx},
-//                                                    {0,     CG.fy, CG.cy},
-//                                                    {0,     0,     1}};
-//    cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << CG.fx, 0, CG.cx, 0, CG.fy, CG.cy, 0, 0, 1);
-    ////////////////////std::cout << CG.cameraMatrix << std::endl;
-//    std::vector<float> cameraMatrix = {CG.fx, 0,     CG.cx,
-//                                                    0,     CG.fy, CG.cy,
-//                                                    0,     0,     1};
-    int minSize = std::min(frame1.keypoints.size(), frame2.keypoints.size());
-    std::cout << frame1.keypoints.size() << " and " << frame2.keypoints.size() << " min size " << minSize << std::endl;
     for (int i = 0; i < minSize; ++i) {
-        auto point = frame1.keypoints[i];
-        pointsFromImage1.push_back({point.y, point.x});
+        const auto &point1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
+        const cv::Point2f p1 = {point1.x, point1.y};
+        pointsFromImage1.push_back(p1);
+        const auto &point2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
+        const cv::Point2f p2 = {point2.x, point2.y};
+        pointsFromImage2.push_back(p2);
     }
-    for (int i = 0; i < minSize; ++i) {
-        auto point = frame2.keypoints[i];
-        pointsFromImage2.push_back({point.y, point.x});
-    }
-    assert(pointsFromImage1.size() == pointsFromImage2.size());
-    if (DEBUG_PRINT)
-        std::cout << "find_ essential matrix" << std::endl;
-    auto cameraMotion = cv::findEssentialMat(pointsFromImage1, pointsFromImage2, CG.cameraRgbd.cameraMatrix);
-    std::cout << E << std::endl;
-    std::cout << "our matrix " << std::endl;
-    std::cout << cameraMotion << std::endl;
-    if (DEBUG_PRINT)
-        std::cout << "found_ essential matrix" << std::endl;
+    cv::Mat status;
+    auto cameraMotion = cv::findEssentialMat(pointsFromImage1,
+                                             pointsFromImage2,
+                                             cameraRgbd.cameraMatrix,
+                                             cv::RANSAC,
+                                             0.999,        //desired solution confidence level
+                                             1.0,          //point-to-epipolar-line threshold
+                                             status);
+    cv::Mat R, t;
+    int res = cv::recoverPose(cameraMotion, pointsFromImage1, pointsFromImage2, cameraRgbd.cameraMatrix, outR, outT, status);
     return cameraMotion;
 }
 
@@ -438,6 +417,10 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
             std::cout << "                          " << std::setw(4) << essentialMatrices[i][j].vertexFrom.index
                       << std::setw(4) << essentialMatrices[i][j].vertexTo.index << std::endl;
             std::cout << essentialMatrices[i][j].innerEssentialMatrix << std::endl;
+            std::cout << "Rotation " << std::endl;
+            std::cout << essentialMatrices[i][j].R << std::endl;
+            std::cout << "translation " << std::endl;
+            std::cout << essentialMatrices[i][j].t << std::endl;
             std::cout
                     << "______________________________________________________________________________________________________"
                     << std::endl;
