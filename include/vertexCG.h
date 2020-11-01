@@ -10,10 +10,11 @@
 
 typedef struct keypointWithDepth {
     SiftGPU::SiftKeypoint keypoint;
-    float depth;
+    double depth;
     std::vector<float> descriptors;
-    keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, float newDepth, const std::vector<float>& newDescriptors);
+    keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth, const std::vector<float>& newDescriptors);
 } keypointWithDepth;
+
 typedef struct vertexCG {
 
     int index;

@@ -2,6 +2,13 @@
 #ifndef TEST_SIFTGPU_CG_H
 #define TEST_SIFTGPU_CG_H
 
+#include <Eigen/Eigen>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
+#include <Eigen/LU> // required for MatrixBase::determinant
+#include <Eigen/SVD> // required for SVD
+
 #include "vertexCG.h"
 #include "essentialMatrix.h"
 #include "cameraRGBD.h"
@@ -19,6 +26,11 @@ typedef struct Match {
             matchNumbers(newMatchNumbers) {};
 } Match;
 
+
+typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
+typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorX;
+
 typedef struct CorrespondenceGraph {
     CameraRGBD cameraRgbd;
     SiftModule siftModule;
@@ -29,11 +41,15 @@ typedef struct CorrespondenceGraph {
     CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD, float fx, float cx, float fy, float cy);
 
     int findCorrespondences();
+
+    int findCorrespondencesEveryDepth();
     int findEssentialMatrices();
     int findRotationsTranslations();
     int findRotationTranslation(int vertexFrom, int vertexInList);
     void decreaseDensity();
-    cv::Mat getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, cv::Mat& outR, cv::Mat& outT);
+
+    cv::Mat getEssentialMatrixTwoImagesOpenCV(int vertexFrom, int vertexInList, cv::Mat& outR, cv::Mat& outT);
+    MatrixX getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, cv::Mat& outR, cv::Mat& outT);
     cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
 } CorrespondenceGraph;
 

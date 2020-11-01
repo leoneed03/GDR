@@ -1,6 +1,6 @@
 #include "../include/vertexCG.h"
 
-keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, float newDepth,
+keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth,
                                      const std::vector<float> &newDescriptors) : keypoint(newKeypoint),
                                                                            depth(newDepth),
                                                                            descriptors(newDescriptors) {

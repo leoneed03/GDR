@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+
 #define DEBUG_PRINT 1
+
 
 void c(std::string output) {
     if (DEBUG_PRINT) {
@@ -16,7 +18,7 @@ void c(int output) {
     }
 }
 
-int essentialMatricesAreEqual(const cv::Mat& matrixLeft, const cv::Mat& matrixRight, float epsilon) {
+int essentialMatricesAreEqual(const cv::Mat &matrixLeft, const cv::Mat &matrixRight, float epsilon) {
     if (matrixLeft.cols != matrixRight.cols) {
         return 1;
     }
@@ -34,7 +36,33 @@ int essentialMatricesAreEqual(const cv::Mat& matrixLeft, const cv::Mat& matrixRi
 
 }
 
+
 int CorrespondenceGraph::findCorrespondences() {
+
+    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+        for (int j = i + 1; j < verticesOfCorrespondence.size(); ++j) {
+
+            if (DEBUG_PRINT)
+                std::cout << "currently " << i << " " << j << std::endl;
+            std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
+                    std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
+                    std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
+                    siftModule.matcher.get());
+            if (DEBUG_PRINT)
+                std::cout << "total matches " << matchingNumbers.size() << std::endl;
+            matches[i].push_back({j, matchingNumbers});
+            for (int p = 0; p < matchingNumbers.size(); ++p) {
+                std::swap(matchingNumbers[p].first, matchingNumbers[p].second);
+            }
+            matches[j].push_back({i, matchingNumbers});
+        }
+    }
+
+    return 0;
+}
+
+
+int CorrespondenceGraph::findCorrespondencesEveryDepth() {
 
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
         for (int j = i + 1; j < verticesOfCorrespondence.size(); ++j) {
@@ -304,10 +332,79 @@ void CorrespondenceGraph::decreaseDensity() {
 int CorrespondenceGraph::findRotationsTranslations() {
     return 0;
 }
+
 int CorrespondenceGraph::findRotationTranslation(int vertexFrom, int vertexInList) {
     return 0;
 }
-cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, cv::Mat& outR, cv::Mat& outT) {
+
+MatrixX
+CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, cv::Mat &outR, cv::Mat &outT) {
+
+    int dim = 3;
+    std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
+    const auto &match = matches[vertexFrom][vertexInList];
+    int minSize = match.matchNumbers.size();
+    pointsFromImage1.reserve(minSize);
+    pointsFromImage2.reserve(minSize);
+
+
+    MatrixX firstPoints = MatrixX::Random(dim + 1, minSize);
+    MatrixX secondPoints = MatrixX::Random(dim + 1, minSize);
+
+    int num_elements = minSize;
+    for (int i = 0; i < minSize; ++i) {
+        {
+            double x1, y1, z1;
+            x1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].x;
+            y1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].y;
+            z1 = verticesOfCorrespondence[vertexFrom].depths[match.matchNumbers[i].first];
+
+            z1 = z1;
+            x1 = (x1 - cameraRgbd.cx) * z1 / cameraRgbd.fx;
+            y1 = (y1 - cameraRgbd.cy) * z1 / cameraRgbd.fy;
+
+            firstPoints.col(i) << x1, y1, z1, 1;
+        }
+
+        {
+            double x2, y2, z2;
+            x2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].x;
+            y2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].y;
+            z2 = verticesOfCorrespondence[match.frameNumber].depths[match.matchNumbers[i].second];
+
+            z2 = z2;
+            x2 = (x2 - cameraRgbd.cx) * z2 / cameraRgbd.fx;
+            y2 = (y2 - cameraRgbd.cy) * z2 / cameraRgbd.fy;
+
+            secondPoints.col(i) << x2, y2, z2, 1;
+        }
+//        const auto &point1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
+//        const cv::Point2f p1 = {point1.x, point1.y};
+//        pointsFromImage1.push_back(p1);
+//        const auto &point2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
+//        const cv::Point2f p2 = {point2.x, point2.y};
+//        pointsFromImage2.push_back(p2);
+    }
+
+    MatrixX cR_t_umeyama = umeyama(firstPoints.block(0, 0, dim, num_elements), secondPoints.block(0, 0, dim, num_elements));
+
+    std::cout << "umeyama \n" << cR_t_umeyama << std::endl;
+//    cv::Mat status;
+//    auto cameraMotion = cv::findEssentialMat(pointsFromImage1,
+//                                             pointsFromImage2,
+//                                             cameraRgbd.cameraMatrix,
+//                                             cv::RANSAC,
+//                                             0.999,        //desired solution confidence level
+//                                             1.0,          //point-to-epipolar-line threshold
+//                                             status);
+//    cv::Mat R, t;
+//    int res = cv::recoverPose(cameraMotion, pointsFromImage1, pointsFromImage2, cameraRgbd.cameraMatrix, outR, outT,
+//                              status);
+    return cR_t_umeyama;
+}
+
+cv::Mat
+CorrespondenceGraph::getEssentialMatrixTwoImagesOpenCV(int vertexFrom, int vertexInList, cv::Mat &outR, cv::Mat &outT) {
 
     std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
     const auto &match = matches[vertexFrom][vertexInList];
@@ -332,13 +429,14 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int ver
                                              1.0,          //point-to-epipolar-line threshold
                                              status);
     cv::Mat R, t;
-    int res = cv::recoverPose(cameraMotion, pointsFromImage1, pointsFromImage2, cameraRgbd.cameraMatrix, outR, outT, status);
+    int res = cv::recoverPose(cameraMotion, pointsFromImage1, pointsFromImage2, cameraRgbd.cameraMatrix, outR, outT,
+                              status);
     return cameraMotion;
 }
 
 CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
                                          const std::string &pathToImageDirectoryD,
-                                         float fx, float cx, float fy, float cy): cameraRgbd({fx, cx, fy, cy}) {
+                                         float fx, float cx, float fy, float cy) : cameraRgbd({fx, cx, fy, cy}) {
 
 //    cameraRgbd = CameraRGBD(fx, cx, fy, cy);
     std::vector<std::string> imagesRgb = readRgbData(pathToImageDirectoryRGB);
@@ -384,15 +482,17 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         for (int i = 0; i < keypoints.size(); ++i) {
             int posInDescriptorVector = 128 * i;
             int currentKeypointDepth = depthImage.at<uchar>((int) keypoints[i].y, (int) keypoints[i].x);
-            depths.push_back(currentKeypointDepth);
-            keypointsKnownDepth.push_back(keypoints[i]);
-            std::vector<float> currentDepths;
-            for (int descriptorCounter = 0; descriptorCounter < 128; ++descriptorCounter) {
-                descriptorsKnownDepth.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
-                currentDepths.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
-            }
+
             if (currentKeypointDepth > 0) {
-                keypointsKnownDepths.push_back({keypoints[i], (float) currentKeypointDepth, currentDepths});
+                depths.push_back(currentKeypointDepth);
+                keypointsKnownDepth.push_back(keypoints[i]);
+                std::vector<float> currentDepths;
+                for (int descriptorCounter = 0; descriptorCounter < 128; ++descriptorCounter) {
+                    descriptorsKnownDepth.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
+                    currentDepths.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
+                }
+                keypointsKnownDepths.push_back(
+                        {keypoints[i], currentKeypointDepth * 65536 / 256.0 / 5000.0, currentDepths});
             }
         }
         vertexCG currentVertex(currentImage, keypointsKnownDepths, keypointsKnownDepth, descriptorsKnownDepth, depths,
@@ -487,7 +587,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     }
     {
         std::cout << a << " match " << b << std::endl;
-        auto matchingKeypoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b], siftModule.matcher.get());
+        auto matchingKeypoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b],
+                                                     siftModule.matcher.get());
         std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
                   << matchingKeypoints.second.size() << std::endl;
     }
@@ -497,7 +598,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         b = 33;
 
         std::cout << a << " match " << b << std::endl;
-        auto matchingKetpoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b], siftModule.matcher.get());
+        auto matchingKetpoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b],
+                                                     siftModule.matcher.get());
         std::cout << "totally matched matchingKeypoints: " << matchingKetpoints.first.size() << " and "
                   << matchingKetpoints.second.size() << std::endl;
     }
