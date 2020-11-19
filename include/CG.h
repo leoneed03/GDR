@@ -38,19 +38,29 @@ typedef struct CorrespondenceGraph {
     int maxVertexDegree = 5;
     std::vector<std::vector<Match>> matches;
     std::vector<std::vector<essentialMatrix>> essentialMatrices;
-    CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD, float fx, float cx, float fy, float cy);
+
+    CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD, float fx,
+                        float cx, float fy, float cy);
 
     int findCorrespondences();
 
     int findCorrespondencesEveryDepth();
+
     int findEssentialMatrices();
+
     int findRotationsTranslations();
+
     int findRotationTranslation(int vertexFrom, int vertexInList);
+
     void decreaseDensity();
 
-    cv::Mat getEssentialMatrixTwoImagesOpenCV(int vertexFrom, int vertexInList, cv::Mat& outR, cv::Mat& outT);
-    MatrixX getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, cv::Mat& outR, cv::Mat& outT);
+    cv::Mat getEssentialMatrixTwoImagesOpenCV(int vertexFrom, int vertexInList, cv::Mat &outR, cv::Mat &outT);
+
+    MatrixX getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT);
+
     cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
+
+    MatrixX getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& points1, const MatrixX& points2, int numOfElements, double inlierCoeff);
 } CorrespondenceGraph;
 
 #endif //TEST_SIFTGPU_CG_H

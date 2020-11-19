@@ -21,6 +21,11 @@ set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/../siftgpu/bin/libsiftgpu.so")
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
+find_package(PCL 1.8 REQUIRED)
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h ../src/cameraRGBD.cpp ../include/cameraRGBD.h ../src/siftModule.cpp ../include/siftModule.h)
 add_executable(trySIFT trysift.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h)
 target_link_libraries(testSIFTGPU
@@ -28,6 +33,7 @@ target_link_libraries(testSIFTGPU
         ${SIFTGPU_LIBS}
         ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
         ${CUDA_LIB_PATH}
+        ${PCL_LIBRARIES}
         Eigen3::Eigen
         )
 target_link_libraries(trySIFT

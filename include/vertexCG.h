@@ -21,7 +21,7 @@ typedef struct vertexCG {
     std::vector<keypointWithDepth> keypointsWithDepths;
     std::vector<SiftGPU::SiftKeypoint> keypoints;
     std::vector<float> descriptors;
-    std::vector<int> depths;
+    std::vector<double> depths;
     std::string pathToRGBimage;
     std::string pathToDimage;
 
@@ -29,7 +29,7 @@ typedef struct vertexCG {
              const std::vector<keypointWithDepth> &newKeypointsWithDepths,
              const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
              const std::vector<float> &newDescriptors,
-             const std::vector<int> &newDepths,
+             const std::vector<double> &newDepths,
              const std::string &newPathRGB,
              const std::string &newPathD);
 } vertexCG;
