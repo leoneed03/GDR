@@ -7,6 +7,8 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <random>
 #define DEBUG_PRINT 1
+#define SHOW_PCL_CLOUDS 0
+#define SHOW_DEPTH_IMAGES_WITH_KEYPOINTS 0
 
 template<typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
@@ -401,10 +403,9 @@ int CorrespondenceGraph::findRotationTranslation(int vertexFrom, int vertexInLis
 }
 
 
-MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& firstPoints, const MatrixX& secondPoints, int numOfPoints, double inlierCoeff) {
+MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& firstPoints, const MatrixX& secondPoints, const int numIterations, const int numOfPoints, double inlierCoeff) {
     int dim = 3;
     int top = 10;
-
     if (inlierCoeff > 1) {
         inlierCoeff = 1;
     }
@@ -414,13 +415,12 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
     }
     assert(numOfPoints == firstPoints.cols());
     assert(firstPoints.cols() == secondPoints.cols());
+
     std::vector<int> pointsPositions;
     pointsPositions.reserve(numOfPoints);
     for (int i = 0; i < numOfPoints; ++i) {
         pointsPositions.push_back(i);
     }
-
-    int numIterations = 100;
     MatrixX bestMath;
 
 
@@ -506,6 +506,8 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
             }
         }
         std::cout << "att " << std::setw(6) << i << " with error " << norm << std::endl;
+
+        std::cout << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers << std::endl;
         if (norm < minError) {
             cR_t_umeyama_3_points_cand = cR_t_umeyama_3_points;
             mError = norm;
@@ -530,6 +532,44 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
         std::cout << std::endl;
     }
     return bestMath;
+}
+void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
+    auto& image = verticesOfCorrespondence[vertexFrom];
+    cv::Mat depthImage = cv::imread(image.pathToDimage, cv::IMREAD_ANYDEPTH);
+    std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
+
+    cv::Mat imageDepth1 ( 480, 640, CV_16UC1 );
+    for (uint x = 0; x < depthImage.cols; ++x) {
+//            std::cout << std::setw(7) << x << ":";
+//            myfile << std::setw(7) << x << ":";
+        for (uint y = 0; y < depthImage.rows; ++y) {
+            auto currentDepth = depthImage.ptr<ushort>(y)[x];
+            assert(currentDepth == depthImage.at<ushort>(y, x));
+//                std::cout << std::setw(8) << currentDepth;
+            imageDepth1.at<ushort>(y, x) = currentDepth;
+//                myfile << std::setw(8) << currentDepth;
+//                depthImageLow.ptr<ushort>(y)[x] = 0;
+
+        }
+//            std::cout << std::endl;
+    }
+    for (int i = 0; i < image.keypoints.size(); ++i) {
+        int x = image.keypoints[i].x;
+        int y = image.keypoints[i].y;
+        std::cout << ((int) (image.depths[i] * 5000)) << " vs " << depthImage.at<ushort>(y, x) << std::endl;
+        std::cout << image.depths[i] << " vs " << depthImage.at<ushort>(y, x) * 1.0 / 5000 << std::endl;
+        assert(abs((image.depths[i]) - depthImage.at<ushort>(y, x) / 5000.0) < std::numeric_limits<float>::epsilon());
+        imageDepth1.at<ushort>(y, x) = std::numeric_limits<ushort>::max();
+    }
+        cv::imshow("Made Depths ?", imageDepth1);
+        cv::waitKey(0);
+//        cv::imshow("Known Depths ?", depthImageS);
+//        cv::waitKey(0);
+//        cv::imshow("Known Depths low", depthImageLow);
+//        cv::waitKey(0);
+        cv::imshow("Known Depths high", depthImage);
+        cv::waitKey(0);
+        cv::destroyAllWindows();
 }
 MatrixX
 CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT) {
@@ -613,15 +653,19 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
     assert(mz > 0);
     assert(Mz > 0);
 
-    MatrixX cR_t_umeyama = umeyama(firstPoints.block(0, 0, dim, num_elements),
+    MatrixX cR_t_umeyama_1 = umeyama(firstPoints.block(0, 0, dim, num_elements),
                                    secondPoints.block(0, 0, dim, num_elements));
-    MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, num_elements, 0.75);
-    std::cout << "simple umeyama " << std::endl;
-    std::cout << cR_t_umeyama << std::endl;
-    std::cout << "RANSAC umeyama " << std::endl;
-    std::cout << cR_t_umeyama_RANSAC << std::endl;
-    std::cout << "______________________________________________________\n";
-    std::cout << "______________________________________________________\n";
+    MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, 5, num_elements, 0.75);
+    MatrixX cR_t_umeyama = cR_t_umeyama_RANSAC;
+    if (DEBUG_PRINT) {
+        std::cout << "simple umeyama " << std::endl;
+        std::cout << cR_t_umeyama << std::endl;
+        std::cout << "RANSAC umeyama " << std::endl;
+        std::cout << cR_t_umeyama_RANSAC << std::endl;
+        std::cout << "______________________________________________________\n";
+        std::cout << "______________________________________________________\n";
+    }
+
 
 
 //    {
@@ -667,9 +711,10 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 //        while (!viewer.wasStopped()) {
 //        }
 //    }
-/*
-    {
+
+    if (SHOW_PCL_CLOUDS) {
         pcl::PointCloud<pcl::PointXYZRGB> cloud1;
+
 
         cloud1.width = 2 * num_elements;
         cloud1.height = 1;
@@ -695,7 +740,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
             int b = 255;
             int32_t rgb = (static_cast<uint32_t>(r) << 16 |
                            static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-            auto res = firstPoints.col(i - num_elements);
+            auto res = cR_t_umeyama * firstPoints.col(i - num_elements);
             cloud1.points[i].x = res[0];
             cloud1.points[i].y = res[1];
             cloud1.points[i].z = res[2];
@@ -706,11 +751,16 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
         }
         pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptrCloud(&cloud1);
+        if (SHOW_DEPTH_IMAGES_WITH_KEYPOINTS) {
+            showKeypointsOnDephtImage(vertexFrom);
+        }
         viewer.showCloud(ptrCloud);
+
 
         while (!viewer.wasStopped()) {
         }
-    }*/
+
+    }
 
 //    {
 //        pcl::PointCloud<pcl::PointXYZ> cloud1;
@@ -800,7 +850,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
     }
     std::cout << std::endl;
 ///////////////////////////////////////////////////////////
-    exit(1);
+//    exit(1);
 
 
 
@@ -1020,8 +1070,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                 std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
                 std::string edgeId = "EDGE_SE3:QUAT " + std::to_string(essentialMatrices[i][j].vertexTo.index) + " " + std::to_string(i) + " ";
                 auto translationVector = essentialMatrices[i][j].t;
-//                std::string edgeWithTranslation = edgeId + std::to_string(translationVector.x()) + " "  + std::to_string(translationVector.y()) + " " + std::to_string(translationVector.z()) + " ";
-                std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
+                std::string edgeWithTranslation = edgeId + std::to_string(translationVector.col(0)[0]) + " "  + std::to_string(translationVector.col(0)[1]) + " " + std::to_string(translationVector.col(0)[2]) + " ";
+//                std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
                 const auto& R = essentialMatrices[i][j].R;
 //                MatrixX R = randMatrixSpecialUnitary<Scalar>(3);
 

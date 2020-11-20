@@ -60,7 +60,8 @@ typedef struct CorrespondenceGraph {
 
     cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
 
-    MatrixX getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& points1, const MatrixX& points2, int numOfElements, double inlierCoeff);
+    void showKeypointsOnDephtImage(int vertexFrom);
+    MatrixX getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& points1, const MatrixX& points2,  const int numIterations, const int numOfElements, double inlierCoeff);
 } CorrespondenceGraph;
 
 #endif //TEST_SIFTGPU_CG_H
