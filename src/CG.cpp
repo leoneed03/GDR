@@ -1,5 +1,5 @@
 #include "../include/CG.h"
-
+#include "../include/groundTruthTransformer.h"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -1070,8 +1070,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                 std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
                 std::string edgeId = "EDGE_SE3:QUAT " + std::to_string(essentialMatrices[i][j].vertexTo.index) + " " + std::to_string(i) + " ";
                 auto translationVector = essentialMatrices[i][j].t;
-                std::string edgeWithTranslation = edgeId + std::to_string(translationVector.col(0)[0]) + " "  + std::to_string(translationVector.col(0)[1]) + " " + std::to_string(translationVector.col(0)[2]) + " ";
-//                std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
+//                std::string edgeWithTranslation = edgeId + std::to_string(translationVector.col(0)[0]) + " "  + std::to_string(translationVector.col(0)[1]) + " " + std::to_string(translationVector.col(0)[2]) + " ";
+                std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
                 const auto& R = essentialMatrices[i][j].R;
 //                MatrixX R = randMatrixSpecialUnitary<Scalar>(3);
 
@@ -1080,8 +1080,10 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                         2)[1], R.row(2)[2];
 
                 Eigen::Quaternionf qR(Rf);
+                int space = 12;
+                std::vector<double> vectorDataRotations = {qR.x(), qR.y(), qR.z(), qR.w()};
                 std::string edgeTotal = edgeWithTranslation + std::to_string(qR.x()) + " " + std::to_string(qR.y()) + " " + std::to_string(qR.z()) + " "
-                + std::to_string(qR.x()) + noise + "\n";
+                + std::to_string(qR.w()) + noise + "\n";
                 if (strings.find(edgeTotal) != strings.end()) {
                     std::cerr << "Duplicate " << i << " " << j << " j as " << essentialMatrices[i][j].vertexFrom.index << std::endl;
                     std::cout << "ERROR";
