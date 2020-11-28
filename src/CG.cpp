@@ -10,6 +10,9 @@
 #define SHOW_PCL_CLOUDS 0
 #define SHOW_DEPTH_IMAGES_WITH_KEYPOINTS 0
 
+#include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
+
 template<typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
     typedef T Scalar;
@@ -361,6 +364,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
 
 int CorrespondenceGraph::findEssentialMatrices() {
 
+    bool f = true;
     for (int i = 0; i < matches.size(); ++i) {
         for (int j = 0; j < matches[i].size(); ++j) {
 
@@ -373,6 +377,7 @@ int CorrespondenceGraph::findEssentialMatrices() {
             assert(frameTo.index != frameFrom.index);
             MatrixX R, t;
             auto cameraMotion = getEssentialMatrixTwoImages(i, j, R, t);
+            std::cout << "out of Transformation calculation" << std::endl;
             essentialMatrices[i].push_back(essentialMatrix(cameraMotion, frameFrom, frameTo, R, t));
         }
     }
@@ -493,28 +498,38 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
             assert(secondInlierPoints.col(currentIndex)[2] == secondPoints.col(index)[2]);
         }
 
-        MatrixX cR_t_umeyama_inlier_points = umeyama(firstInlierPoints.block(0, 0, dim, numInliers),
-                                                secondInlierPoints.block(0, 0, dim, numInliers));
-
-        double norm = 0;
-        for (int count = 0; count < numInliers; ++count) {
-            const auto& firstColumn = firstInlierPoints.col(count);
-            const auto& secondColumn = secondInlierPoints.col(count);
-            auto dest = cR_t_umeyama_inlier_points * firstColumn;
-            for (int pp = 0; pp < dim; ++pp) {
-                norm += pow(dest[pp] - secondColumn[pp], 2);
-            }
+        const auto& firstColumn = firstInlierPoints.col(std::max(numInliers - 1, 0));
+        const auto& secondColumn = secondInlierPoints.col(std::max(numInliers - 1, 0));
+        auto dest = cR_t_umeyama_3_points * firstColumn;
+        double normError = 0;
+        for (int pp = 0; pp < dim; ++pp) {
+            normError += pow(dest[pp] - secondColumn[pp], 2);
         }
-        std::cout << "att " << std::setw(6) << i << " with error " << norm << std::endl;
+        MatrixX cR_t_umeyama_inlier_points = cR_t_umeyama_3_points;
+        if (normError < minError) {
+            cR_t_umeyama_inlier_points = umeyama(firstInlierPoints.block(0, 0, dim, numInliers),
+                                                         secondInlierPoints.block(0, 0, dim, numInliers));
+        }
+
+//        double norm = 0;
+//        for (int count = std::max(numInliers - 1, 0); count < numInliers; ++count) {
+//            const auto& firstColumn = firstInlierPoints.col(count);
+//            const auto& secondColumn = secondInlierPoints.col(count);
+//            auto dest = cR_t_umeyama_inlier_points * firstColumn;
+//            for (int pp = 0; pp < dim; ++pp) {
+//                norm += pow(dest[pp] - secondColumn[pp], 2);
+//            }
+//        }
+        std::cout << "att " << std::setw(6) << i << " with error " << normError << std::endl;
 
         std::cout << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers << std::endl;
-        if (norm < minError) {
+        if (normError < minError) {
             cR_t_umeyama_3_points_cand = cR_t_umeyama_3_points;
-            mError = norm;
+            mError = normError;
             bestMath = cR_t_umeyama_inlier_points;
             attempt = i;
             inlierIndices = pointsPositions;
-            minError = norm;
+            minError = normError;
             triple = p;
         }
     }
@@ -573,101 +588,125 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
 }
 MatrixX
 CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT) {
-
-    int dim = 3;
-    std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
-    const auto &match = matches[vertexFrom][vertexInList];
-    int minSize = match.matchNumbers.size();
-    pointsFromImage1.reserve(minSize);
-    pointsFromImage2.reserve(minSize);
-
-
-    MatrixX firstPoints = MatrixX::Random(dim + 1, minSize);
-    MatrixX secondPoints = MatrixX::Random(dim + 1, minSize);
+    MatrixX cR_t_umeyama;
+    {
+        int dim = 3;
+        std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
+        const auto &match = matches[vertexFrom][vertexInList];
+        int minSize = match.matchNumbers.size();
+        pointsFromImage1.reserve(minSize);
+        pointsFromImage2.reserve(minSize);
 
 
-    double mx = 1000, my = 1000, mz = 1000;
-    double Mx = -1000, My = -1000, Mz = -1000;
-    int num_elements = minSize;
-    for (int i = 0; i < minSize; ++i) {
-        {
-            double x1, y1, z1;
-            x1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].x;
-            y1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].y;
-            z1 = verticesOfCorrespondence[vertexFrom].depths[match.matchNumbers[i].first];
+        MatrixX firstPoints = MatrixX::Random(dim + 1, minSize);
+        MatrixX secondPoints = MatrixX::Random(dim + 1, minSize);
 
-            z1 = z1;
-            x1 = 1.0 * (x1 - cameraRgbd.cx) * z1 / cameraRgbd.fx;
-            y1 = 1.0 * (y1 - cameraRgbd.cy) * z1 / cameraRgbd.fy;
 
-            if (z1 < mz) {
-                mx = x1;
-                my = y1;
-                mz = z1;
+        double mx = 1000, my = 1000, mz = 1000;
+        double Mx = -1000, My = -1000, Mz = -1000;
+        int num_elements = minSize;
+        for (int i = 0; i < minSize; ++i) {
+            {
+                double x1, y1, z1;
+                x1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].x;
+                y1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].y;
+                z1 = verticesOfCorrespondence[vertexFrom].depths[match.matchNumbers[i].first];
+
+                double mirrorParameterH = verticesOfCorrespondence[vertexFrom].heightMirrorParameter;
+                assert(y1 < mirrorParameterH && y1 > 0);
+                y1 = mirrorParameterH - y1;
+
+                double mirrorParameterW = verticesOfCorrespondence[vertexFrom].widthMirrorParameter;
+                assert(x1 < mirrorParameterW && x1 > 0);
+                x1 = mirrorParameterW - x1;
+
+
+                //we have to mirror y because image coordinate system is upper-left located
+                //and mirror x because standart XYZ swaps directions of OX!!!
+
+
+
+                z1 = z1;
+                x1 = 1.0 * (x1 - cameraRgbd.cx) * z1 / cameraRgbd.fx;
+                y1 = 1.0 * (y1 - cameraRgbd.cy) * z1 / cameraRgbd.fy;
+
+                if (z1 < mz) {
+                    mx = x1;
+                    my = y1;
+                    mz = z1;
+                }
+                if (z1 > Mz) {
+                    Mx = x1;
+                    My = y1;
+                    Mz = z1;
+                }
+
+                firstPoints.col(i) << x1, y1, z1, 1;
+
+                assert(firstPoints.col(i)[0] == x1);
+                assert(firstPoints.col(i)[1] == y1);
+                assert(firstPoints.col(i)[2] == z1);
+                assert(firstPoints.col(i)[3] == 1);
             }
-            if (z1 > Mz) {
-                Mx = x1;
-                My = y1;
-                Mz = z1;
+
+            {
+                double x2, y2, z2;
+                x2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].x;
+                y2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].y;
+                z2 = verticesOfCorrespondence[match.frameNumber].depths[match.matchNumbers[i].second];
+
+                double mirrorParameterH = verticesOfCorrespondence[vertexFrom].heightMirrorParameter;
+                assert(y2 < mirrorParameterH && y2 >= 0);
+                y2 = mirrorParameterH - y2;
+
+                double mirrorParameterW = verticesOfCorrespondence[vertexFrom].widthMirrorParameter;
+                assert(x2 < mirrorParameterW && x2 > 0);
+                x2 = mirrorParameterW - x2;
+
+                z2 = z2;
+                x2 = 1.0 * (x2 - cameraRgbd.cx) * z2 / cameraRgbd.fx;
+                y2 = 1.0 * (y2 - cameraRgbd.cy) * z2 / cameraRgbd.fy;
+
+                secondPoints.col(i) << x2, y2, z2, 1;
+
+                assert(secondPoints.col(i)[0] == x2);
+                assert(secondPoints.col(i)[1] == y2);
+                assert(secondPoints.col(i)[2] == z2);
+                assert(secondPoints.col(i)[3] == 1);
             }
-
-            firstPoints.col(i) << x1, y1, z1, 1;
-
-            assert(firstPoints.col(i)[0] == x1);
-            assert(firstPoints.col(i)[1] == y1);
-            assert(firstPoints.col(i)[2] == z1);
-            assert(firstPoints.col(i)[3] == 1);
+            const auto &point1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
+            const cv::Point2f p1 = {point1.x, point1.y};
+            pointsFromImage1.push_back(p1);
+            const auto &point2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
+            const cv::Point2f p2 = {point2.x, point2.y};
+            pointsFromImage2.push_back(p2);
         }
 
-        {
-            double x2, y2, z2;
-            x2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].x;
-            y2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].y;
-            z2 = verticesOfCorrespondence[match.frameNumber].depths[match.matchNumbers[i].second];
 
-            z2 = z2;
-            x2 = 1.0 * (x2 - cameraRgbd.cx) * z2 / cameraRgbd.fx;
-            y2 = 1.0 * (y2 - cameraRgbd.cy) * z2 / cameraRgbd.fy;
+        std::cout << "Points are min" << std::endl;
+        std::cout << mx << " " << my << " " << mz << std::endl;
 
-            secondPoints.col(i) << x2, y2, z2, 1;
+        std::cout << "Points are max" << std::endl;
+        std::cout << Mx << " " << My << " " << Mz << std::endl;
+        assert(mz > 0);
+        assert(Mz > 0);
 
-            assert(secondPoints.col(i)[0] == x2);
-            assert(secondPoints.col(i)[1] == y2);
-            assert(secondPoints.col(i)[2] == z2);
-            assert(secondPoints.col(i)[3] == 1);
+        MatrixX cR_t_umeyama_1 = umeyama(firstPoints.block(0, 0, dim, num_elements),
+                                         secondPoints.block(0, 0, dim, num_elements));
+        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, 5, num_elements,
+                                                                             0.75);
+        cR_t_umeyama = cR_t_umeyama_RANSAC;
+        if (DEBUG_PRINT) {
+            std::cout << "simple umeyama " << std::endl;
+            std::cout << cR_t_umeyama << std::endl;
+            std::cout << "RANSAC umeyama " << std::endl;
+            std::cout << cR_t_umeyama_RANSAC << std::endl;
+            std::cout << "______________________________________________________\n";
+            std::cout << "______________________________________________________\n";
         }
-        const auto &point1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
-        const cv::Point2f p1 = {point1.x, point1.y};
-        pointsFromImage1.push_back(p1);
-        const auto &point2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
-        const cv::Point2f p2 = {point2.x, point2.y};
-        pointsFromImage2.push_back(p2);
-    }
 
 
-    std::cout << "Points are min" << std::endl;
-    std::cout << mx << " " << my << " " << mz << std::endl;
-
-    std::cout << "Points are max" << std::endl;
-    std::cout << Mx << " " << My << " " << Mz << std::endl;
-    assert(mz > 0);
-    assert(Mz > 0);
-
-    MatrixX cR_t_umeyama_1 = umeyama(firstPoints.block(0, 0, dim, num_elements),
-                                   secondPoints.block(0, 0, dim, num_elements));
-    MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, 5, num_elements, 0.75);
-    MatrixX cR_t_umeyama = cR_t_umeyama_RANSAC;
-    if (DEBUG_PRINT) {
-        std::cout << "simple umeyama " << std::endl;
-        std::cout << cR_t_umeyama << std::endl;
-        std::cout << "RANSAC umeyama " << std::endl;
-        std::cout << cR_t_umeyama_RANSAC << std::endl;
-        std::cout << "______________________________________________________\n";
-        std::cout << "______________________________________________________\n";
-    }
-
-
-
+/////////BEGIN UMEYAMA DEMONSTRATION
 //    {
 //        pcl::PointCloud<pcl::PointXYZRGB> cloud1;
 //
@@ -712,55 +751,131 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 //        }
 //    }
 
-    if (SHOW_PCL_CLOUDS) {
-        pcl::PointCloud<pcl::PointXYZRGB> cloud1;
 
+/////////////////////END OF UMEYAMA DEMONSTRATION
 
-        cloud1.width = 2 * num_elements;
-        cloud1.height = 1;
-        cloud1.is_dense = false;
-        cloud1.points.resize(cloud1.width * cloud1.height);
+        {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloudFrom(parseDepthImageNoColour(
+                verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd)); //mistake: should only include keypoints!!!!
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTo(parseDepthImageNoColour(
+                verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
+        cloudTo->points.resize(minSize);
+        cloudTo->width = minSize;
+            cloudFrom->points.resize(minSize);
+            cloudFrom->width = minSize;
+        std::cout << "cloud sizes are " << cloudTo->width << " " << cloudFrom->width << std::endl;
 
-        for (size_t i = 0; i < num_elements; ++i) {
+        assert(cloudTo->width == cloudFrom->width);
+        assert(cloudFrom->width > 0);
+        for (size_t i = 0; i < cloudFrom->width; ++i) {
             int r = 10;
             int g = 10;
             int b = 100;
             int32_t rgb = (static_cast<uint32_t>(r) << 16 |
                            static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-            cloud1.points[i].x = secondPoints.col(i).x();
-            cloud1.points[i].y = secondPoints.col(i).y();
-            cloud1.points[i].z = secondPoints.col(i).z();
-            cloud1.points[i].rgb = rgb;
-            std::cout << "point " << i << " out of " << num_elements << std::endl;
-        }
-        for (size_t i = num_elements; i < 2 * num_elements; ++i) {
 
-            int r = 255;
-            int g = 255;
-            int b = 255;
-            int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-                           static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-            auto res = cR_t_umeyama * firstPoints.col(i - num_elements);
-            cloud1.points[i].x = res[0];
-            cloud1.points[i].y = res[1];
-            cloud1.points[i].z = res[2];
-            cloud1.points[i].rgb = rgb;
+            auto res = cR_t_umeyama * firstPoints.col(i);
+            MatrixX columnOfPoints = MatrixX::Random(dim + 1, 1);
+            columnOfPoints.col(0)[0] = cloudFrom->points[i].x;
+            columnOfPoints.col(0)[1] = cloudFrom->points[i].y;
+            columnOfPoints.col(0)[2] = cloudFrom->points[i].z;
+            columnOfPoints.col(0)[3] = 1;
+//            auto res = cR_t_umeyama * columnOfPoints.col(0);
+            cloudFrom->points[i].x = res[0];
+            cloudFrom->points[i].y = res[1];
+            cloudFrom->points[i].z = res[2];
+            double delta = 0;
+            cloudTo->points[i].x = secondPoints.col(i)[0] + delta;
+            cloudTo->points[i].y = secondPoints.col(i)[1] + delta;
+            cloudTo->points[i].z = secondPoints.col(i)[2] + delta;
+        }
+//        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+//        viewer.showCloud(cloudTo);
+//
+//
+//        while (!viewer.wasStopped()) {
+//        }
+////
+//
+//        parseDepthImage(verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd);
+//        exit(3);/////////////////////EXIT
+
+//////////////////////BLOCK FOR NL ICP
+
+//        double dist = 0.05;
+//        double rans = 0.05;
+//        int iter = 5;
+//        bool nonLinear = true;
+//            pcl::IterativeClosestPointNonLinear<PointType, PointType> icp;
+//            icp.setMaximumIterations(iter);
+//            icp.setMaxCorrespondenceDistance(dist);
+//            icp.setRANSACOutlierRejectionThreshold(rans);
+//            icp.setInputSource(cloudFrom);
+//            icp.setInputTarget(cloudTo);
+//            icp.align(*cloudFrom);
+//
+//            if (icp.hasConverged()) {
+//                std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
+//                std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
+//                auto transformation_matrix = icp.getFinalTransformation().cast<double>();
+//                std::cout << transformation_matrix << std::endl;
+//            } else {
+//                PCL_ERROR ("\nICP has not converged.\n");
+//                exit(-1);
+//            }
+//            std::cout << "before " << std::endl;
+        }
+        std::cout << "after " << std::endl;
+
+        if (SHOW_PCL_CLOUDS) {
+            pcl::PointCloud<pcl::PointXYZRGB> cloud1;
+
+
+            cloud1.width = 2 * num_elements;
+            cloud1.height = 1;
+            cloud1.is_dense = false;
+            cloud1.points.resize(cloud1.width * cloud1.height);
+
+            for (size_t i = 0; i < num_elements; ++i) {
+                int r = 10;
+                int g = 10;
+                int b = 100;
+                int32_t rgb = (static_cast<uint32_t>(r) << 16 |
+                               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
+                cloud1.points[i].x = secondPoints.col(i).x();
+                cloud1.points[i].y = secondPoints.col(i).y();
+                cloud1.points[i].z = secondPoints.col(i).z();
+                cloud1.points[i].rgb = rgb;
+                std::cout << "point " << i << " out of " << num_elements << std::endl;
+            }
+            for (size_t i = num_elements; i < 2 * num_elements; ++i) {
+
+                int r = 255;
+                int g = 255;
+                int b = 255;
+                int32_t rgb = (static_cast<uint32_t>(r) << 16 |
+                               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
+                auto res = cR_t_umeyama * firstPoints.col(i - num_elements);
+                cloud1.points[i].x = res[0];
+                cloud1.points[i].y = res[1];
+                cloud1.points[i].z = res[2];
+                cloud1.points[i].rgb = rgb;
 //        pcl::visualization::createLine();
 
-            std::cout << "point " << i << " out of " << num_elements << std::endl;
-        }
-        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptrCloud(&cloud1);
-        if (SHOW_DEPTH_IMAGES_WITH_KEYPOINTS) {
-            showKeypointsOnDephtImage(vertexFrom);
-        }
-        viewer.showCloud(ptrCloud);
+                std::cout << "point " << i << " out of " << num_elements << std::endl;
+            }
+            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptrCloud(&cloud1);
+            if (SHOW_DEPTH_IMAGES_WITH_KEYPOINTS) {
+                showKeypointsOnDephtImage(vertexFrom);
+            }
+            viewer.showCloud(ptrCloud);
 
 
-        while (!viewer.wasStopped()) {
-        }
+            while (!viewer.wasStopped()) {
+            }
 
-    }
+        }
 
 //    {
 //        pcl::PointCloud<pcl::PointXYZ> cloud1;
@@ -803,52 +918,55 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 //    }
 
 
-    std::vector<double> differences;
-    for (int i = 0; i < num_elements; ++i) {
+        std::vector<double> differences;
+        for (int i = 0; i < num_elements; ++i) {
 //        auto res = cR_t_umeyama * secondPoints.col(i);
 //        assert(abs(pow(secondPoints.col(i).x() - res[0],2) - (secondPoints.col(i).x() - res[0]) * (secondPoints.col(i).x() - res[0])) < 0.000001);
 //        double diff = sqrt(pow(firstPoints.col(i).x() - res[0],2) + pow(firstPoints.col(i).y() - res[1],2) + pow(firstPoints.col(i).z() - res[2],2));
 
-        auto res = cR_t_umeyama * firstPoints.col(i);
-        double diff = sqrt(pow(secondPoints.col(i).x() - res[0],2) + pow(secondPoints.col(i).y() - res[1],2) + pow(secondPoints.col(i).z() - res[2],2));
-        differences.push_back(diff);
-    }
+            auto res = cR_t_umeyama * firstPoints.col(i);
+            double diff = sqrt(pow(secondPoints.col(i).x() - res[0], 2) + pow(secondPoints.col(i).y() - res[1], 2) +
+                               pow(secondPoints.col(i).z() - res[2], 2));
+            differences.push_back(diff);
+        }
 
-    sort(differences.begin(), differences.end(), [](const auto& lhs, const auto& rhs){ return lhs > rhs; });
-    std::cout << "__________________________________________\n";
-    double sum_dif = 0;
-    double sum_sq = 0;
-    for (const auto& e: differences) {
-        std::cout << e << " ";
-        sum_dif += e;
-        sum_sq += e * e;
-    }
-    sum_dif /= num_elements;
-    sum_sq /= num_elements;
-    std::cout << std::endl << sum_dif << " D=" << sum_sq - sum_dif * sum_dif << std::endl;
+        sort(differences.begin(), differences.end(), [](const auto &lhs, const auto &rhs) { return lhs > rhs; });
+        std::cout << "__________________________________________\n";
+        double sum_dif = 0;
+        double sum_sq = 0;
+        for (const auto &e: differences) {
+            std::cout << e << " ";
+            sum_dif += e;
+            sum_sq += e * e;
+        }
+        sum_dif /= num_elements;
+        sum_sq /= num_elements;
+        std::cout << std::endl << sum_dif << " D=" << sum_sq - sum_dif * sum_dif << std::endl;
 
-    sort(differences.begin(), differences.end());
-    for (const auto& e: differences) {
-        std::cout << e << " ";
-    }
-    std::cout << std::endl;
+        sort(differences.begin(), differences.end());
+        for (const auto &e: differences) {
+            std::cout << e << " ";
+        }
+        std::cout << std::endl;
 
-    std::vector<double> differences12;
-    for (int i = 0; i < num_elements; ++i) {
-        double diff = sqrt(pow(secondPoints.col(i).x() - firstPoints.col(i).x(),2) + pow(secondPoints.col(i).y() - firstPoints.col(i).y(),2) + pow(secondPoints.col(i).z() - firstPoints.col(i).z(),2));
-        differences12.push_back(diff);
-    }
-    std::cout << "__________________________________________\n";
-    sort(differences12.begin(), differences12.end(), [](const auto& lhs, const auto& rhs){ return lhs > rhs; });
-    for (const auto& e: differences12) {
-        std::cout << e << " ";
-    }
-    std::cout << std::endl;
-    sort(differences12.begin(), differences12.end());
-    for (const auto& e: differences12) {
-        std::cout << e << " ";
-    }
-    std::cout << std::endl;
+        std::vector<double> differences12;
+        for (int i = 0; i < num_elements; ++i) {
+            double diff = sqrt(pow(secondPoints.col(i).x() - firstPoints.col(i).x(), 2) +
+                               pow(secondPoints.col(i).y() - firstPoints.col(i).y(), 2) +
+                               pow(secondPoints.col(i).z() - firstPoints.col(i).z(), 2));
+            differences12.push_back(diff);
+        }
+        std::cout << "__________________________________________\n";
+        sort(differences12.begin(), differences12.end(), [](const auto &lhs, const auto &rhs) { return lhs > rhs; });
+        for (const auto &e: differences12) {
+            std::cout << e << " ";
+        }
+        std::cout << std::endl;
+        sort(differences12.begin(), differences12.end());
+        for (const auto &e: differences12) {
+            std::cout << e << " ";
+        }
+        std::cout << std::endl;
 ///////////////////////////////////////////////////////////
 //    exit(1);
 
@@ -857,7 +975,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 
 
 //    std::cout << "umeyama \n" << cR_t_umeyama << std::endl;
-    {
+        {
 //        cv::Mat status;
 //        auto cameraMotion = cv::findEssentialMat(pointsFromImage1,
 //                                                 pointsFromImage2,
@@ -871,8 +989,10 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 //                                  status);
 //        std::cout << "Rotation recover pose \n" << R1 << std::endl;
 //        std::cout << "Translation recover pose \n" << t1 << std::endl;
+        }
+        std::cout << "Umeyama\n" << cR_t_umeyama << std::endl;
     }
-    std::cout << "Umeyama\n" << cR_t_umeyama << std::endl;
+    std::cout << "Here!" << std::endl;
     return cR_t_umeyama;
 }
 

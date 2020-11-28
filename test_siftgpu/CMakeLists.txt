@@ -23,11 +23,28 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 find_package(PCL 1.8 REQUIRED)
 
+
+FIND_PACKAGE(Boost COMPONENTS thread system filesystem REQUIRED)
+MESSAGE("Boost information:")
+MESSAGE("   Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
+MESSAGE("   Boost_LIBRARIES: ${Boost_LIBRARIES}")
+MESSAGE("   Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
+
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+
+
+LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+
+
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
-add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h ../src/cameraRGBD.cpp ../include/cameraRGBD.h ../src/siftModule.cpp ../include/siftModule.h)
+add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h ../src/cameraRGBD.cpp ../include/cameraRGBD.h ../src/siftModule.cpp ../include/siftModule.h ../src/groundTruthTransformer.cpp ../include/groundTruthTransformer.h testEigen.cpp ../src/images.cpp ../include/images.h)
 add_executable(trySIFT trysift.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h)
+add_executable(transformGroundTruth transformGroundTruth.cpp ../src/groundTruthTransformer.cpp ../src/files.cpp)
+add_executable(testEigen testEigen.cpp)
+
+target_link_libraries(transformGroundTruth ${Boost_LIBRARIES})
 target_link_libraries(testSIFTGPU
         ${OpenCV_LIBS}
         ${SIFTGPU_LIBS}
@@ -36,6 +53,7 @@ target_link_libraries(testSIFTGPU
         ${PCL_LIBRARIES}
         Eigen3::Eigen
         )
+
 target_link_libraries(trySIFT
         ${OpenCV_LIBS}
         ${SIFTGPU_LIBS}

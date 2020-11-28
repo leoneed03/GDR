@@ -9,10 +9,14 @@
 #include <Eigen/LU> // required for MatrixBase::determinant
 #include <Eigen/SVD> // required for SVD
 
+#include <pcl/registration/incremental_registration.h>
+
 #include "vertexCG.h"
 #include "essentialMatrix.h"
 #include "cameraRGBD.h"
 #include "siftModule.h"
+#include "images.h"
+
 #include <opencv2/opencv.hpp>
 
 typedef struct Match {
@@ -35,7 +39,7 @@ typedef struct CorrespondenceGraph {
     CameraRGBD cameraRgbd;
     SiftModule siftModule;
     std::vector<vertexCG> verticesOfCorrespondence;
-    int maxVertexDegree = 5;
+    int maxVertexDegree = 15;
     std::vector<std::vector<Match>> matches;
     std::vector<std::vector<essentialMatrix>> essentialMatrices;
 

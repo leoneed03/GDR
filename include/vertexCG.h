@@ -24,6 +24,8 @@ typedef struct vertexCG {
     std::vector<double> depths;
     std::string pathToRGBimage;
     std::string pathToDimage;
+    int heightMirrorParameter = 480;
+    int widthMirrorParameter = 640;
 
     vertexCG(int newIndex,
              const std::vector<keypointWithDepth> &newKeypointsWithDepths,
