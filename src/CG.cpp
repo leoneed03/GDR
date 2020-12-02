@@ -119,10 +119,10 @@ int CorrespondenceGraph::findCorrespondences() {
             if (DEBUG_PRINT)
                 std::cout << "total matches " << matchingNumbers.size() << std::endl;
             matches[i].push_back({j, matchingNumbers});
-            for (int p = 0; p < matchingNumbers.size(); ++p) {
-                std::swap(matchingNumbers[p].first, matchingNumbers[p].second);
-            }
-            matches[j].push_back({i, matchingNumbers});
+//            for (int p = 0; p < matchingNumbers.size(); ++p) {
+//                std::swap(matchingNumbers[p].first, matchingNumbers[p].second);
+//            }
+//            matches[j].push_back({i, matchingNumbers});
         }
     }
 
@@ -693,7 +693,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 
         MatrixX cR_t_umeyama_1 = umeyama(firstPoints.block(0, 0, dim, num_elements),
                                          secondPoints.block(0, 0, dim, num_elements));
-        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, 5, num_elements,
+        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, 10, num_elements,
                                                                              0.75);
         cR_t_umeyama = cR_t_umeyama_RANSAC;
         if (DEBUG_PRINT) {
@@ -1158,7 +1158,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     findEssentialMatrices();
     for (int i = 0; i < essentialMatrices.size(); ++i) {
         for (int j = 0; j < essentialMatrices[i].size(); ++j) {
-            std::cout << "                          " << std::setw(4) << i << std::setw(4) << j << std::endl;
+//            std::cout << "                          " << std::setw(4) << i << std::setw(4) << j << std::endl;
             std::cout << "                          " << std::setw(4) << essentialMatrices[i][j].vertexFrom.index
                       << std::setw(4) << essentialMatrices[i][j].vertexTo.index << std::endl;
             std::cout << essentialMatrices[i][j].innerEssentialMatrix << std::endl;
@@ -1216,82 +1216,82 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     }
     return;
 
-
-    auto testImage = verticesOfCorrespondence[10];
-    cv::Mat image = cv::imread(testImage.pathToRGBimage);
-
-    for (const auto &key: testImage.keypoints) {
-//        std::cout << key.x << "::" << key.y << std::endl;
-        auto &pixel = image.at<cv::Vec3b>((int) key.y, (int) key.x);
-        pixel[0] = 255;
-        pixel[1] = 255;
-        pixel[2] = 255;
-
-    }
-    cv::imshow("Well..", image);
-
-    cv::waitKey(0);
-
-    cv::Mat imageD = cv::imread(testImage.pathToDimage);
-    for (const auto &key: testImage.keypoints) {
-//        std::cout << key.x << "::" << key.y << std::endl;
-        auto &pixel = imageD.at<cv::Vec3b>((int) key.y, (int) key.x);
-        pixel[0] = 255;
-        pixel[1] = 255;
-        pixel[2] = 255;
-
-    }
-    cv::imshow("Depth..", imageD);
-    cv::waitKey(0);
-    cv::destroyAllWindows();
-
-    for (int i = 0; i < matches.size(); ++i) {
-        std::cout << i << "-th frame total of  " << matches[i].size() << ": ";
-        for (const auto &match: matches[i]) {
-            std::cout << match.frameNumber << "_(" << match.matchNumbers.size() << ") ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << " all matches done " << std::endl;
-
-
-    c(testImage.pathToRGBimage);
-    c(testImage.pathToDimage);
-
-    int a = 2, b = 17;
-
-    {
-        ++a;
-        ++b;
-
-        auto matchingKeypoints = getMatchesKeypoints(
-                std::make_pair(verticesOfCorrespondence[a].keypoints, verticesOfCorrespondence[a].descriptors),
-                std::make_pair(verticesOfCorrespondence[b].keypoints, verticesOfCorrespondence[b].descriptors),
-                siftModule.matcher.get());
-        std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
-                  << matchingKeypoints.second.size() << std::endl;
-        --a;
-        --b;
-    }
-    {
-        std::cout << a << " match " << b << std::endl;
-        auto matchingKeypoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b],
-                                                     siftModule.matcher.get());
-        std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
-                  << matchingKeypoints.second.size() << std::endl;
-    }
-
-    {
-        a = 17;
-        b = 33;
-
-        std::cout << a << " match " << b << std::endl;
-        auto matchingKetpoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b],
-                                                     siftModule.matcher.get());
-        std::cout << "totally matched matchingKeypoints: " << matchingKetpoints.first.size() << " and "
-                  << matchingKetpoints.second.size() << std::endl;
-    }
-    std::cout << a << " matched " << b << std::endl;
-//    delete matcher;
+//
+//    auto testImage = verticesOfCorrespondence[10];
+//    cv::Mat image = cv::imread(testImage.pathToRGBimage);
+//
+//    for (const auto &key: testImage.keypoints) {
+////        std::cout << key.x << "::" << key.y << std::endl;
+//        auto &pixel = image.at<cv::Vec3b>((int) key.y, (int) key.x);
+//        pixel[0] = 255;
+//        pixel[1] = 255;
+//        pixel[2] = 255;
+//
+//    }
+//    cv::imshow("Well..", image);
+//
+//    cv::waitKey(0);
+//
+//    cv::Mat imageD = cv::imread(testImage.pathToDimage);
+//    for (const auto &key: testImage.keypoints) {
+////        std::cout << key.x << "::" << key.y << std::endl;
+//        auto &pixel = imageD.at<cv::Vec3b>((int) key.y, (int) key.x);
+//        pixel[0] = 255;
+//        pixel[1] = 255;
+//        pixel[2] = 255;
+//
+//    }
+//    cv::imshow("Depth..", imageD);
+//    cv::waitKey(0);
+//    cv::destroyAllWindows();
+//
+//    for (int i = 0; i < matches.size(); ++i) {
+//        std::cout << i << "-th frame total of  " << matches[i].size() << ": ";
+//        for (const auto &match: matches[i]) {
+//            std::cout << match.frameNumber << "_(" << match.matchNumbers.size() << ") ";
+//        }
+//        std::cout << std::endl;
+//    }
+//    std::cout << " all matches done " << std::endl;
+//
+//
+//    c(testImage.pathToRGBimage);
+//    c(testImage.pathToDimage);
+//
+//    int a = 2, b = 17;
+//
+//    {
+//        ++a;
+//        ++b;
+//
+//        auto matchingKeypoints = getMatchesKeypoints(
+//                std::make_pair(verticesOfCorrespondence[a].keypoints, verticesOfCorrespondence[a].descriptors),
+//                std::make_pair(verticesOfCorrespondence[b].keypoints, verticesOfCorrespondence[b].descriptors),
+//                siftModule.matcher.get());
+//        std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
+//                  << matchingKeypoints.second.size() << std::endl;
+//        --a;
+//        --b;
+//    }
+//    {
+//        std::cout << a << " match " << b << std::endl;
+//        auto matchingKeypoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b],
+//                                                     siftModule.matcher.get());
+//        std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
+//                  << matchingKeypoints.second.size() << std::endl;
+//    }
+//
+//    {
+//        a = 17;
+//        b = 33;
+//
+//        std::cout << a << " match " << b << std::endl;
+//        auto matchingKetpoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b],
+//                                                     siftModule.matcher.get());
+//        std::cout << "totally matched matchingKeypoints: " << matchingKetpoints.first.size() << " and "
+//                  << matchingKetpoints.second.size() << std::endl;
+//    }
+//    std::cout << a << " matched " << b << std::endl;
+////    delete matcher;
 
 };
