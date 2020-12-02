@@ -16,6 +16,7 @@
 #include "cameraRGBD.h"
 #include "siftModule.h"
 #include "images.h"
+#include "rotationAveraging.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -40,8 +41,14 @@ typedef struct CorrespondenceGraph {
     SiftModule siftModule;
     std::vector<vertexCG> verticesOfCorrespondence;
     int maxVertexDegree = 15;
+    int numIterations = 50;
     std::vector<std::vector<Match>> matches;
     std::vector<std::vector<essentialMatrix>> essentialMatrices;
+    double neighbourhoodRadius = 0.05;
+    int minNumberOfInliersAfterRobust = 10;
+    const std::string redCode = "\033[0;31m";
+    const std::string resetCode = "\033[0m";
+    const std::string relativePose = "relativeRotations.txt";
 
     CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD, float fx,
                         float cx, float fy, float cy);
@@ -60,12 +67,13 @@ typedef struct CorrespondenceGraph {
 
     cv::Mat getEssentialMatrixTwoImagesOpenCV(int vertexFrom, int vertexInList, cv::Mat &outR, cv::Mat &outT);
 
-    MatrixX getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT);
+    MatrixX getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool& success, double coeff = 0.75);
 
     cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
 
     void showKeypointsOnDephtImage(int vertexFrom);
     MatrixX getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& points1, const MatrixX& points2,  const int numIterations, const int numOfElements, double inlierCoeff);
+    void printConnections(std::ostream& os, int space = 10);
 } CorrespondenceGraph;
 
 #endif //TEST_SIFTGPU_CG_H

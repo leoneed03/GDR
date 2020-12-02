@@ -105,6 +105,7 @@ int main(int argc, char **argv) {
 //    float cx = 319.5;
 //    float cy = 239.5;
 //    CorrespondenceGraph correspondenceGraph("../data/rgbdoffice/rgb", "../data/rgbdoffice/depth", 525.0, 319.5, 525.0, 239.5);
-    CorrespondenceGraph correspondenceGraph("../data/coke/rgb", "../data/coke/depth", 525.0, 319.5, 525.0, 239.5);
+//    CorrespondenceGraph correspondenceGraph("../data/coke/rgb", "../data/coke/depth", 525.0, 319.5, 525.0, 239.5);
+    CorrespondenceGraph correspondenceGraph("../data/plantSampled_20/rgb", "../data/plantSampled_20/depth", 525.0, 319.5, 525.0, 239.5);
     return 0;
 }

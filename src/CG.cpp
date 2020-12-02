@@ -374,11 +374,19 @@ int CorrespondenceGraph::findEssentialMatrices() {
             if (DEBUG_PRINT) {
                 std::cout << "check this " << frameFrom.index << " -> " << frameTo.index << std::endl;
             }
-            assert(frameTo.index != frameFrom.index);
+            assert(frameTo.index > frameFrom.index);
             MatrixX R, t;
-            auto cameraMotion = getEssentialMatrixTwoImages(i, j, R, t);
+            bool success = true;
+            auto cameraMotion = getEssentialMatrixTwoImages(i, j, R, t, success);
+
             std::cout << "out of Transformation calculation" << std::endl;
-            essentialMatrices[i].push_back(essentialMatrix(cameraMotion, frameFrom, frameTo, R, t));
+            std::cout << frameFrom.index << " -> " << frameTo.index << std::endl;
+
+            if (success) {
+                essentialMatrices[i].push_back(essentialMatrix(cameraMotion, frameFrom, frameTo, R, t));
+            } else {
+                std::cout << "/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////\n NOT ENOUGH MATCHES \n/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////////\n";
+            }
         }
     }
 
@@ -420,6 +428,8 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
     }
     assert(numOfPoints == firstPoints.cols());
     assert(firstPoints.cols() == secondPoints.cols());
+
+    int numInliers = (int) (inlierCoeff * numOfPoints);
 
     std::vector<int> pointsPositions;
     pointsPositions.reserve(numOfPoints);
@@ -480,13 +490,12 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
             }
             return dist1 < dist2;
         });
-        for (int ii = 0; ii < top; ++ii) {
-            std::cout << std::setw(6) << pointsPositions[ii];
-        }
-        std::cout << endl;
+//        for (int ii = 0; ii < top; ++ii) {
+//            std::cout << std::setw(6) << pointsPositions[ii];
+//        }
+//        std::cout << endl;
 
         int quantilIndex = (int) (inlierCoeff * numOfPoints);
-        int numInliers = (int) (inlierCoeff * numOfPoints);
         MatrixX firstInlierPoints = MatrixX::Random(dim + 1, numInliers);
         MatrixX secondInlierPoints = MatrixX::Random(dim + 1, numInliers);
         for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
@@ -520,9 +529,14 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
 //                norm += pow(dest[pp] - secondColumn[pp], 2);
 //            }
 //        }
-        std::cout << "att " << std::setw(6) << i << " with error " << normError << std::endl;
 
-        std::cout << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers << std::endl;
+        bool info = false;
+
+        if (info) {
+            std::cout << "att " << std::setw(6) << i << " with error " << normError << std::endl;
+
+            std::cout << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers << std::endl;
+        }
         if (normError < minError) {
             cR_t_umeyama_3_points_cand = cR_t_umeyama_3_points;
             mError = normError;
@@ -534,9 +548,9 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
         }
     }
     if (DEBUG_PRINT) {
-        std::cout << random() << std::endl;
+//        std::cout << random() << std::endl;
         std::cout << "cand \n" << cR_t_umeyama_3_points_cand << std::endl;
-        std::cout << "RANSAC found on attempt " << attempt << " error " << mError << std::endl;
+        std::cout << "RANSAC found on attempt " << attempt << " error on last \'inlier\' " << mError << std::endl;
         for (int i = 0; i < top; ++i) {
             std::cout << std::setw(6) << inlierIndices[i];
         }
@@ -587,13 +601,22 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
         cv::destroyAllWindows();
 }
 MatrixX
-CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT) {
+CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool& success, double inlierCoeff) {
     MatrixX cR_t_umeyama;
+    success = true;
+    if (inlierCoeff >= 1.0) {
+        inlierCoeff = 1.0;
+    }
+    if (inlierCoeff < 0) {
+        success = false;
+        return cR_t_umeyama;
+    }
     {
         int dim = 3;
         std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
         const auto &match = matches[vertexFrom][vertexInList];
         int minSize = match.matchNumbers.size();
+        if (minSize < minNumberOfInliersAfterRobust / inlierCoeff)
         pointsFromImage1.reserve(minSize);
         pointsFromImage2.reserve(minSize);
 
@@ -693,12 +716,12 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 
         MatrixX cR_t_umeyama_1 = umeyama(firstPoints.block(0, 0, dim, num_elements),
                                          secondPoints.block(0, 0, dim, num_elements));
-        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, 10, num_elements,
-                                                                             0.75);
+        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, numIterations, num_elements,
+                                                                             inlierCoeff);
         cR_t_umeyama = cR_t_umeyama_RANSAC;
         if (DEBUG_PRINT) {
             std::cout << "simple umeyama " << std::endl;
-            std::cout << cR_t_umeyama << std::endl;
+            std::cout << cR_t_umeyama_1 << std::endl;
             std::cout << "RANSAC umeyama " << std::endl;
             std::cout << cR_t_umeyama_RANSAC << std::endl;
             std::cout << "______________________________________________________\n";
@@ -754,16 +777,17 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 
 /////////////////////END OF UMEYAMA DEMONSTRATION
 
-        {
+        bool initClouds = false;
+        if (initClouds) {
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloudFrom(parseDepthImageNoColour(
-                verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd)); //mistake: should only include keypoints!!!!
+                verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTo(parseDepthImageNoColour(
                 verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
-        cloudTo->points.resize(minSize);
-        cloudTo->width = minSize;
-            cloudFrom->points.resize(minSize);
-            cloudFrom->width = minSize;
-        std::cout << "cloud sizes are " << cloudTo->width << " " << cloudFrom->width << std::endl;
+//        cloudTo->points.resize(minSize);
+//        cloudTo->width = minSize;
+//        cloudFrom->points.resize(minSize);
+//        cloudFrom->width = minSize;
+        std::cout << "cloud sizes are " << cloudTo->width << "->" << cloudFrom->width << std::endl;
 
         assert(cloudTo->width == cloudFrom->width);
         assert(cloudFrom->width > 0);
@@ -870,8 +894,6 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
                 showKeypointsOnDephtImage(vertexFrom);
             }
             viewer.showCloud(ptrCloud);
-
-
             while (!viewer.wasStopped()) {
             }
 
@@ -925,23 +947,39 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 //        double diff = sqrt(pow(firstPoints.col(i).x() - res[0],2) + pow(firstPoints.col(i).y() - res[1],2) + pow(firstPoints.col(i).z() - res[2],2));
 
             auto res = cR_t_umeyama * firstPoints.col(i);
-            double diff = sqrt(pow(secondPoints.col(i).x() - res[0], 2) + pow(secondPoints.col(i).y() - res[1], 2) +
+            double diff = /*sqrt*/(pow(secondPoints.col(i).x() - res[0], 2) + pow(secondPoints.col(i).y() - res[1], 2) +
                                pow(secondPoints.col(i).z() - res[2], 2));
+            //////Question: maybe change Eucledian distance if needed?
+
             differences.push_back(diff);
         }
 
-        sort(differences.begin(), differences.end(), [](const auto &lhs, const auto &rhs) { return lhs > rhs; });
+        sort(differences.begin(), differences.end(), [](const auto &lhs, const auto &rhs) { return lhs < rhs; });
         std::cout << "__________________________________________\n";
         double sum_dif = 0;
         double sum_sq = 0;
-        for (const auto &e: differences) {
+        int numOfInliers = 0;
+        int aprNumInliers = (int) (differences.size() * inlierCoeff);
+        for (int i = 0; i < aprNumInliers; ++i) {
+            const auto& e = differences[i];
+            if (sqrt(e) < neighbourhoodRadius) {
+                ++numOfInliers;
+            }
             std::cout << e << " ";
             sum_dif += e;
             sum_sq += e * e;
         }
-        sum_dif /= num_elements;
-        sum_sq /= num_elements;
-        std::cout << std::endl << sum_dif << " D=" << sum_sq - sum_dif * sum_dif << std::endl;
+        if (numOfInliers < minNumberOfInliersAfterRobust) {
+            success = false;
+            return cR_t_umeyama;
+        }
+        sum_dif /= aprNumInliers;
+        sum_sq /= aprNumInliers;
+//        std::string redCode("\033[0;31m");
+//        std::string resetCode("\033[0m");
+        std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D=" << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
+        std::cout << std::endl << redCode << "Inliers " << numOfInliers << resetCode << std::endl;
+
 
         sort(differences.begin(), differences.end());
         for (const auto &e: differences) {
@@ -970,26 +1008,6 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 ///////////////////////////////////////////////////////////
 //    exit(1);
 
-
-
-
-
-//    std::cout << "umeyama \n" << cR_t_umeyama << std::endl;
-        {
-//        cv::Mat status;
-//        auto cameraMotion = cv::findEssentialMat(pointsFromImage1,
-//                                                 pointsFromImage2,
-//                                                 cameraRgbd.cameraMatrix,
-//                                                 cv::RANSAC,
-//                                                 0.999,        //desired solution confidence level
-//                                                 1.0,          //point-to-epipolar-line threshold
-//                                                 status);
-//        cv::Mat R1, t1;
-//        int res = cv::recoverPose(cameraMotion, pointsFromImage1, pointsFromImage2, cameraRgbd.cameraMatrix, R1, t1,
-//                                  status);
-//        std::cout << "Rotation recover pose \n" << R1 << std::endl;
-//        std::cout << "Translation recover pose \n" << t1 << std::endl;
-        }
         std::cout << "Umeyama\n" << cR_t_umeyama << std::endl;
     }
     std::cout << "Here!" << std::endl;
@@ -1156,6 +1174,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     findCorrespondences();
     decreaseDensity();
     findEssentialMatrices();
+
     for (int i = 0; i < essentialMatrices.size(); ++i) {
         for (int j = 0; j < essentialMatrices[i].size(); ++j) {
 //            std::cout << "                          " << std::setw(4) << i << std::setw(4) << j << std::endl;
@@ -1172,7 +1191,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         }
     }
 
-    std::string poseFile = "relativeMeasurements.txt";
+
+    std::string poseFile = relativePose;
     {
         std::ofstream file(poseFile);
         int numPoses = essentialMatrices.size();
@@ -1214,6 +1234,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
             }
         }
     }
+    printConnections(std::cout);
+    rotationAverager::shanonAveraging(poseFile, "absoluteRotations.txt");
     return;
 
 //
@@ -1295,3 +1317,18 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 ////    delete matcher;
 
 };
+
+
+void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
+    os << "EDGES of the Correspondence Graph:" << std::endl;
+    for (int i = 0; i < essentialMatrices.size(); ++i) {
+        os << std::setw(space / 5) << i << ":";
+        for (int j = 0; j < essentialMatrices[i].size(); ++j) {
+            const essentialMatrix& e = essentialMatrices[i][j];
+            assert(i == e.vertexFrom.index);
+            os << std::setw(space / 2) << e.vertexTo.index << ",";
+        }
+        os << std::endl;
+    }
+    os << "==============================================\n" << std::endl;
+}

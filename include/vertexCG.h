@@ -6,7 +6,17 @@
 #include <vector>
 #include <iostream>
 #include <SiftGPU.h>
+
+#include <Eigen/Eigen>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
+#include <Eigen/LU> // required for MatrixBase::determinant
+#include <Eigen/SVD> // required for SVD
+
 #include "features.h"
+//#include "essentialMatrix.h"
+
 
 typedef struct keypointWithDepth {
     SiftGPU::SiftKeypoint keypoint;
@@ -15,9 +25,14 @@ typedef struct keypointWithDepth {
     keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth, const std::vector<float>& newDescriptors);
 } keypointWithDepth;
 
+
+typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
+typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+
 typedef struct vertexCG {
 
     int index;
+    MatrixX absoluteRotationTranslation;
     std::vector<keypointWithDepth> keypointsWithDepths;
     std::vector<SiftGPU::SiftKeypoint> keypoints;
     std::vector<float> descriptors;

@@ -7,13 +7,14 @@ int main() {
     }
 
     ////////EXAMPLE WORKS RIGHT
-    GTT::makeRotationsRelativeAndExtractImages("/home/leoneed/Desktop/coke_dataset/groundtruth.txt",
-                                               "/home/leoneed/Desktop/coke_dataset/rgb",
-                                               "/home/leoneed/Desktop/coke_dataset/depth",
-                                               "/home/leoneed/CLionProjects/GDR/test_siftgpu/data/coke",
-                                               "/home/leoneed/Desktop/coke_dataset/rgb.txt",
-                                               indicesSet);
-    GTT::makeRotationsRelative("/home/leoneed/CLionProjects/GDR/test_siftgpu/data/coke/groundtruth_new.txt", "/home/leoneed/CLionProjects/GDR/test_siftgpu/data/coke/groundtruthR.txt");
+    GTT::prepareDataset("/home/leoneed/Desktop/plant_dataset", "/home/leoneed/CLionProjects/GDR/test_siftgpu/data", indicesSet, "plantSampled_20");
+//    GTT::makeRotationsRelativeAndExtractImages("/home/leoneed/Desktop/coke_dataset/groundtruth.txt",
+//                                               "/home/leoneed/Desktop/coke_dataset/rgb",
+//                                               "/home/leoneed/Desktop/coke_dataset/depth",
+//                                               "/home/leoneed/CLionProjects/GDR/test_siftgpu/data/coke",
+//                                               "/home/leoneed/Desktop/coke_dataset/rgb.txt",
+//                                               indicesSet);
+//    GTT::makeRotationsRelative("/home/leoneed/CLionProjects/GDR/test_siftgpu/data/coke/groundtruth_new.txt", "/home/leoneed/CLionProjects/GDR/test_siftgpu/data/coke/groundtruthR.txt");
 
 
 //    GTT::makeRotationsRelativeAndExtractImages("/home/leoneed/CLionProjects/GDR/test_siftgpu/data/rgbdoffice/groundtruth.txt",

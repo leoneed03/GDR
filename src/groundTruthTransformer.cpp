@@ -98,7 +98,8 @@ std::vector<std::string> readData(std::string pathToRGB) {
 
 std::pair<std::vector<std::string>, std::vector<std::string>>
 GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
-                                           const std::string &pathToD, const std::string &pathOutDirectory, const std::string& timeInfo,
+                                           const std::string &pathToD, const std::string &pathOutDirectory,
+                                           const std::string &timeInfo,
                                            const std::set<int> indices) {
     std::ifstream in(pathToGroundTruth);
     std::string outRGB = pathOutDirectory + "/rgb";
@@ -164,7 +165,8 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
 
 std::vector<double>
 GTT::createTimestamps(const std::vector<std::string> &rgb,
-                      const std::string &pathTimeRGB, const std::string &pathToGroundTruth, const std::set<int>& indices) {
+                      const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
+                      const std::set<int> &indices) {
     std::map<std::string, double> rgbToTime;
     int skipNum = 3;
     std::vector<double> timeStamps;
@@ -213,7 +215,8 @@ GTT::createTimestamps(const std::vector<std::string> &rgb,
     }
 }
 
-std::vector<std::vector<double>> GTT::getGroundTruth(const std::string& pathToGroundTruth, const std::vector<double>& timeStamps) {
+std::vector<std::vector<double>>
+GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<double> &timeStamps) {
     std::ifstream in(pathToGroundTruth);
     int numOfEmptyLines = 3;
     int numbersInLine = 8;
@@ -262,15 +265,17 @@ std::vector<std::vector<double>> GTT::getGroundTruth(const std::string& pathToGr
     assert(resultingTruth.size() == timeStamps.size());
     return resultingTruth;
 }
+
 #include <limits>
-int GTT::writeGroundTruth(const std::string& pathOut, const std::vector<std::vector<double>>& timeCoordinates) {
+
+int GTT::writeGroundTruth(const std::string &pathOut, const std::vector<std::vector<double>> &timeCoordinates) {
     std::ofstream out(pathOut);
     int skipN = 3;
     for (int i = 0; i < skipN; ++i) {
         out << "#\n";
     }
 
-    for (const auto& e: timeCoordinates) {
+    for (const auto &e: timeCoordinates) {
         out.precision(std::numeric_limits<double>::max_digits10);
         out << std::setw(2 * spaceIO) << e[0];
         for (int i = 1; i < e.size(); ++i) {
@@ -281,9 +286,30 @@ int GTT::writeGroundTruth(const std::string& pathOut, const std::vector<std::vec
     return 1;
 }
 
-void GTT::writeInfo(const std::vector<std::string>& rgb, const std::string &pathTimeRGB, const std::string &pathToGroundTruth, const std::string& pathOut, const std::set<int>& indices) {
+void GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
+                    const std::string &pathToGroundTruth, const std::string &pathOut, const std::set<int> &indices) {
     std::vector<double> timeStamps = createTimestamps(rgb, pathTimeRGB, pathToGroundTruth, indices);
     std::vector<std::vector<double>> timeAndCoordinates = getGroundTruth(pathToGroundTruth, timeStamps);
     writeGroundTruth(pathOut, timeAndCoordinates);
+}
 
+void
+GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet, const std::string NewName = "subset") {
+//    makeRotationsRelativeAndExtractImages("/home/leoneed/Desktop/coke_dataset/groundtruth.txt",
+//                                          "/home/leoneed/Desktop/coke_dataset/rgb",
+//                                          "/home/leoneed/Desktop/coke_dataset/depth",
+//                                          "/home/leoneed/CLionProjects/GDR/test_siftgpu/data/coke",
+//                                          "/home/leoneed/Desktop/coke_dataset/rgb.txt",
+//                                          indicesSet);
+    std::string pathNewOut = pathOut + "/" + NewName;
+    std::string groundtruth = pathToDataset + "/groundtruth.txt";
+    std::string rgb = pathToDataset + "/rgb";
+    std::string depth = pathToDataset + "/depth";
+    std::string timeInfo = pathToDataset + "/rgb.txt";
+    makeRotationsRelativeAndExtractImages(groundtruth,
+                                          rgb,
+                                          depth,
+                                          pathNewOut,
+                                          timeInfo,
+                                          indicesSet);
 }
