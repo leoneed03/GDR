@@ -37,7 +37,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 
 add_definitions(${PCL_DEFINITIONS})
-add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h ../src/cameraRGBD.cpp ../include/cameraRGBD.h ../src/siftModule.cpp ../include/siftModule.h ../src/groundTruthTransformer.cpp ../include/groundTruthTransformer.h testEigen.cpp ../src/images.cpp ../include/images.h ../src/rotationAveraging.cpp ../include/rotationAveraging.h)
+add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h ../src/cameraRGBD.cpp ../include/cameraRGBD.h ../src/siftModule.cpp ../include/siftModule.h ../src/groundTruthTransformer.cpp ../include/groundTruthTransformer.h testEigen.cpp ../src/images.cpp ../include/images.h ../src/rotationAveraging.cpp ../include/rotationAveraging.h ../src/util.cpp ../include/util.h ../src/quaternions.cpp ../include/quaternions.h)
 add_executable(trySIFT trysift.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h)
 add_executable(transformGroundTruth transformGroundTruth.cpp ../src/groundTruthTransformer.cpp ../src/files.cpp)
 add_executable(testEigen testEigen.cpp)

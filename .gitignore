@@ -28,7 +28,27 @@
 *.a
 *.lib
 
+# Technical
+*.make
+clion*
+cmake*
+CMakeCache*
+*.log
+*.includecache
+*.internal
+DependInfo.cmake
+link.txt
+Makefile*
+*.marks
+TargetDirectories.txt
+cmake-build-debug
+
+
+
+
 # Executables
 *.exe
 *.out
 *.app
+
+

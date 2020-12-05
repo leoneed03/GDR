@@ -11,12 +11,14 @@
 
 #include <pcl/registration/incremental_registration.h>
 
+#include "util.h"
 #include "vertexCG.h"
 #include "essentialMatrix.h"
 #include "cameraRGBD.h"
 #include "siftModule.h"
 #include "images.h"
 #include "rotationAveraging.h"
+#include "quaternions.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -39,6 +41,7 @@ typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorX;
 typedef struct CorrespondenceGraph {
     CameraRGBD cameraRgbd;
     SiftModule siftModule;
+    std::vector<int> originVerticesNumbers;
     std::vector<vertexCG> verticesOfCorrespondence;
     int maxVertexDegree = 15;
     int numIterations = 50;
@@ -49,6 +52,7 @@ typedef struct CorrespondenceGraph {
     const std::string redCode = "\033[0;31m";
     const std::string resetCode = "\033[0m";
     const std::string relativePose = "relativeRotations.txt";
+    const std::string absolutePose = "absoluteRotations.txt";
 
     CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD, float fx,
                         float cx, float fy, float cy);
@@ -74,6 +78,7 @@ typedef struct CorrespondenceGraph {
     void showKeypointsOnDephtImage(int vertexFrom);
     MatrixX getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& points1, const MatrixX& points2,  const int numIterations, const int numOfElements, double inlierCoeff);
     void printConnections(std::ostream& os, int space = 10);
+    std::vector<int> bfs(int currentVertex);
 } CorrespondenceGraph;
 
 #endif //TEST_SIFTGPU_CG_H

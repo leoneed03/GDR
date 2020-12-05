@@ -6,6 +6,17 @@ keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double n
                                                                            descriptors(newDescriptors) {
 }
 
+void vertexCG::setRotation(const MatrixX& rotation) {
+    assert(rotation.rows() == 3 && rotation.cols() == 3);
+    absoluteRotationTranslation.block<3,3>(0,0) = rotation;
+    assert(abs(rotation.col(3)[3] - 1) < std::numeric_limits<double>::epsilon);
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            assert(abs(absoluteRotationTranslation.col(i)[j] - rotation.col(i)[j]) < 2 * std::numeric_limits<double>::epsilon);
+        }
+    }
+}
+
 vertexCG::vertexCG(int newIndex,
                    const std::vector<keypointWithDepth> &newKeypointsWithDepths,
                    const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
@@ -19,4 +30,16 @@ vertexCG::vertexCG(int newIndex,
                                                   depths(newDepths),
                                                   pathToRGBimage(newPathRGB),
                                                   pathToDimage(newPathD) {
+    int transformationMatrixSize = 4;
+    absoluteRotationTranslation = getSomeMatrix(transformationMatrixSize, transformationMatrixSize);
+    for (int i = 0; i < transformationMatrixSize; ++i) {
+        for (int j = 0; j < transformationMatrixSize; ++j) {
+            absoluteRotationTranslation.col(i)[j] = 0;
+        }
+    }
+    for (int j = 0; j < transformationMatrixSize; ++j) {
+        absoluteRotationTranslation.col(j)[j] = 1;
+    }
+    absoluteRotationTranslation.row(transformationMatrixSize - 1)[transformationMatrixSize - 1] = 1;
 }
+

@@ -15,6 +15,7 @@
 #include <Eigen/SVD> // required for SVD
 
 #include "features.h"
+#include "quaternions.h"
 //#include "essentialMatrix.h"
 
 
@@ -42,6 +43,7 @@ typedef struct vertexCG {
     int heightMirrorParameter = 480;
     int widthMirrorParameter = 640;
 
+    void setRotation(const MatrixX& rotation);
     vertexCG(int newIndex,
              const std::vector<keypointWithDepth> &newKeypointsWithDepths,
              const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
@@ -51,4 +53,4 @@ typedef struct vertexCG {
              const std::string &newPathD);
 } vertexCG;
 
-#endif //TEST_SIFTGPU_VERTEXCG_H
+#endif

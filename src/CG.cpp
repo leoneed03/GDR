@@ -384,6 +384,7 @@ int CorrespondenceGraph::findEssentialMatrices() {
 
             if (success) {
                 essentialMatrices[i].push_back(essentialMatrix(cameraMotion, frameFrom, frameTo, R, t));
+                essentialMatrices[frameTo.index].push_back(essentialMatrix(cameraMotion.inverse(), frameTo, frameFrom, cameraMotion.inverse().block(0, 0, 3, 3), cameraMotion.inverse().block(0, 3, 3, 1)));
             } else {
                 std::cout << "/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////\n NOT ENOUGH MATCHES \n/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////////\n";
             }
@@ -706,6 +707,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
         }
 
 
+
         std::cout << "Points are min" << std::endl;
         std::cout << mx << " " << my << " " << mz << std::endl;
 
@@ -713,6 +715,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
         std::cout << Mx << " " << My << " " << Mz << std::endl;
         assert(mz > 0);
         assert(Mz > 0);
+        std::swap(firstPoints, secondPoints); //// swap because we want to know M: first = M * second (first can be world origin -- want to make it easier to reconstruct)
 
         MatrixX cR_t_umeyama_1 = umeyama(firstPoints.block(0, 0, dim, num_elements),
                                          secondPoints.block(0, 0, dim, num_elements));
@@ -1235,7 +1238,27 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         }
     }
     printConnections(std::cout);
-    rotationAverager::shanonAveraging(poseFile, "absoluteRotations.txt");
+
+    std::cout << "first print successfull" << std::endl;
+    rotationAverager::shanonAveraging(poseFile, absolutePose);
+
+    std::cout << "Shonan averaging successfull" << std::endl;
+    std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
+
+    std::cout << "read quaternions successfull" << std::endl;
+    std::vector<MatrixX> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
+
+    std::cout << "get Rotations from quaternions successfull" << std::endl;
+    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+        verticesOfCorrespondence[i].setRotation(absoluteRotations[i]);
+    }
+
+    std::cout << "set Rotations in vertices successfull" << std::endl;
+    bfs(0);
+
+    std::cout << "bfs successfull" << std::endl;
+    printConnections(std::cout);
+
     return;
 
 //
@@ -1320,6 +1343,13 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
 
 void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
+
+//    os << "======================POSES BEFORE=======================\n" << std::endl;
+//    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+//        std::cout << "Pose number: " << i << std::endl;
+//        std::cout << verticesOfCorrespondence[i].absoluteRotationTranslation;
+//        std::cout << "\n_________________________________________________________________\n";
+//    }
     os << "EDGES of the Correspondence Graph:" << std::endl;
     for (int i = 0; i < essentialMatrices.size(); ++i) {
         os << std::setw(space / 5) << i << ":";
@@ -1330,5 +1360,66 @@ void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
         }
         os << std::endl;
     }
-    os << "==============================================\n" << std::endl;
+    os << "======================NOW 4*4 Matrices=======================\n" << std::endl;
+
+    os << "======================++++++++++++++++=======================\n" << std::endl;
+    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+        std::cout << "Pose number: " << i << std::endl;
+        std::cout << verticesOfCorrespondence[i].absoluteRotationTranslation;
+        std::cout << "\n_________________________________________________________________\n";
+    }
+}
+
+
+std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
+    std::vector<bool> visited(verticesOfCorrespondence.size(), false);
+    std::vector<int> preds(verticesOfCorrespondence.size(), -1);
+    std::vector<int> stackOfVertices;
+    stackOfVertices.push_back(currentVertex);
+    assert(verticesOfCorrespondence.size() == essentialMatrices.size());
+    while (!stackOfVertices.empty()) {
+        int vertex = stackOfVertices[stackOfVertices.size() - 1];
+
+        std::cout << " entered vertex " << vertex << std::endl;
+        stackOfVertices.pop_back();
+        assert(vertex < visited.size() && vertex >= 0);
+        visited[vertex] = true;
+
+        for (int i = 0; i < essentialMatrices[vertex].size(); ++i) {
+            int to = essentialMatrices[vertex][i].vertexTo.index;
+            if (!visited[to]) {
+                stackOfVertices.push_back(to);
+                visited[to] = true;
+                assert(preds[to] == -1);
+                preds[to] = vertex;
+
+
+                ///// get absolute Rotation (R) and Translation (t) with given predecessor Vertex and Relative R & t
+                const MatrixX& predAbsoluteRt = verticesOfCorrespondence[vertex].absoluteRotationTranslation;
+                MatrixX predR = predAbsoluteRt.block(0, 0, 3, 3);
+                MatrixX predT = predAbsoluteRt.block(0, 3, 3, 1);
+
+                const MatrixX& relativeRt = essentialMatrices[vertex][i].innerEssentialMatrix;
+                MatrixX relR = relativeRt.block(0, 0, 3, 3);
+                MatrixX relT = relativeRt.block(0, 3, 3, 1);
+
+                MatrixX& newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
+                MatrixX newAbsoluteR = newAbsoluteRt.block(0, 0, 3, 3);
+                MatrixX newAbsoluteT = predT;
+
+                newAbsoluteT = predR * relT + predT;
+                for (int counter = 0; counter < 3; ++counter) {
+                    newAbsoluteRt.col(3)[counter] = newAbsoluteT.col(0)[counter];
+
+                }
+//                relativeRt.block(0, 3, 3, 1) = newAbsoluteT;
+
+
+            }
+        }
+    }
+    return preds;
+
+
+
 }

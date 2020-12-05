@@ -10,7 +10,6 @@
 
 typedef struct GTT {
     static std::vector<double> createTimestamps(const std::vector<std::string>& rgb, const std::string &pathTimeRGB, const std::string &pathToGroundTruth, const std::set<int>& indices);
-
     static std::vector<std::vector<double>> getGroundTruth(const std::string& pathToGroundTruth, const std::vector<double>& timeStamps);
     static int makeRotationsRelative(const std::string& pathToGroundTruth, const std::string& pathToRelativeGroundTruth);
     static int writeGroundTruth(const std::string& pathOut, const std::vector<std::vector<double>>& timeCoordinates);

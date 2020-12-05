@@ -12,6 +12,7 @@
 
 //#include "../include/features.h"
 #include "../include/CG.h"
+#include "../include/quaternions.h"
 
 using namespace std;
 
@@ -70,6 +71,39 @@ int trysift1() {
     return 0;
 }
 
+void testTextReading() {
+    std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile("absoluteRotations.txt");
+    std::cout << "number " << quaternions.size() << std::endl;
+    for (const auto& e: quaternions) {
+        for (const auto& a: e) {
+            std::cout << std::setw(15) << a;
+        }
+        std::cout << std::endl;
+    }
+    auto res = getRotationsFromQuaternionVector(quaternions);
+    int count0 = 0;
+    auto absoluteRotationTranslation = getSomeMatrix(4, 4);
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            absoluteRotationTranslation.col(i)[j] = 0;
+        }
+    }
+    absoluteRotationTranslation.row(3)[3] = 1;
+    for (const auto& e: res) {
+        std:: cout << count0 << "\n";
+        count0++;
+        std::cout << e;
+        std::cout << "\n===============================================\n";
+    }
+    absoluteRotationTranslation.block<3,3>(0,0) = res[res.size() - 1];
+
+    std::cout << "\n===============================================\n";
+
+    std::cout << absoluteRotationTranslation;
+    std::cout << "\n===============================================\n";
+
+}
+
 int main(int argc, char **argv) {
     /*
     cv::Mat image = imread("/home/leoneed/CLionProjects/GDR/test_siftgpu/data/rgbdoffice/depth/1305031102.160407.png",
@@ -106,6 +140,10 @@ int main(int argc, char **argv) {
 //    float cy = 239.5;
 //    CorrespondenceGraph correspondenceGraph("../data/rgbdoffice/rgb", "../data/rgbdoffice/depth", 525.0, 319.5, 525.0, 239.5);
 //    CorrespondenceGraph correspondenceGraph("../data/coke/rgb", "../data/coke/depth", 525.0, 319.5, 525.0, 239.5);
+
+
+
     CorrespondenceGraph correspondenceGraph("../data/plantSampled_20/rgb", "../data/plantSampled_20/depth", 525.0, 319.5, 525.0, 239.5);
+//    testTextReading();
     return 0;
 }
