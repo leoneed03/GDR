@@ -298,7 +298,7 @@ GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut
 //    makeRotationsRelativeAndExtractImages("/home/leoneed/Desktop/coke_dataset/groundtruth.txt",
 //                                          "/home/leoneed/Desktop/coke_dataset/rgb",
 //                                          "/home/leoneed/Desktop/coke_dataset/depth",
-//                                          "/home/leoneed/CLionProjects/GDR/test_siftgpu/data/coke",
+//                                          "/home/leoneed/CLionProjects/GDR/test/data/coke",
 //                                          "/home/leoneed/Desktop/coke_dataset/rgb.txt",
 //                                          indicesSet);
     std::string pathNewOut = pathOut + "/" + NewName;

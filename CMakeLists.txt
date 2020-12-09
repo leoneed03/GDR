@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(test_siftgpu)
+project(GlobalReconstrction)
 set(CMAKE_CXX_STANDARD 17)
 set(GCC_COVERAGE_COMPILE_FLAGS " -Os -DNDEBUG")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
-
 
 
 find_package(GTSAM REQUIRED)
@@ -37,13 +36,13 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 
 add_definitions(${PCL_DEFINITIONS})
-add_executable(testSIFTGPU test_siftgpu/main.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CG.cpp include/CG.h src/essentialMatrix.cpp include/essentialMatrix.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test_siftgpu/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h)
-add_executable(trySIFT test_siftgpu/trysift.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CG.cpp include/CG.h)
-add_executable(transformGroundTruth test_siftgpu/transformGroundTruth.cpp src/groundTruthTransformer.cpp src/files.cpp)
-add_executable(testEigen test_siftgpu/testEigen.cpp)
+add_executable(test test/main.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CG.cpp include/CG.h src/essentialMatrix.cpp include/essentialMatrix.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h)
+add_executable(trySIFT test/trysift.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CG.cpp include/CG.h)
+add_executable(transformGroundTruth test/transformGroundTruth.cpp src/groundTruthTransformer.cpp src/files.cpp)
+add_executable(testEigen test/testEigen.cpp)
 
 target_link_libraries(transformGroundTruth ${Boost_LIBRARIES})
-target_link_libraries(testSIFTGPU
+target_link_libraries(test
         ${TBB_LIBRARIES}
         ${OpenCV_LIBS}
         ${SIFTGPU_LIBS}
