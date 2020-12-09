@@ -1061,9 +1061,9 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     essentialMatrices = std::vector<std::vector<essentialMatrix>>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
-    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
-//    char *myargv[5] = {"-fo", "-1", "-v", "1"};
-    siftModule.sift.ParseParam(5, myargv);
+//    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
+    char *myargv[4] = {"-fo", "-1", "-v", "1"};
+    siftModule.sift.ParseParam(4, myargv);
     int support = siftModule.sift.CreateContextGL();
     std::cout << "Checking" << std::endl;
     if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
@@ -1369,7 +1369,6 @@ void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
         std::cout << "\n_________________________________________________________________\n";
     }
 }
-
 
 std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
     std::vector<bool> visited(verticesOfCorrespondence.size(), false);

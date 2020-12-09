@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 
 
 
-    CorrespondenceGraph correspondenceGraph("../data/plantSampled_20/rgb", "../data/plantSampled_20/depth", 525.0, 319.5, 525.0, 239.5);
+    CorrespondenceGraph correspondenceGraph("../test_siftgpu/data/plantSampled_20/rgb", "../test_siftgpu/data/plantSampled_20/depth", 525.0, 319.5, 525.0, 239.5);
 //    testTextReading();
     return 0;
 }

@@ -13,8 +13,8 @@ find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
 
 # SiftGPU
-include_directories("../siftgpu/src/SiftGPU/" ${OpenGL_INCLUDE_DIR} ${CUDA_INCLUDE_DIR})
-set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/../siftgpu/bin/libsiftgpu.so")
+include_directories("siftgpu/src/SiftGPU" ${OpenGL_INCLUDE_DIR} ${CUDA_INCLUDE_DIR})
+set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -37,10 +37,10 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 
 add_definitions(${PCL_DEFINITIONS})
-add_executable(testSIFTGPU main.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h ../src/essentialMatrix.cpp ../include/essentialMatrix.h ../src/cameraRGBD.cpp ../include/cameraRGBD.h ../src/siftModule.cpp ../include/siftModule.h ../src/groundTruthTransformer.cpp ../include/groundTruthTransformer.h testEigen.cpp ../src/images.cpp ../include/images.h ../src/rotationAveraging.cpp ../include/rotationAveraging.h ../src/util.cpp ../include/util.h ../src/quaternions.cpp ../include/quaternions.h)
-add_executable(trySIFT trysift.cpp ../src/files.cpp ../src/features.cpp ../include/features.h ../src/vertexCG.cpp ../include/vertexCG.h ../src/CG.cpp ../include/CG.h)
-add_executable(transformGroundTruth transformGroundTruth.cpp ../src/groundTruthTransformer.cpp ../src/files.cpp)
-add_executable(testEigen testEigen.cpp)
+add_executable(testSIFTGPU test_siftgpu/main.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CG.cpp include/CG.h src/essentialMatrix.cpp include/essentialMatrix.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test_siftgpu/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h)
+add_executable(trySIFT test_siftgpu/trysift.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CG.cpp include/CG.h)
+add_executable(transformGroundTruth test_siftgpu/transformGroundTruth.cpp src/groundTruthTransformer.cpp src/files.cpp)
+add_executable(testEigen test_siftgpu/testEigen.cpp)
 
 target_link_libraries(transformGroundTruth ${Boost_LIBRARIES})
 target_link_libraries(testSIFTGPU
