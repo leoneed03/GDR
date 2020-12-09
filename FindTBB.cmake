@@ -219,7 +219,7 @@ if (NOT TBB_ROOT)
   file(TO_CMAKE_PATH "$ENV{TBB_ROOT}" TBB_ROOT)
 endif ()
 
-set(_TBB_INC_PATH_SUFFIXES ../include)
+set(_TBB_INC_PATH_SUFFIXES include)
 
 set(_TBB_LIB_PATH_SUFFIXES)
 if (_TBB_ARCH_PLATFORM)
