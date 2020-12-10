@@ -40,6 +40,9 @@ before_install:
 
 
 - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
+- sudo mkdir /usr/local/cuda
+- sudo cp -r /usr/bin/ /usr/local/cuda
+
 - sudo apt-get install libopencv-dev
 
 - sudo apt -y install libglew-dev
