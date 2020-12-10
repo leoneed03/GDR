@@ -37,11 +37,11 @@ link_directories(${PCL_LIBRARY_DIRS})
 
 add_definitions(${PCL_DEFINITIONS})
 add_executable(test test/main.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h src/essentialMatrix.cpp include/essentialMatrix.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h)
-add_executable(trySIFT test/trysift.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h)
-add_executable(transformGroundTruth test/transformGroundTruth.cpp src/groundTruthTransformer.cpp src/files.cpp)
-add_executable(testEigen test/testEigen.cpp)
+#add_executable(trySIFT test/trysift.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h)
+#add_executable(transformGroundTruth test/transformGroundTruth.cpp src/groundTruthTransformer.cpp src/files.cpp)
+#add_executable(testEigen test/testEigen.cpp)
 
-target_link_libraries(transformGroundTruth ${Boost_LIBRARIES})
+#target_link_libraries(transformGroundTruth ${Boost_LIBRARIES})
 target_link_libraries(test
         ${TBB_LIBRARIES}
         ${OpenCV_LIBS}
@@ -54,9 +54,9 @@ target_link_libraries(test
         gtsam
         )
 
-target_link_libraries(trySIFT
-        ${OpenCV_LIBS}
-        ${SIFTGPU_LIBS}
-        ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
-        ${CUDA_LIB_PATH}
-        )
+#target_link_libraries(trySIFT
+#        ${OpenCV_LIBS}
+#        ${SIFTGPU_LIBS}
+#        ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
+#        ${CUDA_LIB_PATH}
+#        )

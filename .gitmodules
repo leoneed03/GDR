@@ -1,0 +1,9 @@
+[submodule "siftgpu/externals/gtsam"]
+	path = siftgpu/externals/gtsam
+	url = https://github.com/borglab/gtsam.git
+[submodule "externals/gtsam"]
+	path = externals/gtsam
+	url = https://github.com/borglab/gtsam.git
+[submodule "externals/siftgpu"]
+	path = externals/siftgpu
+	url = https://github.com/wangq95/SiftGPU_Linux.git
