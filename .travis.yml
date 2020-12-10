@@ -89,7 +89,7 @@ script:
 - ls
 - cd leoneed03
 - ls
-- cd AcvDs
+- cd GDR
 - ls
 - mkdir build
 - cd build
