@@ -5,7 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include "../include/CG.h"
+#include "../include/CorrespondenceGraph.h"
 
 using namespace std;
 

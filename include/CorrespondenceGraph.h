@@ -43,7 +43,7 @@ typedef struct CorrespondenceGraph {
     SiftModule siftModule;
     std::vector<int> originVerticesNumbers;
     std::vector<vertexCG> verticesOfCorrespondence;
-    int maxVertexDegree = 15;
+    int maxVertexDegree = 20;
     int numIterations = 50;
     std::vector<std::vector<Match>> matches;
     std::vector<std::vector<essentialMatrix>> essentialMatrices;

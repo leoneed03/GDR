@@ -1,4 +1,4 @@
-#include "../include/CG.h"
+#include "../include/CorrespondenceGraph.h"
 #include "../include/groundTruthTransformer.h"
 #include <algorithm>
 #include <cmath>
@@ -1350,9 +1350,13 @@ void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
 //        std::cout << verticesOfCorrespondence[i].absoluteRotationTranslation;
 //        std::cout << "\n_________________________________________________________________\n";
 //    }
+    int counter = 0;
+    int counterSquared = 0;
     os << "EDGES of the Correspondence Graph:" << std::endl;
     for (int i = 0; i < essentialMatrices.size(); ++i) {
         os << std::setw(space / 5) << i << ":";
+        counter += essentialMatrices[i].size();
+        counterSquared += essentialMatrices[i].size() * essentialMatrices[i].size();
         for (int j = 0; j < essentialMatrices[i].size(); ++j) {
             const essentialMatrix& e = essentialMatrices[i][j];
             assert(i == e.vertexFrom.index);
@@ -1360,6 +1364,9 @@ void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
         }
         os << std::endl;
     }
+    os << "average number of edges " << counter / essentialMatrices.size() << std::endl;
+
+    os << "sq D " << sqrt( counterSquared * 1.0 / essentialMatrices.size() - pow(counter * 1.0 / essentialMatrices.size(), 2)) << std::endl;
     os << "======================NOW 4*4 Matrices=======================\n" << std::endl;
 
     os << "======================++++++++++++++++=======================\n" << std::endl;

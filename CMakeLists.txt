@@ -36,8 +36,8 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 
 add_definitions(${PCL_DEFINITIONS})
-add_executable(test test/main.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CG.cpp include/CG.h src/essentialMatrix.cpp include/essentialMatrix.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h)
-add_executable(trySIFT test/trysift.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CG.cpp include/CG.h)
+add_executable(test test/main.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h src/essentialMatrix.cpp include/essentialMatrix.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h)
+add_executable(trySIFT test/trysift.cpp src/files.cpp src/features.cpp include/features.h src/vertexCG.cpp include/vertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h)
 add_executable(transformGroundTruth test/transformGroundTruth.cpp src/groundTruthTransformer.cpp src/files.cpp)
 add_executable(testEigen test/testEigen.cpp)
 
