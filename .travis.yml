@@ -16,83 +16,60 @@ packages:
   - cmake
 
 before_install:
-#- INSTALLER=cuda-repo-${UBUNTU_VERSION}_${CUDA}_amd64.deb
-#- wget http://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/${INSTALLER}
-#- sudo dpkg -i ${INSTALLER}
-#- wget https://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/x86_64/7fa2af80.pub
-#- sudo apt-key add 7fa2af80.pub
-#- sudo apt update -qq
-#- sudo apt install -y cuda-core-${CUDA_SHORT/./-} cuda-cudart-dev-${CUDA_SHORT/./-} cuda-cufft-dev-${CUDA_SHORT/./-}
-#- sudo apt clean
-#- CUDA_HOME=/usr/local/cuda-${CUDA_SHORT}
-#- LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
-#- PATH=${CUDA_HOME}/bin:${PATH}
-#- wget https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-linux.zip
-#- unzip ninja-linux.zip
-#- PATH=${PATH}:${PWD}
-#- sudo apt update
-#- gcc -v
-#- sudo apt install wget
-#- wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
-#- sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub && sudo apt update
-#- sudo dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
-#- sudo apt install -y cuda-toolkit-10-1 libopencv-dev libopenblas-dev
+  - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
+  - sudo mkdir /usr/local/cuda
+  - sudo cp -r /usr/bin/ /usr/local/cuda
 
+  - sudo apt-get install libopencv-dev
+  - sudo apt-get -y install libdevil-dev
+  - sudo apt -y install libglew-dev
+  - sudo apt-get install -y glew-utils
+  - sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+  - sudo apt install python3-opencv
+  - sudo apt-get -y install cmake
+  - sudo apt-get -y install libboost-all-dev
 
-- sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
-- sudo mkdir /usr/local/cuda
-- sudo cp -r /usr/bin/ /usr/local/cuda
+  - cd siftgpu
+  #- mkdir build
+  #- cd build
+  #- cmake ..
+  - sudo make
+  #- cd ..
+  - cd ..
+  - ls
 
-- sudo apt-get install libopencv-dev
-- sudo apt-get -y install libdevil-dev
-- sudo apt -y install libglew-dev
-- sudo apt-get install -y glew-utils
-- sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
-- sudo apt install python3-opencv
-- sudo apt-get -y install cmake
-- sudo apt-get -y install libboost-all-dev
+  - cd externals/gtsam
+  - sudo mkdir build
+  - cd build
+  - sudo cmake ..
+  - sudo make install
+  - cd ..
+  - cd ..
+  - cd ..
 
-- cd siftgpu
-#- mkdir build
-#- cd build
-#- cmake ..
-- sudo make
-#- cd ..
-- cd ..
-- ls
-
-- cd externals/gtsam
-- sudo mkdir build
-- cd build
-- sudo cmake ..
-- sudo make install
-- cd ..
-- cd ..
-- cd ..
-
-- sudo apt-get -y install libstdc++6
-- sudo apt-get install g++
-- sudo apt install libpcl-dev
-- sudo apt-get -y install libeigen3-dev
-- sudo apt-get -y install libboost-dev
-- sudo apt-get -y install libboost-test-dev
-- sudo apt-get -y install libboost-system-dev
-- sudo apt-get -y install libboost-filesystem-dev
-- sudo apt-get -y install libboost-thread-dev
-- sudo apt-get -y install libboost-program-options-dev
-- sudo apt-get -y install libtbb-dev
+  - sudo apt-get -y install libstdc++6
+  - sudo apt-get install g++
+  - sudo apt install libpcl-dev
+  - sudo apt-get -y install libeigen3-dev
+  - sudo apt-get -y install libboost-dev
+  - sudo apt-get -y install libboost-test-dev
+  - sudo apt-get -y install libboost-system-dev
+  - sudo apt-get -y install libboost-filesystem-dev
+  - sudo apt-get -y install libboost-thread-dev
+  - sudo apt-get -y install libboost-program-options-dev
+  - sudo apt-get -y install libtbb-dev
 
 
 script:
-- cd
-- cd build
-- ls
-- cd leoneed03
-- ls
-- cd GDR
-- ls
-- mkdir build
-- cd build
-- cmake ../
-- make
-#- ./testSIFTGPU
+  - cd
+  - cd build
+  - ls
+  - cd leoneed03
+  - ls
+  - cd GDR
+  - ls
+  - mkdir build
+  - cd build
+  - cmake ../
+  - make
+  #- ./testSIFTGPU

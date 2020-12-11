@@ -70,15 +70,15 @@ typedef struct CorrespondenceGraph {
 
     void decreaseDensity();
 
-    MatrixX getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
-                                        double coeff = 0.75);
+    MatrixX getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
+                                               double inlierCoeff = 0.75);
 
     cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
 
     void showKeypointsOnDephtImage(int vertexFrom);
 
     MatrixX
-    getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &points1, const MatrixX &points2, const int numIterations,
+    getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints, const int numIterations,
                                            const int numOfElements, double inlierCoeff);
 
     void printConnections(std::ostream &os, int space = 10);

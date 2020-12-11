@@ -377,7 +377,7 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
             assert(frameTo.index > frameFrom.index);
             MatrixX R, t;
             bool success = true;
-            auto cameraMotion = getEssentialMatrixTwoImages(i, j, R, t, success);
+            auto cameraMotion = getTransformationRtMatrixTwoImages(i, j, R, t, success);
 
             std::cout << "out of Transformation calculation" << std::endl;
             std::cout << frameFrom.index << " -> " << frameTo.index << std::endl;
@@ -417,7 +417,7 @@ int CorrespondenceGraph::findRotationTranslation(int vertexFrom, int vertexInLis
 }
 
 
-MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& firstPoints, const MatrixX& secondPoints, const int numIterations, const int numOfPoints, double inlierCoeff) {
+MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& toBeTransormedPoints, const MatrixX& destinationPoints, const int numIterations, const int numOfPoints, double inlierCoeff) {
     int dim = 3;
     int top = 10;
     if (inlierCoeff > 1) {
@@ -427,8 +427,8 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
     if (inlierCoeff < 0) {
         inlierCoeff = 0;
     }
-    assert(numOfPoints == firstPoints.cols());
-    assert(firstPoints.cols() == secondPoints.cols());
+    assert(numOfPoints == toBeTransormedPoints.cols());
+    assert(toBeTransormedPoints.cols() == destinationPoints.cols());
 
     int numInliers = (int) (inlierCoeff * numOfPoints);
 
@@ -438,10 +438,6 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
         pointsPositions.push_back(i);
     }
     MatrixX bestMath;
-
-
-
-
 
     double minError = 1e6;
     int attempt = -1;
@@ -466,21 +462,21 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
             p[2] = rand() % numOfPoints;
         }
         for (int j = 0; j < p.size(); ++j) {
-            first3Points.col(j) = firstPoints.col(p[j]);
-            second3Points.col(j) = secondPoints.col(p[j]);
+            first3Points.col(j) = toBeTransormedPoints.col(p[j]);
+            second3Points.col(j) = destinationPoints.col(p[j]);
             for (int assertCounter = 0; assertCounter < dim; ++assertCounter) {
-                assert(firstPoints.col(p[j])[assertCounter] == first3Points.col(j)[assertCounter]);
-                assert(secondPoints.col(p[j])[assertCounter] == second3Points.col(j)[assertCounter]);
+                assert(toBeTransormedPoints.col(p[j])[assertCounter] == first3Points.col(j)[assertCounter]);
+                assert(destinationPoints.col(p[j])[assertCounter] == second3Points.col(j)[assertCounter]);
             }
         }
 
         MatrixX cR_t_umeyama_3_points = umeyama(first3Points.block(0, 0, dim, dim),
                                        second3Points.block(0, 0, dim, dim));
-        std::sort(pointsPositions.begin(), pointsPositions.end(), [firstPoints, secondPoints, dim, cR_t_umeyama_3_points](const auto& lhs, const auto& rhs){
-            auto& firstLeft = firstPoints.col(lhs);
-            auto& firstRight = firstPoints.col(rhs);
-            auto& secondLeft = secondPoints.col(lhs);
-            auto& secondRight = secondPoints.col(rhs);
+        std::sort(pointsPositions.begin(), pointsPositions.end(), [toBeTransormedPoints, destinationPoints, dim, cR_t_umeyama_3_points](const auto& lhs, const auto& rhs){
+            auto& firstLeft = toBeTransormedPoints.col(lhs);
+            auto& firstRight = toBeTransormedPoints.col(rhs);
+            auto& secondLeft = destinationPoints.col(lhs);
+            auto& secondRight = destinationPoints.col(rhs);
             double dist1 = 0;
             double dist2 = 0;
             auto& destLeft = cR_t_umeyama_3_points * firstLeft;
@@ -501,11 +497,11 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
         MatrixX secondInlierPoints = MatrixX::Random(dim + 1, numInliers);
         for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
             int index = pointsPositions[currentIndex];
-            firstInlierPoints.col(currentIndex) = firstPoints.col(index);
-            secondInlierPoints.col(currentIndex) = secondPoints.col(index);
+            firstInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
+            secondInlierPoints.col(currentIndex) = destinationPoints.col(index);
 
-            assert(firstInlierPoints.col(currentIndex)[1] == firstPoints.col(index)[1]);
-            assert(secondInlierPoints.col(currentIndex)[2] == secondPoints.col(index)[2]);
+            assert(firstInlierPoints.col(currentIndex)[1] == toBeTransormedPoints.col(index)[1]);
+            assert(secondInlierPoints.col(currentIndex)[2] == destinationPoints.col(index)[2]);
         }
 
         const auto& firstColumn = firstInlierPoints.col(std::max(numInliers - 1, 0));
@@ -602,7 +598,7 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
         cv::destroyAllWindows();
 }
 MatrixX
-CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool& success, double inlierCoeff) {
+CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool& success, double inlierCoeff) {
     MatrixX cR_t_umeyama;
     success = true;
     if (inlierCoeff >= 1.0) {
@@ -614,17 +610,14 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
     }
     {
         int dim = 3;
-        std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
         const auto &match = matches[vertexFrom][vertexInList];
         int minSize = match.matchNumbers.size();
-        if (minSize < minNumberOfInliersAfterRobust / inlierCoeff)
-        pointsFromImage1.reserve(minSize);
-        pointsFromImage2.reserve(minSize);
-
-
-        MatrixX firstPoints = MatrixX::Random(dim + 1, minSize);
-        MatrixX secondPoints = MatrixX::Random(dim + 1, minSize);
-
+        if (minSize < minNumberOfInliersAfterRobust / inlierCoeff) {
+            success = false;
+            return cR_t_umeyama;
+        }
+        MatrixX toBeTransformedPoints = MatrixX::Random(dim + 1, minSize);
+        MatrixX originPoints = MatrixX::Random(dim + 1, minSize);
 
         double mx = 1000, my = 1000, mz = 1000;
         double Mx = -1000, My = -1000, Mz = -1000;
@@ -646,7 +639,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 
 
                 //we have to mirror y because image coordinate system is upper-left located
-                //and mirror x because standart XYZ swaps directions of OX!!!
+                //and mirror x because standart XYZ swaps directions of OZ!!!
 
 
 
@@ -665,12 +658,12 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
                     Mz = z1;
                 }
 
-                firstPoints.col(i) << x1, y1, z1, 1;
+                originPoints.col(i) << x1, y1, z1, 1;
 
-                assert(firstPoints.col(i)[0] == x1);
-                assert(firstPoints.col(i)[1] == y1);
-                assert(firstPoints.col(i)[2] == z1);
-                assert(firstPoints.col(i)[3] == 1);
+                assert(originPoints.col(i)[0] == x1);
+                assert(originPoints.col(i)[1] == y1);
+                assert(originPoints.col(i)[2] == z1);
+                assert(originPoints.col(i)[3] == 1);
             }
 
             {
@@ -691,19 +684,13 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
                 x2 = 1.0 * (x2 - cameraRgbd.cx) * z2 / cameraRgbd.fx;
                 y2 = 1.0 * (y2 - cameraRgbd.cy) * z2 / cameraRgbd.fy;
 
-                secondPoints.col(i) << x2, y2, z2, 1;
+                toBeTransformedPoints.col(i) << x2, y2, z2, 1;
 
-                assert(secondPoints.col(i)[0] == x2);
-                assert(secondPoints.col(i)[1] == y2);
-                assert(secondPoints.col(i)[2] == z2);
-                assert(secondPoints.col(i)[3] == 1);
+                assert(toBeTransformedPoints.col(i)[0] == x2);
+                assert(toBeTransformedPoints.col(i)[1] == y2);
+                assert(toBeTransformedPoints.col(i)[2] == z2);
+                assert(toBeTransformedPoints.col(i)[3] == 1);
             }
-            const auto &point1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
-            const cv::Point2f p1 = {point1.x, point1.y};
-            pointsFromImage1.push_back(p1);
-            const auto &point2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
-            const cv::Point2f p2 = {point2.x, point2.y};
-            pointsFromImage2.push_back(p2);
         }
 
 
@@ -715,11 +702,11 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
         std::cout << Mx << " " << My << " " << Mz << std::endl;
         assert(mz > 0);
         assert(Mz > 0);
-        std::swap(firstPoints, secondPoints); //// swap because we want to know M: first = M * second (first can be world origin -- want to make it easier to reconstruct)
+//        std::swap(toBeTransformedPoints, originPoints); //// swap because we want to know M: first = M * second (first can be world origin -- want to make it easier to reconstruct)
 
-        MatrixX cR_t_umeyama_1 = umeyama(firstPoints.block(0, 0, dim, num_elements),
-                                         secondPoints.block(0, 0, dim, num_elements));
-        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(firstPoints, secondPoints, numIterations, num_elements,
+        MatrixX cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
+                                         originPoints.block(0, 0, dim, num_elements));
+        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints, originPoints, numIterations, num_elements,
                                                                              inlierCoeff);
         cR_t_umeyama = cR_t_umeyama_RANSAC;
         if (DEBUG_PRINT) {
@@ -747,9 +734,9 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 //            int b = 100;
 //            int32_t rgb = (static_cast<uint32_t>(r) << 16 |
 //                           static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-//            cloud1.points[i].x = secondPoints.col(i).x();
-//            cloud1.points[i].y = secondPoints.col(i).y();
-//            cloud1.points[i].z = secondPoints.col(i).z();
+//            cloud1.points[i].x = originPoints.col(i).x();
+//            cloud1.points[i].y = originPoints.col(i).y();
+//            cloud1.points[i].z = originPoints.col(i).z();
 //            cloud1.points[i].rgb = rgb;
 //            std::cout << "point " << i << " out of " << num_elements << std::endl;
 //        }
@@ -760,7 +747,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 //            int b = 255;
 //            int32_t rgb = (static_cast<uint32_t>(r) << 16 |
 //                           static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-//            auto res = cR_t_umeyama * firstPoints.col(i - num_elements);
+//            auto res = cR_t_umeyama * toBeTransformedPoints.col(i - num_elements);
 //            cloud1.points[i].x = res[0];
 //            cloud1.points[i].y = res[1];
 //            cloud1.points[i].z = res[2];
@@ -780,77 +767,84 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 
 /////////////////////END OF UMEYAMA DEMONSTRATION
 
-        bool initClouds = false;
+        bool initClouds = true;
         if (initClouds) {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloudFrom(parseDepthImageNoColour(
-                verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTo(parseDepthImageNoColour(
-                verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
-//        cloudTo->points.resize(minSize);
-//        cloudTo->width = minSize;
-//        cloudFrom->points.resize(minSize);
-//        cloudFrom->width = minSize;
-        std::cout << "cloud sizes are " << cloudTo->width << "->" << cloudFrom->width << std::endl;
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudFrom(parseDepthImageNoColour(
+                    verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTo(parseDepthImageNoColour(
+                    verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
+            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+            pcl::PointCloud<pcl::PointXYZ>::Ptr ptrCloud(cloudFrom);
+            viewer.showCloud(ptrCloud);
 
-        assert(cloudTo->width == cloudFrom->width);
-        assert(cloudFrom->width > 0);
-        for (size_t i = 0; i < cloudFrom->width; ++i) {
-            int r = 10;
-            int g = 10;
-            int b = 100;
-            int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-                           static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
 
-            auto res = cR_t_umeyama * firstPoints.col(i);
-            MatrixX columnOfPoints = MatrixX::Random(dim + 1, 1);
-            columnOfPoints.col(0)[0] = cloudFrom->points[i].x;
-            columnOfPoints.col(0)[1] = cloudFrom->points[i].y;
-            columnOfPoints.col(0)[2] = cloudFrom->points[i].z;
-            columnOfPoints.col(0)[3] = 1;
-//            auto res = cR_t_umeyama * columnOfPoints.col(0);
-            cloudFrom->points[i].x = res[0];
-            cloudFrom->points[i].y = res[1];
-            cloudFrom->points[i].z = res[2];
-            double delta = 0;
-            cloudTo->points[i].x = secondPoints.col(i)[0] + delta;
-            cloudTo->points[i].y = secondPoints.col(i)[1] + delta;
-            cloudTo->points[i].z = secondPoints.col(i)[2] + delta;
-        }
-//        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-//        viewer.showCloud(cloudTo);
-//
-//
-//        while (!viewer.wasStopped()) {
-//        }
-////
-//
-//        parseDepthImage(verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd);
-//        exit(3);/////////////////////EXIT
+            while (!viewer.wasStopped()) {
+            }
+    //        cloudTo->points.resize(minSize);
+    //        cloudTo->width = minSize;
+    //        cloudFrom->points.resize(minSize);
+    //        cloudFrom->width = minSize;
+            std::cout << "cloud sizes are " << cloudTo->width << "->" << cloudFrom->width << std::endl;
 
-//////////////////////BLOCK FOR NL ICP
+            assert(cloudTo->width == cloudFrom->width);
+            assert(cloudFrom->width > 0);
+            for (size_t i = 0; i < cloudFrom->width; ++i) {
+                int r = 10;
+                int g = 10;
+                int b = 100;
+                int32_t rgb = (static_cast<uint32_t>(r) << 16 |
+                               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
 
-//        double dist = 0.05;
-//        double rans = 0.05;
-//        int iter = 5;
-//        bool nonLinear = true;
-//            pcl::IterativeClosestPointNonLinear<PointType, PointType> icp;
-//            icp.setMaximumIterations(iter);
-//            icp.setMaxCorrespondenceDistance(dist);
-//            icp.setRANSACOutlierRejectionThreshold(rans);
-//            icp.setInputSource(cloudFrom);
-//            icp.setInputTarget(cloudTo);
-//            icp.align(*cloudFrom);
-//
-//            if (icp.hasConverged()) {
-//                std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
-//                std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
-//                auto transformation_matrix = icp.getFinalTransformation().cast<double>();
-//                std::cout << transformation_matrix << std::endl;
-//            } else {
-//                PCL_ERROR ("\nICP has not converged.\n");
-//                exit(-1);
-//            }
-//            std::cout << "before " << std::endl;
+                auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
+                MatrixX columnOfPoints = MatrixX::Random(dim + 1, 1);
+                columnOfPoints.col(0)[0] = cloudFrom->points[i].x;
+                columnOfPoints.col(0)[1] = cloudFrom->points[i].y;
+                columnOfPoints.col(0)[2] = cloudFrom->points[i].z;
+                columnOfPoints.col(0)[3] = 1;
+    //            auto res = cR_t_umeyama * columnOfPoints.col(0);
+                cloudFrom->points[i].x = res[0];
+                cloudFrom->points[i].y = res[1];
+                cloudFrom->points[i].z = res[2];
+                double delta = 0;
+                cloudTo->points[i].x = originPoints.col(i)[0] + delta;
+                cloudTo->points[i].y = originPoints.col(i)[1] + delta;
+                cloudTo->points[i].z = originPoints.col(i)[2] + delta;
+            }
+    //        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+    //        viewer.showCloud(cloudTo);
+    //
+    //
+    //        while (!viewer.wasStopped()) {
+    //        }
+    ////
+    //
+    //        parseDepthImage(verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd);
+    //        exit(3);/////////////////////EXIT
+
+    //////////////////////BLOCK FOR NL ICP
+
+    //        double dist = 0.05;
+    //        double rans = 0.05;
+    //        int iter = 5;
+    //        bool nonLinear = true;
+    //            pcl::IterativeClosestPointNonLinear<PointType, PointType> icp;
+    //            icp.setMaximumIterations(iter);
+    //            icp.setMaxCorrespondenceDistance(dist);
+    //            icp.setRANSACOutlierRejectionThreshold(rans);
+    //            icp.setInputSource(cloudFrom);
+    //            icp.setInputTarget(cloudTo);
+    //            icp.align(*cloudFrom);
+    //
+    //            if (icp.hasConverged()) {
+    //                std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
+    //                std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
+    //                auto transformation_matrix = icp.getFinalTransformation().cast<double>();
+    //                std::cout << transformation_matrix << std::endl;
+    //            } else {
+    //                PCL_ERROR ("\nICP has not converged.\n");
+    //                exit(-1);
+    //            }
+    //            std::cout << "before " << std::endl;
         }
         std::cout << "after " << std::endl;
 
@@ -869,9 +863,9 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
                 int b = 100;
                 int32_t rgb = (static_cast<uint32_t>(r) << 16 |
                                static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-                cloud1.points[i].x = secondPoints.col(i).x();
-                cloud1.points[i].y = secondPoints.col(i).y();
-                cloud1.points[i].z = secondPoints.col(i).z();
+                cloud1.points[i].x = originPoints.col(i).x();
+                cloud1.points[i].y = originPoints.col(i).y();
+                cloud1.points[i].z = originPoints.col(i).z();
                 cloud1.points[i].rgb = rgb;
                 std::cout << "point " << i << " out of " << num_elements << std::endl;
             }
@@ -882,7 +876,7 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
                 int b = 255;
                 int32_t rgb = (static_cast<uint32_t>(r) << 16 |
                                static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-                auto res = cR_t_umeyama * firstPoints.col(i - num_elements);
+                auto res = cR_t_umeyama * toBeTransformedPoints.col(i - num_elements);
                 cloud1.points[i].x = res[0];
                 cloud1.points[i].y = res[1];
                 cloud1.points[i].z = res[2];
@@ -912,14 +906,14 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 //
 //        {
 //            int i = 400;
-//            cloud1.points[0].x = secondPoints.col(i).x();
-//            cloud1.points[0].y = secondPoints.col(i).y();
-//            cloud1.points[0].z = secondPoints.col(i).z();
+//            cloud1.points[0].x = originPoints.col(i).x();
+//            cloud1.points[0].y = originPoints.col(i).y();
+//            cloud1.points[0].z = originPoints.col(i).z();
 //            std::cout << "point " << i << " out of " << num_elements << std::endl;
 //        }
 //        {
 //            int i = 400;
-//            auto res = cR_t_umeyama * firstPoints.col(i);
+//            auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
 //            cloud1.points[1].x = res[0];
 //            cloud1.points[1].y = res[1];
 //            cloud1.points[1].z = res[2];
@@ -945,13 +939,13 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 
         std::vector<double> differences;
         for (int i = 0; i < num_elements; ++i) {
-//        auto res = cR_t_umeyama * secondPoints.col(i);
-//        assert(abs(pow(secondPoints.col(i).x() - res[0],2) - (secondPoints.col(i).x() - res[0]) * (secondPoints.col(i).x() - res[0])) < 0.000001);
-//        double diff = sqrt(pow(firstPoints.col(i).x() - res[0],2) + pow(firstPoints.col(i).y() - res[1],2) + pow(firstPoints.col(i).z() - res[2],2));
+//        auto res = cR_t_umeyama * originPoints.col(i);
+//        assert(abs(pow(originPoints.col(i).x() - res[0],2) - (originPoints.col(i).x() - res[0]) * (originPoints.col(i).x() - res[0])) < 0.000001);
+//        double diff = sqrt(pow(toBeTransformedPoints.col(i).x() - res[0],2) + pow(toBeTransformedPoints.col(i).y() - res[1],2) + pow(toBeTransformedPoints.col(i).z() - res[2],2));
 
-            auto res = cR_t_umeyama * firstPoints.col(i);
-            double diff = /*sqrt*/(pow(secondPoints.col(i).x() - res[0], 2) + pow(secondPoints.col(i).y() - res[1], 2) +
-                               pow(secondPoints.col(i).z() - res[2], 2));
+            auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
+            double diff = /*sqrt*/(pow(originPoints.col(i).x() - res[0], 2) + pow(originPoints.col(i).y() - res[1], 2) +
+                                   pow(originPoints.col(i).z() - res[2], 2));
             //////Question: maybe change Eucledian distance if needed?
 
             differences.push_back(diff);
@@ -992,9 +986,9 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
 
         std::vector<double> differences12;
         for (int i = 0; i < num_elements; ++i) {
-            double diff = sqrt(pow(secondPoints.col(i).x() - firstPoints.col(i).x(), 2) +
-                               pow(secondPoints.col(i).y() - firstPoints.col(i).y(), 2) +
-                               pow(secondPoints.col(i).z() - firstPoints.col(i).z(), 2));
+            double diff = sqrt(pow(originPoints.col(i).x() - toBeTransformedPoints.col(i).x(), 2) +
+                               pow(originPoints.col(i).y() - toBeTransformedPoints.col(i).y(), 2) +
+                               pow(originPoints.col(i).z() - toBeTransformedPoints.col(i).z(), 2));
             differences12.push_back(diff);
         }
         std::cout << "__________________________________________\n";
