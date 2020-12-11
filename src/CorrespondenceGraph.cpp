@@ -362,7 +362,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     return cameraMotion;
 }
 
-int CorrespondenceGraph::findEssentialMatrices() {
+int CorrespondenceGraph::findTransformationRtMatrices() {
 
     bool f = true;
     for (int i = 0; i < matches.size(); ++i) {
@@ -383,8 +383,8 @@ int CorrespondenceGraph::findEssentialMatrices() {
             std::cout << frameFrom.index << " -> " << frameTo.index << std::endl;
 
             if (success) {
-                essentialMatrices[i].push_back(essentialMatrix(cameraMotion, frameFrom, frameTo, R, t));
-                essentialMatrices[frameTo.index].push_back(essentialMatrix(cameraMotion.inverse(), frameTo, frameFrom, cameraMotion.inverse().block(0, 0, 3, 3), cameraMotion.inverse().block(0, 3, 3, 1)));
+                tranformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo, R, t));
+                tranformationRtMatrices[frameTo.index].push_back(transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom, cameraMotion.inverse().block(0, 0, 3, 3), cameraMotion.inverse().block(0, 3, 3, 1)));
             } else {
                 std::cout << "/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////\n NOT ENOUGH MATCHES \n/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////////\n";
             }
@@ -1017,37 +1017,6 @@ CorrespondenceGraph::getEssentialMatrixTwoImages(int vertexFrom, int vertexInLis
     return cR_t_umeyama;
 }
 
-cv::Mat
-CorrespondenceGraph::getEssentialMatrixTwoImagesOpenCV(int vertexFrom, int vertexInList, cv::Mat &outR, cv::Mat &outT) {
-
-    std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
-    const auto &match = matches[vertexFrom][vertexInList];
-    int minSize = match.matchNumbers.size();
-    pointsFromImage1.reserve(minSize);
-    pointsFromImage2.reserve(minSize);
-
-    for (int i = 0; i < minSize; ++i) {
-        const auto &point1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first];
-        const cv::Point2f p1 = {point1.x, point1.y};
-        pointsFromImage1.push_back(p1);
-        const auto &point2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second];
-        const cv::Point2f p2 = {point2.x, point2.y};
-        pointsFromImage2.push_back(p2);
-    }
-    cv::Mat status;
-    auto cameraMotion = cv::findEssentialMat(pointsFromImage1,
-                                             pointsFromImage2,
-                                             cameraRgbd.cameraMatrix,
-                                             cv::RANSAC,
-                                             0.999,        //desired solution confidence level
-                                             1.0,          //point-to-epipolar-line threshold
-                                             status);
-    cv::Mat R, t;
-    int res = cv::recoverPose(cameraMotion, pointsFromImage1, pointsFromImage2, cameraRgbd.cameraMatrix, outR, outT,
-                              status);
-    return cameraMotion;
-}
-
 CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
                                          const std::string &pathToImageDirectoryD,
                                          float fx, float cx, float fy, float cy) : cameraRgbd({fx, cx, fy, cy}) {
@@ -1058,7 +1027,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
     assert(imagesRgb.size() == imagesD.size());
-    essentialMatrices = std::vector<std::vector<essentialMatrix>>(imagesD.size());
+    tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
 //    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
@@ -1161,7 +1130,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                         {keypoints[i], currentKeypointDepth / 5000.0, currentDescriptors});
             }
         }
-        vertexCG currentVertex(currentImage, keypointsKnownDepths, keypointsKnownDepth, descriptorsKnownDepth, depths,
+        VertexCG currentVertex(currentImage, keypointsKnownDepths, keypointsKnownDepth, descriptorsKnownDepth, depths,
                                imagesRgb[currentImage],
                                imagesD[currentImage]);
         verticesOfCorrespondence.push_back(currentVertex);
@@ -1176,18 +1145,18 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     std::cout << "trying to find corr" << std::endl;
     findCorrespondences();
     decreaseDensity();
-    findEssentialMatrices();
+    findTransformationRtMatrices();
 
-    for (int i = 0; i < essentialMatrices.size(); ++i) {
-        for (int j = 0; j < essentialMatrices[i].size(); ++j) {
+    for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
+        for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
 //            std::cout << "                          " << std::setw(4) << i << std::setw(4) << j << std::endl;
-            std::cout << "                          " << std::setw(4) << essentialMatrices[i][j].vertexFrom.index
-                      << std::setw(4) << essentialMatrices[i][j].vertexTo.index << std::endl;
-            std::cout << essentialMatrices[i][j].innerEssentialMatrix << std::endl;
+            std::cout << "                          " << std::setw(4) << tranformationRtMatrices[i][j].vertexFrom.index
+                      << std::setw(4) << tranformationRtMatrices[i][j].vertexTo.index << std::endl;
+            std::cout << tranformationRtMatrices[i][j].innerTranformationRtMatrix << std::endl;
             std::cout << "Rotation " << std::endl;
-            std::cout << essentialMatrices[i][j].R << std::endl;
+            std::cout << tranformationRtMatrices[i][j].R << std::endl;
             std::cout << "translation " << std::endl;
-            std::cout << essentialMatrices[i][j].t << std::endl;
+            std::cout << tranformationRtMatrices[i][j].t << std::endl;
             std::cout
                     << "______________________________________________________________________________________________________"
                     << std::endl;
@@ -1198,24 +1167,24 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     std::string poseFile = relativePose;
     {
         std::ofstream file(poseFile);
-        int numPoses = essentialMatrices.size();
+        int numPoses = tranformationRtMatrices.size();
         for (int i = 0; i < numPoses; ++i) {
             std::string s1 = "VERTEX_SE3:QUAT ";
             std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
             file << s1 + s2;
         }
         std::set<std::string> strings;
-        for (int i = 0; i < essentialMatrices.size(); ++i) {
-            for (int j = 0; j < essentialMatrices[i].size(); ++j) {
-                if (i >= essentialMatrices[i][j].vertexTo.index) {
+        for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
+            for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
+                if (i >= tranformationRtMatrices[i][j].vertexTo.index) {
                     continue;
                 }
                 std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
-                std::string edgeId = "EDGE_SE3:QUAT " + std::to_string(essentialMatrices[i][j].vertexTo.index) + " " + std::to_string(i) + " ";
-                auto translationVector = essentialMatrices[i][j].t;
+                std::string edgeId = "EDGE_SE3:QUAT " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " " + std::to_string(i) + " ";
+                auto translationVector = tranformationRtMatrices[i][j].t;
 //                std::string edgeWithTranslation = edgeId + std::to_string(translationVector.col(0)[0]) + " "  + std::to_string(translationVector.col(0)[1]) + " " + std::to_string(translationVector.col(0)[2]) + " ";
                 std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
-                const auto& R = essentialMatrices[i][j].R;
+                const auto& R = tranformationRtMatrices[i][j].R;
 //                MatrixX R = randMatrixSpecialUnitary<Scalar>(3);
 
                 Eigen::Matrix3f Rf;
@@ -1228,7 +1197,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                 std::string edgeTotal = edgeWithTranslation + std::to_string(qR.x()) + " " + std::to_string(qR.y()) + " " + std::to_string(qR.z()) + " "
                 + std::to_string(qR.w()) + noise + "\n";
                 if (strings.find(edgeTotal) != strings.end()) {
-                    std::cerr << "Duplicate " << i << " " << j << " j as " << essentialMatrices[i][j].vertexFrom.index << std::endl;
+                    std::cerr << "Duplicate " << i << " " << j << " j as " << tranformationRtMatrices[i][j].vertexFrom.index << std::endl;
                     std::cout << "ERROR";
                     exit(2);
                 }
@@ -1353,20 +1322,20 @@ void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
     int counter = 0;
     int counterSquared = 0;
     os << "EDGES of the Correspondence Graph:" << std::endl;
-    for (int i = 0; i < essentialMatrices.size(); ++i) {
+    for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
         os << std::setw(space / 5) << i << ":";
-        counter += essentialMatrices[i].size();
-        counterSquared += essentialMatrices[i].size() * essentialMatrices[i].size();
-        for (int j = 0; j < essentialMatrices[i].size(); ++j) {
-            const essentialMatrix& e = essentialMatrices[i][j];
+        counter += tranformationRtMatrices[i].size();
+        counterSquared += tranformationRtMatrices[i].size() * tranformationRtMatrices[i].size();
+        for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
+            const transformationRtMatrix& e = tranformationRtMatrices[i][j];
             assert(i == e.vertexFrom.index);
             os << std::setw(space / 2) << e.vertexTo.index << ",";
         }
         os << std::endl;
     }
-    os << "average number of edges " << counter / essentialMatrices.size() << std::endl;
+    os << "average number of edges " << counter / tranformationRtMatrices.size() << std::endl;
 
-    os << "sq D " << sqrt( counterSquared * 1.0 / essentialMatrices.size() - pow(counter * 1.0 / essentialMatrices.size(), 2)) << std::endl;
+    os << "sq D " << sqrt(counterSquared * 1.0 / tranformationRtMatrices.size() - pow(counter * 1.0 / tranformationRtMatrices.size(), 2)) << std::endl;
     os << "======================NOW 4*4 Matrices=======================\n" << std::endl;
 
     os << "======================++++++++++++++++=======================\n" << std::endl;
@@ -1380,22 +1349,21 @@ void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
 std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
     std::vector<bool> visited(verticesOfCorrespondence.size(), false);
     std::vector<int> preds(verticesOfCorrespondence.size(), -1);
-    std::vector<int> stackOfVertices;
-    stackOfVertices.push_back(currentVertex);
-    assert(verticesOfCorrespondence.size() == essentialMatrices.size());
-    while (!stackOfVertices.empty()) {
-        int vertex = stackOfVertices[stackOfVertices.size() - 1];
-
+    std::queue<int> queueVertices;
+    queueVertices.push(currentVertex);
+    assert(verticesOfCorrespondence.size() == tranformationRtMatrices.size());
+    while (!queueVertices.empty()) {
+        int vertex = queueVertices.front();
         std::cout << " entered vertex " << vertex << std::endl;
-        stackOfVertices.pop_back();
+        queueVertices.pop();
         assert(vertex < visited.size() && vertex >= 0);
         visited[vertex] = true;
 
-        for (int i = 0; i < essentialMatrices[vertex].size(); ++i) {
-            int to = essentialMatrices[vertex][i].vertexTo.index;
+        for (int i = 0; i < tranformationRtMatrices[vertex].size(); ++i) {
+            int to = tranformationRtMatrices[vertex][i].vertexTo.index;
             if (!visited[to]) {
-                stackOfVertices.push_back(to);
-                visited[to] = true;
+                queueVertices.push(to);
+//                visited[to] = true;
                 assert(preds[to] == -1);
                 preds[to] = vertex;
 
@@ -1405,7 +1373,7 @@ std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
                 MatrixX predR = predAbsoluteRt.block(0, 0, 3, 3);
                 MatrixX predT = predAbsoluteRt.block(0, 3, 3, 1);
 
-                const MatrixX& relativeRt = essentialMatrices[vertex][i].innerEssentialMatrix;
+                const MatrixX& relativeRt = tranformationRtMatrices[vertex][i].innerTranformationRtMatrix;
                 MatrixX relR = relativeRt.block(0, 0, 3, 3);
                 MatrixX relT = relativeRt.block(0, 3, 3, 1);
 

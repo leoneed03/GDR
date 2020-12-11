@@ -13,7 +13,7 @@
 
 
 #include <opencv2/opencv.hpp>
-#include "vertexCG.h"
+#include "VertexCG.h"
 
 
 
@@ -21,13 +21,13 @@ typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorX;
 
-typedef struct essentialMatrix {
-    MatrixX innerEssentialMatrix;
-    const vertexCG& vertexFrom;
-    const vertexCG& vertexTo;
+typedef struct transformationRtMatrix {
+    MatrixX innerTranformationRtMatrix;
+    const VertexCG& vertexFrom;
+    const VertexCG& vertexTo;
     MatrixX R;
     MatrixX t;
-    essentialMatrix(const MatrixX& newInnerEssentialMatrix, const vertexCG& newVertexFrom, const vertexCG& newVertexTo, const MatrixX& newR, const MatrixX& newT);
+    transformationRtMatrix(const MatrixX& newInnerEssentialMatrix, const VertexCG& newVertexFrom, const VertexCG& newVertexTo, const MatrixX& newR, const MatrixX& newT);
 } essentialMatrix;
 
 #endif

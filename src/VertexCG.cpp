@@ -1,4 +1,4 @@
-#include "../include/vertexCG.h"
+#include "../include/VertexCG.h"
 
 keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth,
                                      const std::vector<float> &newDescriptors) : keypoint(newKeypoint),
@@ -6,7 +6,7 @@ keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double n
                                                                            descriptors(newDescriptors) {
 }
 
-void vertexCG::setRotation(const MatrixX& rotation) {
+void VertexCG::setRotation(const MatrixX& rotation) {
     assert(rotation.rows() == 3 && rotation.cols() == 3);
     absoluteRotationTranslation.block<3,3>(0,0) = rotation;
     assert(abs(rotation.col(3)[3] - 1) < std::numeric_limits<double>::epsilon);
@@ -17,7 +17,7 @@ void vertexCG::setRotation(const MatrixX& rotation) {
     }
 }
 
-vertexCG::vertexCG(int newIndex,
+VertexCG::VertexCG(int newIndex,
                    const std::vector<keypointWithDepth> &newKeypointsWithDepths,
                    const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
                    const std::vector<float> &newDescriptors,
