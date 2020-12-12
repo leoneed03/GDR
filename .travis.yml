@@ -19,7 +19,7 @@ before_install:
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
   - sudo mkdir /usr/local/cuda
   - sudo cp -r /usr/bin/ /usr/local/cuda
-
+  - ls /usr/bin
 
   - sudo apt-get install libopencv-dev
   - sudo apt-get -y install libdevil-dev
@@ -41,6 +41,8 @@ before_install:
   - cd ../../../
   - mkdir build
   - cd build/
+  - CC=/usr/bin/gcc-6
+  - CXX=/usr/bin/g++
   - cmake ..
   - make -j12
   - cd
