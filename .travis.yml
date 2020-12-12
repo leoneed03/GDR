@@ -9,7 +9,6 @@ matrix:
         - UBUNTU_VERSION=ubuntu1804
       dist: bionic
 
-
 packages:
   - gcc-6
   - g++-6
@@ -20,6 +19,16 @@ before_install:
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
   - sudo mkdir /usr/local/cuda
   - sudo cp -r /usr/bin/ /usr/local/cuda
+
+
+  - sudo apt-get install libopencv-dev
+  - sudo apt-get -y install libdevil-dev
+  - sudo apt -y install libglew-dev
+  - sudo apt-get install -y glew-utils
+  - sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+  - sudo apt install python3-opencv
+  - sudo apt-get -y install cmake
+  - sudo apt-get -y install libboost-all-dev
 
   - cd externals
   - cd ICPCUDA
@@ -36,21 +45,10 @@ before_install:
   - make -j12
   - cd
   - cd build/leoneed03/GDR
-  - sudo apt-get install libopencv-dev
-  - sudo apt-get -y install libdevil-dev
-  - sudo apt -y install libglew-dev
-  - sudo apt-get install -y glew-utils
-  - sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
-  - sudo apt install python3-opencv
-  - sudo apt-get -y install cmake
-  - sudo apt-get -y install libboost-all-dev
+
 
   - cd siftgpu
-  #- mkdir build
-  #- cd build
-  #- cmake ..
   - sudo make
-  #- cd ..
   - cd ..
   - ls
 
