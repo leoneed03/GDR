@@ -89,14 +89,10 @@ before_install:
 
 script:
   - cd
-  - cd build
-  - ls
-  - cd leoneed03
-  - ls
-  - cd GDR
+  - cd build/leoneed03/GDR
   - ls
   - mkdir build
   - cd build
   - cmake ../
   - make
-  #- ./testSIFTGPU
+#  - ./testSIFTGPU
