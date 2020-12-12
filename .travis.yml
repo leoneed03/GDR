@@ -47,6 +47,9 @@ before_install:
   - sudo apt-get -y install libboost-program-options-dev
   - sudo apt-get -y install libtbb-dev
 
+
+
+script:
   - cd externals
   - cd ICPCUDA
   - git submodule update --init
@@ -86,8 +89,6 @@ before_install:
   - cd ..
   - cd ..
 
-
-script:
   - cd
   - cd build/leoneed03/GDR
   - ls

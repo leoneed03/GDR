@@ -8,7 +8,7 @@
 #include "../include/CorrespondenceGraph.h"
 
 #include <pangolin/image/image_io.h>
-#include "ICPOdometry.h"
+#include <ICPOdometry.h>
 
 using namespace std;
 
@@ -103,6 +103,6 @@ void testTextReading() {
 int main(int argc, char **argv) {
 
     pangolin::ManagedImage<unsigned short> firstData(640, 480);
-//    CorrespondenceGraph correspondenceGraph("../data/plantSampled_20/rgb", "../data/plantSampled_20/depth", 525.0, 319.5, 525.0, 239.5);
+    CorrespondenceGraph correspondenceGraph("../data/plantSampled_20/rgb", "../data/plantSampled_20/depth", 525.0, 319.5, 525.0, 239.5);
     return 0;
 }

@@ -12,18 +12,25 @@ find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(Pangolin REQUIRED)
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(PCL 1.8 REQUIRED)
-
 set(ICPCUDA "externals/ICPCUDA")
 
-include_directories(${Sophus_INCLUDE_DIR} ${ICPCUDA})
+
+set(Sophus_INCLUDE_DIR "${ICPCUDA}/third-party/Sophus" CACHE PATH "Sophus Include directory")
+
+add_subdirectory(externals)
+include_directories(${ICPCUDA} ${Sophus_INCLUDE_DIR})
+
+# SiftGPU
 include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIR})
-include_directories("siftgpu/src/SiftGPU")
 include_directories(${CUDA_INCLUDE_DIR})
+include_directories("siftgpu/src/SiftGPU")
+
 set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
+
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(PCL 1.8 REQUIRED)
 
 
 FIND_PACKAGE(Boost COMPONENTS thread system filesystem REQUIRED)
@@ -55,6 +62,8 @@ target_link_libraries(test
         ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
         ${CUDA_LIB_PATH}
         ${PCL_LIBRARIES}
+        ${Sophus_LIBRARIES}
+        ${Pangolin_LIBRARIES}
         Eigen3::Eigen
         pthread
         gtsam
