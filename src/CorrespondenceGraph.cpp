@@ -767,7 +767,7 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
 
 /////////////////////END OF UMEYAMA DEMONSTRATION
 
-        bool initClouds = true;
+        bool initClouds = false;
         if (initClouds) {
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloudDest(parseDepthImageNoColour(
                     verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
@@ -864,6 +864,9 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
                 std::cout << "before " << std::endl;
             }
         }
+
+
+
         std::cout << "after " << std::endl;
 
         if (SHOW_PCL_CLOUDS) {
