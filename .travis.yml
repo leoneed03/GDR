@@ -1,14 +1,5 @@
 language: generic
 
-#matrix:
-#  include:
-#    - name: CUDA 10
-#      env:
-#        - CUDA=10.1.105-1
-#        - CUDA_SHORT=10.1
-#        - UBUNTU_VERSION=ubuntu1804
-#      dist: bionic
-
 matrix:
   include:
     - os: linux
@@ -34,7 +25,6 @@ before_install:
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
   - sudo mkdir /usr/local/cuda
   - sudo cp -r /usr/bin/ /usr/local/cuda
-  - ls /usr/bin
 
   - sudo apt-get install libopencv-dev
   - sudo apt-get -y install libdevil-dev
@@ -44,40 +34,6 @@ before_install:
   - sudo apt install python3-opencv
   - sudo apt-get -y install cmake
   - sudo apt-get -y install libboost-all-dev
-
-  - cd externals
-  - cd ICPCUDA
-  - git submodule update --init
-  - cd third-party/Pangolin/
-  - mkdir build
-  - cd build
-  - cmake ../ -DEIGEN_INCLUDE_DIR=/home/travis/build/leoneed03/GDR/externals/ICPCUDA/third-party/Eigen
-
-  - make -j12
-  - cd ../../../
-  - mkdir build
-  - cd build/
-  - export CC=/usr/bin/gcc-6
-  - export CXX=/usr/bin/g++
-  - cmake ..
-  - make -j12
-  - cd
-  - cd build/leoneed03/GDR
-
-
-  - cd siftgpu
-  - sudo make
-  - cd ..
-  - ls
-
-  - cd externals/gtsam
-  - sudo mkdir build
-  - cd build
-  - sudo cmake ..
-  - sudo make install
-  - cd ..
-  - cd ..
-  - cd ..
 
   - sudo apt-get -y install libstdc++6
   - sudo apt-get install g++
@@ -90,6 +46,45 @@ before_install:
   - sudo apt-get -y install libboost-thread-dev
   - sudo apt-get -y install libboost-program-options-dev
   - sudo apt-get -y install libtbb-dev
+
+  - cd externals
+  - cd ICPCUDA
+  - git submodule update --init
+
+#  Pangolin
+  - cd third-party/Pangolin/
+  - mkdir build
+  - cd build
+  - cmake ../ -DEIGEN_INCLUDE_DIR=/home/travis/build/leoneed03/GDR/externals/ICPCUDA/third-party/Eigen
+  - make -j12
+
+# ICPCUDA
+  - cd ../../../
+  - mkdir build
+  - cd build/
+  - export CC=/usr/bin/gcc-6
+  - export CXX=/usr/bin/g++
+  - cmake ..
+  - make -j12
+  - cd
+
+  - cd build/leoneed03/GDR
+
+# SiftGPU
+  - cd siftgpu
+  - sudo make
+  - cd ..
+  - ls
+
+# GTSAM
+  - cd externals/gtsam
+  - sudo mkdir build
+  - cd build
+  - sudo cmake ..
+  - sudo make install
+  - cd ..
+  - cd ..
+  - cd ..
 
 
 script:
