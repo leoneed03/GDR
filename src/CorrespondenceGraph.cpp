@@ -449,8 +449,8 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
     std::vector<int> triple;
     for (int i = 0; i < numIterations; ++i) {
         std::vector<int> p(dim, 0);
-        MatrixX first3Points = MatrixX::Random(dim + 1, dim);
-        MatrixX second3Points = MatrixX::Random(dim + 1, dim);
+        MatrixX toBeTransformed3Points = MatrixX::Random(dim + 1, dim);
+        MatrixX dest3Points = MatrixX::Random(dim + 1, dim);
         p[0] = rand() % numOfPoints;
         p[1] = rand() % numOfPoints;
         p[2] = rand() % numOfPoints;
@@ -462,28 +462,28 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
             p[2] = rand() % numOfPoints;
         }
         for (int j = 0; j < p.size(); ++j) {
-            first3Points.col(j) = toBeTransormedPoints.col(p[j]);
-            second3Points.col(j) = destinationPoints.col(p[j]);
+            toBeTransformed3Points.col(j) = toBeTransormedPoints.col(p[j]);
+            dest3Points.col(j) = destinationPoints.col(p[j]);
             for (int assertCounter = 0; assertCounter < dim; ++assertCounter) {
-                assert(toBeTransormedPoints.col(p[j])[assertCounter] == first3Points.col(j)[assertCounter]);
-                assert(destinationPoints.col(p[j])[assertCounter] == second3Points.col(j)[assertCounter]);
+                assert(toBeTransormedPoints.col(p[j])[assertCounter] == toBeTransformed3Points.col(j)[assertCounter]);
+                assert(destinationPoints.col(p[j])[assertCounter] == dest3Points.col(j)[assertCounter]);
             }
         }
 
-        MatrixX cR_t_umeyama_3_points = umeyama(first3Points.block(0, 0, dim, dim),
-                                       second3Points.block(0, 0, dim, dim));
+        MatrixX cR_t_umeyama_3_points = umeyama(toBeTransformed3Points.block(0, 0, dim, dim),
+                                                dest3Points.block(0, 0, dim, dim));
         std::sort(pointsPositions.begin(), pointsPositions.end(), [toBeTransormedPoints, destinationPoints, dim, cR_t_umeyama_3_points](const auto& lhs, const auto& rhs){
-            auto& firstLeft = toBeTransormedPoints.col(lhs);
-            auto& firstRight = toBeTransormedPoints.col(rhs);
-            auto& secondLeft = destinationPoints.col(lhs);
-            auto& secondRight = destinationPoints.col(rhs);
+            auto& toBeTransformedLeft = toBeTransormedPoints.col(lhs);
+            auto& toBeTransformedRight = toBeTransormedPoints.col(rhs);
+            auto& destinationLeft = destinationPoints.col(lhs);
+            auto& destinationRight = destinationPoints.col(rhs);
             double dist1 = 0;
             double dist2 = 0;
-            auto& destLeft = cR_t_umeyama_3_points * firstLeft;
-            auto& destRight = cR_t_umeyama_3_points * firstRight;
+            auto& destLeft = cR_t_umeyama_3_points * toBeTransformedLeft;
+            auto& destRight = cR_t_umeyama_3_points * toBeTransformedRight;
             for (int pp = 0; pp < dim; ++pp) {
-                dist1 += pow(destLeft[pp] - secondLeft[pp], 2);
-                dist2 += pow(destRight[pp] - secondRight[pp], 2);
+                dist1 += pow(destLeft[pp] - destinationLeft[pp], 2);
+                dist2 += pow(destRight[pp] - destinationRight[pp], 2);
             }
             return dist1 < dist2;
         });
@@ -493,37 +493,37 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
 //        std::cout << endl;
 
         int quantilIndex = (int) (inlierCoeff * numOfPoints);
-        MatrixX firstInlierPoints = MatrixX::Random(dim + 1, numInliers);
-        MatrixX secondInlierPoints = MatrixX::Random(dim + 1, numInliers);
+        MatrixX toBeTransformedInlierPoints = MatrixX::Random(dim + 1, numInliers);
+        MatrixX destInlierPoints = MatrixX::Random(dim + 1, numInliers);
         for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
             int index = pointsPositions[currentIndex];
-            firstInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
-            secondInlierPoints.col(currentIndex) = destinationPoints.col(index);
+            toBeTransformedInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
+            destInlierPoints.col(currentIndex) = destinationPoints.col(index);
 
-            assert(firstInlierPoints.col(currentIndex)[1] == toBeTransormedPoints.col(index)[1]);
-            assert(secondInlierPoints.col(currentIndex)[2] == destinationPoints.col(index)[2]);
+            assert(toBeTransformedInlierPoints.col(currentIndex)[1] == toBeTransormedPoints.col(index)[1]);
+            assert(destInlierPoints.col(currentIndex)[2] == destinationPoints.col(index)[2]);
         }
 
-        const auto& firstColumn = firstInlierPoints.col(std::max(numInliers - 1, 0));
-        const auto& secondColumn = secondInlierPoints.col(std::max(numInliers - 1, 0));
-        auto dest = cR_t_umeyama_3_points * firstColumn;
+        const auto& toBeTransformedColumn = toBeTransformedInlierPoints.col(std::max(numInliers - 1, 0));
+        const auto& destColumn = destInlierPoints.col(std::max(numInliers - 1, 0));
+        auto dest = cR_t_umeyama_3_points * toBeTransformedColumn;
         double normError = 0;
         for (int pp = 0; pp < dim; ++pp) {
-            normError += pow(dest[pp] - secondColumn[pp], 2);
+            normError += pow(dest[pp] - destColumn[pp], 2);
         }
         MatrixX cR_t_umeyama_inlier_points = cR_t_umeyama_3_points;
         if (normError < minError) {
-            cR_t_umeyama_inlier_points = umeyama(firstInlierPoints.block(0, 0, dim, numInliers),
-                                                         secondInlierPoints.block(0, 0, dim, numInliers));
+            cR_t_umeyama_inlier_points = umeyama(toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
+                                                 destInlierPoints.block(0, 0, dim, numInliers));
         }
 
 //        double norm = 0;
 //        for (int count = std::max(numInliers - 1, 0); count < numInliers; ++count) {
-//            const auto& firstColumn = firstInlierPoints.col(count);
-//            const auto& secondColumn = secondInlierPoints.col(count);
-//            auto dest = cR_t_umeyama_inlier_points * firstColumn;
+//            const auto& toBeTransformedColumn = toBeTransformedInlierPoints.col(count);
+//            const auto& destColumn = destInlierPoints.col(count);
+//            auto dest = cR_t_umeyama_inlier_points * toBeTransformedColumn;
 //            for (int pp = 0; pp < dim; ++pp) {
-//                norm += pow(dest[pp] - secondColumn[pp], 2);
+//                norm += pow(dest[pp] - destColumn[pp], 2);
 //            }
 //        }
 
@@ -769,82 +769,100 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
 
         bool initClouds = true;
         if (initClouds) {
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudFrom(parseDepthImageNoColour(
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudDest(parseDepthImageNoColour(
                     verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTo(parseDepthImageNoColour(
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudToBeTransformed(parseDepthImageNoColour(
                     verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
-            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-            pcl::PointCloud<pcl::PointXYZ>::Ptr ptrCloud(cloudFrom);
-            viewer.showCloud(ptrCloud);
+//            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+//            pcl::PointCloud<pcl::PointXYZ>::Ptr ptrCloud(cloudDest);
+//            viewer.showCloud(ptrCloud);
+//
+//
+//            while (!viewer.wasStopped()) {
+//            }
 
 
-            while (!viewer.wasStopped()) {
+            //        cloudToBeTransformed->points.resize(minSize);
+            //        cloudToBeTransformed->width = minSize;
+            //        cloudDest->points.resize(minSize);
+            //        cloudDest->width = minSize;
+            std::cout << "cloud sizes are " << cloudToBeTransformed->width << "->" << cloudDest->width << std::endl;
+
+            assert(cloudToBeTransformed->width == cloudDest->width);
+            assert(cloudDest->width > 0);
+
+
+//
+//            for (size_t i = 0; i < cloudDest->width; ++i) {
+//                int r = 10;
+//                int g = 10;
+//                int b = 100;
+//                int32_t rgb = (static_cast<uint32_t>(r) << 16 |
+//                               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
+//
+////                auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
+//                MatrixX columnOfPointsToBeTransformed = MatrixX::Random(dim + 1, 1);
+//                columnOfPointsToBeTransformed.col(0)[0] = cloudToBeTransformed->points[i].x;
+//                columnOfPointsToBeTransformed.col(0)[1] = cloudToBeTransformed->points[i].y;
+//                columnOfPointsToBeTransformed.col(0)[2] = cloudToBeTransformed->points[i].z;
+//                columnOfPointsToBeTransformed.col(0)[3] = 1;
+//                auto res = cR_t_umeyama * columnOfPointsToBeTransformed.col(0);
+//                cloudToBeTransformed->points[i].x = res[0];
+//                cloudToBeTransformed->points[i].y = res[1];
+//                cloudToBeTransformed->points[i].z = res[2];
+//            }
+            //        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+            //        viewer.showCloud(cloudToBeTransformed);
+            //
+            //
+            //        while (!viewer.wasStopped()) {
+            //        }
+            ////
+            //
+            //        parseDepthImage(verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd);
+            //        exit(3);/////////////////////EXIT
+
+            //////////////////////BLOCK FOR NL ICP
+            {
+                double dist = 0.05;
+                double rans = 0.05;
+
+                int iter = 10;
+                bool nonLinear = false;
+                pcl::IterativeClosestPoint<PointType, PointType> icp;
+                icp.setMaximumIterations(iter);
+                icp.setMaxCorrespondenceDistance(dist);
+                icp.setRANSACOutlierRejectionThreshold(rans);
+                icp.setInputSource(cloudToBeTransformed);
+                icp.setInputTarget(cloudDest);
+//                icp.align(*cloudDest);
+
+//                typedef typename pcl::Registration<PointType, PointType, Scalar>::Matrix4 Matrix4;
+
+                typedef Eigen::Matrix<float, 4, 4> Matrix4;
+                Matrix4 guess;
+
+                for (int i = 0; i < 4; ++i) {
+                    for (int j = 0; j < 4; ++j) {
+                        guess.col(i)[j] = cR_t_umeyama.col(i)[j];
+                    }
+                }
+                icp.align(*cloudToBeTransformed, guess);
+//                icp.align(*cloudToBeTransformed, guess);
+
+//                icp.align(cloudToBeTransformed, guess);
+
+                if (icp.hasConverged()) {
+                    std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
+                    std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
+                    auto transformation_matrix = icp.getFinalTransformation().cast<double>();
+                    std::cout << transformation_matrix << std::endl;
+                } else {
+                    PCL_ERROR ("\nICP has not converged.\n");
+                    exit(-1);
+                }
+                std::cout << "before " << std::endl;
             }
-    //        cloudTo->points.resize(minSize);
-    //        cloudTo->width = minSize;
-    //        cloudFrom->points.resize(minSize);
-    //        cloudFrom->width = minSize;
-            std::cout << "cloud sizes are " << cloudTo->width << "->" << cloudFrom->width << std::endl;
-
-            assert(cloudTo->width == cloudFrom->width);
-            assert(cloudFrom->width > 0);
-            for (size_t i = 0; i < cloudFrom->width; ++i) {
-                int r = 10;
-                int g = 10;
-                int b = 100;
-                int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-                               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-
-                auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
-                MatrixX columnOfPoints = MatrixX::Random(dim + 1, 1);
-                columnOfPoints.col(0)[0] = cloudFrom->points[i].x;
-                columnOfPoints.col(0)[1] = cloudFrom->points[i].y;
-                columnOfPoints.col(0)[2] = cloudFrom->points[i].z;
-                columnOfPoints.col(0)[3] = 1;
-    //            auto res = cR_t_umeyama * columnOfPoints.col(0);
-                cloudFrom->points[i].x = res[0];
-                cloudFrom->points[i].y = res[1];
-                cloudFrom->points[i].z = res[2];
-                double delta = 0;
-                cloudTo->points[i].x = originPoints.col(i)[0] + delta;
-                cloudTo->points[i].y = originPoints.col(i)[1] + delta;
-                cloudTo->points[i].z = originPoints.col(i)[2] + delta;
-            }
-    //        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-    //        viewer.showCloud(cloudTo);
-    //
-    //
-    //        while (!viewer.wasStopped()) {
-    //        }
-    ////
-    //
-    //        parseDepthImage(verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd);
-    //        exit(3);/////////////////////EXIT
-
-    //////////////////////BLOCK FOR NL ICP
-
-    //        double dist = 0.05;
-    //        double rans = 0.05;
-    //        int iter = 5;
-    //        bool nonLinear = true;
-    //            pcl::IterativeClosestPointNonLinear<PointType, PointType> icp;
-    //            icp.setMaximumIterations(iter);
-    //            icp.setMaxCorrespondenceDistance(dist);
-    //            icp.setRANSACOutlierRejectionThreshold(rans);
-    //            icp.setInputSource(cloudFrom);
-    //            icp.setInputTarget(cloudTo);
-    //            icp.align(*cloudFrom);
-    //
-    //            if (icp.hasConverged()) {
-    //                std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
-    //                std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
-    //                auto transformation_matrix = icp.getFinalTransformation().cast<double>();
-    //                std::cout << transformation_matrix << std::endl;
-    //            } else {
-    //                PCL_ERROR ("\nICP has not converged.\n");
-    //                exit(-1);
-    //            }
-    //            std::cout << "before " << std::endl;
         }
         std::cout << "after " << std::endl;
 
@@ -930,7 +948,7 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
 //        }
 //        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
 //        pcl::PointCloud<pcl::PointXYZ>::Ptr ptrCloud(&cloud1);
-//        viewer.showCloud(ptrCloud);
+//        viewer.CloudCloud(ptrCloud);
 //
 //        while (!viewer.wasStopped()) {
 //        }

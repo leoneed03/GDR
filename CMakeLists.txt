@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(GlobalReconstruction)
+
 set(CMAKE_CXX_STANDARD 17)
 set(GCC_COVERAGE_COMPILE_FLAGS " -Os -DNDEBUG")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
@@ -10,14 +11,19 @@ find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
-
-# SiftGPU
-include_directories("siftgpu/src/SiftGPU" ${OpenGL_INCLUDE_DIR} ${CUDA_INCLUDE_DIR})
-set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
-
-
+find_package(Pangolin REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(PCL 1.8 REQUIRED)
+
+set(ICPCUDA "externals/ICPCUDA")
+
+include_directories(${Sophus_INCLUDE_DIR} ${ICPCUDA})
+include_directories(${Pangolin_INCLUDE_DIRS})
+include_directories(${OpenGL_INCLUDE_DIR})
+include_directories("siftgpu/src/SiftGPU")
+include_directories(${CUDA_INCLUDE_DIR})
+set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
+
 
 
 FIND_PACKAGE(Boost COMPONENTS thread system filesystem REQUIRED)

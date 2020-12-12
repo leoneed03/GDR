@@ -11,15 +11,31 @@ matrix:
 
 
 packages:
-  - gcc-7
-  - g++-7
+  - gcc-6
+  - g++-6
   - cmake
 
 before_install:
+
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
   - sudo mkdir /usr/local/cuda
   - sudo cp -r /usr/bin/ /usr/local/cuda
 
+  - cd externals
+  - cd ICPCUDA
+  - git submodule update --init
+  - cd third-party/Pangolin/
+  - mkdir build
+  - cd build
+  - cmake ../ -DEIGEN_INCLUDE_DIR=build/leoneed03/GDR/externals/ICPCUDA/third-party/Eigen
+  - make -j12
+  - cd ../../../
+  - mkdir build
+  - cd build/
+  - cmake ..
+  - make -j12
+  - cd
+  - cd build/leoneed03/GDR
   - sudo apt-get install libopencv-dev
   - sudo apt-get -y install libdevil-dev
   - sudo apt -y install libglew-dev

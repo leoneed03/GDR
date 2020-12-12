@@ -1,5 +1,3 @@
-
-
 #include "Eigen/Geometry"
 #include <vector>
 

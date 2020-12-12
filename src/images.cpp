@@ -147,12 +147,15 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
 //        point.getArray3fMap() << 0, 0, 1;
 //        viewer.addText3D("z ", point, 0.2, 0, 0, 1, "z_");
 
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptrCloud(&cloud1);
-        viewer.showCloud(ptrCloud);
 
 
-        while (!viewer.wasStopped()) {
-        }
+//////show
+//        pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptrCloud(&cloud1);
+//        viewer.showCloud(ptrCloud);
+//
+//
+//        while (!viewer.wasStopped()) {
+//        }
 
     }
 }
