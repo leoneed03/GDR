@@ -1,12 +1,25 @@
 language: generic
 
+#matrix:
+#  include:
+#    - name: CUDA 10
+#      env:
+#        - CUDA=10.1.105-1
+#        - CUDA_SHORT=10.1
+#        - UBUNTU_VERSION=ubuntu1804
+#      dist: bionic
+
 matrix:
   include:
-    - name: CUDA 10
+    - os: linux
+      python: 3.7
+      addons:
+        apt:
+          packages:
+            - g++-6
+            - gcc-6
       env:
-        - CUDA=10.1.105-1
-        - CUDA_SHORT=10.1
-        - UBUNTU_VERSION=ubuntu1804
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
       dist: bionic
 
 packages:
@@ -15,6 +28,8 @@ packages:
   - cmake
 
 before_install:
+
+  - sudo apt-get -y install python3.7-dev
 
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
   - sudo mkdir /usr/local/cuda
@@ -36,13 +51,14 @@ before_install:
   - cd third-party/Pangolin/
   - mkdir build
   - cd build
-  - cmake ../ -DEIGEN_INCLUDE_DIR=build/leoneed03/GDR/externals/ICPCUDA/third-party/Eigen
+  - cmake ../ -DEIGEN_INCLUDE_DIR=/home/travis/build/leoneed03/GDR/externals/ICPCUDA/third-party/Eigen
+
   - make -j12
   - cd ../../../
   - mkdir build
   - cd build/
-  - CC=/usr/bin/gcc-6
-  - CXX=/usr/bin/g++
+  - export CC=/usr/bin/gcc-6
+  - export CXX=/usr/bin/g++
   - cmake ..
   - make -j12
   - cd
