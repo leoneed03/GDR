@@ -21,13 +21,13 @@ typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorX;
 
-typedef struct transformationRtMatrix {
+struct transformationRtMatrix {
     MatrixX innerTranformationRtMatrix;
     const VertexCG& vertexFrom;
     const VertexCG& vertexTo;
     MatrixX R;
     MatrixX t;
     transformationRtMatrix(const MatrixX& newInnerEssentialMatrix, const VertexCG& newVertexFrom, const VertexCG& newVertexTo, const MatrixX& newR, const MatrixX& newT);
-} essentialMatrix;
+};
 
 #endif

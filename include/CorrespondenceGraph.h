@@ -23,7 +23,7 @@
 
 #include <opencv2/opencv.hpp>
 
-typedef struct Match {
+struct Match {
     int frameNumber;
     std::vector<std::pair<int, int>> matchNumbers;
 //    int keypointNumber;
@@ -32,14 +32,14 @@ typedef struct Match {
     Match(int newFrameNumber, const std::vector<std::pair<int, int>> &newMatchNumbers) :
             frameNumber(newFrameNumber),
             matchNumbers(newMatchNumbers) {};
-} Match;
+};
 
 
 typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorX;
 
-typedef struct CorrespondenceGraph {
+struct CorrespondenceGraph {
     CameraRGBD cameraRgbd;
     SiftModule siftModule;
     std::vector<int> originVerticesNumbers;
@@ -84,6 +84,6 @@ typedef struct CorrespondenceGraph {
     void printConnections(std::ostream &os, int space = 10);
 
     std::vector<int> bfs(int currentVertex);
-} CorrespondenceGraph;
+};
 
 #endif

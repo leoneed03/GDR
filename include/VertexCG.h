@@ -19,18 +19,18 @@
 //#include "essentialMatrix.h"
 
 
-typedef struct keypointWithDepth {
+struct keypointWithDepth {
     SiftGPU::SiftKeypoint keypoint;
     double depth;
     std::vector<float> descriptors;
     keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth, const std::vector<float>& newDescriptors);
-} keypointWithDepth;
+};
 
 
 typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 
-typedef struct VertexCG {
+struct VertexCG {
 
     int index;
     MatrixX absoluteRotationTranslation;
@@ -51,6 +51,6 @@ typedef struct VertexCG {
              const std::vector<double> &newDepths,
              const std::string &newPathRGB,
              const std::string &newPathD);
-} vertexCG;
+};
 
 #endif
