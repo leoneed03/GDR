@@ -23,7 +23,6 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${Sophus_INCLUDE_DIR})
-include_directories(${PCL_INCLUDE_DIRS})
 include_directories(${ICPCUDA})
 
 file(GLOB srcs ${ICPCUDA}/ICPOdometry.cpp ${ICPCUDA}/*.cu ${ICPCUDA}/*.h ${ICPCUDA}/*.cuh)
@@ -58,6 +57,9 @@ include_directories("siftgpu/src/SiftGPU")
 set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
 
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 #set(CMAKE_CXX_FLAGS "-O3 -msse2 -msse3 -Wall -std=c++11")
 
 add_executable(CG
@@ -71,6 +73,7 @@ add_executable(CG
 
 target_link_libraries(CG
         ${Pangolin_LIBRARIES}
+        ${Sophus_LIBRARIES}
         ${CUDA_LIBRARIES}
         ${SIFTGPU_LIBS}
         ${OpenCV_LIBS}
