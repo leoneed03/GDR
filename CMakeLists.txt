@@ -23,6 +23,7 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${Sophus_INCLUDE_DIR})
+include_directories(${PCL_INCLUDE_DIRS})
 include_directories(${ICPCUDA})
 
 file(GLOB srcs ${ICPCUDA}/ICPOdometry.cpp ${ICPCUDA}/*.cu ${ICPCUDA}/*.h ${ICPCUDA}/*.cuh)
