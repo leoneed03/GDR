@@ -19,11 +19,11 @@ void testCG() {
 
 }
 int main() {
-    std::vector<std::vector<int>> pixels;
-    for (int i = 0; i < 480; ++i) {
-        pixels.push_back({i, i, 60000});
-    }
-    pangolin::TypedImage img = LoadImage(pixels, 640, 480, 640);
+//    std::vector<std::vector<int>> pixels;
+//    for (int i = 0; i < 480; ++i) {
+//        pixels.push_back({i, i, 60000});
+//    }
+//    pangolin::TypedImage img = LoadImage(pixels, 640, 480, 640);
 
     return 0;
 }
