@@ -80,14 +80,14 @@ script:
   - ls
 
 # GTSAM
-  - cd externals/gtsam
-  - sudo mkdir build
-  - cd build
-  - sudo cmake ..
-  - sudo make install
-  - cd ..
-  - cd ..
-  - cd ..
+#  - cd externals/gtsam
+#  - sudo mkdir build
+#  - cd build
+#  - sudo cmake ..
+#  - sudo make install
+#  - cd ..
+#  - cd ..
+#  - cd ..
 
   - cd
   - cd build/leoneed03/GDR

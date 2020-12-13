@@ -10,7 +10,7 @@ set(ICPCUDA "${CMAKE_CURRENT_SOURCE_DIR}/externals/ICPCUDA")
 set(Pangolin_DIR "${ICPCUDA}/third-party/Pangolin/build/src" CACHE PATH "Pangolin build directory")
 set(Sophus_INCLUDE_DIR "${ICPCUDA}/third-party/Sophus" CACHE PATH "Sophus Include directory")
 
-find_package(GTSAM REQUIRED)
+#find_package(GTSAM REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
@@ -74,7 +74,7 @@ target_link_libraries(CG
         ${SIFTGPU_LIBS}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
-        gtsam
+#        gtsam
         )
 #
 #
