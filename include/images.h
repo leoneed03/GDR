@@ -7,6 +7,10 @@
 #include <pcl/impl/point_types.hpp>
 #include <pcl/point_cloud.h>
 
+
+#include <pangolin/image/image_io.h>
+#include <ICPOdometry.h>
+
 using PointType = pcl::PointXYZ;
 using Cloud = pcl::PointCloud<PointType>;
 using CloudConstPtr = Cloud::ConstPtr;

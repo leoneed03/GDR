@@ -100,9 +100,31 @@ void testTextReading() {
 
 }
 
-int main(int argc, char **argv) {
+void testICP() {
 
     pangolin::ManagedImage<unsigned short> firstData(640, 480);
+    pangolin::ManagedImage<unsigned short> secondData(640, 480);
+
+    pangolin::Image<unsigned short> firstRaw(firstData.w, firstData.h,
+                                             firstData.pitch,
+                                             (unsigned short *)firstData.ptr);
+    pangolin::Image<unsigned short> secondRaw(secondData.w, secondData.h,
+                                              secondData.pitch,
+                                              (unsigned short *)secondData.ptr);
+
+
+    Sophus::SE3d T_wc_prev;
+    ICPOdometry icpOdom(640, 480, 319.5, 239.5, 528, 528);
+}
+
+int main(int argc, char **argv) {
+
+
+    testICP();
+    pangolin::ManagedImage<unsigned short> firstData(640, 480);
+    Sophus::SE3d T_wc_prev;
+    ICPOdometry icpOdom(640, 480, 319.5, 239.5, 528, 528);
     CorrespondenceGraph correspondenceGraph("../data/plantSampled_20/rgb", "../data/plantSampled_20/depth", 525.0, 319.5, 525.0, 239.5);
+    std::cout << "end of the test" << std::endl;
     return 0;
 }

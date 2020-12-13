@@ -66,7 +66,7 @@ script:
   - mkdir build
   - cd build/
   - export CC=/usr/bin/gcc-6
-  - export CXX=/usr/bin/g++
+  - export CXX=/usr/bin/g++6
   - cmake ..
   - make -j12
   - cd
@@ -95,5 +95,5 @@ script:
   - mkdir build
   - cd build
   - cmake ../
-  - make
+  - make -j12
 #  - ./testSIFTGPU
