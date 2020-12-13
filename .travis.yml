@@ -84,7 +84,7 @@ script:
   - sudo mkdir build
   - cd build
   - sudo cmake ..
-  - sudo make -j12 install
+  - sudo make install
   - cd ..
   - cd ..
   - cd ..
@@ -95,5 +95,5 @@ script:
   - mkdir build
   - cd build
   - cmake ../
-  - make -j12
+  - make
 #  - ./testSIFTGPU
