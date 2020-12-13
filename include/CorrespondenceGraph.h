@@ -8,7 +8,6 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
-#include <pcl/registration/incremental_registration.h>
 
 #include <queue>
 

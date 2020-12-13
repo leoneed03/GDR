@@ -823,46 +823,47 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             //        exit(3);/////////////////////EXIT
 
             //////////////////////BLOCK FOR NL ICP
-            {
-                double dist = 0.05;
-                double rans = 0.05;
-
-                int iter = 10;
-                bool nonLinear = false;
-                pcl::IterativeClosestPoint<PointType, PointType> icp;
-                icp.setMaximumIterations(iter);
-                icp.setMaxCorrespondenceDistance(dist);
-                icp.setRANSACOutlierRejectionThreshold(rans);
-                icp.setInputSource(cloudToBeTransformed);
-                icp.setInputTarget(cloudDest);
-//                icp.align(*cloudDest);
-
-//                typedef typename pcl::Registration<PointType, PointType, Scalar>::Matrix4 Matrix4;
-
-                typedef Eigen::Matrix<float, 4, 4> Matrix4;
-                Matrix4 guess;
-
-                for (int i = 0; i < 4; ++i) {
-                    for (int j = 0; j < 4; ++j) {
-                        guess.col(i)[j] = cR_t_umeyama.col(i)[j];
-                    }
-                }
-                icp.align(*cloudToBeTransformed, guess);
+//
+//            {
+//                double dist = 0.05;
+//                double rans = 0.05;
+//
+//                int iter = 10;
+//                bool nonLinear = false;
+//                pcl::IterativeClosestPoint<PointType, PointType> icp;
+//                icp.setMaximumIterations(iter);
+//                icp.setMaxCorrespondenceDistance(dist);
+//                icp.setRANSACOutlierRejectionThreshold(rans);
+//                icp.setInputSource(cloudToBeTransformed);
+//                icp.setInputTarget(cloudDest);
+////                icp.align(*cloudDest);
+//
+////                typedef typename pcl::Registration<PointType, PointType, Scalar>::Matrix4 Matrix4;
+//
+//                typedef Eigen::Matrix<float, 4, 4> Matrix4;
+//                Matrix4 guess;
+//
+//                for (int i = 0; i < 4; ++i) {
+//                    for (int j = 0; j < 4; ++j) {
+//                        guess.col(i)[j] = cR_t_umeyama.col(i)[j];
+//                    }
+//                }
 //                icp.align(*cloudToBeTransformed, guess);
-
-//                icp.align(cloudToBeTransformed, guess);
-
-                if (icp.hasConverged()) {
-                    std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
-                    std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
-                    auto transformation_matrix = icp.getFinalTransformation().cast<double>();
-                    std::cout << transformation_matrix << std::endl;
-                } else {
-                    PCL_ERROR ("\nICP has not converged.\n");
-                    exit(-1);
-                }
-                std::cout << "before " << std::endl;
-            }
+////                icp.align(*cloudToBeTransformed, guess);
+//
+////                icp.align(cloudToBeTransformed, guess);
+//
+//                if (icp.hasConverged()) {
+//                    std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
+//                    std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
+//                    auto transformation_matrix = icp.getFinalTransformation().cast<double>();
+//                    std::cout << transformation_matrix << std::endl;
+//                } else {
+//                    PCL_ERROR ("\nICP has not converged.\n");
+//                    exit(-1);
+//                }
+//                std::cout << "before " << std::endl;
+//            }
         }
 
 
