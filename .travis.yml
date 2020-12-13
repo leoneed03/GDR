@@ -84,7 +84,7 @@ script:
   - sudo mkdir build
   - cd build
   - sudo cmake ..
-  - sudo make install
+  - sudo make -j12 install
   - cd ..
   - cd ..
   - cd ..
