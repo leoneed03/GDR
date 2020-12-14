@@ -8,4 +8,5 @@ typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 
 MatrixX getSomeMatrix(int h, int w);
+Eigen::Matrix3d getRotationMatrixDouble(const MatrixX& m);
 #endif

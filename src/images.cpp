@@ -73,7 +73,9 @@ Cloud *parseDepthImageNoColour(const std::string &pathToDimage, const CameraRGBD
     std::cout << "size inside " << cloud1->size() << std::endl;
     return cloud1;
 }
+
 typedef pcl::PointXYZRGBA PointT;
+
 void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRgbd) {
 
     cv::Mat depthImage = cv::imread(pathToDimage, cv::IMREAD_ANYDEPTH);
@@ -159,6 +161,83 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
 
     }
 }
+
+//// pixels -- std::vector of <x, y, Intensity> where -height / 2 <= y <= height / 2, -width/2 <= x <= width/2, 0 <= Intensity <= 65536
+
+
+
+//// pixels -- std::vector of <x, y, Intensity> where 0 <= y <= height, 0 <= x <= width, 0 <= Intensity <= 65536
+
+
+pangolin::Image<unsigned char> LoadImage(
+        const std::vector<std::vector<int>> &pixels,
+//        pangolin::PixelFormat& raw_fmt,
+        size_t raw_width, size_t raw_height, size_t raw_pitch) {
+
+    pangolin::PixelFormat raw_fmt = pangolin::PixelFormatFromString("GRAY16LE");
+    unsigned char* a;
+    pangolin::Image<unsigned char> img(raw_width, raw_height, raw_pitch, a);
+
+
+    // Read from file, row at a time.
+//    std::ifstream bFile(filename.c_str(), std::ios::in | std::ios::binary);
+
+    int p = 0;
+    for (size_t r = 0; r < img.h; ++r) {
+//        bFile.read((char *) img.ptr + r * img.pitch, img.pitch);
+        for (size_t c = 0; c < img.w; ++c) {
+            int x, y, d;
+            *(img.ptr + r * img.pitch + c) = 0;
+            if (p < pixels.size()) {
+                auto &pixel = pixels[p];
+                x = pixel[0];
+                y = pixel[1];
+                d = pixel[2];
+                if (x == c && y == r) {
+                    *(img.ptr + r * img.pitch + c) = d;
+                    ++p;
+                }
+            }
+        }
+    }
+    return img;
+}
+pangolin::TypedImage LoadImageT(
+        const std::vector<std::vector<int>> &pixels,
+//        pangolin::PixelFormat& raw_fmt,
+        size_t raw_width, size_t raw_height, size_t raw_pitch) {
+
+    std::cout << "start loading" << std::endl;
+    pangolin::PixelFormat raw_fmt = pangolin::PixelFormatFromString("GRAY16LE");
+    pangolin::TypedImage img(raw_width, raw_height, raw_fmt, raw_pitch);
+
+
+    // Read from file, row at a time.
+//    std::ifstream bFile(filename.c_str(), std::ios::in | std::ios::binary);
+
+    int p = 0;
+    for (size_t r = 0; r < img.h; ++r) {
+//        bFile.read((char *) img.ptr + r * img.pitch, img.pitch);
+
+        for (size_t c = 0; c < img.w; ++c) {
+            std::cout << "x = " << c << " y = " << r << std::endl;
+            *(img.ptr + r * img.w + c) = 0;
+        }
+    }
+    for (const auto& pixel: pixels) {
+        int x, y, d;
+        x = pixel[0];
+        y = pixel[1];
+        d = pixel[2];
+        *(img.ptr + y * img.w + x + x) = d;
+
+        *(img.ptr + y * img.w + x + x + 1) = d;
+    }
+    return img;
+}
+
+
+
 
 
 

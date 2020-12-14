@@ -70,6 +70,9 @@ add_executable(CG
         testICPCUDA.cpp
         src/files.cpp src/features.cpp include/features.h src/VertexCG.cpp include/VertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h src/transformationRt.cpp include/transformationRt.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h src/ICP.cpp include/ICP.h
         )
+add_executable(transformGroundTruth test/transformGroundTruth.cpp src/groundTruthTransformer.cpp src/files.cpp src/quaternions.cpp src/util.cpp)
+
+target_link_libraries(transformGroundTruth ${Boost_LIBRARIES})
 
 target_link_libraries(CG
         ${Pangolin_LIBRARIES}

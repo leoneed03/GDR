@@ -43,7 +43,7 @@ struct CorrespondenceGraph {
     SiftModule siftModule;
     std::vector<int> originVerticesNumbers;
     std::vector<VertexCG> verticesOfCorrespondence;
-    int maxVertexDegree = 20;
+    int maxVertexDegree = 80;
     int numIterations = 50;
     std::vector<std::vector<Match>> matches;
     std::vector<std::vector<transformationRtMatrix>> tranformationRtMatrices;
@@ -70,7 +70,7 @@ struct CorrespondenceGraph {
     void decreaseDensity();
 
     MatrixX getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
-                                               double inlierCoeff = 0.75);
+                                               double inlierCoeff = 0.6);
 
     cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
 

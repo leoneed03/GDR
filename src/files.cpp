@@ -24,8 +24,9 @@ std::vector<std::string> readRgbData(std::string pathToRGB) {
     }
     std::sort(RgbImages.begin(), RgbImages.end());
     for (int i = 0; i < RgbImages.size(); ++i) {
-        std::cout << i + 1 << "::" << RgbImages[i] << std::endl;
+        std::cout << i << ":::" << RgbImages[i] << std::endl;
     }
+//    exit(0);
     return RgbImages;
 }
 

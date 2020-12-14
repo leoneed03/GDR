@@ -9,6 +9,7 @@
 #define DEBUG_PRINT 1
 #define SHOW_PCL_CLOUDS 0
 #define SHOW_DEPTH_IMAGES_WITH_KEYPOINTS 0
+#define PRINT_RANSAC 1
 
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
@@ -383,6 +384,18 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
             std::cout << frameFrom.index << " -> " << frameTo.index << std::endl;
 
             if (success) {
+                int spaceIO = 18;
+
+                Eigen::Matrix3d m3d = getRotationMatrixDouble(cameraMotion.block(0, 0, 3, 3));
+                Eigen::Quaterniond qRelatived(m3d);
+                MatrixX tRelative = cameraMotion.block(0, 3, 3, 1);
+                for (int indexT = 0; indexT < 3; ++indexT) {
+                    std::cout << std::setw(2 * spaceIO) << tRelative.col(0)[indexT];
+                }
+                std::cout << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y() << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w() << std::endl;
+
+
+
                 tranformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo, R, t));
                 tranformationRtMatrices[frameTo.index].push_back(transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom, cameraMotion.inverse().block(0, 0, 3, 3), cameraMotion.inverse().block(0, 3, 3, 1)));
             } else {
@@ -544,7 +557,7 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
             triple = p;
         }
     }
-    if (DEBUG_PRINT) {
+    if (PRINT_RANSAC) {
 //        std::cout << random() << std::endl;
         std::cout << "cand \n" << cR_t_umeyama_3_points_cand << std::endl;
         std::cout << "RANSAC found on attempt " << attempt << " error on last \'inlier\' " << mError << std::endl;
@@ -988,7 +1001,9 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             sum_dif += e;
             sum_sq += e * e;
         }
-        if (numOfInliers < minNumberOfInliersAfterRobust) {
+
+//        int minBoundInliers = ;
+        if (numOfInliers < aprNumInliers/*minNumberOfInliersAfterRobust*/) {
             success = false;
             return cR_t_umeyama;
         }
@@ -1041,8 +1056,12 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     std::vector<std::string> imagesRgb = readRgbData(pathToImageDirectoryRGB);
     std::vector<std::string> imagesD = readRgbData(pathToImageDirectoryD);
 
+    std::sort(imagesRgb.begin(), imagesRgb.end());
+    std::sort(imagesD.begin(), imagesD.end());
+
     std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
     assert(imagesRgb.size() == imagesD.size());
+
     tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
@@ -1064,6 +1083,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
             getKeypointsDescriptorsAllImages(siftModule.sift, pathToImageDirectoryRGB);
     c("sift done");
+
 //    int incremental = 0;
     verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
     for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
@@ -1379,7 +1399,7 @@ std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
             int to = tranformationRtMatrices[vertex][i].vertexTo.index;
             if (!visited[to]) {
                 queueVertices.push(to);
-//                visited[to] = true;
+                visited[to] = true;
                 assert(preds[to] == -1);
                 preds[to] = vertex;
 
