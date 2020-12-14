@@ -1065,9 +1065,11 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
-//    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
-    char *myargv[4] = {"-fo", "-1", "-v", "1"};
+    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
+//    char *myargv[4] = {"-fo", "-1", "-v", "1"};
+    std::cout << "Parse params for sift" << std::endl;
     siftModule.sift.ParseParam(4, myargv);
+    std::cout << "Create Context GL" << std::endl;
     int support = siftModule.sift.CreateContextGL();
     std::cout << "Checking" << std::endl;
     if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
