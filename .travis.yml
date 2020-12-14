@@ -20,6 +20,10 @@ packages:
 
 before_install:
 
+  - sudo add-apt-repository -y ppa:borglab/gtsam-develop
+  - sudo apt update
+  - sudo apt install -y libgtsam-dev libgtsam-unstable-dev
+
   - sudo apt-get -y install python3.7-dev
 
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
@@ -78,14 +82,14 @@ script:
   - ls
 
 # GTSAM
-  - cd externals/gtsam
-  - sudo mkdir build
-  - cd build
-  - sudo cmake ..
-  - sudo make install
-  - cd ..
-  - cd ..
-  - cd ..
+#  - cd externals/gtsam
+#  - sudo mkdir build
+#  - cd build
+#  - sudo cmake ..
+#  - sudo make install
+#  - cd ..
+#  - cd ..
+#  - cd ..
 
   - cd
   - cd build/leoneed03/GDR
