@@ -37,6 +37,7 @@ VertexCG::VertexCG(int newIndex,
                                                   pathToRGBimage(newPathRGB),
                                                   pathToDimage(newPathD) {
     int transformationMatrixSize = 4;
+    absoluteRotationTranslation.setIdentity();
     absoluteRotationTranslation = getSomeMatrix(transformationMatrixSize, transformationMatrixSize);
     for (int i = 0; i < transformationMatrixSize; ++i) {
         for (int j = 0; j < transformationMatrixSize; ++j) {
@@ -46,5 +47,6 @@ VertexCG::VertexCG(int newIndex,
     for (int j = 0; j < transformationMatrixSize; ++j) {
         absoluteRotationTranslation.col(j)[j] = 1;
     }
+
     absoluteRotationTranslation.row(transformationMatrixSize - 1)[transformationMatrixSize - 1] = 1;
 }

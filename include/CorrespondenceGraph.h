@@ -44,7 +44,6 @@ typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorX;
 struct CorrespondenceGraph {
     CameraRGBD cameraRgbd;
     SiftModule siftModule;
-    std::vector<int> originVerticesNumbers;
     std::vector<VertexCG> verticesOfCorrespondence;
     int maxVertexDegree = 20;
     int numIterations = 50;
