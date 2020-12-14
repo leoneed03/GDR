@@ -63,7 +63,7 @@ script:
   - cd third-party/Pangolin/
   - mkdir build
   - cd build
-  - EigenAbsolutePath=${readlink -f ../../Eigen}
+  - EigenAbsolutePath=$(readlink -f ../../Eigen)
   - echo $EigenAbsolutePath
   - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
   - make -j12
