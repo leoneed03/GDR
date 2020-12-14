@@ -1,4 +1,8 @@
-#pragma once
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #ifndef TEST_SIFTGPU_UTIL_H
 #define TEST_SIFTGPU_UTIL_H
 
@@ -8,4 +12,5 @@ typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 
 MatrixX getSomeMatrix(int h, int w);
+
 #endif

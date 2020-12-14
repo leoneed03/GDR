@@ -1,4 +1,8 @@
-#pragma once
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #ifndef TEST_SIFTGPU_IMAGES_H
 #define TEST_SIFTGPU_IMAGES_H
 
@@ -12,8 +16,8 @@ using Cloud = pcl::PointCloud<PointType>;
 using CloudConstPtr = Cloud::ConstPtr;
 using CloudPtr = Cloud::Ptr;
 
-void parseDepthImage(const std::string& pathToDepthImage, const CameraRGBD& camera);
+void parseDepthImage(const std::string &pathToDepthImage, const CameraRGBD &camera);
 
-Cloud* parseDepthImageNoColour(const std::string& pathToDepthImage, const CameraRGBD& camera);
+Cloud *parseDepthImageNoColour(const std::string &pathToDepthImage, const CameraRGBD &camera);
 
 #endif

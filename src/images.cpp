@@ -1,3 +1,8 @@
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include <pcl/visualization/cloud_viewer.h>
 #include "../include/images.h"
 
@@ -73,7 +78,9 @@ Cloud *parseDepthImageNoColour(const std::string &pathToDimage, const CameraRGBD
     std::cout << "size inside " << cloud1->size() << std::endl;
     return cloud1;
 }
+
 typedef pcl::PointXYZRGBA PointT;
+
 void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRgbd) {
 
     cv::Mat depthImage = cv::imread(pathToDimage, cv::IMREAD_ANYDEPTH);
@@ -159,6 +166,3 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
 
     }
 }
-
-
-

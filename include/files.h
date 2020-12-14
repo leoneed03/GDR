@@ -1,4 +1,7 @@
-#pragma once
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 
 #ifndef TEST_SIFTGPU_FILES_H
 #define TEST_SIFTGPU_FILES_H
@@ -12,5 +15,7 @@
 #include "assert.h"
 
 std::vector<std::string> readRgbData(std::string pathToRGB);
-std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string& pathToRotationsFile);
+
+std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &pathToRotationsFile);
+
 #endif

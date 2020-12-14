@@ -1,3 +1,8 @@
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "../include/CorrespondenceGraph.h"
 #include "../include/groundTruthTransformer.h"
 #include <algorithm>
@@ -6,6 +11,7 @@
 
 #include <pcl/visualization/cloud_viewer.h>
 #include <random>
+
 #define DEBUG_PRINT 1
 #define SHOW_PCL_CLOUDS 0
 #define SHOW_DEPTH_IMAGES_WITH_KEYPOINTS 0
@@ -54,7 +60,7 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
     }
 
     if (max_tries == 0)
-        eigen_assert(false && "randMatrixUnitary: Could not construct unitary matrix!");
+            eigen_assert(false && "randMatrixUnitary: Could not construct unitary matrix!");
 
     return Q;
 }
@@ -384,9 +390,13 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
 
             if (success) {
                 tranformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo, R, t));
-                tranformationRtMatrices[frameTo.index].push_back(transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom, cameraMotion.inverse().block(0, 0, 3, 3), cameraMotion.inverse().block(0, 3, 3, 1)));
+                tranformationRtMatrices[frameTo.index].push_back(
+                        transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom,
+                                               cameraMotion.inverse().block(0, 0, 3, 3),
+                                               cameraMotion.inverse().block(0, 3, 3, 1)));
             } else {
-                std::cout << "/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////\n NOT ENOUGH MATCHES \n/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////////\n";
+                std::cout
+                        << "/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////\n NOT ENOUGH MATCHES \n/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////////\n";
             }
         }
     }
@@ -417,7 +427,10 @@ int CorrespondenceGraph::findRotationTranslation(int vertexFrom, int vertexInLis
 }
 
 
-MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX& toBeTransormedPoints, const MatrixX& destinationPoints, const int numIterations, const int numOfPoints, double inlierCoeff) {
+MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints,
+                                                                    const MatrixX &destinationPoints,
+                                                                    const int numIterations, const int numOfPoints,
+                                                                    double inlierCoeff) {
     int dim = 3;
     int top = 10;
     if (inlierCoeff > 1) {
@@ -472,21 +485,23 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
 
         MatrixX cR_t_umeyama_3_points = umeyama(toBeTransformed3Points.block(0, 0, dim, dim),
                                                 dest3Points.block(0, 0, dim, dim));
-        std::sort(pointsPositions.begin(), pointsPositions.end(), [toBeTransormedPoints, destinationPoints, dim, cR_t_umeyama_3_points](const auto& lhs, const auto& rhs){
-            auto& toBeTransformedLeft = toBeTransormedPoints.col(lhs);
-            auto& toBeTransformedRight = toBeTransormedPoints.col(rhs);
-            auto& destinationLeft = destinationPoints.col(lhs);
-            auto& destinationRight = destinationPoints.col(rhs);
-            double dist1 = 0;
-            double dist2 = 0;
-            auto& destLeft = cR_t_umeyama_3_points * toBeTransformedLeft;
-            auto& destRight = cR_t_umeyama_3_points * toBeTransformedRight;
-            for (int pp = 0; pp < dim; ++pp) {
-                dist1 += pow(destLeft[pp] - destinationLeft[pp], 2);
-                dist2 += pow(destRight[pp] - destinationRight[pp], 2);
-            }
-            return dist1 < dist2;
-        });
+        std::sort(pointsPositions.begin(), pointsPositions.end(),
+                  [toBeTransormedPoints, destinationPoints, dim, cR_t_umeyama_3_points](const auto &lhs,
+                                                                                        const auto &rhs) {
+                      auto &toBeTransformedLeft = toBeTransormedPoints.col(lhs);
+                      auto &toBeTransformedRight = toBeTransormedPoints.col(rhs);
+                      auto &destinationLeft = destinationPoints.col(lhs);
+                      auto &destinationRight = destinationPoints.col(rhs);
+                      double dist1 = 0;
+                      double dist2 = 0;
+                      auto &destLeft = cR_t_umeyama_3_points * toBeTransformedLeft;
+                      auto &destRight = cR_t_umeyama_3_points * toBeTransformedRight;
+                      for (int pp = 0; pp < dim; ++pp) {
+                          dist1 += pow(destLeft[pp] - destinationLeft[pp], 2);
+                          dist2 += pow(destRight[pp] - destinationRight[pp], 2);
+                      }
+                      return dist1 < dist2;
+                  });
 //        for (int ii = 0; ii < top; ++ii) {
 //            std::cout << std::setw(6) << pointsPositions[ii];
 //        }
@@ -504,8 +519,8 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
             assert(destInlierPoints.col(currentIndex)[2] == destinationPoints.col(index)[2]);
         }
 
-        const auto& toBeTransformedColumn = toBeTransformedInlierPoints.col(std::max(numInliers - 1, 0));
-        const auto& destColumn = destInlierPoints.col(std::max(numInliers - 1, 0));
+        const auto &toBeTransformedColumn = toBeTransformedInlierPoints.col(std::max(numInliers - 1, 0));
+        const auto &destColumn = destInlierPoints.col(std::max(numInliers - 1, 0));
         auto dest = cR_t_umeyama_3_points * toBeTransformedColumn;
         double normError = 0;
         for (int pp = 0; pp < dim; ++pp) {
@@ -559,12 +574,13 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
     }
     return bestMath;
 }
+
 void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
-    auto& image = verticesOfCorrespondence[vertexFrom];
+    auto &image = verticesOfCorrespondence[vertexFrom];
     cv::Mat depthImage = cv::imread(image.pathToDimage, cv::IMREAD_ANYDEPTH);
     std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
 
-    cv::Mat imageDepth1 ( 480, 640, CV_16UC1 );
+    cv::Mat imageDepth1(480, 640, CV_16UC1);
     for (uint x = 0; x < depthImage.cols; ++x) {
 //            std::cout << std::setw(7) << x << ":";
 //            myfile << std::setw(7) << x << ":";
@@ -587,18 +603,20 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
         assert(abs((image.depths[i]) - depthImage.at<ushort>(y, x) / 5000.0) < std::numeric_limits<float>::epsilon());
         imageDepth1.at<ushort>(y, x) = std::numeric_limits<ushort>::max();
     }
-        cv::imshow("Made Depths ?", imageDepth1);
-        cv::waitKey(0);
+    cv::imshow("Made Depths ?", imageDepth1);
+    cv::waitKey(0);
 //        cv::imshow("Known Depths ?", depthImageS);
 //        cv::waitKey(0);
 //        cv::imshow("Known Depths low", depthImageLow);
 //        cv::waitKey(0);
-        cv::imshow("Known Depths high", depthImage);
-        cv::waitKey(0);
-        cv::destroyAllWindows();
+    cv::imshow("Known Depths high", depthImage);
+    cv::waitKey(0);
+    cv::destroyAllWindows();
 }
+
 MatrixX
-CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool& success, double inlierCoeff) {
+CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT,
+                                                        bool &success, double inlierCoeff) {
     MatrixX cR_t_umeyama;
     success = true;
     if (inlierCoeff >= 1.0) {
@@ -694,7 +712,6 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         }
 
 
-
         std::cout << "Points are min" << std::endl;
         std::cout << mx << " " << my << " " << mz << std::endl;
 
@@ -706,7 +723,8 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
 
         MatrixX cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
                                          originPoints.block(0, 0, dim, num_elements));
-        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints, originPoints, numIterations, num_elements,
+        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints, originPoints,
+                                                                             numIterations, num_elements,
                                                                              inlierCoeff);
         cR_t_umeyama = cR_t_umeyama_RANSAC;
         if (DEBUG_PRINT) {
@@ -854,7 +872,8 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
 
                 if (icp.hasConverged()) {
                     std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
-                    std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
+                    std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in "
+                              << icp.convergence_criteria_->getAbsoluteMSE() << std::endl;
                     auto transformation_matrix = icp.getFinalTransformation().cast<double>();
                     std::cout << transformation_matrix << std::endl;
                 } else {
@@ -864,7 +883,6 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
                 std::cout << "before " << std::endl;
             }
         }
-
 
 
         std::cout << "after " << std::endl;
@@ -979,7 +997,7 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         int numOfInliers = 0;
         int aprNumInliers = (int) (differences.size() * inlierCoeff);
         for (int i = 0; i < aprNumInliers; ++i) {
-            const auto& e = differences[i];
+            const auto &e = differences[i];
             if (sqrt(e) < neighbourhoodRadius) {
                 ++numOfInliers;
             }
@@ -995,7 +1013,8 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         sum_sq /= aprNumInliers;
 //        std::string redCode("\033[0;31m");
 //        std::string resetCode("\033[0m");
-        std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D=" << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
+        std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D="
+                  << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
         std::cout << std::endl << redCode << "Inliers " << numOfInliers << resetCode << std::endl;
 
 
@@ -1087,7 +1106,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         int mDepth1 = 0, mDepthLow = 0;
         std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
 
-        cv::Mat imageDepth1 ( 480, 640, CV_16UC1 );
+        cv::Mat imageDepth1(480, 640, CV_16UC1);
         for (uint x = 0; x < depthImage.cols; ++x) {
 //            std::cout << std::setw(7) << x << ":";
 //            myfile << std::setw(7) << x << ":";
@@ -1195,11 +1214,13 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                     continue;
                 }
                 std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
-                std::string edgeId = "EDGE_SE3:QUAT " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " " + std::to_string(i) + " ";
+                std::string edgeId =
+                        "EDGE_SE3:QUAT " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " " +
+                        std::to_string(i) + " ";
                 auto translationVector = tranformationRtMatrices[i][j].t;
 //                std::string edgeWithTranslation = edgeId + std::to_string(translationVector.col(0)[0]) + " "  + std::to_string(translationVector.col(0)[1]) + " " + std::to_string(translationVector.col(0)[2]) + " ";
                 std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
-                const auto& R = tranformationRtMatrices[i][j].R;
+                const auto &R = tranformationRtMatrices[i][j].R;
 //                MatrixX R = randMatrixSpecialUnitary<Scalar>(3);
 
                 Eigen::Matrix3f Rf;
@@ -1209,10 +1230,13 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                 Eigen::Quaternionf qR(Rf);
                 int space = 12;
                 std::vector<double> vectorDataRotations = {qR.x(), qR.y(), qR.z(), qR.w()};
-                std::string edgeTotal = edgeWithTranslation + std::to_string(qR.x()) + " " + std::to_string(qR.y()) + " " + std::to_string(qR.z()) + " "
-                + std::to_string(qR.w()) + noise + "\n";
+                std::string edgeTotal =
+                        edgeWithTranslation + std::to_string(qR.x()) + " " + std::to_string(qR.y()) + " " +
+                        std::to_string(qR.z()) + " "
+                        + std::to_string(qR.w()) + noise + "\n";
                 if (strings.find(edgeTotal) != strings.end()) {
-                    std::cerr << "Duplicate " << i << " " << j << " j as " << tranformationRtMatrices[i][j].vertexFrom.index << std::endl;
+                    std::cerr << "Duplicate " << i << " " << j << " j as "
+                              << tranformationRtMatrices[i][j].vertexFrom.index << std::endl;
                     std::cout << "ERROR";
                     exit(2);
                 }
@@ -1326,7 +1350,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 };
 
 
-void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
+void CorrespondenceGraph::printConnections(std::ostream &os, int space) {
 
 //    os << "======================POSES BEFORE=======================\n" << std::endl;
 //    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
@@ -1342,7 +1366,7 @@ void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
         counter += tranformationRtMatrices[i].size();
         counterSquared += tranformationRtMatrices[i].size() * tranformationRtMatrices[i].size();
         for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
-            const transformationRtMatrix& e = tranformationRtMatrices[i][j];
+            const transformationRtMatrix &e = tranformationRtMatrices[i][j];
             assert(i == e.vertexFrom.index);
             os << std::setw(space / 2) << e.vertexTo.index << ",";
         }
@@ -1350,7 +1374,8 @@ void CorrespondenceGraph::printConnections(std::ostream& os, int space) {
     }
     os << "average number of edges " << counter / tranformationRtMatrices.size() << std::endl;
 
-    os << "sq D " << sqrt(counterSquared * 1.0 / tranformationRtMatrices.size() - pow(counter * 1.0 / tranformationRtMatrices.size(), 2)) << std::endl;
+    os << "sq D " << sqrt(counterSquared * 1.0 / tranformationRtMatrices.size() -
+                          pow(counter * 1.0 / tranformationRtMatrices.size(), 2)) << std::endl;
     os << "======================NOW 4*4 Matrices=======================\n" << std::endl;
 
     os << "======================++++++++++++++++=======================\n" << std::endl;
@@ -1384,15 +1409,15 @@ std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
 
 
                 ///// get absolute Rotation (R) and Translation (t) with given predecessor Vertex and Relative R & t
-                const MatrixX& predAbsoluteRt = verticesOfCorrespondence[vertex].absoluteRotationTranslation;
+                const MatrixX &predAbsoluteRt = verticesOfCorrespondence[vertex].absoluteRotationTranslation;
                 MatrixX predR = predAbsoluteRt.block(0, 0, 3, 3);
                 MatrixX predT = predAbsoluteRt.block(0, 3, 3, 1);
 
-                const MatrixX& relativeRt = tranformationRtMatrices[vertex][i].innerTranformationRtMatrix;
+                const MatrixX &relativeRt = tranformationRtMatrices[vertex][i].innerTranformationRtMatrix;
                 MatrixX relR = relativeRt.block(0, 0, 3, 3);
                 MatrixX relT = relativeRt.block(0, 3, 3, 1);
 
-                MatrixX& newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
+                MatrixX &newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
                 MatrixX newAbsoluteR = newAbsoluteRt.block(0, 0, 3, 3);
                 MatrixX newAbsoluteT = predT;
 
@@ -1408,7 +1433,4 @@ std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
         }
     }
     return preds;
-
-
-
 }

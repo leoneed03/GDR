@@ -1,3 +1,8 @@
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "../include/files.h"
 #include <algorithm>
 #include <fstream>
@@ -62,4 +67,3 @@ std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &p
     }
     return quaternions;
 }
-

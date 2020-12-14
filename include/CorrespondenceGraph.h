@@ -1,4 +1,7 @@
-#pragma once
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 #ifndef TEST_SIFTGPU_CG_H
 #define TEST_SIFTGPU_CG_H
 
@@ -70,15 +73,17 @@ struct CorrespondenceGraph {
 
     void decreaseDensity();
 
-    MatrixX getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
-                                               double inlierCoeff = 0.75);
+    MatrixX
+    getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
+                                       double inlierCoeff = 0.75);
 
     cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
 
     void showKeypointsOnDephtImage(int vertexFrom);
 
     MatrixX
-    getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints, const int numIterations,
+    getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints,
+                                           const int numIterations,
                                            const int numOfElements, double inlierCoeff);
 
     void printConnections(std::ostream &os, int space = 10);

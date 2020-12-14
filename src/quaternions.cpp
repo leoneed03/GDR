@@ -1,3 +1,8 @@
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "../include/quaternions.h"
 
 #include <limits>
@@ -22,10 +27,11 @@ MatrixX copyMatrix(Eigen::Quaterniond &quat) {
     }
     return result;
 }
-std::vector<MatrixX> getRotationsFromQuaternionVector(const std::vector<std::vector<double>>& quats) {
+
+std::vector<MatrixX> getRotationsFromQuaternionVector(const std::vector<std::vector<double>> &quats) {
     std::vector<MatrixX> resultMatrices;
     int count0 = 0;
-    for (const auto& quat: quats) {
+    for (const auto &quat: quats) {
 //        std::cout << "processing quaternion " << count0 << std::endl;
         ++count0;
         Eigen::Quaterniond quatd(quat.data());

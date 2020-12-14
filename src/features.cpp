@@ -1,3 +1,8 @@
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "../include/features.h"
 
 std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
@@ -88,7 +93,7 @@ getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
     matcher->SetDescriptors(1, num2, &descriptors2[0]); //image 2
 
 
-    std::vector<std::pair<int,int>> matchingKeypoints;
+    std::vector<std::pair<int, int>> matchingKeypoints;
 
 //    std::unique_ptr<int*> bufferPtr(new int[num1][2]);
 //    std::vector<int*> matchBuff(num1, int[2] {}/*std::vector<int>(2)*/);
@@ -106,4 +111,3 @@ getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
 
     return matchingKeypoints;
 }
-

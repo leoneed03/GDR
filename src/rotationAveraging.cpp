@@ -1,3 +1,8 @@
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "../include/rotationAveraging.h"
 #include <gtsam/base/timing.h>
 #include <gtsam/sfm/ShonanAveraging.h>
@@ -45,5 +50,4 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
     std::cout << "Writing result to " << outputFile << endl;
     writeG2o(NonlinearFactorGraph(), poses, outputFile);
     return 0;
-
 }

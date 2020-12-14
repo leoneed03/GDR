@@ -1,4 +1,7 @@
-#pragma once
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 
 #ifndef TEST_SIFTGPU_VERTEXCG_H
 #define TEST_SIFTGPU_VERTEXCG_H
@@ -23,7 +26,8 @@ struct keypointWithDepth {
     SiftGPU::SiftKeypoint keypoint;
     double depth;
     std::vector<float> descriptors;
-    keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth, const std::vector<float>& newDescriptors);
+
+    keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth, const std::vector<float> &newDescriptors);
 };
 
 
@@ -43,7 +47,8 @@ struct VertexCG {
     int heightMirrorParameter = 480;
     int widthMirrorParameter = 640;
 
-    void setRotation(const MatrixX& rotation);
+    void setRotation(const MatrixX &rotation);
+
     VertexCG(int newIndex,
              const std::vector<keypointWithDepth> &newKeypointsWithDepths,
              const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,

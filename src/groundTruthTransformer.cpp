@@ -1,3 +1,8 @@
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "../include/groundTruthTransformer.h"
 #include <fstream>
 #include <vector>
@@ -294,7 +299,8 @@ void GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &path
 }
 
 void
-GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet, const std::string NewName = "subset") {
+GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
+                    const std::string NewName = "subset") {
 //    makeRotationsRelativeAndExtractImages("/home/leoneed/Desktop/coke_dataset/groundtruth.txt",
 //                                          "/home/leoneed/Desktop/coke_dataset/rgb",
 //                                          "/home/leoneed/Desktop/coke_dataset/depth",
