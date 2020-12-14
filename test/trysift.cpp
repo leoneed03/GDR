@@ -1,3 +1,7 @@
+//
+// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
 #include <SiftGPU.h>
 #include <iostream>
 #include <vector>
@@ -40,8 +44,9 @@ int trysift() {
     }
 
     for (int i = 0; i < keys.size(); ++i) {
-        auto& key = keys[i];
-        std::cout << "keypoint number " << std::setw(4) << i << " (x::y) = " << std::setw(8) << key.x << "::" << std::setw(8) << key.y << std::endl;
+        auto &key = keys[i];
+        std::cout << "keypoint number " << std::setw(4) << i << " (x::y) = " << std::setw(8) << key.x << "::"
+                  << std::setw(8) << key.y << std::endl;
         auto &pixel = image.at<cv::Vec3b>((int) key.y, (int) key.x);
         pixel[0] = 255;
         pixel[1] = 255;
@@ -54,7 +59,7 @@ int trysift() {
     return 0;
 }
 
-void getMatch(const std::string& path1, const std::string& path2) {
+void getMatch(const std::string &path1, const std::string &path2) {
     SiftGPU sift;
     char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
 //    char *myargv[4] = {"-fo", "-1", "-v", "1"};
@@ -72,6 +77,7 @@ void getMatch(const std::string& path1, const std::string& path2) {
     sift.GetFeatureVector(&keys[0], &descriptors[0]);
 
 }
+
 int main() {
     return trysift();
 }
