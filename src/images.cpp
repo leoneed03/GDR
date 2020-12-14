@@ -43,7 +43,6 @@ Cloud *parseDepthImageNoColour(const std::string &pathToDimage, const CameraRGBD
             points.push_back({x1, y1, z1});
 
         }
-//            std::cout << std::endl;
     }
     if (true) {
 
@@ -54,26 +53,11 @@ Cloud *parseDepthImageNoColour(const std::string &pathToDimage, const CameraRGBD
         cloud1->points.resize(cloud1->width * cloud1->height);
 
         for (size_t i = 0; i < num_elements; ++i) {
-//            int r = 10;
-//            int g = 10;
-//            int b = 100;
-//            int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-//                           static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
             cloud1->points[i].x = points[i][0];
             cloud1->points[i].y = points[i][1];
             cloud1->points[i].z = points[i][2];
-//            cloud1->points[i].rgb = rgb;
         }
     }
-//
-//        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-//        pcl::PointCloud<pcl::PointXYZ>::Ptr ptrCloud(&cloud1);
-//        viewer.showCloud(ptrCloud);
-//
-//
-//        while (!viewer.wasStopped()) {
-//        }
-////
     assert(cloud1->width > 0);
     std::cout << "size inside " << cloud1->size() << std::endl;
     return cloud1;
@@ -89,8 +73,6 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
     int num = 0;
     std::vector<std::vector<double>> points;
     for (uint x = 0; x < depthImage.cols; ++x) {
-//            std::cout << std::setw(7) << x << ":";
-//            myfile << std::setw(7) << x << ":";
         for (uint y = 0; y < depthImage.rows; ++y) {
             auto currentDepth = depthImage.ptr<ushort>(y)[x];
             assert(currentDepth == depthImage.at<ushort>(y, x));
@@ -119,7 +101,6 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
             points.push_back({x1, y1, z1});
 
         }
-//            std::cout << std::endl;
     }
     if (true) {
 
@@ -141,28 +122,5 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
             cloud1.points[i].z = points[i][2];
             cloud1.points[i].rgb = rgb;
         }
-
-        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-//        PointT point;
-//
-//        point.getArray3fMap() << 1, 0, 0;
-//        viewer.addText3D("x", point, 0.2, 1, 0, 0, "x_");
-//
-//        point.getArray3fMap() << 0, 1, 0;
-//        viewer.addText3D("y", point, 0.2, 0, 1, 0, "y_");
-//
-//        point.getArray3fMap() << 0, 0, 1;
-//        viewer.addText3D("z ", point, 0.2, 0, 0, 1, "z_");
-
-
-
-//////show
-//        pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptrCloud(&cloud1);
-//        viewer.showCloud(ptrCloud);
-//
-//
-//        while (!viewer.wasStopped()) {
-//        }
-
     }
 }

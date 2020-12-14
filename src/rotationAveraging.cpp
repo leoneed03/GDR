@@ -23,7 +23,6 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
     srand(time(nullptr));
     int seed = rand();
 
-    // Seed random number generator
     static std::mt19937 rng(seed);
 
     NonlinearFactorGraph::shared_ptr inputGraph;

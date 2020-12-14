@@ -7,13 +7,11 @@
 #include <fstream>
 #include <vector>
 
-#include <Eigen/Eigen>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 #define spaceIO (15)
 
-//#include <filesystem.hpp>
 #include <boost/filesystem.hpp>
 #include <Eigen/LU> // required for MatrixBase::determinant
 #include <Eigen/SVD> // required for SVD
@@ -68,8 +66,6 @@ int GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std::
             putAligned(out, toStream);
             out << std::endl;
             prevCoordinates = {stamps[1], stamps[2], stamps[3]};
-            //out << stamps[0] - stamp0[0] << ' ' << stamps[1] << ' ' << stamps[2] << ' ' << stamps[3] << ' ' << qRelative.x() << ' ' << qRelative.y() << ' ' << qRelative.z() << ' ' << qRelative.w() << std::endl;
-
         }
 
     }
@@ -87,7 +83,6 @@ std::vector<std::string> readData(std::string pathToRGB) {
                 continue;
             }
             std::string rPathToRgbImage = entry->d_name;
-//            std::cout << ++imageCounter << ": " << absolutePathToRgbImage << "\n";
             RgbImages.emplace_back(rPathToRgbImage);
         }
         closedir(pDIR);
@@ -118,37 +113,17 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
     }
     boost::filesystem::create_directory(outD);
     boost::filesystem::create_directory(outRGB);
-//    std::string pathToRelativeGroundTruth = pathOutDirectory + "/groundtruth.txt";
-//    std::ofstream out(pathToRelativeGroundTruth);
     int numOfEmptyLines = 3;
     int numbersInLine = 8;
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0};
     bool isZero = true;
     int counter = -1;
-
-//    if (in) {
-//        for (int i = 0; i < 3; ++i) {
-//            std::string s;
-//            std::getline(in, s);
-//            out << s << std::endl;
-//        }
-//        double currVal = -1;
-//        for (std::string s; std::getline(in, s);) {
-//            ++counter;
-//            if (indices.find(counter) != indices.end()) {
-//                out << s << std::endl;
-//            }
-//        }
-//        makeRotationsRelative(pathToRelativeGroundTruth, pathOutDirectory + "/groundtruthR.txt");
-//    }
     std::vector<std::string> rgbDataR = readData(pathToRGB);
     std::vector<std::string> dDataR = readData(pathToD);
     std::vector<std::string> rgbData = readRgbData(pathToRGB);
     std::vector<std::string> dData = readRgbData(pathToD);
     assert(rgbData.size() == dData.size());
-//    std::string directory = pathOutDirectory + "/RGB_D";
-//    boost::filesystem::create_directory(directory);
 
     std::vector<std::string> onlyTakenRGB;
     int cntr = 0;
@@ -301,12 +276,7 @@ void GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &path
 void
 GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
                     const std::string NewName = "subset") {
-//    makeRotationsRelativeAndExtractImages("/home/leoneed/Desktop/coke_dataset/groundtruth.txt",
-//                                          "/home/leoneed/Desktop/coke_dataset/rgb",
-//                                          "/home/leoneed/Desktop/coke_dataset/depth",
-//                                          "/home/leoneed/CLionProjects/GDR/test/data/coke",
-//                                          "/home/leoneed/Desktop/coke_dataset/rgb.txt",
-//                                          indicesSet);
+
     std::string pathNewOut = pathOut + "/" + NewName;
     std::string groundtruth = pathToDataset + "/groundtruth.txt";
     std::string rgb = pathToDataset + "/rgb";

@@ -32,11 +32,8 @@ std::vector<MatrixX> getRotationsFromQuaternionVector(const std::vector<std::vec
     std::vector<MatrixX> resultMatrices;
     int count0 = 0;
     for (const auto &quat: quats) {
-//        std::cout << "processing quaternion " << count0 << std::endl;
         ++count0;
         Eigen::Quaterniond quatd(quat.data());
-
-//        std::cout << quatd.x() << " " << quatd.y() << " " << quatd.z() << " " << quatd.w() << std::endl;
         auto matrixQuat = copyMatrix(quatd);
         resultMatrices.push_back(matrixQuat);
     }

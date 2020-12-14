@@ -19,8 +19,6 @@
 
 #include "features.h"
 #include "quaternions.h"
-//#include "essentialMatrix.h"
-
 
 struct keypointWithDepth {
     SiftGPU::SiftKeypoint keypoint;

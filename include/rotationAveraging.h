@@ -7,7 +7,9 @@
 #define TEST_SIFTGPU_ROTATIONAVERAGING_H
 
 #include <string>
+
 struct rotationAverager {
-    static int shanonAveraging(const std::string& pathToRelativeRotations, const std::string& pathOut);
+    static int shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut);
 };
+
 #endif

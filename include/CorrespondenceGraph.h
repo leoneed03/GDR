@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
+
 #ifndef TEST_SIFTGPU_CG_H
 #define TEST_SIFTGPU_CG_H
 
@@ -29,8 +30,6 @@
 struct Match {
     int frameNumber;
     std::vector<std::pair<int, int>> matchNumbers;
-//    int keypointNumber;
-//    int correspondingKeypointNumber;
 
     Match(int newFrameNumber, const std::vector<std::pair<int, int>> &newMatchNumbers) :
             frameNumber(newFrameNumber),
@@ -76,8 +75,6 @@ struct CorrespondenceGraph {
     MatrixX
     getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
                                        double inlierCoeff = 0.75);
-
-    cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
 
     void showKeypointsOnDephtImage(int vertexFrom);
 
