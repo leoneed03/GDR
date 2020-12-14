@@ -1,5 +1,5 @@
 //
-// Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+// Copyright (c) Leonid Seniukov. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
@@ -14,8 +14,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <Eigen/LU> // required for MatrixBase::determinant
-#include <Eigen/SVD> // required for SVD
+#include <Eigen/LU>
+#include <Eigen/SVD>
 
 #include "features.h"
 #include "quaternions.h"

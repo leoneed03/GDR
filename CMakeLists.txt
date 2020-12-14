@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(GCC_COVERAGE_COMPILE_FLAGS " -Os -DNDEBUG")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 
-
 find_package(GTSAM REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -14,10 +13,10 @@ find_package(GLEW REQUIRED)
 find_package(Pangolin REQUIRED)
 set(ICPCUDA "externals/ICPCUDA")
 
-
 set(Sophus_INCLUDE_DIR "${ICPCUDA}/third-party/Sophus" CACHE PATH "Sophus Include directory")
 
 add_subdirectory(externals)
+
 include_directories(${ICPCUDA} ${Sophus_INCLUDE_DIR})
 
 # SiftGPU
@@ -28,22 +27,19 @@ include_directories("siftgpu/src/SiftGPU")
 
 set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
-
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(PCL 1.8 REQUIRED)
 
 
-FIND_PACKAGE(Boost COMPONENTS thread system filesystem REQUIRED)
-MESSAGE("   Boost information:")
-MESSAGE("   Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
-MESSAGE("   Boost_LIBRARIES: ${Boost_LIBRARIES}")
-MESSAGE("   Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
+find_package(Boost COMPONENTS thread system filesystem REQUIRED)
+message("   Boost information:")
+message("   Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
+message("   Boost_LIBRARIES: ${Boost_LIBRARIES}")
+message("   Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
 
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS})
 
-
-LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-
+link_directories(${Boost_LIBRARY_DIRS})
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
@@ -52,7 +48,6 @@ add_definitions(${PCL_DEFINITIONS})
 add_executable(test test/main.cpp src/files.cpp src/features.cpp include/features.h src/VertexCG.cpp include/VertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h src/transformationRt.cpp include/transformationRt.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h src/ICP.cpp include/ICP.h)
 
 target_link_libraries(test
-        ${TBB_LIBRARIES}
         ${OpenCV_LIBS}
         ${SIFTGPU_LIBS}
         ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
