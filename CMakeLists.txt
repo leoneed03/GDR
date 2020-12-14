@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.0)
 project(GlobalReconstruction)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -16,6 +16,8 @@ set(ICPCUDA "externals/ICPCUDA")
 set(Sophus_INCLUDE_DIR "${ICPCUDA}/third-party/Sophus" CACHE PATH "Sophus Include directory")
 
 add_subdirectory(externals)
+#add_subdirectory(externals/gtsam)
+#add_library(gtsam)
 
 include_directories(${ICPCUDA} ${Sophus_INCLUDE_DIR})
 
@@ -49,7 +51,9 @@ add_executable(test test/main.cpp src/files.cpp src/features.cpp include/feature
 target_link_libraries(test
         ${OpenCV_LIBS}
         ${SIFTGPU_LIBS}
-        ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES}
+        ${GLEW_LIBRARIES}
+        ${GLUT_LIBRARIES}
+        ${OPENGL_LIBRARIES}
         ${CUDA_LIB_PATH}
         ${PCL_LIBRARIES}
         ${Sophus_LIBRARIES}

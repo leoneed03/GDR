@@ -33,4 +33,4 @@ getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                              const imageDescriptor &keysDescriptors2,
                              SiftMatchGPU *matcher);
 
-#endif //TEST_SIFTGPU_FEATURES_H
+#endif

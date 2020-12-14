@@ -42,9 +42,6 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
         std::cout << "recovering 3D translations" << endl;
         auto poseGraph = initialize::buildPoseGraph<Pose3>(*inputGraph);
         poses = initialize::computePoses<Pose3>(result.first, &poseGraph);
-    } else {
-        std::cout << "Can only run SO(3) averaging\n" << std::endl;
-        return 1;
     }
     std::cout << "Writing result to " << outputFile << endl;
     writeG2o(NonlinearFactorGraph(), poses, outputFile);

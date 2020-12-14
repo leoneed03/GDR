@@ -27,7 +27,6 @@ void putAligned(std::ofstream &of, const std::vector<double> &val) {
 int GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std::string &pathToRelativeGroundTruth) {
     std::ifstream in(pathToGroundTruth);
     std::ofstream out(pathToRelativeGroundTruth);
-    int numOfEmptyLines = 3;
     int numbersInLine = 8;
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0};
@@ -77,7 +76,6 @@ std::vector<std::string> readData(std::string pathToRGB) {
     std::vector<std::string> RgbImages;
     std::cout << "start reading" << std::endl;
     if ((pDIR = opendir(pathToRGB.data())) != nullptr) {
-        int imageCounter = 0;
         while ((entry = readdir(pDIR)) != nullptr) {
             if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..") {
                 continue;
@@ -113,12 +111,8 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
     }
     boost::filesystem::create_directory(outD);
     boost::filesystem::create_directory(outRGB);
-    int numOfEmptyLines = 3;
-    int numbersInLine = 8;
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0};
-    bool isZero = true;
-    int counter = -1;
     std::vector<std::string> rgbDataR = readData(pathToRGB);
     std::vector<std::string> dDataR = readData(pathToD);
     std::vector<std::string> rgbData = readRgbData(pathToRGB);
@@ -140,7 +134,6 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
     }
     writeInfo(onlyTakenRGB, timeInfo, pathToGroundTruth, pathOutDirectory + "/groundtruth_new.txt", indices);
     return {rgbDataR, dDataR};
-//    makeRotationsRelative();
 }
 
 std::vector<double>
@@ -174,8 +167,6 @@ GTT::createTimestamps(const std::vector<std::string> &rgb,
                     rgbToTime[rgb[index]] = currVal;
                     timeStamps.push_back(currVal);
                     ++index;
-                } else {
-//                    std::cout << currPath << " _____ " << ("rgb/" + rgb[index]) << std::endl;
                 }
             } else {
 
@@ -186,9 +177,6 @@ GTT::createTimestamps(const std::vector<std::string> &rgb,
                     std::cout << timeStamps[timeStamps.size() - 1] << " vs " << rgb[rgb.size() - 1] << std::endl;
                     assert(false);
                 }
-            }
-            if (index >= rgb.size()) {
-//                std::cout << timeStamps.size() << " " << index << " " << rgb.size() << std::endl;
             }
             assert(index <= rgb.size());
         }
@@ -204,10 +192,6 @@ GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<doub
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0, 0, 0, 0, 0, 0};
     std::vector<std::vector<double>> coordAndQuat;
-
-    bool isZero = true;
-
-    int index;
 
     if (in) {
         for (int i = 0; i < numOfEmptyLines; ++i) {

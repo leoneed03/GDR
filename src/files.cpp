@@ -14,7 +14,6 @@ std::vector<std::string> readRgbData(std::string pathToRGB) {
     std::vector<std::string> RgbImages;
     std::cout << "start reading" << std::endl;
     if ((pDIR = opendir(pathToRGB.data())) != nullptr) {
-        int imageCounter = 0;
         while ((entry = readdir(pDIR)) != nullptr) {
             if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..") {
                 continue;
