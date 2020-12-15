@@ -1068,10 +1068,10 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     char *myargv[5] = {"-nogl", "-fo", "-1", "-v", "1"};
 //    char *myargv[4] = {"-fo", "-1", "-v", "1"};
     std::cout << "Parse params for sift" << std::endl;
-    siftModule.sift.ParseParam(4, myargv);
-    std::cout << "Create Context GL" << std::endl;
+    siftModule.sift.ParseParam(5, myargv);
+//    std::cout << "Create Context GL" << std::endl;
 //    int support = siftModule.sift.CreateContextGL();
-    std::cout << "Checking" << std::endl;
+//    std::cout << "Checking" << std::endl;
 //    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
 //        std::cerr << "SiftGPU is not supported!" << std::endl;
 //    }
