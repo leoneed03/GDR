@@ -103,5 +103,5 @@ script:
   - cd build
   - cmake ../
   - make
-  - ./transformGroundTruth
+#  - ./transformGroundTruth
   - ./CG
