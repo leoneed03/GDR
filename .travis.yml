@@ -60,7 +60,9 @@ script:
   - cd third-party/Pangolin/
   - mkdir build
   - cd build
-  - cmake ../ -DEIGEN_INCLUDE_DIR=/home/travis/build/leoneed03/GDR/externals/ICPCUDA/third-party/Eigen
+  - EigenAbsolutePath=$(readlink -f ../../Eigen)
+  - echo $EigenAbsolutePath
+  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
   - make -j12
 
 # ICPCUDA
@@ -68,7 +70,7 @@ script:
   - mkdir build
   - cd build/
   - export CC=/usr/bin/gcc-6
-  - export CXX=/usr/bin/g++
+  - export CXX=/usr/bin/g++-6
   - cmake ..
   - make -j12
   - cd
