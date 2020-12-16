@@ -8,7 +8,7 @@
 
 #include "include/CorrespondenceGraph.h"
 
-#include <pangolin/image/image_io.h>
+//#include <pangolin/image/image_io.h>
 //#include <ICPOdometry.h>
 
 void testCG() {
