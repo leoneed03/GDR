@@ -52,36 +52,36 @@ before_install:
   - sudo apt-get -y install libtbb-dev
 
 script:
-  - cd externals
-  - cd ICPCUDA
-  - git submodule update --init
+#  - cd externals
+#  - cd ICPCUDA
+#  - git submodule update --init
+#
+##  Pangolin
+#  - cd third-party/Pangolin/
+#  - mkdir build
+#  - cd build
+#  - EigenAbsolutePath=$(readlink -f ../../Eigen)
+#  - echo $EigenAbsolutePath
+#  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
+#  - make -j12
 
-#  Pangolin
-  - cd third-party/Pangolin/
-  - mkdir build
-  - cd build
-  - EigenAbsolutePath=$(readlink -f ../../Eigen)
-  - echo $EigenAbsolutePath
-  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
-  - make -j12
-
-# ICPCUDA
-  - cd ../../../
-  - mkdir build
-  - cd build/
-  - export CC=/usr/bin/gcc-6
-  - export CXX=/usr/bin/g++-6
-  - cmake ..
-  - make -j12
-  - cd
-
-  - cd build/leoneed03/GDR
+## ICPCUDA
+#  - cd ../../../
+#  - mkdir build
+#  - cd build/
+#  - export CC=/usr/bin/gcc-6
+#  - export CXX=/usr/bin/g++-6
+#  - cmake ..
+#  - make -j12
+#  - cd
+#
+#  - cd build/leoneed03/GDR
 
 # SiftGPU
-  - cd siftgpu
-  - sudo make
-  - cd ..
-  - ls
+#  - cd siftgpu
+#  - sudo make
+#  - cd ..
+#  - ls
 
 # GTSAM
 #  - cd externals/gtsam

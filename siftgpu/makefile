@@ -80,27 +80,27 @@ ODIR_SIFTGPU = build
 
 
 # external header files
-_HEADER_EXTERNAL = GL/glew.h GL/glut.h IL/il.h  
+_HEADER_EXTERNAL = GL/glew.h GL/glut.h IL/il.h
 # siftgpu header files
 _HEADER_SIFTGPU = FrameBufferObject.h GlobalUtil.h GLTexImage.h ProgramGPU.h ShaderMan.h ProgramGLSL.h SiftGPU.h SiftPyramid.h SiftMatch.h PyramidGL.h LiteWindow.h
 # siftgpu library header files for drivers
-_HEADER_SIFTGPU_LIB = SiftGPU.h  
+_HEADER_SIFTGPU_LIB = SiftGPU.h
 
-ifneq ($(DARWIN),) 
+ifneq ($(DARWIN),)
 #librarys for SiftGPU
-LIBS_SIFTGPU = -lGLEW -framework GLUT -framework OpenGL 
-CFLAGS +=  -L/Users/prb2pal/Development/Resources/lib  
+LIBS_SIFTGPU = -lGLEW -framework GLUT -framework OpenGL
+CFLAGS +=  -L/Users/prb2pal/Development/Resources/lib
 else
 #librarys for SiftGPU
 LIBS_SIFTGPU = -lGLEW -lglut -lGL -lX11
 endif
- 
+
 ifneq ($(siftgpu_disable_devil), 0)
 	CFLAGS += -DSIFTGPU_NO_DEVIL
 else
 	LIBS_SIFTGPU += -lIL
-endif 
- 
+endif
+
 #Obj files for SiftGPU
 _OBJ_SIFTGPU = FrameBufferObject.o GlobalUtil.o GLTexImage.o ProgramGLSL.o ProgramGPU.o ShaderMan.o SiftGPU.o SiftPyramid.o PyramidGL.o SiftMatch.o
 
@@ -125,21 +125,21 @@ ifneq ($(siftgpu_enable_cuda), 0)
 	_OBJ_SIFTGPU += CuTexImage.o PyramidCU.o SiftMatchCU.o
 	_HEADER_SIFTGPU += CuTexImage.h ProgramCU.h PyramidCU.h
 endif
- 
+
 ifneq ($(siftgpu_enable_opencl), 0)
 	CFLAGS += -lOpenCL
 endif
- 
-all: makepath siftgpu server  driver 
- 
 
-#the dependencies of SiftGPU library 
+all: makepath siftgpu server  driver
+
+
+#the dependencies of SiftGPU library
 DEPS_SIFTGPU = $(patsubst %, $(SRC_SIFTGPU)/%, $(_HEADER_SIFTGPU))
 
 
 #rules for the rest of the object files
-$(ODIR_SIFTGPU)/%.o: $(SRC_SIFTGPU)/%.cpp $(DEPS_SIFTGPU) 
-	$(CC) -o $@ $< $(CFLAGS) -c 
+$(ODIR_SIFTGPU)/%.o: $(SRC_SIFTGPU)/%.cpp $(DEPS_SIFTGPU)
+	$(CC) -o $@ $< $(CFLAGS) -c
 
 
 ifneq ($(siftgpu_enable_cuda), 0)
@@ -147,7 +147,7 @@ NVCC_FLAGS = -I$(INC_DIR) -I$(CUDA_INC_PATH) -DCUDA_SIFTGPU_ENABLED -O2 -Xcompil
 ifdef siftgpu_cuda_options
 	NVCC_FLAGS += $(siftgpu_cuda_options)
 endif
-#build rule for CUDA 
+#build rule for CUDA
 $(ODIR_SIFTGPU)/ProgramCU.o: $(SRC_SIFTGPU)/ProgramCU.cu $(DEPS_SIFTGPU)
 	$(NVCC) $(NVCC_FLAGS) -o $@ $< -c
 _OBJ_SIFTGPU += ProgramCU.o
@@ -161,9 +161,9 @@ _OBJ_SIFTGPU += ServerSiftGPU.o
 endif
 
 OBJ_SIFTGPU = $(patsubst %,$(ODIR_SIFTGPU)/%,$(_OBJ_SIFTGPU))
-LIBS_DRIVER = $(BIN_DIR)/libsiftgpu.a $(LIBS_SIFTGPU) 
-SRC_TESTWIN = $(SRC_DRIVER)/TestWinGlut.cpp $(SRC_DRIVER)/BasicTestWin.cpp  
-DEP_TESTWIN = $(SRC_DRIVER)/TestWinGlut.h $(SRC_DRIVER)/BasicTestwin.h $(SRC_DRIVER)/GLTransform.h 
+LIBS_DRIVER = $(BIN_DIR)/libsiftgpu.a $(LIBS_SIFTGPU)
+SRC_TESTWIN = $(SRC_DRIVER)/TestWinGlut.cpp $(SRC_DRIVER)/BasicTestWin.cpp
+DEP_TESTWIN = $(SRC_DRIVER)/TestWinGlut.h $(SRC_DRIVER)/BasicTestwin.h $(SRC_DRIVER)/GLTransform.h
 
 
 
@@ -176,26 +176,26 @@ endif
 siftgpu: makepath $(OBJ_SIFTGPU)
 	ar rcs $(BIN_DIR)/libsiftgpu.a $(OBJ_SIFTGPU)
 	$(CC) -o $(BIN_DIR)/libsiftgpu.so $(OBJ_SIFTGPU) $(LIBS_SIFTGPU) $(CFLAGS) -shared -fPIC
- 
-driver: makepath 
+
+driver: makepath
 	$(CC) -o $(BIN_DIR)/TestWinGlut $(SRC_TESTWIN) $(LIBS_DRIVER) $(CFLAGS)
-	$(CC) -o $(BIN_DIR)/SimpleSIFT $(SRC_DRIVER)/SimpleSIFT.cpp $(LIBS_SIMPLESIFT) $(CFLAGS) 
-	$(CC) -o $(BIN_DIR)/speed $(SRC_DRIVER)/speed.cpp $(LIBS_DRIVER) $(CFLAGS) 
+	$(CC) -o $(BIN_DIR)/SimpleSIFT $(SRC_DRIVER)/SimpleSIFT.cpp $(LIBS_SIMPLESIFT) $(CFLAGS)
+	$(CC) -o $(BIN_DIR)/speed $(SRC_DRIVER)/speed.cpp $(LIBS_DRIVER) $(CFLAGS)
 	$(CC) -o $(BIN_DIR)/MultiThreadSIFT $(SRC_DRIVER)/MultiThreadSIFT.cpp $(LIBS_DRIVER) $(CFLAGS)  -pthread
-	
+
 ifneq ($(siftgpu_enable_server), 0)
 server: makepath
 	$(CC) -o $(BIN_DIR)/server_siftgpu $(SRC_SERVER)/server.cpp $(LIBS_DRIVER) $(CFLAGS)
 else
-server: 
+server:
 
-endif	
-	
+endif
+
 makepath:
 	mkdir -p $(ODIR_SIFTGPU)
-	mkdir -p $(BIN_DIR) 
+	mkdir -p $(BIN_DIR)
 	sed -i -e 's/\\/\//g' demos/*.bat
- 
+
 clean:
 	rm -f $(ODIR_SIFTGPU)/*.o
 	rm -f $(BIN_DIR)/libsiftgpu.a
@@ -206,3 +206,4 @@ clean:
 	rm -f $(BIN_DIR)/server_siftgpu
 	rm -f $(BIN_DIR)/MultiThreadSIFT
 	rm -f ProgramCU.linkinfo
+

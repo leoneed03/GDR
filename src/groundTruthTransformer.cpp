@@ -125,8 +125,8 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
         if (e >= rgbData.size()) {
             break;
         }
-        std::string toRGB = outRGB + "/" + std::to_string(cntr) + "_" + rgbDataR[e];
-        std::string toD = outD + "/" + std::to_string(cntr) + "_" + dDataR[e];
+        std::string toRGB = outRGB + "/" + rgbDataR[e];
+        std::string toD = outD + "/" + dDataR[e];
         boost::filesystem::copy_file(rgbData[e], toRGB);
         boost::filesystem::copy_file(dData[e], toD);
         onlyTakenRGB.push_back(rgbDataR[e]);
