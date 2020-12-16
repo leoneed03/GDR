@@ -11,10 +11,12 @@ simple_find_cuda = $(shell locate libcudart.so)
 ifneq ($(simple_find_cuda), )
  	siftgpu_enable_cuda = 1
 else
-	siftgpu_enable_cuda = 1
+	siftgpu_enable_cuda = 0
 endif
 
-CUDA_INSTALL_PATH = /usr/local/cuda
+#CUDA_INSTALL_PATH = /usr
+CUDA_INSTALL_PATH = /usr
+
 #change  additional  settings, like SM version here if it is not 1.0 (eg. -arch sm_13 for GTX280)
 #siftgpu_cuda_options = -Xopencc -OPT:unroll_size=200000
 #siftgpu_cuda_options = -arch sm_10
@@ -24,7 +26,7 @@ siftgpu_enable_sse = 1
 siftgpu_sse_options = -march=core2 -mfpmath=sse
 #--------------------------------------------------------------------------------------------------
 # openGL context creation.  1 for glut, 0 for xlib
-siftgpu_prefer_glut = 1
+siftgpu_prefer_glut = 0
 #whether remove dependency on DevIL (1 to remove, the output libsiftgpu.so still works for VisualSFM)
 siftgpu_disable_devil = 0
 #------------------------------------------------------------------------------------------------
@@ -55,10 +57,10 @@ SRC_SIFTGPU = src/SiftGPU
 SRC_DRIVER = src/TestWin
 SRC_SERVER = src/ServerSiftGPU
 CC = g++
-CFLAGS = -I$(INC_DIR) -fPIC  -L/usr/lib -L./bin -L./lib -Wall -Wno-deprecated -pthread  
+CFLAGS = -I$(INC_DIR) -fPIC  -L/usr/lib -L./bin -L./lib -Wall -Wno-deprecated -pthread
 
 #simple hack to repalce the native flat on OSX because gcc version is low
-ifneq ($(DARWIN),) 
+ifneq ($(DARWIN),)
 	siftgpu_sse_options = -march=core2 -mfpmath=sse
 endif
 
@@ -67,7 +69,7 @@ ifneq ($(siftgpu_enable_sse), 0)
 endif
 
 ifneq ($(siftgpu_prefer_glut), 0)
-	CFLAGS += -DWINDOW_PREFER_GLUT
+#	CFLAGS += -DWINDOW_PREFER_GLUT
 endif
 
 ifneq ($(siftgpu_enable_opencl), 0)
@@ -204,4 +206,3 @@ clean:
 	rm -f $(BIN_DIR)/server_siftgpu
 	rm -f $(BIN_DIR)/MultiThreadSIFT
 	rm -f ProgramCU.linkinfo
-
