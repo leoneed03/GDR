@@ -164,7 +164,7 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
 
 //// pixels -- std::vector of <x, y, Intensity> where -height / 2 <= y <= height / 2, -width/2 <= x <= width/2, 0 <= Intensity <= 65536
 
-
+/*
 
 //// pixels -- std::vector of <x, y, Intensity> where 0 <= y <= height, 0 <= x <= width, 0 <= Intensity <= 65536
 
@@ -241,3 +241,4 @@ pangolin::TypedImage LoadImageT(
 
 
 
+*/

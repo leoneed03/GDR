@@ -20,10 +20,8 @@ packages:
 
 before_install:
 
-  # Add PPA
   - sudo add-apt-repository -y ppa:borglab/gtsam-develop
-  - sudo apt update  # not necessary since Bionic
-  # Install:
+  - sudo apt update
   - sudo apt install -y libgtsam-dev libgtsam-unstable-dev
 
   - sudo apt-get -y install python3.7-dev
@@ -55,36 +53,36 @@ before_install:
 
 
 script:
-  - cd externals
-  - cd ICPCUDA
-  - git submodule update --init
-
-#  Pangolin
-  - cd third-party/Pangolin/
-  - mkdir build
-  - cd build
-  - EigenAbsolutePath=$(readlink -f ../../Eigen)
-  - echo $EigenAbsolutePath
-  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
-  - make -j12
-
-# ICPCUDA
-  - cd ../../../
-  - mkdir build
-  - cd build/
-  - export CC=/usr/bin/gcc-6
-  - export CXX=/usr/bin/g++-6
-  - cmake ..
-  - make -j12
-  - cd
+#  - cd externals
+#  - cd ICPCUDA
+#  - git submodule update --init
+#
+##  Pangolin
+#  - cd third-party/Pangolin/
+#  - mkdir build
+#  - cd build
+#  - EigenAbsolutePath=$(readlink -f ../../Eigen)
+#  - echo $EigenAbsolutePath
+#  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
+#  - make -j12
+#
+## ICPCUDA
+#  - cd ../../../
+#  - mkdir build
+#  - cd build/
+#  - export CC=/usr/bin/gcc-6
+#  - export CXX=/usr/bin/g++-6
+#  - cmake ..
+#  - make -j12
+#  - cd
 
   - cd build/leoneed03/GDR
 
 # SiftGPU
-  - cd siftgpu
-  - sudo make
-  - cd ..
-  - ls
+#  - cd siftgpu
+#  - sudo make
+#  - cd ..
+#  - ls
 
 # GTSAM
 #  - cd externals/gtsam
@@ -103,5 +101,4 @@ script:
   - cd build
   - cmake ../
   - make
-#  - ./transformGroundTruth
-  - ./CG
+#  - ./CG

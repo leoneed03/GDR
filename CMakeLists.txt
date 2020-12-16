@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6.0)
+cmake_minimum_required(VERSION 3.10.0)
 
 project(GlobalReconstructionICP)
 
@@ -6,9 +6,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(GCC_COVERAGE_COMPILE_FLAGS " -Os -DNDEBUG")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 
-set(ICPCUDA "${CMAKE_CURRENT_SOURCE_DIR}/externals/ICPCUDA")
-set(Pangolin_DIR "${ICPCUDA}/third-party/Pangolin/build/src" CACHE PATH "Pangolin build directory")
-set(Sophus_INCLUDE_DIR "${ICPCUDA}/third-party/Sophus" CACHE PATH "Sophus Include directory")
+include(ExternalProject)
+
+ExternalProject_Add(siftgpu
+        SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu"
+        BUILD_IN_SOURCE 1
+        BUILD_COMMAND $(MAKE)
+        INSTALL_COMMAND ""
+        )
+
+#set(ICPCUDA "${CMAKE_CURRENT_SOURCE_DIR}/externals/ICPCUDA")
+#set(Pangolin_DIR "${ICPCUDA}/third-party/Pangolin/build/src" CACHE PATH "Pangolin build directory")
+#set(Sophus_INCLUDE_DIR "${ICPCUDA}/third-party/Sophus" CACHE PATH "Sophus Include directory")
 
 find_package(GTSAM REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -23,28 +32,28 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${Sophus_INCLUDE_DIR})
-include_directories(${ICPCUDA})
+#include_directories(${ICPCUDA})
 
-file(GLOB srcs ${ICPCUDA}/ICPOdometry.cpp ${ICPCUDA}/*.cu ${ICPCUDA}/*.h ${ICPCUDA}/*.cuh)
-file(GLOB cuda ${ICPCUDA}/Cuda/*.cu ${ICPCUDA}/ICPOdometry.cpp ${ICPCUDA}/Cuda/*.cuh ${ICPCUDA}/*.h)
-file(GLOB containers ${ICPCUDA}/Cuda/containers/*.cpp ${ICPCUDA}/Cuda/containers/*.h ${ICPCUDA}/containers/*.cu ${ICPCUDA}/Cuda/containers/*.cuh)
+#file(GLOB srcs ${ICPCUDA}/ICPOdometry.cpp ${ICPCUDA}/*.cu ${ICPCUDA}/*.h ${ICPCUDA}/*.cuh)
+#file(GLOB cuda ${ICPCUDA}/Cuda/*.cu ${ICPCUDA}/ICPOdometry.cpp ${ICPCUDA}/Cuda/*.cuh ${ICPCUDA}/*.h)
+#file(GLOB containers ${ICPCUDA}/Cuda/containers/*.cpp ${ICPCUDA}/Cuda/containers/*.h ${ICPCUDA}/containers/*.cu ${ICPCUDA}/Cuda/containers/*.cuh)
 
-set(CUDA_ARCH_BIN "" CACHE STRING "Specify 'real' GPU arch to build binaries for, BIN(PTX) format is supported. Example: 1.3 2.1(1.3) or 13 21(13)")
-set(CUDA_ARCH_PTX "" CACHE STRING "Specify 'virtual' PTX arch to build PTX intermediate code for. Example: 1.0 1.2 or 10 12")
+#set(CUDA_ARCH_BIN "" CACHE STRING "Specify 'real' GPU arch to build binaries for, BIN(PTX) format is supported. Example: 1.3 2.1(1.3) or 13 21(13)")
+#set(CUDA_ARCH_PTX "" CACHE STRING "Specify 'virtual' PTX arch to build PTX intermediate code for. Example: 1.0 1.2 or 10 12")
+#
+#include("CudaDetect.cmake")
+#detect_installed_gpus(CUDA_NVCC_ARCHS)
+#foreach(NVCC_ARCH IN LISTS CUDA_NVCC_ARCHS)
+#    list(APPEND CUDA_ARCH_BIN "${NVCC_ARCH} ")
+#endforeach(NVCC_ARCH)
 
-include("CudaDetect.cmake")
-detect_installed_gpus(CUDA_NVCC_ARCHS)
-foreach(NVCC_ARCH IN LISTS CUDA_NVCC_ARCHS)
-    list(APPEND CUDA_ARCH_BIN "${NVCC_ARCH} ")
-endforeach(NVCC_ARCH)
 
-
-include("CudaComputeTargetFlags.cmake")
-append_target_arch_flags()
-
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}  "-Xcompiler;-fPIC;--expt-relaxed-constexpr")
-
-CUDA_COMPILE(cuda_objs ${cuda})
+#include("CudaComputeTargetFlags.cmake")
+#append_target_arch_flags()
+#
+#set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}  "-Xcompiler;-fPIC;--expt-relaxed-constexpr")
+#
+#CUDA_COMPILE(cuda_objs ${cuda})
 
 
 # SiftGPU
@@ -52,7 +61,7 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIR})
 include_directories(${CUDA_INCLUDE_DIR})
 include_directories(${CUDA_INCLUDE_DIRS})
-include_directories("siftgpu/src/SiftGPU")
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/src/SiftGPU)
 
 set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
@@ -63,10 +72,10 @@ add_definitions(${PCL_DEFINITIONS})
 #set(CMAKE_CXX_FLAGS "-O3 -msse2 -msse3 -Wall -std=c++11")
 
 add_executable(CG
-        ${srcs}
-        ${cuda}
-        ${cuda_objs}
-        ${containers}
+#        ${srcs}
+#        ${cuda}
+#        ${cuda_objs}
+#        ${containers}
         testICPCUDA.cpp
         src/files.cpp src/features.cpp include/features.h src/VertexCG.cpp include/VertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h src/transformationRt.cpp include/transformationRt.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h test/testEigen.cpp src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h src/ICP.cpp include/ICP.h
         )
