@@ -84,7 +84,6 @@ add_executable(transformGroundTruth test/transformGroundTruth.cpp src/groundTrut
 target_link_libraries(transformGroundTruth ${Boost_LIBRARIES})
 
 target_link_libraries(CG
-        ${Pangolin_LIBRARIES}
         ${Sophus_LIBRARIES}
         ${CUDA_LIBRARIES}
         ${SIFTGPU_LIBS}
