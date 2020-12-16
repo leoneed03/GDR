@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.10.0)
+
 project(GlobalReconstruction)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -19,62 +20,34 @@ find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
-#find_package(Pangolin REQUIRED)
-#set(ICPCUDA "externals/ICPCUDA")
+find_package(CUDA REQUIRED)
+find_package(PCL 1.8 REQUIRED)
 
-
-
-
-#set(Sophus_INCLUDE_DIR "${ICPCUDA}/third-party/Sophus" CACHE PATH "Sophus Include directory")
-
-#add_subdirectory(externals)
-#add_subdirectory(externals/gtsam)
-#add_library(gtsam)
-
-#include_directories(${ICPCUDA} ${Sophus_INCLUDE_DIR})
-
-# SiftGPU
-#include_directories(${Pangolin_INCLUDE_DIRS})
+include_directories(${CUDA_INCLUDE_DIRS})
+include_directories(${EIGEN_INCLUDE_DIRS})
+include_directories(${Sophus_INCLUDE_DIR})
 include_directories(${OpenGL_INCLUDE_DIR})
 include_directories(${CUDA_INCLUDE_DIR})
-
-
+include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/src/SiftGPU)
 
 set(SIFTGPU_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(PCL 1.8 REQUIRED)
-
-find_package(Boost COMPONENTS thread system filesystem REQUIRED)
-message("   Boost information:")
-message("   Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
-message("   Boost_LIBRARIES: ${Boost_LIBRARIES}")
-message("   Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
-
-include_directories(${Boost_INCLUDE_DIRS})
-
-link_directories(${Boost_LIBRARY_DIRS})
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
-
 add_definitions(${PCL_DEFINITIONS})
-add_executable(test1 test/main.cpp src/files.cpp src/features.cpp include/features.h src/VertexCG.cpp include/VertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h src/transformationRt.cpp include/transformationRt.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h src/ICP.cpp include/ICP.h)
-#add_executable(prepareDataset test/prepareDataset.cpp src/files.cpp src/features.cpp include/features.h src/VertexCG.cpp include/VertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h src/transformationRt.cpp include/transformationRt.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h src/ICP.cpp include/ICP.h)
 
+add_executable(CG
+        test/main.cpp
+        src/files.cpp src/features.cpp include/features.h src/VertexCG.cpp include/VertexCG.h src/CorrespondenceGraph.cpp include/CorrespondenceGraph.h src/transformationRt.cpp include/transformationRt.h src/cameraRGBD.cpp include/cameraRGBD.h src/siftModule.cpp include/siftModule.h src/groundTruthTransformer.cpp include/groundTruthTransformer.h src/images.cpp include/images.h src/rotationAveraging.cpp include/rotationAveraging.h src/util.cpp include/util.h src/quaternions.cpp include/quaternions.h src/ICP.cpp include/ICP.h
+        )
 
-target_link_libraries(test1
-        ${OpenCV_LIBS}
+target_link_libraries(CG
+        ${Sophus_LIBRARIES}
+        ${CUDA_LIBRARIES}
         ${SIFTGPU_LIBS}
-        ${GLEW_LIBRARIES}
-        ${GLUT_LIBRARIES}
-        ${OPENGL_LIBRARIES}
-        ${CUDA_LIB_PATH}
+        ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
-#        ${Sophus_LIBRARIES}
-#        ${Pangolin_LIBRARIES}
-        Eigen3::Eigen
-        pthread
         gtsam
         )
