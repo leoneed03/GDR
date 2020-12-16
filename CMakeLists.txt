@@ -24,11 +24,11 @@ find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
-find_package(Pangolin REQUIRED)
+#find_package(Pangolin REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(PCL 1.8 REQUIRED)
 
-include_directories(${Pangolin_INCLUDE_DIRS})
+#include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${Sophus_INCLUDE_DIR})
@@ -57,7 +57,7 @@ include_directories(${Sophus_INCLUDE_DIR})
 
 
 # SiftGPU
-include_directories(${Pangolin_INCLUDE_DIRS})
+#include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIR})
 include_directories(${CUDA_INCLUDE_DIR})
 include_directories(${CUDA_INCLUDE_DIRS})
