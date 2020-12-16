@@ -16,7 +16,6 @@ matrix:
 packages:
   - gcc-6
   - g++-6
-  - cmake
 
 before_install:
 
@@ -76,7 +75,7 @@ script:
 #  - make -j12
 #  - cd
 
-  - cd build/leoneed03/GDR
+#  - cd build/leoneed03/GDR
 
 # SiftGPU
 #  - cd siftgpu
