@@ -69,7 +69,7 @@ ifneq ($(siftgpu_enable_sse), 0)
 endif
 
 ifneq ($(siftgpu_prefer_glut), 0)
-	CFLAGS += -DWINDOW_PREFER_GLUT
+#	CFLAGS += -DWINDOW_PREFER_GLUT
 endif
 
 ifneq ($(siftgpu_enable_opencl), 0)
