@@ -680,13 +680,13 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
-    char *myargv[4] = {"-fo", "-1", "-v", "1"};
-    siftModule.sift.ParseParam(4, myargv);
-    int support = siftModule.sift.CreateContextGL();
+    char *myargv[5] = {"-nogl", "-fo", "-1", "-v", "1"};
+    siftModule.sift.ParseParam(5, myargv);
+//    int support = siftModule.sift.CreateContextGL();
     std::cout << "Checking" << std::endl;
-    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
-        std::cerr << "SiftGPU is not supported!" << std::endl;
-    }
+//    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
+//        std::cerr << "SiftGPU is not supported!" << std::endl;
+//    }
 
     boost::timer timer;
 
