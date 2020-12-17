@@ -4,19 +4,19 @@
 //
 
 #include "../include/rotationAveraging.h"
-#include <gtsam/base/timing.h>
-#include <gtsam/sfm/ShonanAveraging.h>
-#include <gtsam/slam/InitializePose.h>
-#include <gtsam/slam/dataset.h>
+//#include <gtsam/base/timing.h>
+//#include <gtsam/sfm/ShonanAveraging.h>
+//#include <gtsam/slam/InitializePose.h>
+//#include <gtsam/slam/dataset.h>
 
 #include <boost/program_options.hpp>
 #include <random>
 
-using namespace gtsam;
+//using namespace gtsam;
 namespace po = boost::program_options;
 
 int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
-    std::string datasetName;
+    /*std::string datasetName;
     std::string inputFile = pathToRelativeRotations;
     std::string outputFile = pathOut;
     int d = 3;
@@ -45,6 +45,6 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
         return 1;
     }
     std::cout << "Writing result to " << outputFile << endl;
-    writeG2o(NonlinearFactorGraph(), poses, outputFile);
+    writeG2o(NonlinearFactorGraph(), poses, outputFile);*/
     return 0;
 }

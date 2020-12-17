@@ -11,6 +11,7 @@ void testCG() {
     std::cout << "hello";
     CorrespondenceGraph correspondenceGraph("../data/plantFirst_20_2/rgb", "../data/plantFirst_20_2/depth", 525.0,
                                             319.5, 525.0, 239.5);
+    std::cout << "success" << std::endl;
 
 }
 

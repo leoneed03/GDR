@@ -992,7 +992,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         }
     }
     printConnections(std::cout);
-
+/*
     std::cout << "first print successfull" << std::endl;
     rotationAverager::shanonAveraging(poseFile, absolutePose);
 
@@ -1009,7 +1009,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     std::cout << "set Rotations in vertices successfull" << std::endl;
     bfs(0);
-
+*/
     std::cout << "bfs successfull" << std::endl;
     printConnections(std::cout);
 
