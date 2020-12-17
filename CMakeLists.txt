@@ -19,7 +19,6 @@ ExternalProject_Add(siftgpu
         )
 
 
-find_package(GTSAM REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
