@@ -24,8 +24,8 @@ void VertexCG::setRotation(const MatrixX &rotation) {
 }
 
 VertexCG::VertexCG(int newIndex,
-                   const std::vector<keypointWithDepth> &newKeypointsWithDepths,
-                   const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
+                   const std::vector <keypointWithDepth> &newKeypointsWithDepths,
+                   const std::vector <SiftGPU::SiftKeypoint> &newKeypoints,
                    const std::vector<float> &newDescriptors,
                    const std::vector<double> &newDepths,
                    const std::string &newPathRGB,

@@ -23,7 +23,6 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
     srand(time(nullptr));
     int seed = rand();
 
-    // Seed random number generator
     static std::mt19937 rng(seed);
 
     NonlinearFactorGraph::shared_ptr inputGraph;
@@ -34,8 +33,6 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
         ShonanAveraging3 shonan(inputFile);
         auto initial = shonan.initializeRandomly(rng);
         auto result = shonan.run(initial);
-
-        // Parse file again to set up translation problem, adding a prior
         boost::tie(inputGraph, posesInFile) = load3D(inputFile);
         auto priorModel = noiseModel::Unit::Create(6);
         inputGraph->addPrior(0, posesInFile->at<Pose3>(0), priorModel);
@@ -50,5 +47,4 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
     std::cout << "Writing result to " << outputFile << endl;
     writeG2o(NonlinearFactorGraph(), poses, outputFile);
     return 0;
-
 }

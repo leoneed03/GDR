@@ -1086,7 +1086,6 @@ std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
                 newAbsoluteT = predR * relT + predT;
                 for (int counter = 0; counter < 3; ++counter) {
                     newAbsoluteRt.col(3)[counter] = newAbsoluteT.col(0)[counter];
-
                 }
             }
         }

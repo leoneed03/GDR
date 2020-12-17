@@ -17,7 +17,6 @@ Eigen::Matrix3d getRotationMatrixDouble(const MatrixX &m) {
 
 
     for (int i = 0; i < 3; ++i) {
-//        assert(resMatrix[i].size() == 3);
         for (int j = 0; j < 3; ++j) {
             resMatrix.row(i)[j] = m.row(i)[j];
         }

@@ -20,7 +20,6 @@ std::vector<std::string> readRgbData(std::string pathToRGB) {
                 continue;
             }
             std::string absolutePathToRgbImage = pathToRGB + "/" + entry->d_name;
-//            std::cout << ++imageCounter << ": " << absolutePathToRgbImage << "\n";
             RgbImages.emplace_back(absolutePathToRgbImage);
         }
         closedir(pDIR);
@@ -31,7 +30,6 @@ std::vector<std::string> readRgbData(std::string pathToRGB) {
     for (int i = 0; i < RgbImages.size(); ++i) {
         std::cout << i << ":::" << RgbImages[i] << std::endl;
     }
-//    exit(0);
     return RgbImages;
 }
 

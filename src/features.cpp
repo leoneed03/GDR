@@ -52,18 +52,12 @@ getMatchesKeypoints(const imageDescriptor &keysDescriptors1,
 
 
     std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>> matchingKeypoints;
-
-//    std::unique_ptr<int*> bufferPtr(new int[num1][2]);
-//    std::vector<int*> matchBuff(num1, int[2] {}/*std::vector<int>(2)*/);
     int (*match_buf)[2] = new int[num1][2];
-    //use the default thresholds. Check the declaration in SiftGPU.h
     int num_match = matcher->GetSiftMatch(num1, match_buf);
     matchingKeypoints.first.reserve(num_match);
     matchingKeypoints.second.reserve(num_match);
 
     for (int i = 0; i < num_match; ++i) {
-        /* std::cout << i << " -> keypoint on the 1st image " << match_buf[i][0] << " keypoint on the 2nd image "
-                   << match_buf[i][1] << std::endl;*/
         matchingKeypoints.first.emplace_back(keys1[match_buf[i][0]]);
         matchingKeypoints.second.emplace_back(keys2[match_buf[i][1]]);
     }
@@ -94,17 +88,11 @@ getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
 
 
     std::vector<std::pair<int, int>> matchingKeypoints;
-
-//    std::unique_ptr<int*> bufferPtr(new int[num1][2]);
-//    std::vector<int*> matchBuff(num1, int[2] {}/*std::vector<int>(2)*/);
     int (*match_buf)[2] = new int[num1][2];
-    //use the default thresholds. Check the declaration in SiftGPU.h
     int num_match = matcher->GetSiftMatch(num1, match_buf);
     matchingKeypoints.reserve(num_match);
 
     for (int i = 0; i < num_match; ++i) {
-        /* std::cout << i << " -> keypoint on the 1st image " << match_buf[i][0] << " keypoint on the 2nd image "
-                   << match_buf[i][1] << std::endl;*/
         matchingKeypoints.push_back({match_buf[i][0], match_buf[i][1]});
     }
     delete[] match_buf;
