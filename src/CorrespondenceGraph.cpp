@@ -846,6 +846,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     std::cout << "Parse params for sift" << std::endl;
     siftModule.sift.ParseParam(4, myargv);
 
+
+    std::cout << "Params are parsed" << std::endl;
     int support = siftModule.sift.CreateContextGL();
     std::cout << "Checking" << std::endl;
     if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
