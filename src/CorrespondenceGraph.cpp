@@ -840,20 +840,21 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix >>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
-//    char *myargv[5] = {"-nogl", "-fo", "-1", "-v", "1"};
+    char *myargv[5] = {"-nogl", "-fo", "-1", "-v", "1"};
 //   for GLSL:
-    char *myargv[4] = {"-fo", "-1", "-v", "1"};
+//    char *myargv[4] = {"-fo", "-1", "-v", "1"};
     std::cout << "Parse params for sift" << std::endl;
-    siftModule.sift.ParseParam(4, myargv);
+    siftModule.sift.ParseParam(5, myargv);
 
 
     std::cout << "Params are parsed" << std::endl;
-    int support = siftModule.sift.CreateContextGL();
+//    int support = siftModule.sift.CreateContextGL();
     std::cout << "Checking" << std::endl;
-    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
-        std::cerr << "SiftGPU is not supported!" << std::endl;
-    }
+//    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
+//        std::cerr << "SiftGPU is not supported!" << std::endl;
+//    }
 
+    std::cout << "start timer " << std::endl;
     boost::timer timer;
     siftModule.matcher->VerifyContextGL();
 
