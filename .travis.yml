@@ -1,0 +1,102 @@
+language: generic
+
+matrix:
+  include:
+    - os: linux
+      python: 3.7
+      addons:
+        apt:
+          packages:
+            - g++-6
+            - gcc-6
+      env:
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+      dist: bionic
+
+packages:
+  - gcc-6
+  - g++-6
+
+before_install:
+
+  - sudo add-apt-repository -y ppa:borglab/gtsam-develop
+  - sudo apt update
+  - sudo apt install -y libgtsam-dev libgtsam-unstable-dev
+
+  - sudo apt-get -y install python3.7-dev
+  - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
+  #  - sudo mkdir /usr/local/cuda
+  #  - sudo cp -r /usr/bin/ /usr/local/cuda
+
+  - sudo apt-get install libopencv-dev
+  - sudo apt-get -y install libdevil-dev
+  - sudo apt -y install libglew-dev
+  - sudo apt-get install -y glew-utils
+  - sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+  - sudo apt install python3-opencv
+  - sudo apt-get -y install cmake
+  - sudo apt-get -y install libboost-all-dev
+
+  - sudo apt-get -y install libstdc++6
+  - sudo apt-get install g++
+  - sudo apt install libpcl-dev
+  - sudo apt-get -y install libeigen3-dev
+  - sudo apt-get -y install libboost-dev
+  - sudo apt-get -y install libboost-test-dev
+  - sudo apt-get -y install libboost-system-dev
+  - sudo apt-get -y install libboost-filesystem-dev
+  - sudo apt-get -y install libboost-thread-dev
+  - sudo apt-get -y install libboost-program-options-dev
+  - sudo apt-get -y install libtbb-dev
+
+
+
+script:
+  #  - cd externals
+  #  - cd ICPCUDA
+  #  - git submodule update --init
+  #
+  ##  Pangolin
+  #  - cd third-party/Pangolin/
+  #  - mkdir build
+  #  - cd build
+  #  - EigenAbsolutePath=$(readlink -f ../../Eigen)
+  #  - echo $EigenAbsolutePath
+  #  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
+  #  - make -j12
+  #
+  ## ICPCUDA
+  #  - cd ../../../
+  #  - mkdir build
+  #  - cd build/
+  #  - export CC=/usr/bin/gcc-6
+  #  - export CXX=/usr/bin/g++-6
+  #  - cmake ..
+  #  - make -j12
+  #  - cd
+
+  #  - cd build/leoneed03/GDR
+
+  # SiftGPU
+  #  - cd siftgpu
+  #  - sudo make
+  #  - cd ..
+  #  - ls
+
+  # GTSAM
+  #  - cd externals/gtsam
+  #  - sudo mkdir build
+  #  - cd build
+  #  - sudo cmake ..
+  #  - sudo make install
+  #  - cd ..
+  #  - cd ..
+  #  - cd ..
+
+  - cd
+  - cd build/leoneed03/GDR
+  - ls
+  - mkdir build
+  - cd build
+  - cmake ../
+  - make
