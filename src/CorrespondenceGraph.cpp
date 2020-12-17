@@ -21,9 +21,9 @@
 #include <pcl/registration/icp_nl.h>
 
 template<typename T>
-Eigen::Matrix <T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
     typedef T Scalar;
-    typedef Eigen::Matrix <Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
 
     MatrixType Q;
 
@@ -57,16 +57,16 @@ Eigen::Matrix <T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
     }
 
     if (max_tries == 0)
-        eigen_assert(false && "randMatrixUnitary: Could not construct unitary matrix!");
+            eigen_assert(false && "randMatrixUnitary: Could not construct unitary matrix!");
 
     return Q;
 }
 
 template<typename T>
-Eigen::Matrix <T, Eigen::Dynamic, Eigen::Dynamic> randMatrixSpecialUnitary(int size) {
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixSpecialUnitary(int size) {
     typedef T Scalar;
 
-    typedef Eigen::Matrix <Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
 
     MatrixType Q = randMatrixUnitary<Scalar>(size);
     Q.col(0) *= Eigen::numext::conj(Q.determinant());
@@ -112,7 +112,7 @@ int CorrespondenceGraph::findCorrespondences() {
 
             if (DEBUG_PRINT)
                 std::cout << "currently " << i << " " << j << std::endl;
-            std::vector <std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
+            std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
                     std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
                     std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
                     siftModule.matcher.get());
@@ -133,7 +133,7 @@ int CorrespondenceGraph::findCorrespondencesEveryDepth() {
 
             if (DEBUG_PRINT)
                 std::cout << "currently " << i << " " << j << std::endl;
-            std::vector <std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
+            std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
                     std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
                     std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
                     siftModule.matcher.get());
@@ -181,13 +181,13 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     siftModule.sift.RunSIFT(frame1.pathToRGBimage.data());
     int num1 = siftModule.sift.GetFeatureNum();
     std::vector<float> descriptors1(128 * num1);
-    std::vector <SiftGPU::SiftKeypoint> keys1(num1);
+    std::vector<SiftGPU::SiftKeypoint> keys1(num1);
     siftModule.sift.GetFeatureVector(&keys1[0], &descriptors1[0]);
 
     siftModule.sift.RunSIFT(frame2.pathToRGBimage.data());
     int num2 = siftModule.sift.GetFeatureNum();
     std::vector<float> descriptors2(128 * num2);
-    std::vector <SiftGPU::SiftKeypoint> keys2(num2);
+    std::vector<SiftGPU::SiftKeypoint> keys2(num2);
     siftModule.sift.GetFeatureVector(&keys2[0], &descriptors2[0]);
 
     assert(num1 * 128 == descriptors1.size());
@@ -197,7 +197,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     siftModule.matcher->SetDescriptors(1, num2, &descriptors2[0]); //image 2
 
 
-    std::pair <std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>> matchingKeypoints;
+    std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>> matchingKeypoints;
 
     int (*match_buf)[2] = new int[num1][2];
     int num_match = siftModule.matcher->GetSiftMatch(num1, match_buf);
@@ -210,7 +210,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     }
     assert(matchingKeypoints.first.size() == matchingKeypoints.second.size());
     delete[] match_buf;
-    std::vector <cv::Point2f> leftPtsgpu, rightPtsgpu;
+    std::vector<cv::Point2f> leftPtsgpu, rightPtsgpu;
 
     cv::Mat imageWithLines = cv::imread(frame1.pathToRGBimage);
     cv::Mat imageWithLinesTo = cv::imread(frame2.pathToRGBimage);
@@ -255,17 +255,17 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
 
 
 
-    std::vector <cv::KeyPoint> keypts1, keypts2;
+    std::vector<cv::KeyPoint> keypts1, keypts2;
     cv::Mat desc1, desc2;
-    cv::Ptr <cv::Feature2D> orb = cv::ORB::create(4096);
+    cv::Ptr<cv::Feature2D> orb = cv::ORB::create(4096);
     cv::Mat img1 = cv::imread(frame1.pathToRGBimage);
     cv::Mat img2 = cv::imread(frame2.pathToRGBimage);
     orb->detectAndCompute(img1, cv::noArray(), keypts1, desc1);
     orb->detectAndCompute(img2, cv::noArray(), keypts2, desc2);
-    cv::Ptr <cv::DescriptorMatcher> matcherLocal = cv::DescriptorMatcher::create("BruteForce-Hamming");
-    std::vector <cv::DMatch> matchesLocal;
+    cv::Ptr<cv::DescriptorMatcher> matcherLocal = cv::DescriptorMatcher::create("BruteForce-Hamming");
+    std::vector<cv::DMatch> matchesLocal;
     matcherLocal->match(desc1, desc2, matchesLocal);
-    std::vector <cv::Point2f> leftPts, rightPts;
+    std::vector<cv::Point2f> leftPts, rightPts;
     for (size_t i = 0; i < matchesLocal.size(); i++) {
         leftPts.push_back(keypts1[matchesLocal[i].queryIdx].pt);
         rightPts.push_back(keypts2[matchesLocal[i].trainIdx].pt);
@@ -296,7 +296,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
 
 
 
-    std::vector <cv::Point2f> pointsFromImage1, pointsFromImage2;
+    std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
     const auto &match = matches[vertexFrom][vertexInList];
     int minSize = match.matchNumbers.size();
     pointsFromImage1.reserve(minSize);
@@ -396,14 +396,14 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
 }
 
 void CorrespondenceGraph::decreaseDensity() {
-    for (std::vector <Match> &correspondenceList: matches) {
+    for (std::vector<Match> &correspondenceList: matches) {
 
         std::sort(correspondenceList.begin(), correspondenceList.end(), [](const auto &lhs, const auto &rhs) {
             return lhs.matchNumbers.size() > rhs.matchNumbers.size();
         });
 
         if (correspondenceList.size() > maxVertexDegree) {
-            std::vector <Match> newMatchList(correspondenceList.begin(), correspondenceList.begin() + maxVertexDegree);
+            std::vector<Match> newMatchList(correspondenceList.begin(), correspondenceList.begin() + maxVertexDegree);
             std::swap(correspondenceList, newMatchList);
         }
     }
@@ -711,7 +711,7 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         std::cout << "after " << std::endl;
 
         if (SHOW_PCL_CLOUDS) {
-            pcl::PointCloud <pcl::PointXYZRGB> cloud1;
+            pcl::PointCloud<pcl::PointXYZRGB> cloud1;
 
 
             cloud1.width = 2 * num_elements;
@@ -828,8 +828,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                                          const std::string &pathToImageDirectoryD,
                                          float fx, float cx, float fy, float cy) : cameraRgbd({fx, cx, fy, cy}) {
 
-    std::vector <std::string> imagesRgb = readRgbData(pathToImageDirectoryRGB);
-    std::vector <std::string> imagesD = readRgbData(pathToImageDirectoryD);
+    std::vector<std::string> imagesRgb = readRgbData(pathToImageDirectoryRGB);
+    std::vector<std::string> imagesD = readRgbData(pathToImageDirectoryD);
 
     std::sort(imagesRgb.begin(), imagesRgb.end());
     std::sort(imagesD.begin(), imagesD.end());
@@ -837,7 +837,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
     assert(imagesRgb.size() == imagesD.size());
 
-    tranformationRtMatrices = std::vector < std::vector < transformationRtMatrix >> (imagesD.size());
+    tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix >>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
     char *myargv[5] = {"-nogl", "-fo", "-1", "-v", "1"};
@@ -849,10 +849,10 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     siftModule.matcher->VerifyContextGL();
 
     c("before sift");
-    std::vector < std::pair < std::vector < SiftGPU::SiftKeypoint > , std::vector < float>>> keysDescriptorsAll =
-                                                                                                     getKeypointsDescriptorsAllImages(
-                                                                                                             siftModule.sift,
-                                                                                                             pathToImageDirectoryRGB);
+    std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
+            getKeypointsDescriptorsAllImages(
+                    siftModule.sift,
+                    pathToImageDirectoryRGB);
     c("sift done");
 
     verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
@@ -860,10 +860,10 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         auto keypointAndDescriptor = keysDescriptorsAll[currentImage];
         c("processing");
         c(currentImage);
-        std::vector <SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
+        std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
         std::vector<float> &descriptors = keypointAndDescriptor.second;
-        std::vector <SiftGPU::SiftKeypoint> keypointsKnownDepth;
-        std::vector <keypointWithDepth> keypointsKnownDepths;
+        std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
+        std::vector<keypointWithDepth> keypointsKnownDepths;
         std::vector<float> descriptorsKnownDepth;
         std::vector<double> depths;
 
@@ -922,7 +922,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
     }
     std::cout << "vertices written" << std::endl;
-    matches = std::vector < std::vector < Match >> (verticesOfCorrespondence.size());
+    matches = std::vector<std::vector<Match >>(verticesOfCorrespondence.size());
 
 
     std::cout << "trying to find corr" << std::endl;
@@ -955,7 +955,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
             std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
             file << s1 + s2;
         }
-        std::set <std::string> strings;
+        std::set<std::string> strings;
         for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
             for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
                 if (i >= tranformationRtMatrices[i][j].vertexTo.index) {
@@ -997,10 +997,10 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     rotationAverager::shanonAveraging(poseFile, absolutePose);
 
     std::cout << "Shonan averaging successfull" << std::endl;
-    std::vector <std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
+    std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
 
     std::cout << "read quaternions successfull" << std::endl;
-    std::vector <MatrixX> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
+    std::vector<MatrixX> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
 
     std::cout << "get Rotations from quaternions successfull" << std::endl;
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {

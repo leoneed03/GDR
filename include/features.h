@@ -13,25 +13,25 @@
 
 #include "files.h"
 
-using imageDescriptor = std::pair <std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>;
+using imageDescriptor = std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>;
 
-std::pair <std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
+std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
         SiftGPU &sift,
         const std::string &pathToTheImage);
 
-std::vector <std::pair<std::vector < SiftGPU::SiftKeypoint>, std::vector<float>>>
+std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
 getKeypointsDescriptorsAllImages(
         SiftGPU
-&sift,
-const std::string &pathToTheDirectory
+        &sift,
+        const std::string &pathToTheDirectory
 );
 
-std::pair <std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>>
+std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>>
 getMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                     const imageDescriptor &keysDescriptors2,
                     SiftMatchGPU *matcher);
 
-std::vector <std::pair<int, int>>
+std::vector<std::pair<int, int>>
 getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                              const imageDescriptor &keysDescriptors2,
                              SiftMatchGPU *matcher);
