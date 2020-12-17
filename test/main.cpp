@@ -1,3 +1,8 @@
+//
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include <SiftGPU.h>
 #include <iostream>
 #include <vector>
@@ -70,8 +75,8 @@ int trysift1() {
 void testTextReading() {
     std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile("absoluteRotations.txt");
     std::cout << "number " << quaternions.size() << std::endl;
-    for (const auto& e: quaternions) {
-        for (const auto& a: e) {
+    for (const auto &e: quaternions) {
+        for (const auto &a: e) {
             std::cout << std::setw(15) << a;
         }
         std::cout << std::endl;
@@ -85,13 +90,13 @@ void testTextReading() {
         }
     }
     absoluteRotationTranslation.row(3)[3] = 1;
-    for (const auto& e: res) {
-        std:: cout << count0 << "\n";
+    for (const auto &e: res) {
+        std::cout << count0 << "\n";
         count0++;
         std::cout << e;
         std::cout << "\n===============================================\n";
     }
-    absoluteRotationTranslation.block<3,3>(0,0) = res[res.size() - 1];
+    absoluteRotationTranslation.block<3, 3>(0, 0) = res[res.size() - 1];
 
     std::cout << "\n===============================================\n";
 
@@ -107,10 +112,10 @@ void testICP() {
 
     pangolin::Image<unsigned short> firstRaw(firstData.w, firstData.h,
                                              firstData.pitch,
-                                             (unsigned short *)firstData.ptr);
+                                             (unsigned short *) firstData.ptr);
     pangolin::Image<unsigned short> secondRaw(secondData.w, secondData.h,
                                               secondData.pitch,
-                                              (unsigned short *)secondData.ptr);
+                                              (unsigned short *) secondData.ptr);
 
 
     Sophus::SE3d T_wc_prev;
@@ -124,7 +129,8 @@ int main(int argc, char **argv) {
     pangolin::ManagedImage<unsigned short> firstData(640, 480);
     Sophus::SE3d T_wc_prev;
     ICPOdometry icpOdom(640, 480, 319.5, 239.5, 528, 528);
-    CorrespondenceGraph correspondenceGraph("../data/plantSampled_20/rgb", "../data/plantSampled_20/depth", 525.0, 319.5, 525.0, 239.5);
+    CorrespondenceGraph correspondenceGraph("../data/plantSampled_20/rgb", "../data/plantSampled_20/depth", 525.0,
+                                            319.5, 525.0, 239.5);
     std::cout << "end of the test" << std::endl;
     return 0;
 }

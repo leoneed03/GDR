@@ -1,3 +1,8 @@
+//
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "../include/groundTruthTransformer.h"
 #include <set>
 
@@ -8,7 +13,8 @@ int main() {
     }
 
     ////////EXAMPLE WORKS RIGHT
-    GTT::prepareDataset("/home/leoneed/Desktop/plant_dataset", "/home/leoneed/Desktop/GDR/data", indicesSet, "plantFirst_20_2");
+    GTT::prepareDataset("/home/leoneed/Desktop/plant_dataset", "/home/leoneed/Desktop/GDR/data", indicesSet,
+                        "plantFirst_20_2");
 //    GTT::makeRotationsRelativeAndExtractImages("/home/leoneed/Desktop/coke_dataset/groundtruth.txt",
 //                                               "/home/leoneed/Desktop/coke_dataset/rgb",
 //                                               "/home/leoneed/Desktop/coke_dataset/depth",

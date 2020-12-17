@@ -1,3 +1,8 @@
+//
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include <pcl/visualization/cloud_viewer.h>
 #include "../include/images.h"
 

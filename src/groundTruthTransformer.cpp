@@ -1,3 +1,8 @@
+//
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "../include/groundTruthTransformer.h"
 #include <fstream>
 #include <vector>
@@ -5,7 +10,6 @@
 
 #define spaceIO (15)
 
-//#include <filesystem.hpp>
 #include <boost/filesystem.hpp>
 #include <Eigen/LU> // required for MatrixBase::determinant
 #include <Eigen/SVD> // required for SVD
@@ -163,14 +167,15 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
     }
 
     std::cout << "pathOut" << pathOutDirectory << std::endl;
-    writeInfo(onlyTakenRGB, timeInfo, pathToGroundTruth, pathOutDirectory + "/groundtruth_new.txt", pathOutDirectory + "/relative_groundtruth.txt", indices);
+    writeInfo(onlyTakenRGB, timeInfo, pathToGroundTruth, pathOutDirectory + "/groundtruth_new.txt",
+              pathOutDirectory + "/relative_groundtruth.txt", indices);
     return {rgbDataR, dDataR};
 //    makeRotationsRelative();
 }
 
 std::vector<double> GTT::createTimestamps(const std::vector<std::string> &rgb,
-                      const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
-                      const std::set<int> &indices) {
+                                          const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
+                                          const std::set<int> &indices) {
     std::map<std::string, double> rgbToTime;
     int skipNum = 3;
     std::vector<double> timeStamps;
@@ -290,7 +295,8 @@ int GTT::writeGroundTruth(const std::string &pathOut, const std::vector<std::vec
     return 1;
 }
 
-int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut, const std::vector<std::vector<double>> &timeCoordinates) {
+int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
+                                            const std::vector<std::vector<double>> &timeCoordinates) {
     std::ofstream out(pathOut);
     int skipN = 3;
     for (int i = 0; i < skipN; ++i) {
@@ -298,16 +304,16 @@ int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut, const st
     }
 
     MatrixX zeroRotationMatrix;
-    MatrixX zeroTranslation = getSomeMatrix(3,1);
+    MatrixX zeroTranslation = getSomeMatrix(3, 1);
 
     for (int index = 0; index < timeCoordinates.size(); ++index) {
-        auto& e = timeCoordinates[index];
+        auto &e = timeCoordinates[index];
 
         out.precision(std::numeric_limits<double>::max_digits10);
         out << std::setw(2 * spaceIO) << e[0];
 
 
-        MatrixX currentTranslation = getSomeMatrix(3,1);
+        MatrixX currentTranslation = getSomeMatrix(3, 1);
 
         std::vector<double> vectorData = {e[4], e[5], e[6], e[7]};
         Eigen::Quaterniond qd(vectorData.data());
@@ -339,13 +345,15 @@ int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut, const st
         for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
             out << std::setw(2 * spaceIO) << relativeTranslation.col(0)[posTranslation];
         }
-        out << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y() << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w() << std::endl;
+        out << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
+            << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w() << std::endl;
     }
     return 1;
 }
 
 void GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
-                    const std::string &pathToGroundTruth, const std::string &pathOut, const std::string &relativeOutput, const std::set<int> &indices) {
+                    const std::string &pathToGroundTruth, const std::string &pathOut, const std::string &relativeOutput,
+                    const std::set<int> &indices) {
     std::vector<double> timeStamps = createTimestamps(rgb, pathTimeRGB, pathToGroundTruth, indices);
     std::vector<std::vector<double>> timeAndCoordinates = getGroundTruth(pathToGroundTruth, timeStamps);
     writeGroundTruth(pathOut, timeAndCoordinates);
@@ -353,7 +361,8 @@ void GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &path
 }
 
 void
-GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet, const std::string NewName = "subset") {
+GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
+                    const std::string NewName = "subset") {
 //    makeRotationsRelativeAndExtractImages("/home/leoneed/Desktop/coke_dataset/groundtruth.txt",
 //                                          "/home/leoneed/Desktop/coke_dataset/rgb",
 //                                          "/home/leoneed/Desktop/coke_dataset/depth",
