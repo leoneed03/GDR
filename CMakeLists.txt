@@ -108,7 +108,7 @@ target_link_libraries(CG
         ${OPENGL_LIBRARIES}
         ${CUDA_LIB_PATH}
         ${PCL_LIBRARIES}
-        gtsam
+        ${OpenCV_LIBS}
         )
 #
 #
