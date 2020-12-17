@@ -26,7 +26,7 @@ siftgpu_enable_sse = 1
 siftgpu_sse_options = -march=core2 -mfpmath=sse
 #--------------------------------------------------------------------------------------------------
 # openGL context creation.  1 for glut, 0 for xlib
-siftgpu_prefer_glut = 0
+siftgpu_prefer_glut = 1
 #whether remove dependency on DevIL (1 to remove, the output libsiftgpu.so still works for VisualSFM)
 siftgpu_disable_devil = 0
 #------------------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ ifneq ($(siftgpu_enable_sse), 0)
 endif
 
 ifneq ($(siftgpu_prefer_glut), 0)
-#	CFLAGS += -DWINDOW_PREFER_GLUT
+	CFLAGS += -DWINDOW_PREFER_GLUT
 endif
 
 ifneq ($(siftgpu_enable_opencl), 0)
