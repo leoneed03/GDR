@@ -85,6 +85,9 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 #set(CMAKE_CXX_FLAGS "-O3 -msse2 -msse3 -Wall -std=c++11")
 
+
+add_dependencies(CG siftgpu)
+
 add_executable(CG
 #        ${srcs}
 #        ${cuda}
