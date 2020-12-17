@@ -84,9 +84,6 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 #set(CMAKE_CXX_FLAGS "-O3 -msse2 -msse3 -Wall -std=c++11")
 
-
-add_dependencies(CG siftgpu)
-
 add_executable(CG
 #        ${srcs}
 #        ${cuda}
@@ -98,6 +95,9 @@ add_executable(CG
 add_executable(transformGroundTruth test/transformGroundTruth.cpp src/groundTruthTransformer.cpp src/files.cpp src/quaternions.cpp src/util.cpp)
 
 target_link_libraries(transformGroundTruth ${Boost_LIBRARIES})
+
+
+add_dependencies(CG siftgpu)
 
 target_link_libraries(CG
         ${Sophus_LIBRARIES}
