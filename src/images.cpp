@@ -70,6 +70,7 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
     cv::Mat depthImage = cv::imread(pathToDimage, cv::IMREAD_ANYDEPTH);
 
     pcl::PointCloud<pcl::PointXYZRGB> cloud1;
+    int num = 0;
     std::vector<std::vector<double>> points;
     for (uint x = 0; x < depthImage.cols; ++x) {
         for (uint y = 0; y < depthImage.rows; ++y) {
@@ -80,7 +81,6 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
             }
 
             double x1, y1, z1;
-
 
             x1 = x + 0.5;
             y1 = y + 0.5;
@@ -121,5 +121,7 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
             cloud1.points[i].z = points[i][2];
             cloud1.points[i].rgb = rgb;
         }
+
+//        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
     }
 }

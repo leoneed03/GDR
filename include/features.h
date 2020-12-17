@@ -19,9 +19,12 @@ std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDe
         SiftGPU &sift,
         const std::string &pathToTheImage);
 
-std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> getKeypointsDescriptorsAllImages(
-        SiftGPU &sift,
-        const std::string &pathToTheDirectory);
+std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
+getKeypointsDescriptorsAllImages(
+        SiftGPU
+        &sift,
+        const std::string &pathToTheDirectory
+);
 
 std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>>
 getMatchesKeypoints(const imageDescriptor &keysDescriptors1,
@@ -33,4 +36,4 @@ getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                              const imageDescriptor &keysDescriptors2,
                              SiftMatchGPU *matcher);
 
-#endif
+#endif //TEST_SIFTGPU_FEATURES_H

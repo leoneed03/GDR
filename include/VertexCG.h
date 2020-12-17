@@ -14,11 +14,12 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <Eigen/LU>
-#include <Eigen/SVD>
+#include <Eigen/LU> // required for MatrixBase::determinant
+#include <Eigen/SVD> // required for SVD
 
 #include "features.h"
 #include "quaternions.h"
+
 
 struct keypointWithDepth {
     SiftGPU::SiftKeypoint keypoint;
@@ -36,12 +37,12 @@ struct VertexCG {
 
     int index;
     MatrixX absoluteRotationTranslation;
+    std::vector<keypointWithDepth> keypointsWithDepths;
     std::vector<SiftGPU::SiftKeypoint> keypoints;
     std::vector<float> descriptors;
     std::vector<double> depths;
     std::string pathToRGBimage;
     std::string pathToDimage;
-    std::vector<keypointWithDepth> keypointsWithDepths;
     int heightMirrorParameter = 480;
     int widthMirrorParameter = 640;
 

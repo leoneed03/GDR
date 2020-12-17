@@ -10,7 +10,17 @@
 #include <set>
 #include <unordered_map>
 #include <map>
+
 #include "files.h"
+#include "quaternions.h"
+
+
+#include <Eigen/Eigen>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
+typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
+typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 
 struct GTT {
     static std::vector<double> createTimestamps(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
@@ -31,11 +41,14 @@ struct GTT {
 
     static void
     writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
-              const std::string &pathOut, const std::set<int> &indices);
+              const std::string &pathOut, const std::string &rel, const std::set<int> &indices);
 
     static void
     prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &chosenIndices,
                    const std::string NewName);
+
+    static int writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
+                                                  const std::vector<std::vector<double>> &timeCoordinates);
 };
 
 #endif

@@ -14,6 +14,7 @@ std::vector<std::string> readRgbData(std::string pathToRGB) {
     std::vector<std::string> RgbImages;
     std::cout << "start reading" << std::endl;
     if ((pDIR = opendir(pathToRGB.data())) != nullptr) {
+        int imageCounter = 0;
         while ((entry = readdir(pDIR)) != nullptr) {
             if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..") {
                 continue;
@@ -27,7 +28,7 @@ std::vector<std::string> readRgbData(std::string pathToRGB) {
     }
     std::sort(RgbImages.begin(), RgbImages.end());
     for (int i = 0; i < RgbImages.size(); ++i) {
-        std::cout << i + 1 << "::" << RgbImages[i] << std::endl;
+        std::cout << i << ":::" << RgbImages[i] << std::endl;
     }
     return RgbImages;
 }
@@ -65,3 +66,4 @@ std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &p
     }
     return quaternions;
 }
+

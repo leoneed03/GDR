@@ -33,8 +33,6 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
         ShonanAveraging3 shonan(inputFile);
         auto initial = shonan.initializeRandomly(rng);
         auto result = shonan.run(initial);
-
-        // Parse file again to set up translation problem, adding a prior
         boost::tie(inputGraph, posesInFile) = load3D(inputFile);
         auto priorModel = noiseModel::Unit::Create(6);
         inputGraph->addPrior(0, posesInFile->at<Pose3>(0), priorModel);
@@ -42,6 +40,9 @@ int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations
         std::cout << "recovering 3D translations" << endl;
         auto poseGraph = initialize::buildPoseGraph<Pose3>(*inputGraph);
         poses = initialize::computePoses<Pose3>(result.first, &poseGraph);
+    } else {
+        std::cout << "Can only run SO(3) averaging\n" << std::endl;
+        return 1;
     }
     std::cout << "Writing result to " << outputFile << endl;
     writeG2o(NonlinearFactorGraph(), poses, outputFile);

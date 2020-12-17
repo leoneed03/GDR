@@ -12,7 +12,6 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
-#include <pcl/registration/incremental_registration.h>
 
 #include <queue>
 
@@ -44,8 +43,9 @@ typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorX;
 struct CorrespondenceGraph {
     CameraRGBD cameraRgbd;
     SiftModule siftModule;
+    std::vector<int> originVerticesNumbers;
     std::vector<VertexCG> verticesOfCorrespondence;
-    int maxVertexDegree = 20;
+    int maxVertexDegree = 80;
     int numIterations = 50;
     std::vector<std::vector<Match>> matches;
     std::vector<std::vector<transformationRtMatrix>> tranformationRtMatrices;
@@ -73,7 +73,9 @@ struct CorrespondenceGraph {
 
     MatrixX
     getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
-                                       double inlierCoeff = 0.75);
+                                       double inlierCoeff = 0.6);
+
+    cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
 
     void showKeypointsOnDephtImage(int vertexFrom);
 
