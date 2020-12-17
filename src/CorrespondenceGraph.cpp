@@ -21,9 +21,9 @@
 #include <pcl/registration/icp_nl.h>
 
 template<typename T>
-Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
+Eigen::Matrix <T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
     typedef T Scalar;
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
+    typedef Eigen::Matrix <Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
 
     MatrixType Q;
 
@@ -44,8 +44,6 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
             Q.col(col) = colVec.normalized();
         }
 
-        // this additional orthogonalization is not necessary in theory but should enhance
-        // the numerical orthogonality of the matrix
         for (int row = 0; row < size; ++row) {
             typename MatrixType::RowXpr rowVec = Q.row(row);
             for (int prevRow = 0; prevRow < row; ++prevRow) {
@@ -54,28 +52,23 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixUnitary(int size) {
             }
             Q.row(row) = rowVec.normalized();
         }
-
-        // final check
         is_unitary = Q.isUnitary();
         --max_tries;
     }
 
     if (max_tries == 0)
-            eigen_assert(false && "randMatrixUnitary: Could not construct unitary matrix!");
+        eigen_assert(false && "randMatrixUnitary: Could not construct unitary matrix!");
 
     return Q;
 }
 
 template<typename T>
-Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> randMatrixSpecialUnitary(int size) {
+Eigen::Matrix <T, Eigen::Dynamic, Eigen::Dynamic> randMatrixSpecialUnitary(int size) {
     typedef T Scalar;
 
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
+    typedef Eigen::Matrix <Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
 
-    // initialize unitary matrix
     MatrixType Q = randMatrixUnitary<Scalar>(size);
-
-    // tweak the first column to make the determinant be 1
     Q.col(0) *= Eigen::numext::conj(Q.determinant());
 
     return Q;
@@ -119,17 +112,13 @@ int CorrespondenceGraph::findCorrespondences() {
 
             if (DEBUG_PRINT)
                 std::cout << "currently " << i << " " << j << std::endl;
-            std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
+            std::vector <std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
                     std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
                     std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
                     siftModule.matcher.get());
             if (DEBUG_PRINT)
                 std::cout << "total matches " << matchingNumbers.size() << std::endl;
             matches[i].push_back({j, matchingNumbers});
-//            for (int p = 0; p < matchingNumbers.size(); ++p) {
-//                std::swap(matchingNumbers[p].first, matchingNumbers[p].second);
-//            }
-//            matches[j].push_back({i, matchingNumbers});
         }
     }
 
@@ -144,7 +133,7 @@ int CorrespondenceGraph::findCorrespondencesEveryDepth() {
 
             if (DEBUG_PRINT)
                 std::cout << "currently " << i << " " << j << std::endl;
-            std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
+            std::vector <std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
                     std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
                     std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
                     siftModule.matcher.get());
@@ -192,13 +181,13 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     siftModule.sift.RunSIFT(frame1.pathToRGBimage.data());
     int num1 = siftModule.sift.GetFeatureNum();
     std::vector<float> descriptors1(128 * num1);
-    std::vector<SiftGPU::SiftKeypoint> keys1(num1);
+    std::vector <SiftGPU::SiftKeypoint> keys1(num1);
     siftModule.sift.GetFeatureVector(&keys1[0], &descriptors1[0]);
 
     siftModule.sift.RunSIFT(frame2.pathToRGBimage.data());
     int num2 = siftModule.sift.GetFeatureNum();
     std::vector<float> descriptors2(128 * num2);
-    std::vector<SiftGPU::SiftKeypoint> keys2(num2);
+    std::vector <SiftGPU::SiftKeypoint> keys2(num2);
     siftModule.sift.GetFeatureVector(&keys2[0], &descriptors2[0]);
 
     assert(num1 * 128 == descriptors1.size());
@@ -208,25 +197,20 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     siftModule.matcher->SetDescriptors(1, num2, &descriptors2[0]); //image 2
 
 
-    std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>> matchingKeypoints;
+    std::pair <std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>> matchingKeypoints;
 
-//    std::unique_ptr<int*> bufferPtr(new int[num1][2]);
-//    std::vector<int*> matchBuff(num1, int[2] {}/*std::vector<int>(2)*/);
     int (*match_buf)[2] = new int[num1][2];
-    //use the default thresholds. Check the declaration in SiftGPU.h
     int num_match = siftModule.matcher->GetSiftMatch(num1, match_buf);
     matchingKeypoints.first.reserve(num_match);
     matchingKeypoints.second.reserve(num_match);
 
     for (int i = 0; i < num_match; ++i) {
-        /* std::cout << i << " -> keypoint on the 1st image " << match_buf[i][0] << " keypoint on the 2nd image "
-                   << match_buf[i][1] << std::endl;*/
         matchingKeypoints.first.emplace_back(keys1[match_buf[i][0]]);
         matchingKeypoints.second.emplace_back(keys2[match_buf[i][1]]);
     }
     assert(matchingKeypoints.first.size() == matchingKeypoints.second.size());
     delete[] match_buf;
-    std::vector<cv::Point2f> leftPtsgpu, rightPtsgpu;
+    std::vector <cv::Point2f> leftPtsgpu, rightPtsgpu;
 
     cv::Mat imageWithLines = cv::imread(frame1.pathToRGBimage);
     cv::Mat imageWithLinesTo = cv::imread(frame2.pathToRGBimage);
@@ -239,10 +223,6 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
         rightPtsgpu.push_back(p2);
         MyLine(imageWithLines, p1, p2);
         MyLine(imageWithLinesTo, p1, p2);
-
-//        leftPtsgpu.push_back({matchingKeypoints.first[i].y, matchingKeypoints.first[i].x});
-//        rightPtsgpu.push_back({matchingKeypoints.second[i].y, matchingKeypoints.second[i].x});
-
     }
 
     cv::imshow("Well..", imageWithLines);
@@ -275,18 +255,17 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
 
 
 
-    std::vector<cv::KeyPoint> keypts1, keypts2;
+    std::vector <cv::KeyPoint> keypts1, keypts2;
     cv::Mat desc1, desc2;
-    cv::Ptr<cv::Feature2D> orb = cv::ORB::create(4096);
+    cv::Ptr <cv::Feature2D> orb = cv::ORB::create(4096);
     cv::Mat img1 = cv::imread(frame1.pathToRGBimage);
     cv::Mat img2 = cv::imread(frame2.pathToRGBimage);
     orb->detectAndCompute(img1, cv::noArray(), keypts1, desc1);
     orb->detectAndCompute(img2, cv::noArray(), keypts2, desc2);
-// matching descriptors
-    cv::Ptr<cv::DescriptorMatcher> matcherLocal = cv::DescriptorMatcher::create("BruteForce-Hamming");
-    std::vector<cv::DMatch> matchesLocal;
+    cv::Ptr <cv::DescriptorMatcher> matcherLocal = cv::DescriptorMatcher::create("BruteForce-Hamming");
+    std::vector <cv::DMatch> matchesLocal;
     matcherLocal->match(desc1, desc2, matchesLocal);
-    std::vector<cv::Point2f> leftPts, rightPts;
+    std::vector <cv::Point2f> leftPts, rightPts;
     for (size_t i = 0; i < matchesLocal.size(); i++) {
         leftPts.push_back(keypts1[matchesLocal[i].queryIdx].pt);
         rightPts.push_back(keypts2[matchesLocal[i].trainIdx].pt);
@@ -317,7 +296,7 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
 
 
 
-    std::vector<cv::Point2f> pointsFromImage1, pointsFromImage2;
+    std::vector <cv::Point2f> pointsFromImage1, pointsFromImage2;
     const auto &match = matches[vertexFrom][vertexInList];
     int minSize = match.matchNumbers.size();
     pointsFromImage1.reserve(minSize);
@@ -334,7 +313,6 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
         pointsFromImage2.push_back(p2);
         MyLine2(imageWithLinesDepthKnown, p1, p2);
 
-//        auto train = point.;
     }
     for (int i = 0; i < minSize; ++i) {
     }
@@ -362,7 +340,6 @@ cv::Mat CorrespondenceGraph::getEssentialMatrixTwoImagesMatched(int vertexFrom, 
     std::cout << E << std::endl;
     assert(essentialMatricesAreEqual(Egpu, cameraMotion, 0.00001) == 0);
 
-//    assert(essentialMatricesAreEqual(E, cameraMotion, 0.00001) == 0);
     if (DEBUG_PRINT) {
         std::cout << "found essential matrix" << std::endl << std::endl << std::endl;
     }
@@ -419,14 +396,14 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
 }
 
 void CorrespondenceGraph::decreaseDensity() {
-    for (std::vector<Match> &correspondenceList: matches) {
+    for (std::vector <Match> &correspondenceList: matches) {
 
         std::sort(correspondenceList.begin(), correspondenceList.end(), [](const auto &lhs, const auto &rhs) {
             return lhs.matchNumbers.size() > rhs.matchNumbers.size();
         });
 
         if (correspondenceList.size() > maxVertexDegree) {
-            std::vector<Match> newMatchList(correspondenceList.begin(), correspondenceList.begin() + maxVertexDegree);
+            std::vector <Match> newMatchList(correspondenceList.begin(), correspondenceList.begin() + maxVertexDegree);
             std::swap(correspondenceList, newMatchList);
         }
     }
@@ -516,11 +493,6 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
                       }
                       return dist1 < dist2;
                   });
-//        for (int ii = 0; ii < top; ++ii) {
-//            std::cout << std::setw(6) << pointsPositions[ii];
-//        }
-//        std::cout << endl;
-
         int quantilIndex = (int) (inlierCoeff * numOfPoints);
         MatrixX toBeTransformedInlierPoints = MatrixX::Random(dim + 1, numInliers);
         MatrixX destInlierPoints = MatrixX::Random(dim + 1, numInliers);
@@ -545,16 +517,6 @@ MatrixX CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const Matrix
             cR_t_umeyama_inlier_points = umeyama(toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
                                                  destInlierPoints.block(0, 0, dim, numInliers));
         }
-
-//        double norm = 0;
-//        for (int count = std::max(numInliers - 1, 0); count < numInliers; ++count) {
-//            const auto& toBeTransformedColumn = toBeTransformedInlierPoints.col(count);
-//            const auto& destColumn = destInlierPoints.col(count);
-//            auto dest = cR_t_umeyama_inlier_points * toBeTransformedColumn;
-//            for (int pp = 0; pp < dim; ++pp) {
-//                norm += pow(dest[pp] - destColumn[pp], 2);
-//            }
-//        }
 
         bool info = false;
 
@@ -596,18 +558,12 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
 
     cv::Mat imageDepth1(480, 640, CV_16UC1);
     for (uint x = 0; x < depthImage.cols; ++x) {
-//            std::cout << std::setw(7) << x << ":";
-//            myfile << std::setw(7) << x << ":";
         for (uint y = 0; y < depthImage.rows; ++y) {
             auto currentDepth = depthImage.ptr<ushort>(y)[x];
             assert(currentDepth == depthImage.at<ushort>(y, x));
-//                std::cout << std::setw(8) << currentDepth;
             imageDepth1.at<ushort>(y, x) = currentDepth;
-//                myfile << std::setw(8) << currentDepth;
-//                depthImageLow.ptr<ushort>(y)[x] = 0;
 
         }
-//            std::cout << std::endl;
     }
     for (int i = 0; i < image.keypoints.size(); ++i) {
         int x = image.keypoints[i].x;
@@ -619,10 +575,6 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
     }
     cv::imshow("Made Depths ?", imageDepth1);
     cv::waitKey(0);
-//        cv::imshow("Known Depths ?", depthImageS);
-//        cv::waitKey(0);
-//        cv::imshow("Known Depths low", depthImageLow);
-//        cv::waitKey(0);
     cv::imshow("Known Depths high", depthImage);
     cv::waitKey(0);
     cv::destroyAllWindows();
@@ -668,12 +620,6 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
                 double mirrorParameterW = verticesOfCorrespondence[vertexFrom].widthMirrorParameter;
                 assert(x1 < mirrorParameterW && x1 > 0);
                 x1 = mirrorParameterW - x1;
-
-
-                //we have to mirror y because image coordinate system is upper-left located
-                //and mirror x because standart XYZ swaps directions of OZ!!!
-
-
 
                 z1 = z1;
                 x1 = 1.0 * (x1 - cameraRgbd.cx) * z1 / cameraRgbd.fx;
@@ -733,8 +679,6 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         std::cout << Mx << " " << My << " " << Mz << std::endl;
         assert(mz > 0);
         assert(Mz > 0);
-//        std::swap(toBeTransformedPoints, originPoints); //// swap because we want to know M: first = M * second (first can be world origin -- want to make it easier to reconstruct)
-
         MatrixX cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
                                          originPoints.block(0, 0, dim, num_elements));
         MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints, originPoints,
@@ -750,159 +694,24 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             std::cout << "______________________________________________________\n";
         }
 
-
-/////////BEGIN UMEYAMA DEMONSTRATION
-//    {
-//        pcl::PointCloud<pcl::PointXYZRGB> cloud1;
-//
-//        cloud1.width = 2 * num_elements;
-//        cloud1.height = 1;
-//        cloud1.is_dense = false;
-//        cloud1.points.resize(cloud1.width * cloud1.height);
-//
-//        for (size_t i = 0; i < num_elements; ++i) {
-//            int r = 10;
-//            int g = 10;
-//            int b = 100;
-//            int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-//                           static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-//            cloud1.points[i].x = originPoints.col(i).x();
-//            cloud1.points[i].y = originPoints.col(i).y();
-//            cloud1.points[i].z = originPoints.col(i).z();
-//            cloud1.points[i].rgb = rgb;
-//            std::cout << "point " << i << " out of " << num_elements << std::endl;
-//        }
-//        for (size_t i = num_elements; i < 2 * num_elements; ++i) {
-//
-//            int r = 255;
-//            int g = 255;
-//            int b = 255;
-//            int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-//                           static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-//            auto res = cR_t_umeyama * toBeTransformedPoints.col(i - num_elements);
-//            cloud1.points[i].x = res[0];
-//            cloud1.points[i].y = res[1];
-//            cloud1.points[i].z = res[2];
-//            cloud1.points[i].rgb = rgb;
-////        pcl::visualization::createLine();
-//
-//            std::cout << "point " << i << " out of " << num_elements << std::endl;
-//        }
-//        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-//        pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptrCloud(&cloud1);
-//        viewer.showCloud(ptrCloud);
-//
-//        while (!viewer.wasStopped()) {
-//        }
-//    }
-
-
-/////////////////////END OF UMEYAMA DEMONSTRATION
-
         bool initClouds = false;
         if (initClouds) {
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloudDest(parseDepthImageNoColour(
                     verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloudToBeTransformed(parseDepthImageNoColour(
                     verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
-//            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-//            pcl::PointCloud<pcl::PointXYZ>::Ptr ptrCloud(cloudDest);
-//            viewer.showCloud(ptrCloud);
-//
-//
-//            while (!viewer.wasStopped()) {
-//            }
 
-
-            //        cloudToBeTransformed->points.resize(minSize);
-            //        cloudToBeTransformed->width = minSize;
-            //        cloudDest->points.resize(minSize);
-            //        cloudDest->width = minSize;
             std::cout << "cloud sizes are " << cloudToBeTransformed->width << "->" << cloudDest->width << std::endl;
 
             assert(cloudToBeTransformed->width == cloudDest->width);
             assert(cloudDest->width > 0);
-
-
-//
-//            for (size_t i = 0; i < cloudDest->width; ++i) {
-//                int r = 10;
-//                int g = 10;
-//                int b = 100;
-//                int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-//                               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-//
-////                auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
-//                MatrixX columnOfPointsToBeTransformed = MatrixX::Random(dim + 1, 1);
-//                columnOfPointsToBeTransformed.col(0)[0] = cloudToBeTransformed->points[i].x;
-//                columnOfPointsToBeTransformed.col(0)[1] = cloudToBeTransformed->points[i].y;
-//                columnOfPointsToBeTransformed.col(0)[2] = cloudToBeTransformed->points[i].z;
-//                columnOfPointsToBeTransformed.col(0)[3] = 1;
-//                auto res = cR_t_umeyama * columnOfPointsToBeTransformed.col(0);
-//                cloudToBeTransformed->points[i].x = res[0];
-//                cloudToBeTransformed->points[i].y = res[1];
-//                cloudToBeTransformed->points[i].z = res[2];
-//            }
-            //        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-            //        viewer.showCloud(cloudToBeTransformed);
-            //
-            //
-            //        while (!viewer.wasStopped()) {
-            //        }
-            ////
-            //
-            //        parseDepthImage(verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd);
-            //        exit(3);/////////////////////EXIT
-
-            //////////////////////BLOCK FOR NL ICP
-//
-//            {
-//                double dist = 0.05;
-//                double rans = 0.05;
-//
-//                int iter = 10;
-//                bool nonLinear = false;
-//                pcl::IterativeClosestPoint<PointType, PointType> icp;
-//                icp.setMaximumIterations(iter);
-//                icp.setMaxCorrespondenceDistance(dist);
-//                icp.setRANSACOutlierRejectionThreshold(rans);
-//                icp.setInputSource(cloudToBeTransformed);
-//                icp.setInputTarget(cloudDest);
-////                icp.align(*cloudDest);
-//
-////                typedef typename pcl::Registration<PointType, PointType, Scalar>::Matrix4 Matrix4;
-//
-//                typedef Eigen::Matrix<float, 4, 4> Matrix4;
-//                Matrix4 guess;
-//
-//                for (int i = 0; i < 4; ++i) {
-//                    for (int j = 0; j < 4; ++j) {
-//                        guess.col(i)[j] = cR_t_umeyama.col(i)[j];
-//                    }
-//                }
-//                icp.align(*cloudToBeTransformed, guess);
-////                icp.align(*cloudToBeTransformed, guess);
-//
-////                icp.align(cloudToBeTransformed, guess);
-//
-//                if (icp.hasConverged()) {
-//                    std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
-//                    std::cout << "\nICP transformation " << icp.nr_iterations_ << " : cloud_icp -> cloud_in " << icp.convergence_criteria_->getAbsoluteMSE()<< std::endl;
-//                    auto transformation_matrix = icp.getFinalTransformation().cast<double>();
-//                    std::cout << transformation_matrix << std::endl;
-//                } else {
-//                    PCL_ERROR ("\nICP has not converged.\n");
-//                    exit(-1);
-//                }
-//                std::cout << "before " << std::endl;
-//            }
         }
 
 
         std::cout << "after " << std::endl;
 
         if (SHOW_PCL_CLOUDS) {
-            pcl::PointCloud<pcl::PointXYZRGB> cloud1;
+            pcl::PointCloud <pcl::PointXYZRGB> cloud1;
 
 
             cloud1.width = 2 * num_elements;
@@ -934,8 +743,6 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
                 cloud1.points[i].y = res[1];
                 cloud1.points[i].z = res[2];
                 cloud1.points[i].rgb = rgb;
-//        pcl::visualization::createLine();
-
                 std::cout << "point " << i << " out of " << num_elements << std::endl;
             }
             pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
@@ -948,54 +755,8 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             }
 
         }
-
-//    {
-//        pcl::PointCloud<pcl::PointXYZ> cloud1;
-//
-//        cloud1.width = 2;
-//        cloud1.height = 1;
-//        cloud1.is_dense = false;
-//        cloud1.points.resize(cloud1.width * cloud1.height);
-//
-//        {
-//            int i = 400;
-//            cloud1.points[0].x = originPoints.col(i).x();
-//            cloud1.points[0].y = originPoints.col(i).y();
-//            cloud1.points[0].z = originPoints.col(i).z();
-//            std::cout << "point " << i << " out of " << num_elements << std::endl;
-//        }
-//        {
-//            int i = 400;
-//            auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
-//            cloud1.points[1].x = res[0];
-//            cloud1.points[1].y = res[1];
-//            cloud1.points[1].z = res[2];
-////        pcl::visualization::createLine();
-//sort(differences.begin(), differences.end(), [](const auto& lhs, const auto& rhs){ return lhs > rhs; });
-//    double sum_diff = 0;
-//    for (const auto& e: differences) {
-//        std::cout << e << " ";
-//        sum_diff += e;
-//    }
-//    sum_diff /= num_elements;
-//    std::cout << std::endl << sum_diff << std::endl;
-//            std::cout << "point " << i << " out of " << num_elements << std::endl;
-//        }
-//        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-//        pcl::PointCloud<pcl::PointXYZ>::Ptr ptrCloud(&cloud1);
-//        viewer.CloudCloud(ptrCloud);
-//
-//        while (!viewer.wasStopped()) {
-//        }
-//    }
-
-
         std::vector<double> differences;
         for (int i = 0; i < num_elements; ++i) {
-//        auto res = cR_t_umeyama * originPoints.col(i);
-//        assert(abs(pow(originPoints.col(i).x() - res[0],2) - (originPoints.col(i).x() - res[0]) * (originPoints.col(i).x() - res[0])) < 0.000001);
-//        double diff = sqrt(pow(toBeTransformedPoints.col(i).x() - res[0],2) + pow(toBeTransformedPoints.col(i).y() - res[1],2) + pow(toBeTransformedPoints.col(i).z() - res[2],2));
-
             auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
             double diff = /*sqrt*/(pow(originPoints.col(i).x() - res[0], 2) + pow(originPoints.col(i).y() - res[1], 2) +
                                    pow(originPoints.col(i).z() - res[2], 2));
@@ -1020,19 +781,15 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             sum_sq += e * e;
         }
 
-//        int minBoundInliers = ;
-        if (numOfInliers < aprNumInliers/*minNumberOfInliersAfterRobust*/) {
+        if (numOfInliers < aprNumInliers) {
             success = false;
             return cR_t_umeyama;
         }
         sum_dif /= aprNumInliers;
         sum_sq /= aprNumInliers;
-//        std::string redCode("\033[0;31m");
-//        std::string resetCode("\033[0m");
         std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D="
                   << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
         std::cout << std::endl << redCode << "Inliers " << numOfInliers << resetCode << std::endl;
-
 
         sort(differences.begin(), differences.end());
         for (const auto &e: differences) {
@@ -1071,9 +828,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                                          const std::string &pathToImageDirectoryD,
                                          float fx, float cx, float fy, float cy) : cameraRgbd({fx, cx, fy, cy}) {
 
-//    cameraRgbd = CameraRGBD(fx, cx, fy, cy);
-    std::vector<std::string> imagesRgb = readRgbData(pathToImageDirectoryRGB);
-    std::vector<std::string> imagesD = readRgbData(pathToImageDirectoryD);
+    std::vector <std::string> imagesRgb = readRgbData(pathToImageDirectoryRGB);
+    std::vector <std::string> imagesD = readRgbData(pathToImageDirectoryD);
 
     std::sort(imagesRgb.begin(), imagesRgb.end());
     std::sort(imagesD.begin(), imagesD.end());
@@ -1081,40 +837,33 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
     assert(imagesRgb.size() == imagesD.size());
 
-    tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
+    tranformationRtMatrices = std::vector < std::vector < transformationRtMatrix >> (imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
 
     char *myargv[5] = {"-nogl", "-fo", "-1", "-v", "1"};
-//    char *myargv[4] = {"-fo", "-1", "-v", "1"};
+//   for GLSL: char *myargv[4] = {"-fo", "-1", "-v", "1"};
     std::cout << "Parse params for sift" << std::endl;
     siftModule.sift.ParseParam(5, myargv);
-//    std::cout << "Create Context GL" << std::endl;
-//    int support = siftModule.sift.CreateContextGL();
-//    std::cout << "Checking" << std::endl;
-//    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
-//        std::cerr << "SiftGPU is not supported!" << std::endl;
-//    }
 
     boost::timer timer;
-
-//    matcher = std::unique_ptr<SiftMatchGPU>(new SiftMatchGPU(maxSift));
     siftModule.matcher->VerifyContextGL();
 
     c("before sift");
-    std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
-            getKeypointsDescriptorsAllImages(siftModule.sift, pathToImageDirectoryRGB);
+    std::vector < std::pair < std::vector < SiftGPU::SiftKeypoint > , std::vector < float>>> keysDescriptorsAll =
+                                                                                                     getKeypointsDescriptorsAllImages(
+                                                                                                             siftModule.sift,
+                                                                                                             pathToImageDirectoryRGB);
     c("sift done");
 
-//    int incremental = 0;
     verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
     for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
         auto keypointAndDescriptor = keysDescriptorsAll[currentImage];
         c("processing");
         c(currentImage);
-        std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
+        std::vector <SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
         std::vector<float> &descriptors = keypointAndDescriptor.second;
-        std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
-        std::vector<keypointWithDepth> keypointsKnownDepths;
+        std::vector <SiftGPU::SiftKeypoint> keypointsKnownDepth;
+        std::vector <keypointWithDepth> keypointsKnownDepths;
         std::vector<float> descriptorsKnownDepth;
         std::vector<double> depths;
 
@@ -1123,37 +872,23 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         cv::Mat depthImageS = cv::imread(imagesD[currentImage]);
 
         std::ofstream myfile;
-//        myfile.open ("example.txt");
-//        myfile << "Writing this to a file.\n";
-//        myfile.close();
         int mDepth1 = 0, mDepthLow = 0;
         std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
 
         cv::Mat imageDepth1(480, 640, CV_16UC1);
         for (uint x = 0; x < depthImage.cols; ++x) {
-//            std::cout << std::setw(7) << x << ":";
-//            myfile << std::setw(7) << x << ":";
             for (uint y = 0; y < depthImage.rows; ++y) {
                 auto currentDepth = depthImage.ptr<ushort>(y)[x];
                 assert(currentDepth == depthImage.at<ushort>(y, x));
-//                imageDepth1
                 if (mDepth1 < currentDepth) {
                     mDepth1 = currentDepth;
                 }
                 if (mDepthLow < depthImageLow.ptr<ushort>(y)[x]) {
                     mDepthLow = currentDepth;
                 }
-//                std::cout << std::setw(8) << currentDepth;
                 imageDepth1.at<ushort>(y, x) = 65535 - currentDepth;
-//                myfile << std::setw(8) << currentDepth;
-//                depthImageLow.ptr<ushort>(y)[x] = 0;
-
             }
-//            std::cout << std::endl;
         }
-//        myfile.close();
-//        exit(0);
-//        depthImage.at<uint>(10,50) = 255;
         int x = 200, y = 200;
         std::cout << "depth1 " << depthImage.depth() << " and " << depthImage.channels() << std::endl;
         std::cout << "depthLow " << depthImageLow.depth() << std::endl;
@@ -1161,15 +896,6 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         std::cout << "full value is " << depthImage.ptr<ushort>(y)[x] << std::endl;
         std::cout << "low value is " << depthImageLow.ptr<ushort>(y)[x] << std::endl;
         std::cout << "Max depth  " << mDepth1 << " vs low " << mDepthLow << std::endl;
-//        cv::imshow("Made Depths ?", imageDepth1);
-//        cv::waitKey(0);
-//        cv::imshow("Known Depths ?", depthImageS);
-//        cv::waitKey(0);
-//        cv::imshow("Known Depths low", depthImageLow);
-//        cv::waitKey(0);
-//        cv::imshow("Known Depths high", depthImage);
-//        cv::waitKey(0);
-//        cv::destroyAllWindows();
         for (int i = 0; i < keypoints.size(); ++i) {
             int posInDescriptorVector = 128 * i;
             int currentKeypointDepth = depthImage.at<ushort>(keypoints[i].y, keypoints[i].x);
@@ -1196,7 +922,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
     }
     std::cout << "vertices written" << std::endl;
-    matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());
+    matches = std::vector < std::vector < Match >> (verticesOfCorrespondence.size());
 
 
     std::cout << "trying to find corr" << std::endl;
@@ -1206,7 +932,6 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
         for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
-//            std::cout << "                          " << std::setw(4) << i << std::setw(4) << j << std::endl;
             std::cout << "                          " << std::setw(4) << tranformationRtMatrices[i][j].vertexFrom.index
                       << std::setw(4) << tranformationRtMatrices[i][j].vertexTo.index << std::endl;
             std::cout << tranformationRtMatrices[i][j].innerTranformationRtMatrix << std::endl;
@@ -1230,7 +955,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
             std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
             file << s1 + s2;
         }
-        std::set<std::string> strings;
+        std::set <std::string> strings;
         for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
             for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
                 if (i >= tranformationRtMatrices[i][j].vertexTo.index) {
@@ -1241,10 +966,8 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                         "EDGE_SE3:QUAT " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " " +
                         std::to_string(i) + " ";
                 auto translationVector = tranformationRtMatrices[i][j].t;
-//                std::string edgeWithTranslation = edgeId + std::to_string(translationVector.col(0)[0]) + " "  + std::to_string(translationVector.col(0)[1]) + " " + std::to_string(translationVector.col(0)[2]) + " ";
                 std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
                 const auto &R = tranformationRtMatrices[i][j].R;
-//                MatrixX R = randMatrixSpecialUnitary<Scalar>(3);
 
                 Eigen::Matrix3f Rf;
                 Rf << R.row(0)[0], R.row(0)[1], R.row(0)[2], R.row(1)[0], R.row(1)[1], R.row(1)[2], R.row(2)[0], R.row(
@@ -1274,10 +997,10 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     rotationAverager::shanonAveraging(poseFile, absolutePose);
 
     std::cout << "Shonan averaging successfull" << std::endl;
-    std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
+    std::vector <std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
 
     std::cout << "read quaternions successfull" << std::endl;
-    std::vector<MatrixX> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
+    std::vector <MatrixX> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
 
     std::cout << "get Rotations from quaternions successfull" << std::endl;
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
@@ -1292,95 +1015,11 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     return;
 
-//
-//    auto testImage = verticesOfCorrespondence[10];
-//    cv::Mat image = cv::imread(testImage.pathToRGBimage);
-//
-//    for (const auto &key: testImage.keypoints) {
-////        std::cout << key.x << "::" << key.y << std::endl;
-//        auto &pixel = image.at<cv::Vec3b>((int) key.y, (int) key.x);
-//        pixel[0] = 255;
-//        pixel[1] = 255;
-//        pixel[2] = 255;
-//
-//    }
-//    cv::imshow("Well..", image);
-//
-//    cv::waitKey(0);
-//
-//    cv::Mat imageD = cv::imread(testImage.pathToDimage);
-//    for (const auto &key: testImage.keypoints) {
-////        std::cout << key.x << "::" << key.y << std::endl;
-//        auto &pixel = imageD.at<cv::Vec3b>((int) key.y, (int) key.x);
-//        pixel[0] = 255;
-//        pixel[1] = 255;
-//        pixel[2] = 255;
-//
-//    }
-//    cv::imshow("Depth..", imageD);
-//    cv::waitKey(0);
-//    cv::destroyAllWindows();
-//
-//    for (int i = 0; i < matches.size(); ++i) {
-//        std::cout << i << "-th frame total of  " << matches[i].size() << ": ";
-//        for (const auto &match: matches[i]) {
-//            std::cout << match.frameNumber << "_(" << match.matchNumbers.size() << ") ";
-//        }
-//        std::cout << std::endl;
-//    }
-//    std::cout << " all matches done " << std::endl;
-//
-//
-//    c(testImage.pathToRGBimage);
-//    c(testImage.pathToDimage);
-//
-//    int a = 2, b = 17;
-//
-//    {
-//        ++a;
-//        ++b;
-//
-//        auto matchingKeypoints = getMatchesKeypoints(
-//                std::make_pair(verticesOfCorrespondence[a].keypoints, verticesOfCorrespondence[a].descriptors),
-//                std::make_pair(verticesOfCorrespondence[b].keypoints, verticesOfCorrespondence[b].descriptors),
-//                siftModule.matcher.get());
-//        std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
-//                  << matchingKeypoints.second.size() << std::endl;
-//        --a;
-//        --b;
-//    }
-//    {
-//        std::cout << a << " match " << b << std::endl;
-//        auto matchingKeypoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b],
-//                                                     siftModule.matcher.get());
-//        std::cout << "totally matched matchingKeypoints: " << matchingKeypoints.first.size() << " and "
-//                  << matchingKeypoints.second.size() << std::endl;
-//    }
-//
-//    {
-//        a = 17;
-//        b = 33;
-//
-//        std::cout << a << " match " << b << std::endl;
-//        auto matchingKetpoints = getMatchesKeypoints(keysDescriptorsAll[a], keysDescriptorsAll[b],
-//                                                     siftModule.matcher.get());
-//        std::cout << "totally matched matchingKeypoints: " << matchingKetpoints.first.size() << " and "
-//                  << matchingKetpoints.second.size() << std::endl;
-//    }
-//    std::cout << a << " matched " << b << std::endl;
-////    delete matcher;
-
 };
 
 
 void CorrespondenceGraph::printConnections(std::ostream &os, int space) {
 
-//    os << "======================POSES BEFORE=======================\n" << std::endl;
-//    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-//        std::cout << "Pose number: " << i << std::endl;
-//        std::cout << verticesOfCorrespondence[i].absoluteRotationTranslation;
-//        std::cout << "\n_________________________________________________________________\n";
-//    }
     int counter = 0;
     int counterSquared = 0;
     os << "EDGES of the Correspondence Graph:" << std::endl;
@@ -1449,13 +1088,8 @@ std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
                     newAbsoluteRt.col(3)[counter] = newAbsoluteT.col(0)[counter];
 
                 }
-//                relativeRt.block(0, 3, 3, 1) = newAbsoluteT;
-
-
             }
         }
     }
     return preds;
-
-
 }
