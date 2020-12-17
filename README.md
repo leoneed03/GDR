@@ -16,13 +16,6 @@ make shure you have dependencies preinstalled:
 8. TBB
 9. GTSAM
 
-## SiftGPU
-To build SiftGPU:
-
-```
-cd siftgpu
-make 
-```
 
 ## Project
 
