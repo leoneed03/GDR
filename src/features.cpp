@@ -52,7 +52,6 @@ getMatchesKeypoints(const imageDescriptor &keysDescriptors1,
 
 
     std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<SiftGPU::SiftKeypoint>> matchingKeypoints;
-
     int (*match_buf)[2] = new int[num1][2];
     int num_match = matcher->GetSiftMatch(num1, match_buf);
     matchingKeypoints.first.reserve(num_match);
@@ -89,9 +88,7 @@ getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
 
 
     std::vector<std::pair<int, int>> matchingKeypoints;
-
     int (*match_buf)[2] = new int[num1][2];
-
     int num_match = matcher->GetSiftMatch(num1, match_buf);
     matchingKeypoints.reserve(num_match);
 
@@ -102,3 +99,4 @@ getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
 
     return matchingKeypoints;
 }
+

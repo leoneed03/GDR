@@ -7,16 +7,15 @@
 #include <fstream>
 #include <vector>
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 
 #define spaceIO (15)
 
 #include <boost/filesystem.hpp>
-#include <Eigen/LU> // required for MatrixBase::determinant
-#include <Eigen/SVD> // required for SVD
+#include <Eigen/LU>
+#include <Eigen/SVD>
 #include <iomanip>
 #include <set>
+#include "../include/util.h"
 
 void putAligned(std::ofstream &of, const std::vector<double> &val) {
     for (const auto &vals: val) {
@@ -27,6 +26,7 @@ void putAligned(std::ofstream &of, const std::vector<double> &val) {
 int GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std::string &pathToRelativeGroundTruth) {
     std::ifstream in(pathToGroundTruth);
     std::ofstream out(pathToRelativeGroundTruth);
+    int numOfEmptyLines = 3;
     int numbersInLine = 8;
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0};
@@ -103,7 +103,6 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
     std::string outRGB = pathOutDirectory + "/rgb";
     std::string outD = pathOutDirectory + "/depth";
 
-    boost::filesystem::create_directory(pathOutDirectory);
     namespace fs = boost::filesystem;
     fs::path path_to_remove(pathOutDirectory);
     for (fs::directory_iterator end_dir_it, it(path_to_remove); it != end_dir_it; ++it) {
@@ -111,14 +110,17 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
     }
     boost::filesystem::create_directory(outD);
     boost::filesystem::create_directory(outRGB);
+    int numOfEmptyLines = 3;
+    int numbersInLine = 8;
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0};
+    bool isZero = true;
+    int counter = -1;
     std::vector<std::string> rgbDataR = readData(pathToRGB);
     std::vector<std::string> dDataR = readData(pathToD);
     std::vector<std::string> rgbData = readRgbData(pathToRGB);
     std::vector<std::string> dData = readRgbData(pathToD);
     assert(rgbData.size() == dData.size());
-
     std::vector<std::string> onlyTakenRGB;
     int cntr = 0;
     for (const auto &e: indices) {
@@ -127,19 +129,24 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
         }
         std::string toRGB = outRGB + "/" + rgbDataR[e];
         std::string toD = outD + "/" + dDataR[e];
+        std::cout << "write RGB " << toRGB << std::endl;
+        std::cout << "write D " << toD << std::endl;
         boost::filesystem::copy_file(rgbData[e], toRGB);
         boost::filesystem::copy_file(dData[e], toD);
+        std::cout << "success" << std::endl;
         onlyTakenRGB.push_back(rgbDataR[e]);
         ++cntr;
     }
-    writeInfo(onlyTakenRGB, timeInfo, pathToGroundTruth, pathOutDirectory + "/groundtruth_new.txt", indices);
+
+    std::cout << "pathOut" << pathOutDirectory << std::endl;
+    writeInfo(onlyTakenRGB, timeInfo, pathToGroundTruth, pathOutDirectory + "/groundtruth_new.txt",
+              pathOutDirectory + "/relative_groundtruth.txt", indices);
     return {rgbDataR, dDataR};
 }
 
-std::vector<double>
-GTT::createTimestamps(const std::vector<std::string> &rgb,
-                      const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
-                      const std::set<int> &indices) {
+std::vector<double> GTT::createTimestamps(const std::vector<std::string> &rgb,
+                                          const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
+                                          const std::set<int> &indices) {
     std::map<std::string, double> rgbToTime;
     int skipNum = 3;
     std::vector<double> timeStamps;
@@ -192,6 +199,10 @@ GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<doub
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0, 0, 0, 0, 0, 0};
     std::vector<std::vector<double>> coordAndQuat;
+
+    bool isZero = true;
+
+    int index;
 
     if (in) {
         for (int i = 0; i < numOfEmptyLines; ++i) {
@@ -250,17 +261,68 @@ int GTT::writeGroundTruth(const std::string &pathOut, const std::vector<std::vec
     return 1;
 }
 
+int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
+                                            const std::vector<std::vector<double>> &timeCoordinates) {
+    std::ofstream out(pathOut);
+    int skipN = 3;
+    for (int i = 0; i < skipN; ++i) {
+        out << "#\n";
+    }
+
+    MatrixX zeroRotationMatrix;
+    MatrixX zeroTranslation = getSomeMatrix(3, 1);
+
+    for (int index = 0; index < timeCoordinates.size(); ++index) {
+        auto &e = timeCoordinates[index];
+
+        out.precision(std::numeric_limits<double>::max_digits10);
+        out << std::setw(2 * spaceIO) << e[0];
+
+
+        MatrixX currentTranslation = getSomeMatrix(3, 1);
+
+        std::vector<double> vectorData = {e[4], e[5], e[6], e[7]};
+        Eigen::Quaterniond qd(vectorData.data());
+        MatrixX currentRotationMatrix = copyMatrix(qd);
+
+        currentTranslation.col(0)[0] = e[1];
+        currentTranslation.col(0)[1] = e[2];
+        currentTranslation.col(0)[2] = e[3];
+
+
+        if (index == 0) {
+            zeroRotationMatrix = currentRotationMatrix;
+            zeroTranslation = currentTranslation;
+        }
+
+        MatrixX relativeRotation = zeroRotationMatrix.transpose() * currentRotationMatrix;
+        Eigen::Matrix3d matrixDouble = getRotationMatrixDouble(relativeRotation);
+        Eigen::Quaterniond qRelatived(matrixDouble);
+
+        MatrixX deltaTranslation = zeroTranslation - currentTranslation;
+        MatrixX relativeTranslation = zeroRotationMatrix.transpose() * deltaTranslation;
+        assert(posTranslation.size() == 3);
+        for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
+            out << std::setw(2 * spaceIO) << relativeTranslation.col(0)[posTranslation];
+        }
+        out << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
+            << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w() << std::endl;
+    }
+    return 1;
+}
+
 void GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
-                    const std::string &pathToGroundTruth, const std::string &pathOut, const std::set<int> &indices) {
+                    const std::string &pathToGroundTruth, const std::string &pathOut, const std::string &relativeOutput,
+                    const std::set<int> &indices) {
     std::vector<double> timeStamps = createTimestamps(rgb, pathTimeRGB, pathToGroundTruth, indices);
     std::vector<std::vector<double>> timeAndCoordinates = getGroundTruth(pathToGroundTruth, timeStamps);
     writeGroundTruth(pathOut, timeAndCoordinates);
+    writeGroundTruthRelativeToZeroPose(relativeOutput, timeAndCoordinates);
 }
 
 void
 GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
                     const std::string NewName = "subset") {
-
     std::string pathNewOut = pathOut + "/" + NewName;
     std::string groundtruth = pathToDataset + "/groundtruth.txt";
     std::string rgb = pathToDataset + "/rgb";

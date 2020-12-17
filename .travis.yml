@@ -25,10 +25,9 @@ before_install:
   - sudo apt install -y libgtsam-dev libgtsam-unstable-dev
 
   - sudo apt-get -y install python3.7-dev
-
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
-#  - sudo mkdir /usr/local/cuda
-#  - sudo cp -r /usr/bin/ /usr/local/cuda
+  #  - sudo mkdir /usr/local/cuda
+  #  - sudo cp -r /usr/bin/ /usr/local/cuda
 
   - sudo apt-get install libopencv-dev
   - sudo apt-get -y install libdevil-dev
@@ -51,47 +50,49 @@ before_install:
   - sudo apt-get -y install libboost-program-options-dev
   - sudo apt-get -y install libtbb-dev
 
+
+
 script:
-#  - cd externals
-#  - cd ICPCUDA
-#  - git submodule update --init
-#
-##  Pangolin
-#  - cd third-party/Pangolin/
-#  - mkdir build
-#  - cd build
-#  - EigenAbsolutePath=$(readlink -f ../../Eigen)
-#  - echo $EigenAbsolutePath
-#  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
-#  - make -j12
+  #  - cd externals
+  #  - cd ICPCUDA
+  #  - git submodule update --init
+  #
+  ##  Pangolin
+  #  - cd third-party/Pangolin/
+  #  - mkdir build
+  #  - cd build
+  #  - EigenAbsolutePath=$(readlink -f ../../Eigen)
+  #  - echo $EigenAbsolutePath
+  #  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
+  #  - make -j12
+  #
+  ## ICPCUDA
+  #  - cd ../../../
+  #  - mkdir build
+  #  - cd build/
+  #  - export CC=/usr/bin/gcc-6
+  #  - export CXX=/usr/bin/g++-6
+  #  - cmake ..
+  #  - make -j12
+  #  - cd
 
-## ICPCUDA
-#  - cd ../../../
-#  - mkdir build
-#  - cd build/
-#  - export CC=/usr/bin/gcc-6
-#  - export CXX=/usr/bin/g++-6
-#  - cmake ..
-#  - make -j12
-#  - cd
-#
-#  - cd build/leoneed03/GDR
+  #  - cd build/leoneed03/GDR
 
-# SiftGPU
-#  - cd siftgpu
-#  - sudo make
-#  - cd ..
-#  - ls
+  # SiftGPU
+  #  - cd siftgpu
+  #  - sudo make
+  #  - cd ..
+  #  - ls
 
-# GTSAM
-#  - cd externals/gtsam
-#  - sudo mkdir build
-#  - cd build
-#  - sudo cmake ..
-#  - sudo make install
-#  - cd ..
-#  - cd ..
-#  - cd ..
+  # GTSAM
+  #  - cd externals/gtsam
+  #  - sudo mkdir build
+  #  - cd build
+  #  - sudo cmake ..
+  #  - sudo make install
+  #  - cd ..
+  #  - cd ..
+  #  - cd ..
 
   - cd
   - cd build/leoneed03/GDR
