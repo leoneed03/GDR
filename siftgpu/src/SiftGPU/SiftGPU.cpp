@@ -45,7 +45,7 @@ using namespace std;
 #include "PyramidGL.h"
 
 //CUDA works only with vc8 or higher
-#if (true)//defined(CUDA_SIFTGPU_ENABLED)
+#if defined(CUDA_SIFTGPU_ENABLED)
 #include "PyramidCU.h"
 #endif
 
@@ -143,7 +143,7 @@ inline void SiftGPU::InitSiftGPU()
 	//Parse sift parameters
 	ParseSiftParam();
 
-#if (false) //!defined(CUDA_SIFTGPU_ENABLED)
+#if !defined(CUDA_SIFTGPU_ENABLED)
 	if(GlobalUtil::_UseCUDA)
 	{
 		GlobalUtil::_UseCUDA = 0;
@@ -174,7 +174,7 @@ inline void SiftGPU::InitSiftGPU()
                                             << (GlobalUtil::_UseCUDA? "CUDA" : 
                                             (GlobalUtil::_UseOpenCL? "OpenCL" : "GLSL")) <<"\n";
 
-#if (true)//defined(CUDA_SIFTGPU_ENABLED)
+#if defined(CUDA_SIFTGPU_ENABLED)
 	if(GlobalUtil::_UseCUDA)
 		_pyramid = new PyramidCU(*this);
 	else 
@@ -779,7 +779,7 @@ void SiftGPU::ParseParam(int argc, char **argv)
 			PrintUsage();
             break;            
         case MAKEINT4(c, u, d, a):
-#if (true) //defined(CUDA_SIFTGPU_ENABLED)
+#if defined(CUDA_SIFTGPU_ENABLED)
 
             if(!_initialized) 
             {
@@ -1293,7 +1293,7 @@ int SiftGPU::CreateContextGL()
     }
     else if(!GlobalUtil::CreateWindowEZ()) 
     {
-#if (true) //CUDA_SIFTGPU_ENABLED
+#if CUDA_SIFTGPU_ENABLED
 		GlobalUtil::_UseCUDA = 1;
 #else
         return 0;

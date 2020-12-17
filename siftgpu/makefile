@@ -14,8 +14,8 @@ else
 	siftgpu_enable_cuda = 1
 endif
 
-#CUDA_INSTALL_PATH = /usr
-CUDA_INSTALL_PATH = /usr/lib/cuda
+CUDA_INSTALL_PATH = /usr
+#CUDA_INSTALL_PATH = /usr/lib/cuda
 
 #change  additional  settings, like SM version here if it is not 1.0 (eg. -arch sm_13 for GTX280)
 #siftgpu_cuda_options = -Xopencc -OPT:unroll_size=200000
