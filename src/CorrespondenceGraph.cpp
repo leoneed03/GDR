@@ -131,9 +131,8 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
                 std::cout << "check this " << frameFrom.index << " -> " << frameTo.index << std::endl;
             }
             assert(frameTo.index > frameFrom.index);
-            MatrixX R, t;
             bool success = true;
-            auto cameraMotion = getTransformationRtMatrixTwoImages(i, j, R, t, success);
+            auto cameraMotion = getTransformationRtMatrixTwoImages(i, j, success);
 
             std::cout << "out of Transformation calculation" << std::endl;
             std::cout << frameFrom.index << " -> " << frameTo.index << std::endl;
@@ -143,20 +142,14 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
 
                 Eigen::Matrix3d m3d = getRotationMatrixDouble(cameraMotion.block(0, 0, 3, 3));
                 Eigen::Quaterniond qRelatived(m3d);
-                MatrixX tRelative = cameraMotion.block(0, 3, 3, 1);
-                for (int indexT = 0; indexT < 3; ++indexT) {
-                    std::cout << std::setw(2 * spaceIO) << tRelative.col(0)[indexT];
-                }
+
                 std::cout << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
                           << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w()
                           << std::endl;
 
-
-                tranformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo, R, t));
+                tranformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo));
                 tranformationRtMatrices[frameTo.index].push_back(
-                        transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom,
-                                               cameraMotion.inverse().block(0, 0, 3, 3),
-                                               cameraMotion.inverse().block(0, 3, 3, 1)));
+                        transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
             } else {
                 std::cout
                         << "/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////\n NOT ENOUGH MATCHES \n/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////////\n";
@@ -344,10 +337,10 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
     cv::destroyAllWindows();
 }
 
-MatrixX
-CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT,
+Eigen::Matrix4d
+CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList,
                                                         bool &success, double inlierCoeff) {
-    MatrixX cR_t_umeyama;
+    Eigen::Matrix4d cR_t_umeyama;
     success = true;
     if (inlierCoeff >= 1.0) {
         inlierCoeff = 1.0;
@@ -435,7 +428,6 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             }
         }
 
-
         std::cout << "Points are min" << std::endl;
         std::cout << mx << " " << my << " " << mz << std::endl;
 
@@ -443,9 +435,9 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         std::cout << Mx << " " << My << " " << Mz << std::endl;
         assert(mz > 0);
         assert(Mz > 0);
-        MatrixX cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
+        Eigen::Matrix4d cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
                                          originPoints.block(0, 0, dim, num_elements));
-        MatrixX cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints, originPoints,
+        Eigen::Matrix4d cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints, originPoints,
                                                                              numIterations, num_elements,
                                                                              inlierCoeff);
         cR_t_umeyama = cR_t_umeyama_RANSAC;
@@ -582,6 +574,8 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         std::cout << "Umeyama\n" << cR_t_umeyama << std::endl;
     }
     std::cout << "Here!" << std::endl;
+    assert(cR_t_umyama.cols() == 4 && cR_t_umeyama.rows() == 4);
+    std::cout << "return transformation matrix" << std::endl;
     return cR_t_umeyama;
 }
 

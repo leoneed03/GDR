@@ -67,8 +67,8 @@ struct CorrespondenceGraph {
 
     void decreaseDensity();
 
-    MatrixX
-    getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
+    Eigen::Matrix4d
+    getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, bool &success,
                                        double inlierCoeff = 0.6);
 
     void showKeypointsOnDephtImage(int vertexFrom);

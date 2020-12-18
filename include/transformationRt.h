@@ -31,7 +31,7 @@ struct transformationRtMatrix {
     MatrixX t;
 
     transformationRtMatrix(const MatrixX &newInnerEssentialMatrix, const VertexCG &newVertexFrom,
-                           const VertexCG &newVertexTo, const MatrixX &newR, const MatrixX &newT);
+                           const VertexCG &newVertexTo);
 };
 
 #endif
