@@ -8,6 +8,10 @@
 #include <limits>
 #include <iostream>
 
+Eigen::Matrix3d copyMatrix3d(Eigen::Quaterniond &quat) {
+    return quat.toRotationMatrix();
+}
+
 MatrixX copyMatrix(Eigen::Quaterniond &quat) {
     assert(quat.size() == 4);
     auto matrixQuat = quat.toRotationMatrix();

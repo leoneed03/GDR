@@ -102,8 +102,6 @@ void parseDepthImage(const std::string &pathToDimage, const CameraRGBD &cameraRg
         }
     }
     if (true) {
-
-
         int num_elements = points.size();
         cloud1.width = num_elements;
         cloud1.height = 1;

@@ -65,21 +65,15 @@ struct CorrespondenceGraph {
 
     int findTransformationRtMatrices();
 
-    int findRotationsTranslations();
-
-    int findRotationTranslation(int vertexFrom, int vertexInList);
-
     void decreaseDensity();
 
     MatrixX
     getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, MatrixX &outR, MatrixX &outT, bool &success,
                                        double inlierCoeff = 0.6);
 
-    cv::Mat getEssentialMatrixTwoImagesMatched(int vertexFrom, int vertexTo);
-
     void showKeypointsOnDephtImage(int vertexFrom);
 
-    MatrixX
+    Eigen::Matrix4d
     getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints,
                                            const int numIterations,
                                            const int numOfElements, double inlierCoeff);

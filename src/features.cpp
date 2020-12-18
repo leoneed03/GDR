@@ -96,7 +96,6 @@ getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
         matchingKeypoints.push_back({match_buf[i][0], match_buf[i][1]});
     }
     delete[] match_buf;
-
     return matchingKeypoints;
 }
 
