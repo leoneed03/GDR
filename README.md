@@ -1,4 +1,4 @@
-# GDR: global depth reconstrutor
+# GDR: global depth reconstructor
 
 Global reconstruction from RGB-D data
 
@@ -14,7 +14,8 @@ make shure you have dependencies preinstalled:
 6. OpenCV
 7. Boost
 8. TBB
-9. GTSAM
+9. GTest
+10. GTSAM
 
 
 ## Project
@@ -24,9 +25,5 @@ mkdir build
 cd build
 cmake ..
 make
+ctest
 ```
-
-## Usage
-
-take a look at "test" directory for example
-
