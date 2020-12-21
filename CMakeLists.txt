@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10.0)
 project(GlobalReconstructionRGBD)
 
 set(CMAKE_CXX_STANDARD 17)
-set(GCC_COVERAGE_COMPILE_FLAGS " -Os -DNDEBUG")
+set(GCC_COVERAGE_COMPILE_FLAGS " -Os")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 
 include(ExternalProject)
@@ -37,6 +37,8 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 set(GDR_HEADER_FILES
+
+        ${PROJECT_SOURCE_DIR}/include/errors.h
         ${PROJECT_SOURCE_DIR}/include/features.h
         ${PROJECT_SOURCE_DIR}/include/VertexCG.h
         ${PROJECT_SOURCE_DIR}/include/CorrespondenceGraph.h
