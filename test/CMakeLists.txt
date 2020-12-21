@@ -1,4 +1,4 @@
-set(TESTS testGDR_1 testGDR)
+set(TESTS testUmeyamaRansac testGDR)
 
 foreach(TEST ${TESTS})
     add_executable(${TEST} ${TEST}.cpp)
