@@ -23,6 +23,7 @@
 #include "images.h"
 #include "rotationAveraging.h"
 #include "quaternions.h"
+#include "errors.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -35,6 +36,10 @@ struct Match {
             matchNumbers(newMatchNumbers) {};
 };
 
+struct KeypointsAndDescriptors {
+    std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> pairsOfKeypointsAndDescriptors;
+    KeypointsAndDescriptors(const std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>& newPairskeypointsAndDescriptors);
+};
 
 typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
@@ -55,6 +60,7 @@ struct CorrespondenceGraph {
     const std::string resetCode = "\033[0m";
     const std::string relativePose = "relativeRotations.txt";
     const std::string absolutePose = "absoluteRotations.txt";
+
 
     CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD, float fx,
                         float cx, float fy, float cy);
@@ -78,7 +84,11 @@ struct CorrespondenceGraph {
                                            const int numIterations,
                                            const int numOfElements, double inlierCoeff);
 
-    void printConnections(std::ostream &os, int space = 10);
+    void printConnectionsRelative(std::ostream &os, int space = 10);
+    int printAbsolutePoses(std::ostream &os, int space = 10);
+    int performRotationAveraging();
+
+    int printRelativePosesFile(const std::string& outPutFileRelativePoses);
 
     std::vector<int> bfs(int currentVertex);
 };

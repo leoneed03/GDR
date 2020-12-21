@@ -14,11 +14,11 @@ keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double n
 void VertexCG::setRotation(const MatrixX &rotation) {
     assert(rotation.rows() == 3 && rotation.cols() == 3);
     absoluteRotationTranslation.block<3, 3>(0, 0) = rotation;
-    assert(abs(rotation.col(3)[3] - 1) < std::numeric_limits<double>::epsilon);
+    assert(abs(rotation.col(3)[3] - 1) < std::numeric_limits<double>::epsilon());
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             assert(abs(absoluteRotationTranslation.col(i)[j] - rotation.col(i)[j]) <
-                   2 * std::numeric_limits<double>::epsilon);
+                   2 * std::numeric_limits<double>::epsilon());
         }
     }
 }

@@ -301,7 +301,7 @@ int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
 
         MatrixX deltaTranslation = zeroTranslation - currentTranslation;
         MatrixX relativeTranslation = zeroRotationMatrix.transpose() * deltaTranslation;
-        assert(posTranslation.size() == 3);
+//        assert(posTranslation.size() == 3);
         for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
             out << std::setw(2 * spaceIO) << relativeTranslation.col(0)[posTranslation];
         }

@@ -12,7 +12,7 @@ MatrixX getSomeMatrix(int height, int width) {
 Eigen::Matrix3d getRotationMatrixDouble(const MatrixX &m) {
     Eigen::Matrix3d resMatrix;
 
-    assert(m.col() == 3);
+    assert(m.cols() == 3);
     assert(m.rows() == 3);
 
     resMatrix = m;

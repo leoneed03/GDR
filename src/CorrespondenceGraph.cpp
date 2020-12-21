@@ -20,6 +20,12 @@
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
 
+KeypointsAndDescriptors::KeypointsAndDescriptors(const std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>& newPairsKeypointsAndDescriptors) {
+    for (const auto& newPairKeypointAndDescriptor: newPairsKeypointsAndDescriptors) {
+        assert(newPairKeypointAndDescriptor.first.size() * 128 == newPairKeypointAndDescriptor.second.size());
+    }
+    pairsOfKeypointsAndDescriptors = newPairsKeypointsAndDescriptors;
+}
 
 void c(std::string output) {
     if (DEBUG_PRINT) {
@@ -574,9 +580,76 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         std::cout << "Umeyama\n" << cR_t_umeyama << std::endl;
     }
     std::cout << "Here!" << std::endl;
-    assert(cR_t_umyama.cols() == 4 && cR_t_umeyama.rows() == 4);
     std::cout << "return transformation matrix" << std::endl;
     return cR_t_umeyama;
+}
+
+int CorrespondenceGraph::printRelativePosesFile(const std::string& pathOutRelativePoseFile) {
+
+    std::ofstream file(pathOutRelativePoseFile);
+
+    if (file.is_open()) {
+        int numPoses = tranformationRtMatrices.size();
+        for (int i = 0; i < numPoses; ++i) {
+            std::string s1 = "VERTEX_SE3:QUAT ";
+            std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
+            file << s1 + s2;
+        }
+        std::set<std::string> strings;
+        for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
+            for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
+                if (i >= tranformationRtMatrices[i][j].vertexTo.index) {
+                    continue;
+                }
+                std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
+                std::string edgeId =
+                        "EDGE_SE3:QUAT " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " " +
+                        std::to_string(i) + " ";
+                auto translationVector = tranformationRtMatrices[i][j].t;
+                std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
+                const auto &R = tranformationRtMatrices[i][j].R;
+
+                Eigen::Quaterniond qR(R);
+                int space = 12;
+                std::vector<double> vectorDataRotations = {qR.x(), qR.y(), qR.z(), qR.w()};
+                std::string edgeTotal =
+                        edgeWithTranslation + std::to_string(qR.x()) + " " + std::to_string(qR.y()) + " " +
+                        std::to_string(qR.z()) + " "
+                        + std::to_string(qR.w()) + noise + "\n";
+                if (strings.find(edgeTotal) != strings.end()) {
+                    std::cerr << "Duplicate " << i << " " << j << " j as "
+                              << tranformationRtMatrices[i][j].vertexFrom.index << std::endl;
+                    std::cout << "ERROR";
+                    exit(2);
+                }
+                strings.insert(edgeTotal);
+                file << edgeTotal;
+            }
+        }
+    } else {
+        return ERROR_OPENING_FILE_WRITE;
+    }
+
+    return 0;
+}
+
+int CorrespondenceGraph::performRotationAveraging() {
+    std::cout << "first print successfull" << std::endl;
+    rotationAverager::shanonAveraging(relativePose, absolutePose);
+
+    std::cout << "Shonan averaging successfull" << std::endl;
+    std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
+
+    std::cout << "read quaternions successfull" << std::endl;
+    std::vector<MatrixX> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
+
+    std::cout << "get Rotations from quaternions successfull" << std::endl;
+    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+        verticesOfCorrespondence[i].setRotation(absoluteRotations[i]);
+    }
+
+    std::cout << "set Rotations in vertices successfull" << std::endl;
+    return 0;
 }
 
 CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
@@ -594,12 +667,11 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix >>(imagesD.size());
     std::cout << "Totally read " << imagesRgb.size() << std::endl;
-
-    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
+//    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
 //   for GLSL:
 //    char *myargv[4] = {"-fo", "-1", "-v", "1"};
-    std::cout << "Parse params for sift" << std::endl;
-    siftModule.sift.ParseParam(5, myargv);
+//    std::cout << "Parse params for sift" << std::endl;
+//    siftModule.sift.ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
 
 
     std::cout << "Params are parsed" << std::endl;
@@ -611,7 +683,6 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
 
     std::cout << "start timer " << std::endl;
     boost::timer timer;
-    siftModule.matcher->VerifyContextGL();
 
     c("before sift");
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
@@ -687,7 +758,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
                verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
     }
     std::cout << "vertices written" << std::endl;
-    matches = std::vector<std::vector<Match >>(verticesOfCorrespondence.size());
+    matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());
 
 
     std::cout << "trying to find corr" << std::endl;
@@ -710,80 +781,27 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
         }
     }
 
-
     std::string poseFile = relativePose;
-    {
-        std::ofstream file(poseFile);
-        int numPoses = tranformationRtMatrices.size();
-        for (int i = 0; i < numPoses; ++i) {
-            std::string s1 = "VERTEX_SE3:QUAT ";
-            std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
-            file << s1 + s2;
-        }
-        std::set<std::string> strings;
-        for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
-            for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
-                if (i >= tranformationRtMatrices[i][j].vertexTo.index) {
-                    continue;
-                }
-                std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
-                std::string edgeId =
-                        "EDGE_SE3:QUAT " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " " +
-                        std::to_string(i) + " ";
-                auto translationVector = tranformationRtMatrices[i][j].t;
-                std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
-                const auto &R = tranformationRtMatrices[i][j].R;
-
-                Eigen::Matrix3f Rf;
-                Rf << R.row(0)[0], R.row(0)[1], R.row(0)[2], R.row(1)[0], R.row(1)[1], R.row(1)[2], R.row(2)[0], R.row(
-                        2)[1], R.row(2)[2];
-
-                Eigen::Quaternionf qR(Rf);
-                int space = 12;
-                std::vector<double> vectorDataRotations = {qR.x(), qR.y(), qR.z(), qR.w()};
-                std::string edgeTotal =
-                        edgeWithTranslation + std::to_string(qR.x()) + " " + std::to_string(qR.y()) + " " +
-                        std::to_string(qR.z()) + " "
-                        + std::to_string(qR.w()) + noise + "\n";
-                if (strings.find(edgeTotal) != strings.end()) {
-                    std::cerr << "Duplicate " << i << " " << j << " j as "
-                              << tranformationRtMatrices[i][j].vertexFrom.index << std::endl;
-                    std::cout << "ERROR";
-                    exit(2);
-                }
-                strings.insert(edgeTotal);
-                file << edgeTotal;
-            }
-        }
-    }
-    printConnections(std::cout);
-/*
-    std::cout << "first print successfull" << std::endl;
-    rotationAverager::shanonAveraging(poseFile, absolutePose);
-
-    std::cout << "Shonan averaging successfull" << std::endl;
-    std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
-
-    std::cout << "read quaternions successfull" << std::endl;
-    std::vector<MatrixX> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
-
-    std::cout << "get Rotations from quaternions successfull" << std::endl;
-    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-        verticesOfCorrespondence[i].setRotation(absoluteRotations[i]);
-    }
-
-    std::cout << "set Rotations in vertices successfull" << std::endl;
-    bfs(0);
-*/
+    printRelativePosesFile(poseFile);
+    printConnectionsRelative(std::cout);
     std::cout << "bfs successfull" << std::endl;
-    printConnections(std::cout);
-
-    return;
+    printConnectionsRelative(std::cout);
 
 };
 
+int CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
+    os << "======================NOW 4*4 Matrices of absolute positions=======================\n" << std::endl;
 
-void CorrespondenceGraph::printConnections(std::ostream &os, int space) {
+    os << "======================++++++++++++++++=======================\n" << std::endl;
+    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+        os << "Pose number: " << i << std::endl;
+        os << verticesOfCorrespondence[i].absoluteRotationTranslation;
+        os << "\n_________________________________________________________________\n";
+    }
+    return 0;
+}
+
+void CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) {
 
     int counter = 0;
     int counterSquared = 0;
@@ -803,14 +821,7 @@ void CorrespondenceGraph::printConnections(std::ostream &os, int space) {
 
     os << "sq D " << sqrt(counterSquared * 1.0 / tranformationRtMatrices.size() -
                           pow(counter * 1.0 / tranformationRtMatrices.size(), 2)) << std::endl;
-    os << "======================NOW 4*4 Matrices=======================\n" << std::endl;
 
-    os << "======================++++++++++++++++=======================\n" << std::endl;
-    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-        std::cout << "Pose number: " << i << std::endl;
-        std::cout << verticesOfCorrespondence[i].absoluteRotationTranslation;
-        std::cout << "\n_________________________________________________________________\n";
-    }
 }
 
 std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {

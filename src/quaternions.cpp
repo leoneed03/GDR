@@ -13,13 +13,12 @@ Eigen::Matrix3d copyMatrix3d(Eigen::Quaterniond &quat) {
 }
 
 MatrixX copyMatrix(Eigen::Quaterniond &quat) {
-    assert(quat.size() == 4);
+
     auto matrixQuat = quat.toRotationMatrix();
     assert(matrixQuat.rows() == 3);
 
     MatrixX result = getSomeMatrix(matrixQuat.rows(), matrixQuat.cols());
     for (int i = 0; i < 3; ++i) {
-        assert(matrixQuat[i].size() == 3);
         for (int j = 0; j < 3; ++j) {
             result.row(i)[j] = matrixQuat.row(i)[j];
         }

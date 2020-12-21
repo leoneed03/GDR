@@ -24,13 +24,13 @@ typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorX;
 
 struct transformationRtMatrix {
-    MatrixX innerTranformationRtMatrix;
+    Eigen::Matrix4d innerTranformationRtMatrix;
     const VertexCG &vertexFrom;
     const VertexCG &vertexTo;
-    MatrixX R;
-    MatrixX t;
+    Eigen::Matrix3d R;
+    Eigen::Vector3d t;
 
-    transformationRtMatrix(const MatrixX &newInnerEssentialMatrix, const VertexCG &newVertexFrom,
+    transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix, const VertexCG &newVertexFrom,
                            const VertexCG &newVertexTo);
 };
 
