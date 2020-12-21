@@ -4,7 +4,21 @@
 //
 
 #include "../include/siftModule.h"
+#include <iostream>
 
-SiftModule::SiftModule() {
+void SiftModule::siftParseParams(std::vector<char *> &siftGpuArgs) {
+    sift.ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
+}
+SiftModule::SiftModule(std::vector<char *> &siftGpuArgs) {
     matcher = std::unique_ptr<SiftMatchGPU>(new SiftMatchGPU(maxSift));
+    std::cout << "Parse params for sift specified" << std::endl;
+    siftParseParams(siftGpuArgs);
+    matcher->VerifyContextGL();
+}
+SiftModule::SiftModule() {
+    std::vector<char*> siftGpuArgs = {"-cuda", "-fo", "-1", "-v", "1"};
+    matcher = std::unique_ptr<SiftMatchGPU>(new SiftMatchGPU(maxSift));
+    std::cout << "Parse params for sift default" << std::endl;
+    siftParseParams(siftGpuArgs);
+    matcher->VerifyContextGL();
 }

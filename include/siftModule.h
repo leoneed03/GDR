@@ -6,15 +6,20 @@
 #ifndef SIFTGPU_SIFT_H
 #define SIFTGPU_SIFT_H
 
+#include <vector>
 #include <memory>
 #include "SiftGPU.h"
 
 struct SiftModule {
+
     std::unique_ptr<SiftMatchGPU> matcher;
     SiftGPU sift;
     int maxSift = 4096;
 
+    SiftModule(std::vector<char *> &siftGpuArgs);
     SiftModule();
+
+    void siftParseParams(std::vector<char *> &siftGpuArgs);
 };
 
 #endif
