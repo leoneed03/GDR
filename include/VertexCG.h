@@ -36,7 +36,7 @@ typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 struct VertexCG {
 
     int index;
-    MatrixX absoluteRotationTranslation;
+    Eigen::Matrix4d absoluteRotationTranslation;
     std::vector<keypointWithDepth> keypointsWithDepths;
     std::vector<SiftGPU::SiftKeypoint> keypoints;
     std::vector<float> descriptors;
@@ -46,7 +46,7 @@ struct VertexCG {
     int heightMirrorParameter = 480;
     int widthMirrorParameter = 640;
 
-    void setRotation(const MatrixX &rotation);
+    void setRotation(const Eigen::Matrix3d &rotation);
 
     VertexCG(int newIndex,
              const std::vector<keypointWithDepth> &newKeypointsWithDepths,

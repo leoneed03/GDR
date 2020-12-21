@@ -77,31 +77,6 @@ int CorrespondenceGraph::findCorrespondences() {
     return 0;
 }
 
-
-int CorrespondenceGraph::findCorrespondencesEveryDepth() {
-
-    for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-        for (int j = i + 1; j < verticesOfCorrespondence.size(); ++j) {
-
-            if (DEBUG_PRINT)
-                std::cout << "currently " << i << " " << j << std::endl;
-            std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
-                    std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
-                    std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
-                    siftModule.matcher.get());
-            if (DEBUG_PRINT)
-                std::cout << "total matches " << matchingNumbers.size() << std::endl;
-            matches[i].push_back({j, matchingNumbers});
-            for (int p = 0; p < matchingNumbers.size(); ++p) {
-                std::swap(matchingNumbers[p].first, matchingNumbers[p].second);
-            }
-            matches[j].push_back({i, matchingNumbers});
-        }
-    }
-
-    return 0;
-}
-
 void MyLine(cv::Mat &img, cv::Point start, cv::Point end) {
     int thickness = 2;
     int lineType = cv::LINE_8;
@@ -157,6 +132,7 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
                 tranformationRtMatrices[frameTo.index].push_back(
                         transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
             } else {
+                std::cout << "transformation matrix not found" << std::endl;
                 std::cout
                         << "/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////\n NOT ENOUGH MATCHES \n/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////////\n";
             }
@@ -181,9 +157,10 @@ void CorrespondenceGraph::decreaseDensity() {
 }
 
 
-Eigen::Matrix4d CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints,
+Eigen::Matrix4d getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints,
                                                                     const MatrixX &destinationPoints,
-                                                                    const int numIterations, const int numOfPoints,
+                                                                    int numIterationsRansac,
+                                                                    int numOfPoints,
                                                                     double inlierCoeff) {
     int dim = 3;
     int top = 10;
@@ -215,7 +192,7 @@ Eigen::Matrix4d CorrespondenceGraph::getTransformationMatrixUmeyamaLoRANSAC(cons
     Eigen::Matrix4d cR_t_umeyama_3_points_cand;
     std::vector<int> triple;
 
-    for (int i = 0; i < numIterations; ++i) {
+    for (int i = 0; i < numIterationsRansac; ++i) {
         std::vector<int> p(dim, 0);
         MatrixX toBeTransformed3Points = MatrixX(dim + 1, dim);
         MatrixX dest3Points = MatrixX(dim + 1, dim);
@@ -522,8 +499,6 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
             double diff = /*sqrt*/(pow(originPoints.col(i).x() - res[0], 2) + pow(originPoints.col(i).y() - res[1], 2) +
                                    pow(originPoints.col(i).z() - res[2], 2));
-            //////Question: maybe change Eucledian distance if needed?
-
             differences.push_back(diff);
         }
 
@@ -641,7 +616,7 @@ int CorrespondenceGraph::performRotationAveraging() {
     std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
 
     std::cout << "read quaternions successfull" << std::endl;
-    std::vector<MatrixX> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
+    std::vector<Eigen::Matrix3d> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
 
     std::cout << "get Rotations from quaternions successfull" << std::endl;
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
@@ -652,37 +627,7 @@ int CorrespondenceGraph::performRotationAveraging() {
     return 0;
 }
 
-CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
-                                         const std::string &pathToImageDirectoryD,
-                                         float fx, float cx, float fy, float cy) : cameraRgbd({fx, cx, fy, cy}) {
-
-    std::vector<std::string> imagesRgb = readRgbData(pathToImageDirectoryRGB);
-    std::vector<std::string> imagesD = readRgbData(pathToImageDirectoryD);
-
-    std::sort(imagesRgb.begin(), imagesRgb.end());
-    std::sort(imagesD.begin(), imagesD.end());
-
-    std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
-    assert(imagesRgb.size() == imagesD.size());
-
-    tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix >>(imagesD.size());
-    std::cout << "Totally read " << imagesRgb.size() << std::endl;
-//    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
-//   for GLSL:
-//    char *myargv[4] = {"-fo", "-1", "-v", "1"};
-//    std::cout << "Parse params for sift" << std::endl;
-//    siftModule.sift.ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
-
-
-    std::cout << "Params are parsed" << std::endl;
-//    int support = siftModule.sift.CreateContextGL();
-    std::cout << "Checking" << std::endl;
-//    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
-//        std::cerr << "SiftGPU is not supported!" << std::endl;
-//    }
-
-    std::cout << "start timer " << std::endl;
-    boost::timer timer;
+int CorrespondenceGraph::computeRelativePoses() {
 
     c("before sift");
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
@@ -786,6 +731,40 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &pathToImageDirectory
     printConnectionsRelative(std::cout);
     std::cout << "bfs successfull" << std::endl;
     printConnectionsRelative(std::cout);
+    return 0;
+};
+
+CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirectoryRGB,
+                                         const std::string &newPathToImageDirectoryD,
+                                         float fx, float cx, float fy, float cy) :
+                                         cameraRgbd({fx, cx, fy, cy}),
+                                         pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
+                                         pathToImageDirectoryD(newPathToImageDirectoryD) {
+
+    imagesRgb = readRgbData(pathToImageDirectoryRGB);
+    imagesD = readRgbData(pathToImageDirectoryD);
+
+    std::sort(imagesRgb.begin(), imagesRgb.end());
+    std::sort(imagesD.begin(), imagesD.end());
+
+    std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
+    assert(imagesRgb.size() == imagesD.size());
+
+    tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
+    std::cout << "Totally read " << imagesRgb.size() << std::endl;
+//    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
+//   for GLSL:
+//    char *myargv[4] = {"-fo", "-1", "-v", "1"};
+//    std::cout << "Parse params for sift" << std::endl;
+//    siftModule.sift.ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
+
+
+    std::cout << "Params are parsed" << std::endl;
+//    int support = siftModule.sift.CreateContextGL();
+    std::cout << "Checking" << std::endl;
+//    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
+//        std::cerr << "SiftGPU is not supported!" << std::endl;
+//    }
 
 };
 
@@ -845,21 +824,19 @@ std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
                 assert(preds[to] == -1);
                 preds[to] = vertex;
 
-
                 ///// get absolute Rotation (R) and Translation (t) with given predecessor Vertex and Relative R & t
-                const MatrixX &predAbsoluteRt = verticesOfCorrespondence[vertex].absoluteRotationTranslation;
-                MatrixX predR = predAbsoluteRt.block(0, 0, 3, 3);
-                MatrixX predT = predAbsoluteRt.block(0, 3, 3, 1);
+                const Eigen::Matrix4d &predAbsoluteRt = verticesOfCorrespondence[vertex].absoluteRotationTranslation;
+                Eigen::Matrix3d predR = predAbsoluteRt.block(0, 0, 3, 3);
+                Eigen::Vector3d predT = predAbsoluteRt.block(0, 3, 3, 1);
 
-                const MatrixX &relativeRt = tranformationRtMatrices[vertex][i].innerTranformationRtMatrix;
-                MatrixX relR = relativeRt.block(0, 0, 3, 3);
-                MatrixX relT = relativeRt.block(0, 3, 3, 1);
+                const Eigen::Matrix4d &relativeRt = tranformationRtMatrices[vertex][i].innerTranformationRtMatrix;
+                Eigen::Matrix3d relR = relativeRt.block(0, 0, 3, 3);
+                Eigen::Vector3d relT = relativeRt.block(0, 3, 3, 1);
 
-                MatrixX &newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
-                MatrixX newAbsoluteR = newAbsoluteRt.block(0, 0, 3, 3);
-                MatrixX newAbsoluteT = predT;
+                Eigen::Matrix4d &newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
+                Eigen::Matrix3d newAbsoluteR = newAbsoluteRt.block(0, 0, 3, 3);
+                Eigen::Vector3d newAbsoluteT = predR * relT + predT;
 
-                newAbsoluteT = predR * relT + predT;
                 for (int counter = 0; counter < 3; ++counter) {
                     newAbsoluteRt.col(3)[counter] = newAbsoluteT.col(0)[counter];
                 }

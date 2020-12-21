@@ -60,14 +60,16 @@ struct CorrespondenceGraph {
     const std::string resetCode = "\033[0m";
     const std::string relativePose = "relativeRotations.txt";
     const std::string absolutePose = "absoluteRotations.txt";
+    std::vector<std::string> imagesRgb;
+    std::vector<std::string> imagesD;
+    std::string pathToImageDirectoryRGB;
+    std::string pathToImageDirectoryD;
 
 
     CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD, float fx,
                         float cx, float fy, float cy);
 
     int findCorrespondences();
-
-    int findCorrespondencesEveryDepth();
 
     int findTransformationRtMatrices();
 
@@ -79,10 +81,6 @@ struct CorrespondenceGraph {
 
     void showKeypointsOnDephtImage(int vertexFrom);
 
-    Eigen::Matrix4d
-    getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints,
-                                           const int numIterations,
-                                           const int numOfElements, double inlierCoeff);
 
     void printConnectionsRelative(std::ostream &os, int space = 10);
     int printAbsolutePoses(std::ostream &os, int space = 10);
@@ -91,6 +89,14 @@ struct CorrespondenceGraph {
     int printRelativePosesFile(const std::string& outPutFileRelativePoses);
 
     std::vector<int> bfs(int currentVertex);
+
+    int computeRelativePoses();
 };
+
+
+Eigen::Matrix4d
+getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints,
+                                       const int numIterationsRansac,
+                                       const int numOfElements, double inlierCoeff);
 
 #endif

@@ -11,7 +11,7 @@ keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double n
                                                                                  descriptors(newDescriptors) {
 }
 
-void VertexCG::setRotation(const MatrixX &rotation) {
+void VertexCG::setRotation(const Eigen::Matrix3d &rotation) {
     assert(rotation.rows() == 3 && rotation.cols() == 3);
     absoluteRotationTranslation.block<3, 3>(0, 0) = rotation;
     assert(abs(rotation.col(3)[3] - 1) < std::numeric_limits<double>::epsilon());

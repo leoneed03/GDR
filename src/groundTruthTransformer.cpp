@@ -283,12 +283,11 @@ int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
 
         std::vector<double> vectorData = {e[4], e[5], e[6], e[7]};
         Eigen::Quaterniond qd(vectorData.data());
-        MatrixX currentRotationMatrix = copyMatrix(qd);
+        Eigen::Matrix3d currentRotationMatrix = qd.toRotationMatrix();
 
         currentTranslation.col(0)[0] = e[1];
         currentTranslation.col(0)[1] = e[2];
         currentTranslation.col(0)[2] = e[3];
-
 
         if (index == 0) {
             zeroRotationMatrix = currentRotationMatrix;

@@ -8,8 +8,6 @@
 
 #include "util.h"
 
-MatrixX copyMatrix(Eigen::Quaterniond &quat);
-Eigen::Matrix3d copyMatrix3d(Eigen::Quaterniond &quat);
-std::vector<MatrixX> getRotationsFromQuaternionVector(const std::vector<std::vector<double>> &quats);
+std::vector<Eigen::Matrix3d> getRotationsFromQuaternionVector(const std::vector<std::vector<double>> &quats);
 
 #endif
