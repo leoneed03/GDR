@@ -254,10 +254,11 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         assert(mz > 0);
         assert(Mz > 0);
         Eigen::Matrix4d cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
-                                         originPoints.block(0, 0, dim, num_elements));
-        Eigen::Matrix4d cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints, originPoints,
-                                                                             numIterations, num_elements,
-                                                                             inlierCoeff);
+                                                 originPoints.block(0, 0, dim, num_elements));
+        Eigen::Matrix4d cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints,
+                                                                                     originPoints,
+                                                                                     numIterations, num_elements,
+                                                                                     inlierCoeff);
         cR_t_umeyama = cR_t_umeyama_RANSAC;
         if (DEBUG_PRINT) {
             std::cout << "simple umeyama " << std::endl;
@@ -272,7 +273,7 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         for (int i = 0; i < num_elements; ++i) {
             auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
             double diff = (pow(originPoints.col(i).x() - res[0], 2) + pow(originPoints.col(i).y() - res[1], 2) +
-                                   pow(originPoints.col(i).z() - res[2], 2));
+                           pow(originPoints.col(i).z() - res[2], 2));
             differences.push_back(diff);
         }
 
@@ -303,7 +304,8 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         sum_sq /= aprNumInliers;
 
         if (DEBUG_PRINT) {
-            std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D=" << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
+            std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D="
+                      << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
             std::cout << std::endl << redCode << "Inliers " << numOfInliers << resetCode << std::endl;
         }
 
@@ -327,7 +329,8 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         if (DEBUG_PRINT) {
             std::cout << "__________________________________________\n";
         }
-        std::sort(differences12.begin(), differences12.end(), [](const auto &lhs, const auto &rhs) { return lhs > rhs; });
+        std::sort(differences12.begin(), differences12.end(),
+                  [](const auto &lhs, const auto &rhs) { return lhs > rhs; });
 
         if (DEBUG_PRINT) {
             for (const auto &e: differences12) {
@@ -352,7 +355,7 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
     return cR_t_umeyama;
 }
 
-int CorrespondenceGraph::printRelativePosesFile(const std::string& pathOutRelativePoseFile) {
+int CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutRelativePoseFile) {
 
     std::ofstream file(pathOutRelativePoseFile);
 
@@ -504,7 +507,6 @@ int CorrespondenceGraph::computeRelativePoses() {
     matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());
 
 
-
     if (DEBUG_PRINT) {
         std::cout << "trying to find corr" << std::endl;
     }
@@ -516,16 +518,17 @@ int CorrespondenceGraph::computeRelativePoses() {
     if (DEBUG_PRINT) {
         for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
             for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
-                std::cout << "                          " << std::setw(4) << tranformationRtMatrices[i][j].vertexFrom.index
-                << std::setw(4) << tranformationRtMatrices[i][j].vertexTo.index << std::endl;
+                std::cout << "                          " << std::setw(4)
+                          << tranformationRtMatrices[i][j].vertexFrom.index
+                          << std::setw(4) << tranformationRtMatrices[i][j].vertexTo.index << std::endl;
                 std::cout << tranformationRtMatrices[i][j].innerTranformationRtMatrix << std::endl;
                 std::cout << "Rotation " << std::endl;
                 std::cout << tranformationRtMatrices[i][j].R << std::endl;
                 std::cout << "translation " << std::endl;
                 std::cout << tranformationRtMatrices[i][j].t << std::endl;
                 std::cout
-                << "______________________________________________________________________________________________________"
-                << std::endl;
+                        << "______________________________________________________________________________________________________"
+                        << std::endl;
             }
         }
     }
@@ -544,9 +547,9 @@ int CorrespondenceGraph::computeRelativePoses() {
 CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirectoryRGB,
                                          const std::string &newPathToImageDirectoryD,
                                          float fx, float cx, float fy, float cy) :
-                                         cameraRgbd({fx, cx, fy, cy}),
-                                         pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
-                                         pathToImageDirectoryD(newPathToImageDirectoryD) {
+        cameraRgbd({fx, cx, fy, cy}),
+        pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
+        pathToImageDirectoryD(newPathToImageDirectoryD) {
 
     imagesRgb = readRgbData(pathToImageDirectoryRGB);
     imagesD = readRgbData(pathToImageDirectoryD);

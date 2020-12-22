@@ -5,7 +5,7 @@
 
 #include "CorrespondenceGraph.h"
 
-int countNumberOfLines(const std::string& relPosesFile) {
+int countNumberOfLines(const std::string &relPosesFile) {
     int numberOfLines = 0;
     std::ifstream relPoses(relPosesFile);
     std::string currentString;
@@ -16,7 +16,8 @@ int countNumberOfLines(const std::string& relPosesFile) {
 }
 
 TEST(testCorrespondanceGraph, fullTest) {
-    CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth", 525.0, 319.5, 525.0, 239.5);
+    CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth", 525.0,
+                                            319.5, 525.0, 239.5);
     correspondenceGraph.computeRelativePoses();
     int numberOfLines = countNumberOfLines(correspondenceGraph.relativePose);
     std::cout << "number of lines in file with relative poses" << numberOfLines << std::endl;

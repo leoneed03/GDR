@@ -5,7 +5,8 @@
 
 #include "transformationRt.h"
 
-transformationRtMatrix::transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix, const VertexCG &newVertexFrom,
+transformationRtMatrix::transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix,
+                                               const VertexCG &newVertexFrom,
                                                const VertexCG &newVertexTo)
         : innerTranformationRtMatrix(newInnerEssentialMatrix),
           vertexFrom(newVertexFrom), vertexTo(newVertexTo) {

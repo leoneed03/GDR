@@ -104,7 +104,7 @@ TEST(testUmeyamaRansac, Inliers90percent) {
 
     std::cout << "compute error" << std::endl;
     double mse = 0;
-    for (const auto& e: errors) {
+    for (const auto &e: errors) {
         mse += e;
     }
     mse /= errors.size();
