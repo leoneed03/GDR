@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "../include/groundTruthTransformer.h"
+#include "groundTruthTransformer.h"
 #include <fstream>
 #include <vector>
 
@@ -12,10 +12,8 @@
 
 #include <boost/filesystem.hpp>
 #include <Eigen/LU>
-#include <Eigen/SVD>
 #include <iomanip>
 #include <set>
-#include "../include/util.h"
 
 void putAligned(std::ofstream &of, const std::vector<double> &val) {
     for (const auto &vals: val) {
@@ -110,17 +108,15 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
     }
     boost::filesystem::create_directory(outD);
     boost::filesystem::create_directory(outRGB);
-    int numOfEmptyLines = 3;
-    int numbersInLine = 8;
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0};
-    bool isZero = true;
-    int counter = -1;
     std::vector<std::string> rgbDataR = readData(pathToRGB);
     std::vector<std::string> dDataR = readData(pathToD);
     std::vector<std::string> rgbData = readRgbData(pathToRGB);
     std::vector<std::string> dData = readRgbData(pathToD);
+
     assert(rgbData.size() == dData.size());
+
     std::vector<std::string> onlyTakenRGB;
     int cntr = 0;
     for (const auto &e: indices) {
@@ -153,7 +149,6 @@ std::vector<double> GTT::createTimestamps(const std::vector<std::string> &rgb,
     std::ifstream in(pathTimeRGB);
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0};
-    bool isZero = true;
     int index = 0;
 
     if (in) {
@@ -182,7 +177,7 @@ std::vector<double> GTT::createTimestamps(const std::vector<std::string> &rgb,
                 } else {
                     std::cout << timeStamps.size() << " vs " << rgb.size() << std::endl;
                     std::cout << timeStamps[timeStamps.size() - 1] << " vs " << rgb[rgb.size() - 1] << std::endl;
-                    assert(false);
+                    return timeStamps;
                 }
             }
             assert(index <= rgb.size());
@@ -195,14 +190,9 @@ GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<doub
     std::ifstream in(pathToGroundTruth);
     int numOfEmptyLines = 3;
     int numbersInLine = 8;
-    double time = -1;
     std::vector<double> stamp0;
     std::vector<double> prevCoordinates = {0, 0, 0, 0, 0, 0, 0, 0};
     std::vector<std::vector<double>> coordAndQuat;
-
-    bool isZero = true;
-
-    int index;
 
     if (in) {
         for (int i = 0; i < numOfEmptyLines; ++i) {
@@ -294,13 +284,12 @@ int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
             zeroTranslation = currentTranslation;
         }
 
-        MatrixX relativeRotation = zeroRotationMatrix.transpose() * currentRotationMatrix;
-        Eigen::Matrix3d matrixDouble = getRotationMatrixDouble(relativeRotation);
+        Eigen::Matrix3d relativeRotation = zeroRotationMatrix.transpose() * currentRotationMatrix;
+        Eigen::Matrix3d matrixDouble = relativeRotation;
         Eigen::Quaterniond qRelatived(matrixDouble);
 
         MatrixX deltaTranslation = zeroTranslation - currentTranslation;
         MatrixX relativeTranslation = zeroRotationMatrix.transpose() * deltaTranslation;
-//        assert(posTranslation.size() == 3);
         for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
             out << std::setw(2 * spaceIO) << relativeTranslation.col(0)[posTranslation];
         }

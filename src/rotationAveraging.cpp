@@ -3,17 +3,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "../include/rotationAveraging.h"
+#include "rotationAveraging.h"
+
 //#include <gtsam/base/timing.h>
 //#include <gtsam/sfm/ShonanAveraging.h>
 //#include <gtsam/slam/InitializePose.h>
 //#include <gtsam/slam/dataset.h>
 
-#include <boost/program_options.hpp>
-#include <random>
+//#include <boost/program_options.hpp>
 
 //using namespace gtsam;
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
     /*std::string datasetName;

@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "../include/VertexCG.h"
+#include "VertexCG.h"
 
 keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth,
                                      const std::vector<float> &newDescriptors) : keypoint(newKeypoint),
@@ -48,4 +48,3 @@ VertexCG::VertexCG(int newIndex,
     }
     absoluteRotationTranslation.row(transformationMatrixSize - 1)[transformationMatrixSize - 1] = 1;
 }
-

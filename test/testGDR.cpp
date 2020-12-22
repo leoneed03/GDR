@@ -1,13 +1,27 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
+#include <fstream>
 
-#include "../include/CorrespondenceGraph.h"
+#include "CorrespondenceGraph.h"
+
+int countNumberOfLines(const std::string& relPosesFile) {
+    int numberOfLines = 0;
+    std::ifstream relPoses(relPosesFile);
+    std::string currentString;
+    while (std::getline(relPoses, currentString)) {
+        ++numberOfLines;
+    }
+    return numberOfLines;
+}
 
 TEST(testCorrespondanceGraph, fullTest) {
     CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth", 525.0, 319.5, 525.0, 239.5);
     correspondenceGraph.computeRelativePoses();
-    ASSERT_EQ(1, 1);
+    int numberOfLines = countNumberOfLines(correspondenceGraph.relativePose);
+    std::cout << "number of lines in file with relative poses" << numberOfLines << std::endl;
+    ASSERT_TRUE(numberOfLines >= correspondenceGraph.verticesOfCorrespondence.size());
+    ASSERT_TRUE(numberOfLines >= 10);
 }
 
 int main(int argc, char *argv[]) {

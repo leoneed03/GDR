@@ -2,8 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <vector>
-#include "../include/CorrespondenceGraph.h"
-
+#include "CorrespondenceGraph.h"
 
 TEST(testUmeyamaRansac, allInliers) {
     CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth", 525.0,
@@ -13,7 +12,7 @@ TEST(testUmeyamaRansac, allInliers) {
     Eigen::Matrix3d rotationMatrix;
     std::vector<double> angles = {30, 50, -87};
 
-    std::cout << "get angles" << std::endl;
+    std::cout << "get angles for rotstion matrix" << std::endl;
     rotationMatrix = Eigen::AngleAxisd(angles[0], Eigen::Vector3d::UnitZ())
                      * Eigen::AngleAxisd(angles[1], Eigen::Vector3d::UnitY())
                      * Eigen::AngleAxisd(angles[2], Eigen::Vector3d::UnitZ());
@@ -27,7 +26,7 @@ TEST(testUmeyamaRansac, allInliers) {
         transformationMatrix.col(3)[i] = translation[i];
     }
 
-    std::cout << "generate vectors" << std::endl;
+    std::cout << "generate points for umeyama test" << std::endl;
 
     MatrixX src = MatrixX::Random(4, numOfPoints);
     src.row(3) = Eigen::Matrix<Scalar, 1, Eigen::Dynamic>::Constant(numOfPoints, Scalar(1));
@@ -56,9 +55,9 @@ TEST(testUmeyamaRansac, Inliers90percent) {
     double outlierCoeff = 0.1;
     int numOutliers = 100 * outlierCoeff;
     Eigen::Matrix3d rotationMatrix;
-    std::vector<double> angles = {30, 50, -87};
+    std::vector<double> angles = {10, 5, 70};
 
-    std::cout << "get angles" << std::endl;
+    std::cout << "get angles for rotation matrix" << std::endl;
     rotationMatrix = Eigen::AngleAxisd(angles[0], Eigen::Vector3d::UnitZ())
                      * Eigen::AngleAxisd(angles[1], Eigen::Vector3d::UnitY())
                      * Eigen::AngleAxisd(angles[2], Eigen::Vector3d::UnitZ());
@@ -72,7 +71,7 @@ TEST(testUmeyamaRansac, Inliers90percent) {
         transformationMatrix.col(3)[i] = translation[i];
     }
 
-    std::cout << "generate vectors" << std::endl;
+    std::cout << "generate points for umeyama test" << std::endl;
 
     MatrixX src = MatrixX::Random(4, numOfPoints);
     src.row(3) = Eigen::Matrix<Scalar, 1, Eigen::Dynamic>::Constant(numOfPoints, Scalar(1));
@@ -110,7 +109,7 @@ TEST(testUmeyamaRansac, Inliers90percent) {
     }
     mse /= errors.size();
     std::cout << "error MSE: " << mse << std::endl;
-    ASSERT_TRUE(mse < 3 * std::numeric_limits<Scalar>::epsilon());;
+    ASSERT_TRUE(mse < 3 * std::numeric_limits<Scalar>::epsilon());
 }
 
 int main(int argc, char *argv[]) {

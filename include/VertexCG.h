@@ -14,10 +14,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <Eigen/LU> // required for MatrixBase::determinant
-#include <Eigen/SVD> // required for SVD
+#include <Eigen/LU>
+#include <Eigen/SVD>
 
-#include "features.h"
+#include "keyFeatures.h"
 #include "quaternions.h"
 
 

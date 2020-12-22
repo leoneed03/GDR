@@ -3,73 +3,35 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "../include/CorrespondenceGraph.h"
-#include "../include/groundTruthTransformer.h"
+#include "CorrespondenceGraph.h"
+#include "groundTruthTransformer.h"
+
+#include <vector>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-
-#include <pcl/visualization/cloud_viewer.h>
+#include <string>
 #include <random>
 
-#define DEBUG_PRINT 1
-#define SHOW_PCL_CLOUDS 0
+#define DEBUG_PRINT 0
 #define SHOW_DEPTH_IMAGES_WITH_KEYPOINTS 0
-#define PRINT_RANSAC 1
-
-#include <pcl/registration/icp.h>
-#include <pcl/registration/icp_nl.h>
-
-KeypointsAndDescriptors::KeypointsAndDescriptors(const std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>& newPairsKeypointsAndDescriptors) {
-    for (const auto& newPairKeypointAndDescriptor: newPairsKeypointsAndDescriptors) {
-        assert(newPairKeypointAndDescriptor.first.size() * 128 == newPairKeypointAndDescriptor.second.size());
-    }
-    pairsOfKeypointsAndDescriptors = newPairsKeypointsAndDescriptors;
-}
-
-void c(std::string output) {
-    if (DEBUG_PRINT) {
-        std::cout << output << std::endl;
-    }
-}
-
-void c(int output) {
-    if (DEBUG_PRINT) {
-        std::cout << output << std::endl;
-    }
-}
-
-int essentialMatricesAreEqual(const cv::Mat &matrixLeft, const cv::Mat &matrixRight, float epsilon) {
-    if (matrixLeft.cols != matrixRight.cols) {
-        return 1;
-    }
-    if (matrixLeft.rows != matrixRight.rows) {
-        return 2;
-    }
-    for (int i = 0; i < matrixLeft.cols; ++i) {
-        for (int j = 0; j < matrixRight.rows; ++j) {
-            if (std::abs(matrixLeft.at<uchar>(j, i) - matrixRight.at<uchar>(j, i)) > epsilon) {
-                return 3;
-            }
-        }
-    }
-    return 0;
-}
-
+#define PRINT_RANSAC 0
 
 int CorrespondenceGraph::findCorrespondences() {
 
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
         for (int j = i + 1; j < verticesOfCorrespondence.size(); ++j) {
 
-            if (DEBUG_PRINT)
+            if (DEBUG_PRINT) {
                 std::cout << "currently " << i << " " << j << std::endl;
+            }
             std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
                     std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
                     std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
                     siftModule.matcher.get());
-            if (DEBUG_PRINT)
+            if (DEBUG_PRINT) {
                 std::cout << "total matches " << matchingNumbers.size() << std::endl;
+            }
             matches[i].push_back({j, matchingNumbers});
         }
     }
@@ -115,26 +77,31 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
             bool success = true;
             auto cameraMotion = getTransformationRtMatrixTwoImages(i, j, success);
 
-            std::cout << "out of Transformation calculation" << std::endl;
-            std::cout << frameFrom.index << " -> " << frameTo.index << std::endl;
+            if (DEBUG_PRINT) {
+                std::cout << "out of Transformation calculation" << std::endl;
+                std::cout << frameFrom.index << " -> " << frameTo.index << std::endl;
+            }
 
             if (success) {
                 int spaceIO = 18;
 
-                Eigen::Matrix3d m3d = getRotationMatrixDouble(cameraMotion.block(0, 0, 3, 3));
+                Eigen::Matrix3d m3d = cameraMotion.block(0, 0, 3, 3);
                 Eigen::Quaterniond qRelatived(m3d);
 
-                std::cout << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
-                          << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w()
-                          << std::endl;
+                if (DEBUG_PRINT) {
+                    std::cout << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
+                              << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w()
+                              << std::endl;
+                }
 
                 tranformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo));
                 tranformationRtMatrices[frameTo.index].push_back(
                         transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
             } else {
-                std::cout << "transformation matrix not found" << std::endl;
-                std::cout
-                        << "/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////\n NOT ENOUGH MATCHES \n/////////////////////////////////\n/////////////////////////////////\n/////////////////////////////////\n";
+
+                if (DEBUG_PRINT) {
+                    std::cout << "transformation matrix not found" << std::endl;
+                }
             }
         }
     }
@@ -156,141 +123,6 @@ void CorrespondenceGraph::decreaseDensity() {
     }
 }
 
-
-Eigen::Matrix4d getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints,
-                                                                    const MatrixX &destinationPoints,
-                                                                    int numIterationsRansac,
-                                                                    int numOfPoints,
-                                                                    double inlierCoeff) {
-    int dim = 3;
-    int top = 10;
-    if (inlierCoeff > 1) {
-        inlierCoeff = 1;
-    }
-
-    if (inlierCoeff < 0) {
-        inlierCoeff = 0;
-    }
-    assert(numOfPoints == toBeTransormedPoints.cols());
-    assert(toBeTransormedPoints.cols() == destinationPoints.cols());
-
-    int numInliers = (int) (inlierCoeff * numOfPoints);
-
-    std::vector<int> pointsPositions;
-    pointsPositions.reserve(numOfPoints);
-    for (int i = 0; i < numOfPoints; ++i) {
-        pointsPositions.push_back(i);
-    }
-    Eigen::Matrix4d bestMath;
-
-    double minError = 1e6;
-    int attempt = -1;
-    double mError = -1;
-    std::vector<int> inlierIndices;
-    srand((unsigned int) time(0));
-
-    Eigen::Matrix4d cR_t_umeyama_3_points_cand;
-    std::vector<int> triple;
-
-    for (int i = 0; i < numIterationsRansac; ++i) {
-        std::vector<int> p(dim, 0);
-        MatrixX toBeTransformed3Points = MatrixX(dim + 1, dim);
-        MatrixX dest3Points = MatrixX(dim + 1, dim);
-        p[0] = rand() % numOfPoints;
-        p[1] = rand() % numOfPoints;
-        p[2] = rand() % numOfPoints;
-
-        while (p[0] == p[1]) {
-            p[1] = rand() % numOfPoints;
-        }
-        while (p[0] == p[2] || p[1] == p[2]) {
-            p[2] = rand() % numOfPoints;
-        }
-        for (int j = 0; j < p.size(); ++j) {
-            toBeTransformed3Points.col(j) = toBeTransormedPoints.col(p[j]);
-            dest3Points.col(j) = destinationPoints.col(p[j]);
-            for (int assertCounter = 0; assertCounter < dim; ++assertCounter) {
-                assert(toBeTransormedPoints.col(p[j])[assertCounter] == toBeTransformed3Points.col(j)[assertCounter]);
-                assert(destinationPoints.col(p[j])[assertCounter] == dest3Points.col(j)[assertCounter]);
-            }
-        }
-
-        Eigen::Matrix4d cR_t_umeyama_3_points = umeyama(toBeTransformed3Points.block(0, 0, dim, dim),
-                                                dest3Points.block(0, 0, dim, dim));
-        std::sort(pointsPositions.begin(), pointsPositions.end(),
-                  [toBeTransormedPoints, destinationPoints, dim, cR_t_umeyama_3_points](const auto &lhs,
-                                                                                        const auto &rhs) {
-                      auto &toBeTransformedLeft = toBeTransormedPoints.col(lhs);
-                      auto &toBeTransformedRight = toBeTransormedPoints.col(rhs);
-                      auto &destinationLeft = destinationPoints.col(lhs);
-                      auto &destinationRight = destinationPoints.col(rhs);
-                      double dist1 = 0;
-                      double dist2 = 0;
-                      auto &destLeft = cR_t_umeyama_3_points * toBeTransformedLeft;
-                      auto &destRight = cR_t_umeyama_3_points * toBeTransformedRight;
-                      for (int pp = 0; pp < dim; ++pp) {
-                          dist1 += pow(destLeft[pp] - destinationLeft[pp], 2);
-                          dist2 += pow(destRight[pp] - destinationRight[pp], 2);
-                      }
-                      return dist1 < dist2;
-                  });
-        int quantilIndex = (int) (inlierCoeff * numOfPoints);
-        MatrixX toBeTransformedInlierPoints = MatrixX(dim + 1, numInliers);
-        MatrixX destInlierPoints = MatrixX(dim + 1, numInliers);
-        for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
-            int index = pointsPositions[currentIndex];
-            toBeTransformedInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
-            destInlierPoints.col(currentIndex) = destinationPoints.col(index);
-
-            assert(toBeTransformedInlierPoints.col(currentIndex)[1] == toBeTransormedPoints.col(index)[1]);
-            assert(destInlierPoints.col(currentIndex)[2] == destinationPoints.col(index)[2]);
-        }
-
-        const auto &toBeTransformedColumn = toBeTransformedInlierPoints.col(std::max(numInliers - 1, 0));
-        const auto &destColumn = destInlierPoints.col(std::max(numInliers - 1, 0));
-        auto dest = cR_t_umeyama_3_points * toBeTransformedColumn;
-        double normError = 0;
-        for (int pp = 0; pp < dim; ++pp) {
-            normError += pow(dest[pp] - destColumn[pp], 2);
-        }
-        MatrixX cR_t_umeyama_inlier_points = cR_t_umeyama_3_points;
-        if (normError < minError) {
-            cR_t_umeyama_inlier_points = umeyama(toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
-                                                 destInlierPoints.block(0, 0, dim, numInliers));
-        }
-
-        bool info = false;
-
-        if (info) {
-            std::cout << "att " << std::setw(6) << i << " with error " << normError << std::endl;
-
-            std::cout << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers << std::endl;
-        }
-        if (normError < minError) {
-            cR_t_umeyama_3_points_cand = cR_t_umeyama_3_points;
-            mError = normError;
-            bestMath = cR_t_umeyama_inlier_points;
-            attempt = i;
-            inlierIndices = pointsPositions;
-            minError = normError;
-            triple = p;
-        }
-    }
-    if (PRINT_RANSAC) {
-        std::cout << "cand \n" << cR_t_umeyama_3_points_cand << std::endl;
-        std::cout << "RANSAC found on attempt " << attempt << " error on last \'inlier\' " << mError << std::endl;
-        for (int i = 0; i < top; ++i) {
-            std::cout << std::setw(6) << inlierIndices[i];
-        }
-        std::cout << std::endl;
-        for (int i = 0; i < triple.size(); ++i) {
-            std::cout << std::setw(6) << triple[i];
-        }
-        std::cout << std::endl;
-    }
-    return bestMath;
-}
-
 void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
     auto &image = verticesOfCorrespondence[vertexFrom];
     cv::Mat depthImage = cv::imread(image.pathToDimage, cv::IMREAD_ANYDEPTH);
@@ -302,9 +134,9 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
             auto currentDepth = depthImage.ptr<ushort>(y)[x];
             assert(currentDepth == depthImage.at<ushort>(y, x));
             imageDepth1.at<ushort>(y, x) = currentDepth;
-
         }
     }
+
     for (int i = 0; i < image.keypoints.size(); ++i) {
         int x = image.keypoints[i].x;
         int y = image.keypoints[i].y;
@@ -411,11 +243,14 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             }
         }
 
-        std::cout << "Points are min" << std::endl;
-        std::cout << mx << " " << my << " " << mz << std::endl;
 
-        std::cout << "Points are max" << std::endl;
-        std::cout << Mx << " " << My << " " << Mz << std::endl;
+        if (DEBUG_PRINT) {
+            std::cout << "Points are min" << std::endl;
+            std::cout << mx << " " << my << " " << mz << std::endl;
+
+            std::cout << "Points are max" << std::endl;
+            std::cout << Mx << " " << My << " " << Mz << std::endl;
+        }
         assert(mz > 0);
         assert(Mz > 0);
         Eigen::Matrix4d cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
@@ -433,77 +268,16 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             std::cout << "______________________________________________________\n";
         }
 
-        bool initClouds = false;
-        if (initClouds) {
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudDest(parseDepthImageNoColour(
-                    verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudToBeTransformed(parseDepthImageNoColour(
-                    verticesOfCorrespondence[vertexFrom].pathToDimage, cameraRgbd));
-
-            std::cout << "cloud sizes are " << cloudToBeTransformed->width << "->" << cloudDest->width << std::endl;
-
-            assert(cloudToBeTransformed->width == cloudDest->width);
-            assert(cloudDest->width > 0);
-        }
-
-
-        std::cout << "after " << std::endl;
-
-        if (SHOW_PCL_CLOUDS) {
-            pcl::PointCloud<pcl::PointXYZRGB> cloud1;
-
-
-            cloud1.width = 2 * num_elements;
-            cloud1.height = 1;
-            cloud1.is_dense = false;
-            cloud1.points.resize(cloud1.width * cloud1.height);
-
-            for (size_t i = 0; i < num_elements; ++i) {
-                int r = 10;
-                int g = 10;
-                int b = 100;
-                int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-                               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-                cloud1.points[i].x = originPoints.col(i).x();
-                cloud1.points[i].y = originPoints.col(i).y();
-                cloud1.points[i].z = originPoints.col(i).z();
-                cloud1.points[i].rgb = rgb;
-                std::cout << "point " << i << " out of " << num_elements << std::endl;
-            }
-            for (size_t i = num_elements; i < 2 * num_elements; ++i) {
-
-                int r = 255;
-                int g = 255;
-                int b = 255;
-                int32_t rgb = (static_cast<uint32_t>(r) << 16 |
-                               static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-                auto res = cR_t_umeyama * toBeTransformedPoints.col(i - num_elements);
-                cloud1.points[i].x = res[0];
-                cloud1.points[i].y = res[1];
-                cloud1.points[i].z = res[2];
-                cloud1.points[i].rgb = rgb;
-                std::cout << "point " << i << " out of " << num_elements << std::endl;
-            }
-            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptrCloud(&cloud1);
-            if (SHOW_DEPTH_IMAGES_WITH_KEYPOINTS) {
-                showKeypointsOnDephtImage(vertexFrom);
-            }
-            viewer.showCloud(ptrCloud);
-            while (!viewer.wasStopped()) {
-            }
-
-        }
         std::vector<double> differences;
         for (int i = 0; i < num_elements; ++i) {
             auto res = cR_t_umeyama * toBeTransformedPoints.col(i);
-            double diff = /*sqrt*/(pow(originPoints.col(i).x() - res[0], 2) + pow(originPoints.col(i).y() - res[1], 2) +
+            double diff = (pow(originPoints.col(i).x() - res[0], 2) + pow(originPoints.col(i).y() - res[1], 2) +
                                    pow(originPoints.col(i).z() - res[2], 2));
             differences.push_back(diff);
         }
 
-        sort(differences.begin(), differences.end(), [](const auto &lhs, const auto &rhs) { return lhs < rhs; });
-        std::cout << "__________________________________________\n";
+        std::sort(differences.begin(), differences.end(), [](const auto &lhs, const auto &rhs) { return lhs < rhs; });
+
         double sum_dif = 0;
         double sum_sq = 0;
         int numOfInliers = 0;
@@ -513,7 +287,10 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
             if (sqrt(e) < neighbourhoodRadius) {
                 ++numOfInliers;
             }
-            std::cout << e << " ";
+
+            if (DEBUG_PRINT) {
+                std::cout << e << " ";
+            }
             sum_dif += e;
             sum_sq += e * e;
         }
@@ -524,15 +301,20 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
         }
         sum_dif /= aprNumInliers;
         sum_sq /= aprNumInliers;
-        std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D="
-                  << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
-        std::cout << std::endl << redCode << "Inliers " << numOfInliers << resetCode << std::endl;
 
-        sort(differences.begin(), differences.end());
-        for (const auto &e: differences) {
-            std::cout << e << " ";
+        if (DEBUG_PRINT) {
+            std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D=" << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
+            std::cout << std::endl << redCode << "Inliers " << numOfInliers << resetCode << std::endl;
         }
-        std::cout << std::endl;
+
+        std::sort(differences.begin(), differences.end());
+
+        if (DEBUG_PRINT) {
+            for (const auto &e: differences) {
+                std::cout << e << " ";
+            }
+            std::cout << std::endl;
+        }
 
         std::vector<double> differences12;
         for (int i = 0; i < num_elements; ++i) {
@@ -541,21 +323,32 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
                                pow(originPoints.col(i).z() - toBeTransformedPoints.col(i).z(), 2));
             differences12.push_back(diff);
         }
-        std::cout << "__________________________________________\n";
-        sort(differences12.begin(), differences12.end(), [](const auto &lhs, const auto &rhs) { return lhs > rhs; });
-        for (const auto &e: differences12) {
-            std::cout << e << " ";
+
+        if (DEBUG_PRINT) {
+            std::cout << "__________________________________________\n";
         }
-        std::cout << std::endl;
-        sort(differences12.begin(), differences12.end());
-        for (const auto &e: differences12) {
-            std::cout << e << " ";
+        std::sort(differences12.begin(), differences12.end(), [](const auto &lhs, const auto &rhs) { return lhs > rhs; });
+
+        if (DEBUG_PRINT) {
+            for (const auto &e: differences12) {
+                std::cout << e << " ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
-        std::cout << "Umeyama\n" << cR_t_umeyama << std::endl;
+        std::sort(differences12.begin(), differences12.end());
+
+        if (DEBUG_PRINT) {
+            for (const auto &e: differences12) {
+                std::cout << e << " ";
+            }
+            std::cout << std::endl;
+            std::cout << "Umeyama\n" << cR_t_umeyama << std::endl;
+        }
     }
-    std::cout << "Here!" << std::endl;
-    std::cout << "return transformation matrix" << std::endl;
+
+    if (DEBUG_PRINT) {
+        std::cout << "return transformation matrix" << std::endl;
+    }
     return cR_t_umeyama;
 }
 
@@ -629,18 +422,14 @@ int CorrespondenceGraph::performRotationAveraging() {
 
 int CorrespondenceGraph::computeRelativePoses() {
 
-    c("before sift");
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
             getKeypointsDescriptorsAllImages(
                     siftModule.sift,
                     pathToImageDirectoryRGB);
-    c("sift done");
 
     verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
     for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
         auto keypointAndDescriptor = keysDescriptorsAll[currentImage];
-        c("processing");
-        c(currentImage);
         std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
         std::vector<float> &descriptors = keypointAndDescriptor.second;
         std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
@@ -654,7 +443,10 @@ int CorrespondenceGraph::computeRelativePoses() {
 
         std::ofstream myfile;
         int mDepth1 = 0, mDepthLow = 0;
-        std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
+
+        if (DEBUG_PRINT) {
+            std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
+        }
 
         cv::Mat imageDepth1(480, 640, CV_16UC1);
         for (uint x = 0; x < depthImage.cols; ++x) {
@@ -671,12 +463,15 @@ int CorrespondenceGraph::computeRelativePoses() {
             }
         }
         int x = 200, y = 200;
-        std::cout << "depth1 " << depthImage.depth() << " and " << depthImage.channels() << std::endl;
-        std::cout << "depthLow " << depthImageLow.depth() << std::endl;
-        std::cout << "full value is  ?" << depthImageS.ptr<ushort>(y)[x] << std::endl;
-        std::cout << "full value is " << depthImage.ptr<ushort>(y)[x] << std::endl;
-        std::cout << "low value is " << depthImageLow.ptr<ushort>(y)[x] << std::endl;
-        std::cout << "Max depth  " << mDepth1 << " vs low " << mDepthLow << std::endl;
+
+        if (DEBUG_PRINT) {
+            std::cout << "depth1 " << depthImage.depth() << " and " << depthImage.channels() << std::endl;
+            std::cout << "depthLow " << depthImageLow.depth() << std::endl;
+            std::cout << "full value is  ?" << depthImageS.ptr<ushort>(y)[x] << std::endl;
+            std::cout << "full value is " << depthImage.ptr<ushort>(y)[x] << std::endl;
+            std::cout << "low value is " << depthImageLow.ptr<ushort>(y)[x] << std::endl;
+            std::cout << "Max depth  " << mDepth1 << " vs low " << mDepthLow << std::endl;
+        }
         for (int i = 0; i < keypoints.size(); ++i) {
             int posInDescriptorVector = 128 * i;
             int currentKeypointDepth = depthImage.at<ushort>(keypoints[i].y, keypoints[i].x);
@@ -702,35 +497,47 @@ int CorrespondenceGraph::computeRelativePoses() {
         assert(verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].depths.size() ==
                verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
     }
-    std::cout << "vertices written" << std::endl;
+
+    if (DEBUG_PRINT) {
+        std::cout << "vertices written" << std::endl;
+    }
     matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());
 
 
-    std::cout << "trying to find corr" << std::endl;
+
+    if (DEBUG_PRINT) {
+        std::cout << "trying to find corr" << std::endl;
+    }
     findCorrespondences();
     decreaseDensity();
     findTransformationRtMatrices();
 
-    for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
-        for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
-            std::cout << "                          " << std::setw(4) << tranformationRtMatrices[i][j].vertexFrom.index
-                      << std::setw(4) << tranformationRtMatrices[i][j].vertexTo.index << std::endl;
-            std::cout << tranformationRtMatrices[i][j].innerTranformationRtMatrix << std::endl;
-            std::cout << "Rotation " << std::endl;
-            std::cout << tranformationRtMatrices[i][j].R << std::endl;
-            std::cout << "translation " << std::endl;
-            std::cout << tranformationRtMatrices[i][j].t << std::endl;
-            std::cout
-                    << "______________________________________________________________________________________________________"
-                    << std::endl;
+
+    if (DEBUG_PRINT) {
+        for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
+            for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
+                std::cout << "                          " << std::setw(4) << tranformationRtMatrices[i][j].vertexFrom.index
+                << std::setw(4) << tranformationRtMatrices[i][j].vertexTo.index << std::endl;
+                std::cout << tranformationRtMatrices[i][j].innerTranformationRtMatrix << std::endl;
+                std::cout << "Rotation " << std::endl;
+                std::cout << tranformationRtMatrices[i][j].R << std::endl;
+                std::cout << "translation " << std::endl;
+                std::cout << tranformationRtMatrices[i][j].t << std::endl;
+                std::cout
+                << "______________________________________________________________________________________________________"
+                << std::endl;
+            }
         }
     }
 
     std::string poseFile = relativePose;
     printRelativePosesFile(poseFile);
-    printConnectionsRelative(std::cout);
-    std::cout << "bfs successfull" << std::endl;
-    printConnectionsRelative(std::cout);
+
+    if (DEBUG_PRINT) {
+        printConnectionsRelative(std::cout);
+        std::cout << "bfs successfull" << std::endl;
+        printConnectionsRelative(std::cout);
+    }
     return 0;
 };
 
@@ -747,25 +554,17 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirect
     std::sort(imagesRgb.begin(), imagesRgb.end());
     std::sort(imagesD.begin(), imagesD.end());
 
-    std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
+
+    if (DEBUG_PRINT) {
+        std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
+    }
     assert(imagesRgb.size() == imagesD.size());
 
     tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
-    std::cout << "Totally read " << imagesRgb.size() << std::endl;
-//    char *myargv[5] = {"-cuda", "-fo", "-1", "-v", "1"};
-//   for GLSL:
-//    char *myargv[4] = {"-fo", "-1", "-v", "1"};
-//    std::cout << "Parse params for sift" << std::endl;
-//    siftModule.sift.ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
 
-
-    std::cout << "Params are parsed" << std::endl;
-//    int support = siftModule.sift.CreateContextGL();
-    std::cout << "Checking" << std::endl;
-//    if (support != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
-//        std::cerr << "SiftGPU is not supported!" << std::endl;
-//    }
-
+    if (DEBUG_PRINT) {
+        std::cout << "Totally read " << imagesRgb.size() << std::endl;
+    }
 };
 
 int CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
