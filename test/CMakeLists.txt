@@ -1,10 +1,10 @@
 set(TESTS testUmeyamaRansac testGDR)
 
-foreach (TEST ${TESTS})
+foreach(TEST ${TESTS})
     add_executable(${TEST} ${TEST}.cpp)
     target_link_libraries(${TEST} gtest GDR_LIB)
-endforeach (TEST)
+endforeach(TEST)
 
-foreach (TEST ${TESTS})
+foreach(TEST ${TESTS})
     add_test(${TEST} ${TEST})
-endforeach (TEST)
+endforeach(TEST)
