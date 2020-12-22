@@ -19,7 +19,7 @@ CUDA_INSTALL_PATH = /usr
 
 #change  additional  settings, like SM version here if it is not 1.0 (eg. -arch sm_13 for GTX280)
 #siftgpu_cuda_options = -Xopencc -OPT:unroll_size=200000
-siftgpu_cuda_options = -arch sm_61
+#siftgpu_cuda_options = -arch sm_61
 #--------------------------------------------------------------------------------------------------
 # enable SSE optimization for GL-based implementations
 siftgpu_enable_sse = 1
