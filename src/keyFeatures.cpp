@@ -7,7 +7,7 @@
 
 #include "keyFeatures.h"
 
-std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
+std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> gdr::getKeypointsDescriptorsOneImage(
         SiftGPU &sift,
         const std::string &pathToTheImage) {
 
@@ -22,7 +22,7 @@ std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDe
     return {keys1, descriptors1};
 }
 
-std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> getKeypointsDescriptorsAllImages(
+std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> gdr::getKeypointsDescriptorsAllImages(
         SiftGPU &sift,
         const std::string &pathToTheDirectory) {
 
@@ -36,9 +36,9 @@ std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> g
 }
 
 std::vector<std::pair<int, int>>
-getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
-                             const imageDescriptor &keysDescriptors2,
-                             SiftMatchGPU *matcher) {
+gdr::getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
+                                  const imageDescriptor &keysDescriptors2,
+                                  SiftMatchGPU *matcher) {
     auto descriptors1 = keysDescriptors1.second;
     auto descriptors2 = keysDescriptors2.second;
 

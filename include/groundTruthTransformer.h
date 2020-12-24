@@ -13,42 +13,48 @@
 
 #include "fileProc.h"
 #include "quaternions.h"
-
+#include "pseudonames.h"
 
 #include <Eigen/Eigen>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
-typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+namespace gdr {
 
-struct GTT {
-    static std::vector<double> createTimestamps(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
-                                                const std::string &pathToGroundTruth, const std::set<int> &indices);
+    void putAligned(std::ofstream &of, const std::vector<double> &val);
 
-    static std::vector<std::vector<double>>
-    getGroundTruth(const std::string &pathToGroundTruth, const std::vector<double> &timeStamps);
+    std::vector<std::string> readData(std::string pathToRGB);
 
-    static int
-    makeRotationsRelative(const std::string &pathToGroundTruth, const std::string &pathToRelativeGroundTruth);
+    struct GTT {
+        static std::vector<double> createTimestamps(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
+                                                    const std::string &pathToGroundTruth, const std::set<int> &indices);
 
-    static int writeGroundTruth(const std::string &pathOut, const std::vector<std::vector<double>> &timeCoordinates);
+        static std::vector<std::vector<double>>
+        getGroundTruth(const std::string &pathToGroundTruth, const std::vector<double> &timeStamps);
 
-    static std::pair<std::vector<std::string>, std::vector<std::string>>
-    makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
-                                          const std::string &pathToD, const std::string &pathOutDirectory,
-                                          const std::string &timeInfo, const std::set<int> indices);
+        static int
+        makeRotationsRelative(const std::string &pathToGroundTruth, const std::string &pathToRelativeGroundTruth);
 
-    static void
-    writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
-              const std::string &pathOut, const std::string &rel, const std::set<int> &indices);
+        static int
+        writeGroundTruth(const std::string &pathOut, const std::vector<std::vector<double>> &timeCoordinates);
 
-    static void
-    prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &chosenIndices,
-                   const std::string NewName);
+        static std::pair<std::vector<std::string>, std::vector<std::string>>
+        makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
+                                              const std::string &pathToD, const std::string &pathOutDirectory,
+                                              const std::string &timeInfo, const std::set<int> indices);
 
-    static int writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
-                                                  const std::vector<std::vector<double>> &timeCoordinates);
-};
+        static void
+        writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
+                  const std::string &pathToGroundTruth,
+                  const std::string &pathOut, const std::string &rel, const std::set<int> &indices);
+
+        static void
+        prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &chosenIndices,
+                       const std::string NewName);
+
+        static int writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
+                                                      const std::vector<std::vector<double>> &timeCoordinates);
+    };
+}
 
 #endif

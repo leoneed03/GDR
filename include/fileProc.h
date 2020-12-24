@@ -14,8 +14,12 @@
 
 #include <cassert>
 
-std::vector<std::string> readRgbData(std::string pathToRGB);
 
-std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &pathToRotationsFile);
+namespace gdr {
+
+    std::vector<std::string> readRgbData(std::string pathToRGB);
+
+    std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &pathToRotationsFile);
+}
 
 #endif

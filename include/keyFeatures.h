@@ -13,22 +13,25 @@
 
 #include "fileProc.h"
 
-using imageDescriptor = std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>;
+namespace gdr {
 
-std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
-        SiftGPU &sift,
-        const std::string &pathToTheImage);
+    using imageDescriptor = std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>;
 
-std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
-getKeypointsDescriptorsAllImages(
-        SiftGPU
-        &sift,
-        const std::string &pathToTheDirectory
-);
+    std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
+            SiftGPU &sift,
+            const std::string &pathToTheImage);
 
-std::vector<std::pair<int, int>>
-getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
-                             const imageDescriptor &keysDescriptors2,
-                             SiftMatchGPU *matcher);
+    std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
+    getKeypointsDescriptorsAllImages(
+            SiftGPU
+            &sift,
+            const std::string &pathToTheDirectory
+    );
+
+    std::vector<std::pair<int, int>>
+    getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
+                                 const imageDescriptor &keysDescriptors2,
+                                 SiftMatchGPU *matcher);
+}
 
 #endif

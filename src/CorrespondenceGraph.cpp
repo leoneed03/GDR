@@ -11,13 +11,10 @@
 #include <cmath>
 #include <fstream>
 #include <string>
-#include <random>
 
 #define DEBUG_PRINT 0
-#define SHOW_DEPTH_IMAGES_WITH_KEYPOINTS 0
-#define PRINT_RANSAC 0
 
-int CorrespondenceGraph::findCorrespondences() {
+int gdr::CorrespondenceGraph::findCorrespondences() {
 
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
         for (int j = i + 1; j < verticesOfCorrespondence.size(); ++j) {
@@ -61,7 +58,7 @@ void MyLine2(cv::Mat &img, cv::Point start, cv::Point end) {
          lineType);
 }
 
-int CorrespondenceGraph::findTransformationRtMatrices() {
+int gdr::CorrespondenceGraph::findTransformationRtMatrices() {
     bool f = true;
 
     for (int i = 0; i < matches.size(); ++i) {
@@ -109,7 +106,7 @@ int CorrespondenceGraph::findTransformationRtMatrices() {
     return 0;
 }
 
-void CorrespondenceGraph::decreaseDensity() {
+void gdr::CorrespondenceGraph::decreaseDensity() {
     for (std::vector<Match> &correspondenceList: matches) {
 
         std::sort(correspondenceList.begin(), correspondenceList.end(), [](const auto &lhs, const auto &rhs) {
@@ -123,7 +120,7 @@ void CorrespondenceGraph::decreaseDensity() {
     }
 }
 
-void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
+void gdr::CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
     auto &image = verticesOfCorrespondence[vertexFrom];
     cv::Mat depthImage = cv::imread(image.pathToDimage, cv::IMREAD_ANYDEPTH);
     std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
@@ -153,8 +150,8 @@ void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
 }
 
 Eigen::Matrix4d
-CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList,
-                                                        bool &success, double inlierCoeff) {
+gdr::CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList,
+                                                             bool &success, double inlierCoeff) {
     Eigen::Matrix4d cR_t_umeyama;
     success = true;
     if (inlierCoeff >= 1.0) {
@@ -355,7 +352,7 @@ CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vert
     return cR_t_umeyama;
 }
 
-int CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutRelativePoseFile) {
+int gdr::CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutRelativePoseFile) {
 
     std::ofstream file(pathOutRelativePoseFile);
 
@@ -404,7 +401,7 @@ int CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutRelati
     return 0;
 }
 
-int CorrespondenceGraph::performRotationAveraging() {
+int gdr::CorrespondenceGraph::performRotationAveraging() {
     std::cout << "first print successfull" << std::endl;
     rotationAverager::shanonAveraging(relativePose, absolutePose);
 
@@ -423,7 +420,7 @@ int CorrespondenceGraph::performRotationAveraging() {
     return 0;
 }
 
-int CorrespondenceGraph::computeRelativePoses() {
+int gdr::CorrespondenceGraph::computeRelativePoses() {
 
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
             getKeypointsDescriptorsAllImages(
@@ -544,9 +541,9 @@ int CorrespondenceGraph::computeRelativePoses() {
     return 0;
 };
 
-CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirectoryRGB,
-                                         const std::string &newPathToImageDirectoryD,
-                                         float fx, float cx, float fy, float cy) :
+gdr::CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirectoryRGB,
+                                              const std::string &newPathToImageDirectoryD,
+                                              float fx, float cx, float fy, float cy) :
         cameraRgbd({fx, cx, fy, cy}),
         pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
         pathToImageDirectoryD(newPathToImageDirectoryD) {
@@ -570,7 +567,7 @@ CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirect
     }
 };
 
-int CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
+int gdr::CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
     os << "======================NOW 4*4 Matrices of absolute positions=======================\n" << std::endl;
 
     os << "======================++++++++++++++++=======================\n" << std::endl;
@@ -582,7 +579,7 @@ int CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
     return 0;
 }
 
-void CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) {
+void gdr::CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) {
 
     int counter = 0;
     int counterSquared = 0;
@@ -605,7 +602,7 @@ void CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) 
 
 }
 
-std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
+std::vector<int> gdr::CorrespondenceGraph::bfs(int currentVertex) {
     std::vector<bool> visited(verticesOfCorrespondence.size(), false);
     std::vector<int> preds(verticesOfCorrespondence.size(), -1);
     std::queue<int> queueVertices;

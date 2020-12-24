@@ -6,8 +6,11 @@
 #ifndef GLOBALRECONSTRUCTIONRGBD_ERRORS_H
 #define GLOBALRECONSTRUCTIONRGBD_ERRORS_H
 
-enum ERRORS {
-    ERROR_OPENING_FILE_WRITE
-};
+namespace gdr {
+
+    enum ERRORS {
+        ERROR_OPENING_FILE_WRITE
+    };
+}
 
 #endif

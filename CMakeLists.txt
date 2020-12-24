@@ -45,6 +45,7 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/quaternions.h
         ${PROJECT_SOURCE_DIR}/include/ICP.h
         ${PROJECT_SOURCE_DIR}/include/umeyama.h
+        ${PROJECT_SOURCE_DIR}/include/pseudonames.h
         )
 
 set(GDR_SOURCE_FILES

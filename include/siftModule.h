@@ -10,16 +10,19 @@
 #include <memory>
 #include "SiftGPU.h"
 
-struct SiftModule {
 
-    std::unique_ptr<SiftMatchGPU> matcher;
-    SiftGPU sift;
-    int maxSift = 4096;
+namespace gdr {
 
-    SiftModule(std::vector<char *> &siftGpuArgs);
-    SiftModule();
+    struct SiftModule {
 
-    void siftParseParams(std::vector<char *> &siftGpuArgs);
-};
+        std::unique_ptr<SiftMatchGPU> matcher;
+        SiftGPU sift;
+        int maxSift = 4096;
+
+        SiftModule();
+
+        void siftParseParams(std::vector<char *> &siftGpuArgs);
+    };
+}
 
 #endif

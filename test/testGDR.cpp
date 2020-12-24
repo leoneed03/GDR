@@ -16,8 +16,10 @@ int countNumberOfLines(const std::string &relPosesFile) {
 }
 
 TEST(testCorrespondanceGraph, fullTest) {
-    CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth", 525.0,
-                                            319.5, 525.0, 239.5);
+
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth",
+                                                 525.0,
+                                                 319.5, 525.0, 239.5);
     correspondenceGraph.computeRelativePoses();
     int numberOfLines = countNumberOfLines(correspondenceGraph.relativePose);
     int defaultNumberOfLines = 10;

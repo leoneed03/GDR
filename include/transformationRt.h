@@ -10,18 +10,17 @@
 #include "VertexCG.h"
 
 
-typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
-typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+namespace gdr {
 
-struct transformationRtMatrix {
-    Eigen::Matrix4d innerTranformationRtMatrix;
-    const VertexCG &vertexFrom;
-    const VertexCG &vertexTo;
-    Eigen::Matrix3d R;
-    Eigen::Vector3d t;
+    struct transformationRtMatrix {
+        Eigen::Matrix4d innerTranformationRtMatrix;
+        const VertexCG &vertexFrom;
+        const VertexCG &vertexTo;
+        Eigen::Matrix3d R;
+        Eigen::Vector3d t;
 
-    transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix, const VertexCG &newVertexFrom,
-                           const VertexCG &newVertexTo);
-};
-
+        transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix, const VertexCG &newVertexFrom,
+                               const VertexCG &newVertexTo);
+    };
+}
 #endif

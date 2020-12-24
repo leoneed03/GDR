@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <fstream>
 
-std::vector<std::string> readRgbData(std::string pathToRGB) {
+std::vector<std::string> gdr::readRgbData(std::string pathToRGB) {
     DIR *pDIR;
     struct dirent *entry;
     std::vector<std::string> RgbImages;
@@ -40,7 +40,7 @@ std::vector<std::string> readRgbData(std::string pathToRGB) {
     return RgbImages;
 }
 
-std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &pathToRotationsFile) {
+std::vector<std::vector<double>> gdr::parseAbsoluteRotationsFile(const std::string &pathToRotationsFile) {
     std::ifstream in(pathToRotationsFile);
     std::vector<std::vector<double>> quaternions;
     int numOfEmptyLines = 0;

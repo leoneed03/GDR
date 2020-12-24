@@ -8,6 +8,10 @@
 
 #include "util.h"
 
-std::vector<Eigen::Matrix3d> getRotationsFromQuaternionVector(const std::vector<std::vector<double>> &quats);
+
+namespace gdr {
+
+    std::vector<Eigen::Matrix3d> getRotationsFromQuaternionVector(const std::vector<std::vector<double>> &quats);
+}
 
 #endif

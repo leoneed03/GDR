@@ -15,7 +15,7 @@
 //using namespace gtsam;
 //namespace po = boost::program_options;
 
-int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
+int gdr::rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
     /*std::string datasetName;
     std::string inputFile = pathToRelativeRotations;
     std::string outputFile = pathOut;

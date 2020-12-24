@@ -12,12 +12,14 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
-typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
-typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+#include "pseudonames.h"
 
-Eigen::Matrix4d
-getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints,
-                                       const int numIterationsRansac,
-                                       const int numOfElements, double inlierCoeff);
 
+namespace gdr {
+
+    Eigen::Matrix4d
+    getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints,
+                                           const int numIterationsRansac,
+                                           const int numOfElements, double inlierCoeff);
+}
 #endif

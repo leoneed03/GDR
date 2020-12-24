@@ -20,62 +20,65 @@
 
 #include <opencv2/opencv.hpp>
 
-struct Match {
-    int frameNumber;
-    std::vector<std::pair<int, int>> matchNumbers;
+namespace gdr {
+    struct Match {
+        int frameNumber;
+        std::vector<std::pair<int, int>> matchNumbers;
 
-    Match(int newFrameNumber, const std::vector<std::pair<int, int>> &newMatchNumbers) :
-            frameNumber(newFrameNumber),
-            matchNumbers(newMatchNumbers) {};
-};
+        Match(int newFrameNumber, const std::vector<std::pair<int, int>> &newMatchNumbers) :
+                frameNumber(newFrameNumber),
+                matchNumbers(newMatchNumbers) {};
+    };
 
-struct CorrespondenceGraph {
+    struct CorrespondenceGraph {
 
-    CameraRGBD cameraRgbd;
-    SiftModule siftModule;
-    std::vector<VertexCG> verticesOfCorrespondence;
-    int maxVertexDegree = 80;
-    int numIterations = 50;
-    std::vector<std::vector<Match>> matches;
-    std::vector<std::vector<transformationRtMatrix>> tranformationRtMatrices;
-    double neighbourhoodRadius = 0.05;
-    int minNumberOfInliersAfterRobust = 10;
-    const std::string redCode = "\033[0;31m";
-    const std::string resetCode = "\033[0m";
-    const std::string relativePose = "relativeRotations.txt";
-    const std::string absolutePose = "absoluteRotations.txt";
-    std::vector<std::string> imagesRgb;
-    std::vector<std::string> imagesD;
-    std::string pathToImageDirectoryRGB;
-    std::string pathToImageDirectoryD;
+        CameraRGBD cameraRgbd;
+        SiftModule siftModule;
+        std::vector<VertexCG> verticesOfCorrespondence;
+        int maxVertexDegree = 80;
+        int numIterations = 50;
+        std::vector<std::vector<Match>> matches;
+        std::vector<std::vector<transformationRtMatrix>> tranformationRtMatrices;
+        double neighbourhoodRadius = 0.05;
+        int minNumberOfInliersAfterRobust = 10;
+        const std::string redCode = "\033[0;31m";
+        const std::string resetCode = "\033[0m";
+        const std::string relativePose = "relativeRotations.txt";
+        const std::string absolutePose = "absoluteRotations.txt";
+        std::vector<std::string> imagesRgb;
+        std::vector<std::string> imagesD;
+        std::string pathToImageDirectoryRGB;
+        std::string pathToImageDirectoryD;
 
-    CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD, float fx,
-                        float cx, float fy, float cy);
+        CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD,
+                            float fx,
+                            float cx, float fy, float cy);
 
-    int findCorrespondences();
+        int findCorrespondences();
 
-    int findTransformationRtMatrices();
+        int findTransformationRtMatrices();
 
-    void decreaseDensity();
+        void decreaseDensity();
 
-    Eigen::Matrix4d
-    getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, bool &success,
-                                       double inlierCoeff = 0.6);
+        Eigen::Matrix4d
+        getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, bool &success,
+                                           double inlierCoeff = 0.6);
 
-    void showKeypointsOnDephtImage(int vertexFrom);
+        void showKeypointsOnDephtImage(int vertexFrom);
 
 
-    void printConnectionsRelative(std::ostream &os, int space = 10);
+        void printConnectionsRelative(std::ostream &os, int space = 10);
 
-    int printAbsolutePoses(std::ostream &os, int space = 10);
+        int printAbsolutePoses(std::ostream &os, int space = 10);
 
-    int performRotationAveraging();
+        int performRotationAveraging();
 
-    int printRelativePosesFile(const std::string &outPutFileRelativePoses);
+        int printRelativePosesFile(const std::string &outPutFileRelativePoses);
 
-    std::vector<int> bfs(int currentVertex);
+        std::vector<int> bfs(int currentVertex);
 
-    int computeRelativePoses();
-};
+        int computeRelativePoses();
+    };
+}
 
 #endif

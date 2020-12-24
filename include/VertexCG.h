@@ -21,40 +21,43 @@
 #include "quaternions.h"
 
 
-struct keypointWithDepth {
-    SiftGPU::SiftKeypoint keypoint;
-    double depth;
-    std::vector<float> descriptors;
+namespace gdr {
 
-    keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth, const std::vector<float> &newDescriptors);
-};
+    struct keypointWithDepth {
+        SiftGPU::SiftKeypoint keypoint;
+        double depth;
+        std::vector<float> descriptors;
+
+        keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth, const std::vector<float> &newDescriptors);
+    };
 
 
-typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
-typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+    typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 
-struct VertexCG {
+    struct VertexCG {
 
-    int index;
-    Eigen::Matrix4d absoluteRotationTranslation;
-    std::vector<keypointWithDepth> keypointsWithDepths;
-    std::vector<SiftGPU::SiftKeypoint> keypoints;
-    std::vector<float> descriptors;
-    std::vector<double> depths;
-    std::string pathToRGBimage;
-    std::string pathToDimage;
-    int heightMirrorParameter = 480;
-    int widthMirrorParameter = 640;
+        int index;
+        Eigen::Matrix4d absoluteRotationTranslation;
+        std::vector<keypointWithDepth> keypointsWithDepths;
+        std::vector<SiftGPU::SiftKeypoint> keypoints;
+        std::vector<float> descriptors;
+        std::vector<double> depths;
+        std::string pathToRGBimage;
+        std::string pathToDimage;
+        int heightMirrorParameter = 480;
+        int widthMirrorParameter = 640;
 
-    void setRotation(const Eigen::Matrix3d &rotation);
+        void setRotation(const Eigen::Matrix3d &rotation);
 
-    VertexCG(int newIndex,
-             const std::vector<keypointWithDepth> &newKeypointsWithDepths,
-             const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
-             const std::vector<float> &newDescriptors,
-             const std::vector<double> &newDepths,
-             const std::string &newPathRGB,
-             const std::string &newPathD);
-};
+        VertexCG(int newIndex,
+                 const std::vector<keypointWithDepth> &newKeypointsWithDepths,
+                 const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
+                 const std::vector<float> &newDescriptors,
+                 const std::vector<double> &newDepths,
+                 const std::string &newPathRGB,
+                 const std::string &newPathD);
+    };
+}
 
 #endif

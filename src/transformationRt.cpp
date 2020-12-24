@@ -5,7 +5,7 @@
 
 #include "transformationRt.h"
 
-transformationRtMatrix::transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix,
+gdr::transformationRtMatrix::transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix,
                                                const VertexCG &newVertexFrom,
                                                const VertexCG &newVertexTo)
         : innerTranformationRtMatrix(newInnerEssentialMatrix),

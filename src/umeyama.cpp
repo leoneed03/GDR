@@ -9,7 +9,7 @@
 
 #include "umeyama.h"
 
-Eigen::Matrix4d getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints,
+Eigen::Matrix4d gdr::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints,
                                                        const MatrixX &destinationPoints,
                                                        int numIterationsRansac,
                                                        int numOfPoints,

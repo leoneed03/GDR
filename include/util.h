@@ -8,9 +8,11 @@
 
 #include <Eigen/Eigen>
 
-typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
-typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+#include "pseudonames.h"
 
-MatrixX getSomeMatrix(int h, int w);
+namespace gdr {
+
+    MatrixX getSomeMatrix(int h, int w);
+}
 
 #endif

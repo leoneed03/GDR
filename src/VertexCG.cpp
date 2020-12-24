@@ -5,13 +5,13 @@
 
 #include "VertexCG.h"
 
-keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth,
+gdr::keypointWithDepth::keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth,
                                      const std::vector<float> &newDescriptors) : keypoint(newKeypoint),
                                                                                  depth(newDepth),
                                                                                  descriptors(newDescriptors) {
 }
 
-void VertexCG::setRotation(const Eigen::Matrix3d &rotation) {
+void gdr::VertexCG::setRotation(const Eigen::Matrix3d &rotation) {
     assert(rotation.rows() == 3 && rotation.cols() == 3);
     absoluteRotationTranslation.block<3, 3>(0, 0) = rotation;
     assert(abs(rotation.col(3)[3] - 1) < std::numeric_limits<double>::epsilon());
@@ -23,7 +23,7 @@ void VertexCG::setRotation(const Eigen::Matrix3d &rotation) {
     }
 }
 
-VertexCG::VertexCG(int newIndex,
+gdr::VertexCG::VertexCG(int newIndex,
                    const std::vector<keypointWithDepth> &newKeypointsWithDepths,
                    const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
                    const std::vector<float> &newDescriptors,

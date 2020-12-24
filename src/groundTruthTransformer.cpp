@@ -3,25 +3,28 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "groundTruthTransformer.h"
-#include <fstream>
-#include <vector>
-
 
 #define spaceIO (15)
+
+#include "groundTruthTransformer.h"
+
+#include <fstream>
+#include <vector>
+#include <limits>
 
 #include <boost/filesystem.hpp>
 #include <Eigen/LU>
 #include <iomanip>
 #include <set>
 
-void putAligned(std::ofstream &of, const std::vector<double> &val) {
+void gdr::putAligned(std::ofstream &of, const std::vector<double> &val) {
     for (const auto &vals: val) {
         (of << std::setw(12) << vals << ' ');
     }
 }
 
-int GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std::string &pathToRelativeGroundTruth) {
+int
+gdr::GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std::string &pathToRelativeGroundTruth) {
     std::ifstream in(pathToGroundTruth);
     std::ofstream out(pathToRelativeGroundTruth);
     int numOfEmptyLines = 3;
@@ -64,11 +67,11 @@ int GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std::
             out << std::endl;
             prevCoordinates = {stamps[1], stamps[2], stamps[3]};
         }
-
     }
+    return 0;
 }
 
-std::vector<std::string> readData(std::string pathToRGB) {
+std::vector<std::string> gdr::readData(std::string pathToRGB) {
     DIR *pDIR;
     struct dirent *entry;
     std::vector<std::string> RgbImages;
@@ -93,10 +96,10 @@ std::vector<std::string> readData(std::string pathToRGB) {
 }
 
 std::pair<std::vector<std::string>, std::vector<std::string>>
-GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
-                                           const std::string &pathToD, const std::string &pathOutDirectory,
-                                           const std::string &timeInfo,
-                                           const std::set<int> indices) {
+gdr::GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
+                                                const std::string &pathToD, const std::string &pathOutDirectory,
+                                                const std::string &timeInfo,
+                                                const std::set<int> indices) {
     std::ifstream in(pathToGroundTruth);
     std::string outRGB = pathOutDirectory + "/rgb";
     std::string outD = pathOutDirectory + "/depth";
@@ -140,9 +143,9 @@ GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
     return {rgbDataR, dDataR};
 }
 
-std::vector<double> GTT::createTimestamps(const std::vector<std::string> &rgb,
-                                          const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
-                                          const std::set<int> &indices) {
+std::vector<double> gdr::GTT::createTimestamps(const std::vector<std::string> &rgb,
+                                               const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
+                                               const std::set<int> &indices) {
     std::map<std::string, double> rgbToTime;
     int skipNum = 3;
     std::vector<double> timeStamps;
@@ -186,7 +189,7 @@ std::vector<double> GTT::createTimestamps(const std::vector<std::string> &rgb,
 }
 
 std::vector<std::vector<double>>
-GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<double> &timeStamps) {
+gdr::GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<double> &timeStamps) {
     std::ifstream in(pathToGroundTruth);
     int numOfEmptyLines = 3;
     int numbersInLine = 8;
@@ -202,7 +205,6 @@ GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<doub
         double currVal = -1;
         bool run = true;
         while (run) {
-
             std::vector<double> stamps;
             for (int i = 0; i < numbersInLine; ++i) {
                 if (in >> currVal) {
@@ -231,9 +233,7 @@ GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<doub
     return resultingTruth;
 }
 
-#include <limits>
-
-int GTT::writeGroundTruth(const std::string &pathOut, const std::vector<std::vector<double>> &timeCoordinates) {
+int gdr::GTT::writeGroundTruth(const std::string &pathOut, const std::vector<std::vector<double>> &timeCoordinates) {
     std::ofstream out(pathOut);
     int skipN = 3;
     for (int i = 0; i < skipN; ++i) {
@@ -251,8 +251,8 @@ int GTT::writeGroundTruth(const std::string &pathOut, const std::vector<std::vec
     return 1;
 }
 
-int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
-                                            const std::vector<std::vector<double>> &timeCoordinates) {
+int gdr::GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
+                                                 const std::vector<std::vector<double>> &timeCoordinates) {
     std::ofstream out(pathOut);
     int skipN = 3;
     for (int i = 0; i < skipN; ++i) {
@@ -299,9 +299,10 @@ int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
     return 1;
 }
 
-void GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
-                    const std::string &pathToGroundTruth, const std::string &pathOut, const std::string &relativeOutput,
-                    const std::set<int> &indices) {
+void gdr::GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
+                         const std::string &pathToGroundTruth, const std::string &pathOut,
+                         const std::string &relativeOutput,
+                         const std::set<int> &indices) {
     std::vector<double> timeStamps = createTimestamps(rgb, pathTimeRGB, pathToGroundTruth, indices);
     std::vector<std::vector<double>> timeAndCoordinates = getGroundTruth(pathToGroundTruth, timeStamps);
     writeGroundTruth(pathOut, timeAndCoordinates);
@@ -309,8 +310,8 @@ void GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &path
 }
 
 void
-GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
-                    const std::string NewName = "subset") {
+gdr::GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
+                         const std::string NewName = "subset") {
     std::string pathNewOut = pathOut + "/" + NewName;
     std::string groundtruth = pathToDataset + "/groundtruth.txt";
     std::string rgb = pathToDataset + "/rgb";
