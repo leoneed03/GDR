@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#define DEBUG_PRINT_KEYPOINTS 1
+#define DEBUG_PRINT_KEYPOINTS 0
 
 #include "keyFeatures.h"
 
