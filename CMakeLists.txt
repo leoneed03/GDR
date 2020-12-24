@@ -90,9 +90,9 @@ target_include_directories(GDR_LIB
         PUBLIC
         ${PROJECT_SOURCE_DIR}/include
         ${EIGEN3_INCLUDE_DIRS}
+        ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
         PRIVATE
         ${OpenGL_INCLUDE_DIR}
-        ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
         )
 
 enable_testing()
