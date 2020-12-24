@@ -3,9 +3,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#define  DEBUG_PRINT_FILES 0
-
 #include "fileProc.h"
+#include "printer.h"
+#include "errors.h"
+
 #include <algorithm>
 #include <fstream>
 
@@ -13,9 +14,7 @@ std::vector<std::string> gdr::readRgbData(std::string pathToRGB) {
     DIR *pDIR;
     struct dirent *entry;
     std::vector<std::string> RgbImages;
-    if (DEBUG_PRINT_FILES) {
-        std::cout << "start reading" << std::endl;
-    }
+    PRINT_PROGRESS("start reading images");
     if ((pDIR = opendir(pathToRGB.data())) != nullptr) {
         while ((entry = readdir(pDIR)) != nullptr) {
             if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..") {
@@ -26,17 +25,10 @@ std::vector<std::string> gdr::readRgbData(std::string pathToRGB) {
         }
         closedir(pDIR);
     } else {
-        std::cout << "Unable to open" << std::endl;
-        return RgbImages;
+        std::cerr << "Unable to open" << std::endl;
+        exit(ERROR_OPENING_FILE_READ);
     }
     std::sort(RgbImages.begin(), RgbImages.end());
-
-
-    if (DEBUG_PRINT_FILES) {
-        for (int i = 0; i < RgbImages.size(); ++i) {
-            std::cout << i << ":::" << RgbImages[i] << std::endl;
-        }
-    }
     return RgbImages;
 }
 
@@ -69,8 +61,8 @@ std::vector<std::vector<double>> gdr::parseAbsoluteRotationsFile(const std::stri
             quaternions.push_back(stamps);
         }
     } else {
-        std::cout << "ERROR opening file" << std::endl;
+        std::cerr << "ERROR opening file" << std::endl;
+        exit(ERROR_OPENING_FILE_READ);
     }
-    return quaternions;
 }
 

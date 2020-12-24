@@ -41,7 +41,7 @@ namespace gdr {
         static std::pair<std::vector<std::string>, std::vector<std::string>>
         makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
                                               const std::string &pathToD, const std::string &pathOutDirectory,
-                                              const std::string &timeInfo, const std::set<int> indices);
+                                              const std::string &timeInfo, const std::set<int>& indices);
 
         static void
         writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
@@ -50,7 +50,7 @@ namespace gdr {
 
         static void
         prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &chosenIndices,
-                       const std::string NewName);
+                       const std::string& NewName);
 
         static int writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
                                                       const std::vector<std::vector<double>> &timeCoordinates);

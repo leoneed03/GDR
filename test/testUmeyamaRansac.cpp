@@ -6,7 +6,7 @@
 
 bool testMSEisLessThanEpsilon(double mse) {
     bool MSEisLessThanEpsilon = mse < 3 * std::numeric_limits<gdr::Scalar>::epsilon();
-    if (MSEisLessThanEpsilon) {
+    if (!MSEisLessThanEpsilon) {
         std::cout << "error MSE: " << mse << std::endl;
     }
     return MSEisLessThanEpsilon;
@@ -14,6 +14,7 @@ bool testMSEisLessThanEpsilon(double mse) {
 
 TEST(testUmeyamaRansac, allInliers) {
 
+    int iii = 3;
     int numOfPoints = 100;
     Eigen::Matrix3d rotationMatrix;
     std::vector<double> angles = {30, 50, -87};

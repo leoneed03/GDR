@@ -7,8 +7,9 @@
 #define spaceIO (15)
 
 #include "groundTruthTransformer.h"
+#include "printer.h"
+#include "errors.h"
 
-#include <fstream>
 #include <vector>
 #include <limits>
 
@@ -34,13 +35,13 @@ gdr::GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std:
     bool isZero = true;
 
     if (in) {
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < numOfEmptyLines; ++i) {
             std::string s;
             std::getline(in, s);
         }
         double currVal = -1;
-        while (true) {
 
+        while (true) {
             std::vector<double> stamps;
             for (int i = 0; i < numbersInLine; ++i) {
                 if (in >> currVal) {
@@ -75,7 +76,7 @@ std::vector<std::string> gdr::readData(std::string pathToRGB) {
     DIR *pDIR;
     struct dirent *entry;
     std::vector<std::string> RgbImages;
-    std::cout << "start reading" << std::endl;
+    PRINT_PROGRESS("start reading");
     if ((pDIR = opendir(pathToRGB.data())) != nullptr) {
         while ((entry = readdir(pDIR)) != nullptr) {
             if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..") {
@@ -86,11 +87,12 @@ std::vector<std::string> gdr::readData(std::string pathToRGB) {
         }
         closedir(pDIR);
     } else {
-        std::cout << "Unable to open" << std::endl;
+        std::cerr << "Unable to open" << std::endl;
+        exit(ERROR_OPENING_FILE_READ);
     }
     std::sort(RgbImages.begin(), RgbImages.end());
     for (int i = 0; i < RgbImages.size(); ++i) {
-        std::cout << i + 1 << "::" << RgbImages[i] << std::endl;
+        PRINT_PROGRESS(i + 1 << "::" << RgbImages[i]);
     }
     return RgbImages;
 }
@@ -99,7 +101,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>>
 gdr::GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
                                                 const std::string &pathToD, const std::string &pathOutDirectory,
                                                 const std::string &timeInfo,
-                                                const std::set<int> indices) {
+                                                const std::set<int>& indices) {
     std::ifstream in(pathToGroundTruth);
     std::string outRGB = pathOutDirectory + "/rgb";
     std::string outD = pathOutDirectory + "/depth";
@@ -128,16 +130,16 @@ gdr::GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundT
         }
         std::string toRGB = outRGB + "/" + rgbDataR[e];
         std::string toD = outD + "/" + dDataR[e];
-        std::cout << "write RGB " << toRGB << std::endl;
-        std::cout << "write D " << toD << std::endl;
+        PRINT_PROGRESS("write RGB " << toRGB);
+        PRINT_PROGRESS("write D " << toD);
         boost::filesystem::copy_file(rgbData[e], toRGB);
         boost::filesystem::copy_file(dData[e], toD);
-        std::cout << "success" << std::endl;
+        PRINT_PROGRESS("success" << std::endl);
         onlyTakenRGB.push_back(rgbDataR[e]);
         ++cntr;
     }
 
-    std::cout << "pathOut" << pathOutDirectory << std::endl;
+    PRINT_PROGRESS("pathOut" << pathOutDirectory);
     writeInfo(onlyTakenRGB, timeInfo, pathToGroundTruth, pathOutDirectory + "/groundtruth_new.txt",
               pathOutDirectory + "/relative_groundtruth.txt", indices);
     return {rgbDataR, dDataR};
@@ -178,8 +180,8 @@ std::vector<double> gdr::GTT::createTimestamps(const std::vector<std::string> &r
                 if (timeStamps.size() == rgb.size()) {
                     return timeStamps;
                 } else {
-                    std::cout << timeStamps.size() << " vs " << rgb.size() << std::endl;
-                    std::cout << timeStamps[timeStamps.size() - 1] << " vs " << rgb[rgb.size() - 1] << std::endl;
+                    PRINT_PROGRESS(timeStamps.size() << " vs " << rgb.size());
+                    PRINT_PROGRESS(timeStamps[timeStamps.size() - 1] << " vs " << rgb[rgb.size() - 1]);
                     return timeStamps;
                 }
             }
@@ -284,8 +286,7 @@ int gdr::GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
             zeroTranslation = currentTranslation;
         }
 
-        Eigen::Matrix3d relativeRotation = zeroRotationMatrix.transpose() * currentRotationMatrix;
-        Eigen::Matrix3d matrixDouble = relativeRotation;
+        Eigen::Matrix3d matrixDouble = zeroRotationMatrix.transpose() * currentRotationMatrix;
         Eigen::Quaterniond qRelatived(matrixDouble);
 
         MatrixX deltaTranslation = zeroTranslation - currentTranslation;
@@ -311,7 +312,7 @@ void gdr::GTT::writeInfo(const std::vector<std::string> &rgb, const std::string 
 
 void
 gdr::GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
-                         const std::string NewName = "subset") {
+                         const std::string& NewName = "subset") {
     std::string pathNewOut = pathOut + "/" + NewName;
     std::string groundtruth = pathToDataset + "/groundtruth.txt";
     std::string rgb = pathToDataset + "/rgb";

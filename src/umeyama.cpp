@@ -2,18 +2,17 @@
 // Created by leoneed on 12/22/20.
 //
 
-#define DEBUG_PRINT_UMEYAMA 0
-
 #include <iomanip>
 #include <iostream>
 
 #include "umeyama.h"
+#include "printer.h"
 
 Eigen::Matrix4d gdr::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints,
-                                                       const MatrixX &destinationPoints,
-                                                       int numIterationsRansac,
-                                                       int numOfPoints,
-                                                       double inlierCoeff) {
+                                                            const MatrixX &destinationPoints,
+                                                            int numIterationsRansac,
+                                                            int numOfPoints,
+                                                            double inlierCoeff) {
     int dim = 3;
     int top = 10;
     if (inlierCoeff > 1) {
@@ -111,11 +110,8 @@ Eigen::Matrix4d gdr::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeT
                                                  destInlierPoints.block(0, 0, dim, numInliers));
         }
 
-        if (DEBUG_PRINT_UMEYAMA) {
-            std::cout << "att " << std::setw(6) << i << " with error " << normError << std::endl;
-
-            std::cout << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers << std::endl;
-        }
+        PRINT_PROGRESS("att " << std::setw(6) << i << " with error " << normError
+                              << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers);
         if (normError < minError) {
             cR_t_umeyama_3_points_cand = cR_t_umeyama_3_points;
             mError = normError;
@@ -126,17 +122,7 @@ Eigen::Matrix4d gdr::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeT
             triple = p;
         }
     }
-    if (DEBUG_PRINT_UMEYAMA) {
-        std::cout << "cand \n" << cR_t_umeyama_3_points_cand << std::endl;
-        std::cout << "RANSAC found on attempt " << attempt << " error on last \'inlier\' " << mError << std::endl;
-        for (int i = 0; i < top; ++i) {
-            std::cout << std::setw(6) << inlierIndices[i];
-        }
-        std::cout << std::endl;
-        for (int i = 0; i < triple.size(); ++i) {
-            std::cout << std::setw(6) << triple[i];
-        }
-        std::cout << std::endl;
-    }
+    PRINT_PROGRESS("cand \n" << cR_t_umeyama_3_points_cand << "RANSAC found on attempt " << attempt
+                                     << " error on last \'inlier\' " << mError);
     return bestMath;
 }

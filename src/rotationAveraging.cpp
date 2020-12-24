@@ -4,6 +4,7 @@
 //
 
 #include "rotationAveraging.h"
+#include "printer.h"
 
 //#include <gtsam/base/timing.h>
 //#include <gtsam/sfm/ShonanAveraging.h>
@@ -29,7 +30,7 @@ int gdr::rotationAverager::shanonAveraging(const std::string &pathToRelativeRota
     Values::shared_ptr posesInFile;
     Values poses;
     if (d == 3) {
-        std::cout << "Running Shonan averaging for SO(3) on " << inputFile << endl;
+        PRINT_PROGRESS("Running Shonan averaging for SO(3) on " << inputFile);
         ShonanAveraging3 shonan(inputFile);
         auto initial = shonan.initializeRandomly(rng);
         auto result = shonan.run(initial);
@@ -37,11 +38,11 @@ int gdr::rotationAverager::shanonAveraging(const std::string &pathToRelativeRota
         auto priorModel = noiseModel::Unit::Create(6);
         inputGraph->addPrior(0, posesInFile->at<Pose3>(0), priorModel);
 
-        std::cout << "recovering 3D translations" << endl;
+        PRINT_PROGRESS("recovering 3D translations");
         auto poseGraph = initialize::buildPoseGraph<Pose3>(*inputGraph);
         poses = initialize::computePoses<Pose3>(result.first, &poseGraph);
     }
-    std::cout << "Writing result to " << outputFile << endl;
+    PRINT_PROGRESS("Writing result to " << outputFile);
     writeG2o(NonlinearFactorGraph(), poses, outputFile);*/
     return 0;
 }

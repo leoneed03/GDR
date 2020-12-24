@@ -3,9 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#define DEBUG_PRINT_KEYPOINTS 0
-
 #include "keyFeatures.h"
+#include "printer.h"
 
 std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> gdr::getKeypointsDescriptorsOneImage(
         SiftGPU &sift,
@@ -16,9 +15,7 @@ std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> gdr::getKeypoi
     std::vector<float> descriptors1(128 * num1);
     std::vector<SiftGPU::SiftKeypoint> keys1(num1);
     sift.GetFeatureVector(&keys1[0], &descriptors1[0]);
-    if (DEBUG_PRINT_KEYPOINTS) {
-        std::cout << num1 << " -- totally" << std::endl;
-    }
+    PRINT_PROGRESS(" -- totall number of keypoints");
     return {keys1, descriptors1};
 }
 

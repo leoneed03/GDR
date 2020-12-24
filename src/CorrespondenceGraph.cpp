@@ -5,6 +5,7 @@
 
 #include "CorrespondenceGraph.h"
 #include "groundTruthTransformer.h"
+#include "printer.h"
 
 #include <vector>
 #include <algorithm>
@@ -12,50 +13,22 @@
 #include <fstream>
 #include <string>
 
-#define DEBUG_PRINT 0
-
 int gdr::CorrespondenceGraph::findCorrespondences() {
 
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
         for (int j = i + 1; j < verticesOfCorrespondence.size(); ++j) {
 
-            if (DEBUG_PRINT) {
-                std::cout << "currently " << i << " " << j << std::endl;
-            }
+            PRINT_PROGRESS("currently " << i << " " << j);
             std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
                     std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
                     std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
                     siftModule.matcher.get());
-            if (DEBUG_PRINT) {
-                std::cout << "total matches " << matchingNumbers.size() << std::endl;
-            }
+            PRINT_PROGRESS("total matches " << matchingNumbers.size() << std::endl);
             matches[i].push_back({j, matchingNumbers});
         }
     }
 
     return 0;
-}
-
-void MyLine(cv::Mat &img, cv::Point start, cv::Point end) {
-    int thickness = 2;
-    int lineType = cv::LINE_8;
-    line(img,
-         start,
-         end,
-         cv::Scalar(255, 255, 255),
-         thickness,
-         lineType);
-}
-
-void MyLine2(cv::Mat &img, cv::Point start, cv::Point end) {
-    int thickness = 2;
-    int lineType = cv::LINE_8;
-    line(img,
-         start,
-         end,
-         cv::Scalar(215, 215, 215),
-         thickness,
-         lineType);
 }
 
 int gdr::CorrespondenceGraph::findTransformationRtMatrices() {
@@ -67,17 +40,14 @@ int gdr::CorrespondenceGraph::findTransformationRtMatrices() {
             const auto &match = matches[i][j];
             const auto &frameFrom = verticesOfCorrespondence[i];
             const auto &frameTo = verticesOfCorrespondence[match.frameNumber];
-            if (DEBUG_PRINT) {
-                std::cout << "check this " << frameFrom.index << " -> " << frameTo.index << std::endl;
-            }
+            PRINT_PROGRESS("check this " << frameFrom.index << " -> " << frameTo.index);
             assert(frameTo.index > frameFrom.index);
             bool success = true;
             auto cameraMotion = getTransformationRtMatrixTwoImages(i, j, success);
 
-            if (DEBUG_PRINT) {
-                std::cout << "out of Transformation calculation" << std::endl;
-                std::cout << frameFrom.index << " -> " << frameTo.index << std::endl;
-            }
+            PRINT_PROGRESS(
+                    "out of Transformation calculation" << std::endl
+                                                        << frameFrom.index << " -> " << frameTo.index);
 
             if (success) {
                 int spaceIO = 18;
@@ -85,20 +55,15 @@ int gdr::CorrespondenceGraph::findTransformationRtMatrices() {
                 Eigen::Matrix3d m3d = cameraMotion.block(0, 0, 3, 3);
                 Eigen::Quaterniond qRelatived(m3d);
 
-                if (DEBUG_PRINT) {
-                    std::cout << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
-                              << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w()
-                              << std::endl;
-                }
+                PRINT_PROGRESS(std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
+                                                      << std::setw(2 * spaceIO) << qRelatived.z()
+                                                      << std::setw(2 * spaceIO) << qRelatived.w());
 
                 tranformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo));
                 tranformationRtMatrices[frameTo.index].push_back(
                         transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
             } else {
-
-                if (DEBUG_PRINT) {
-                    std::cout << "transformation matrix not found" << std::endl;
-                }
+                PRINT_PROGRESS("transformation matrix not found");
             }
         }
     }
@@ -123,7 +88,7 @@ void gdr::CorrespondenceGraph::decreaseDensity() {
 void gdr::CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
     auto &image = verticesOfCorrespondence[vertexFrom];
     cv::Mat depthImage = cv::imread(image.pathToDimage, cv::IMREAD_ANYDEPTH);
-    std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
+    PRINT_PROGRESS(depthImage.cols << " " << depthImage.rows);
 
     cv::Mat imageDepth1(480, 640, CV_16UC1);
     for (uint x = 0; x < depthImage.cols; ++x) {
@@ -137,8 +102,8 @@ void gdr::CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
     for (int i = 0; i < image.keypoints.size(); ++i) {
         int x = image.keypoints[i].x;
         int y = image.keypoints[i].y;
-        std::cout << ((int) (image.depths[i] * 5000)) << " vs " << depthImage.at<ushort>(y, x) << std::endl;
-        std::cout << image.depths[i] << " vs " << depthImage.at<ushort>(y, x) * 1.0 / 5000 << std::endl;
+        PRINT_PROGRESS(((int) (image.depths[i] * 5000)) << " vs " << depthImage.at<ushort>(y, x));
+        PRINT_PROGRESS(image.depths[i] << " vs " << depthImage.at<ushort>(y, x) * 1.0 / 5000);
         assert(abs((image.depths[i]) - depthImage.at<ushort>(y, x) / 5000.0) < std::numeric_limits<float>::epsilon());
         imageDepth1.at<ushort>(y, x) = std::numeric_limits<ushort>::max();
     }
@@ -241,13 +206,10 @@ gdr::CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int
         }
 
 
-        if (DEBUG_PRINT) {
-            std::cout << "Points are min" << std::endl;
-            std::cout << mx << " " << my << " " << mz << std::endl;
-
-            std::cout << "Points are max" << std::endl;
-            std::cout << Mx << " " << My << " " << Mz << std::endl;
-        }
+        PRINT_PROGRESS("Points are min" << std::endl
+                                        << mx << " " << my << " " << mz << std::endl
+                                        << "Points are max" << std::endl
+                                        << Mx << " " << My << " " << Mz);
         assert(mz > 0);
         assert(Mz > 0);
         Eigen::Matrix4d cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
@@ -257,14 +219,12 @@ gdr::CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int
                                                                                      numIterations, num_elements,
                                                                                      inlierCoeff);
         cR_t_umeyama = cR_t_umeyama_RANSAC;
-        if (DEBUG_PRINT) {
-            std::cout << "simple umeyama " << std::endl;
-            std::cout << cR_t_umeyama_1 << std::endl;
-            std::cout << "RANSAC umeyama " << std::endl;
-            std::cout << cR_t_umeyama_RANSAC << std::endl;
-            std::cout << "______________________________________________________\n";
-            std::cout << "______________________________________________________\n";
-        }
+        PRINT_PROGRESS("simple umeyama " << std::endl
+                                         << cR_t_umeyama_1 << std::endl
+                                         << "RANSAC umeyama " << std::endl
+                                         << cR_t_umeyama_RANSAC << std::endl
+                                         << "______________________________________________________\n"
+                                         << "______________________________________________________\n");
 
         std::vector<double> differences;
         for (int i = 0; i < num_elements; ++i) {
@@ -286,9 +246,7 @@ gdr::CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int
                 ++numOfInliers;
             }
 
-            if (DEBUG_PRINT) {
-                std::cout << e << " ";
-            }
+            APPEND_PROGRESS(e << " ");
             sum_dif += e;
             sum_sq += e * e;
         }
@@ -300,55 +258,12 @@ gdr::CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int
         sum_dif /= aprNumInliers;
         sum_sq /= aprNumInliers;
 
-        if (DEBUG_PRINT) {
-            std::cout << std::endl << redCode << "MeanEuclidianError = " << sum_dif << "      D="
-                      << sum_sq - sum_dif * sum_dif << resetCode << std::endl;
-            std::cout << std::endl << redCode << "Inliers " << numOfInliers << resetCode << std::endl;
-        }
-
-        std::sort(differences.begin(), differences.end());
-
-        if (DEBUG_PRINT) {
-            for (const auto &e: differences) {
-                std::cout << e << " ";
-            }
-            std::cout << std::endl;
-        }
-
-        std::vector<double> differences12;
-        for (int i = 0; i < num_elements; ++i) {
-            double diff = sqrt(pow(originPoints.col(i).x() - toBeTransformedPoints.col(i).x(), 2) +
-                               pow(originPoints.col(i).y() - toBeTransformedPoints.col(i).y(), 2) +
-                               pow(originPoints.col(i).z() - toBeTransformedPoints.col(i).z(), 2));
-            differences12.push_back(diff);
-        }
-
-        if (DEBUG_PRINT) {
-            std::cout << "__________________________________________\n";
-        }
-        std::sort(differences12.begin(), differences12.end(),
-                  [](const auto &lhs, const auto &rhs) { return lhs > rhs; });
-
-        if (DEBUG_PRINT) {
-            for (const auto &e: differences12) {
-                std::cout << e << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::sort(differences12.begin(), differences12.end());
-
-        if (DEBUG_PRINT) {
-            for (const auto &e: differences12) {
-                std::cout << e << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "Umeyama\n" << cR_t_umeyama << std::endl;
-        }
+        PRINT_PROGRESS(redCode << "MeanEuclidianError = " << sum_dif << "      D="
+                               << sum_sq - sum_dif * sum_dif << resetCode << std::endl
+                               << redCode << "Inliers " << numOfInliers << resetCode << std::endl);
     }
 
-    if (DEBUG_PRINT) {
-        std::cout << "return transformation matrix" << std::endl;
-    }
+    PRINT_PROGRESS("return success -- transformation matrix");
     return cR_t_umeyama;
 }
 
@@ -363,7 +278,6 @@ int gdr::CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutR
             std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
             file << s1 + s2;
         }
-        std::set<std::string> strings;
         for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
             for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
                 if (i >= tranformationRtMatrices[i][j].vertexTo.index) {
@@ -384,39 +298,32 @@ int gdr::CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutR
                         edgeWithTranslation + std::to_string(qR.x()) + " " + std::to_string(qR.y()) + " " +
                         std::to_string(qR.z()) + " "
                         + std::to_string(qR.w()) + noise + "\n";
-                if (strings.find(edgeTotal) != strings.end()) {
-                    std::cerr << "Duplicate " << i << " " << j << " j as "
-                              << tranformationRtMatrices[i][j].vertexFrom.index << std::endl;
-                    std::cout << "ERROR";
-                    exit(2);
-                }
-                strings.insert(edgeTotal);
                 file << edgeTotal;
             }
         }
     } else {
-        return ERROR_OPENING_FILE_WRITE;
+        exit(ERROR_OPENING_FILE_WRITE);
     }
 
     return 0;
 }
 
 int gdr::CorrespondenceGraph::performRotationAveraging() {
-    std::cout << "first print successfull" << std::endl;
+    PRINT_PROGRESS("first print successfull");
     rotationAverager::shanonAveraging(relativePose, absolutePose);
 
-    std::cout << "Shonan averaging successfull" << std::endl;
+    PRINT_PROGRESS("Shonan averaging successfull");
     std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
 
-    std::cout << "read quaternions successfull" << std::endl;
+    PRINT_PROGRESS("read quaternions successfull");
     std::vector<Eigen::Matrix3d> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
 
-    std::cout << "get Rotations from quaternions successfull" << std::endl;
+    PRINT_PROGRESS("get Rotations from quaternions successfull");
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
         verticesOfCorrespondence[i].setRotation(absoluteRotations[i]);
     }
 
-    std::cout << "set Rotations in vertices successfull" << std::endl;
+    PRINT_PROGRESS("setting Rotations in vertices successfull");
     return 0;
 }
 
@@ -433,7 +340,6 @@ int gdr::CorrespondenceGraph::computeRelativePoses() {
         std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
         std::vector<float> &descriptors = keypointAndDescriptor.second;
         std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
-        std::vector<keypointWithDepth> keypointsKnownDepths;
         std::vector<float> descriptorsKnownDepth;
         std::vector<double> depths;
 
@@ -444,9 +350,7 @@ int gdr::CorrespondenceGraph::computeRelativePoses() {
         std::ofstream myfile;
         int mDepth1 = 0, mDepthLow = 0;
 
-        if (DEBUG_PRINT) {
-            std::cout << depthImage.cols << " " << depthImage.rows << std::endl;
-        }
+        PRINT_PROGRESS(depthImage.cols << " " << depthImage.rows);
 
         cv::Mat imageDepth1(480, 640, CV_16UC1);
         for (uint x = 0; x < depthImage.cols; ++x) {
@@ -462,16 +366,6 @@ int gdr::CorrespondenceGraph::computeRelativePoses() {
                 imageDepth1.at<ushort>(y, x) = 65535 - currentDepth;
             }
         }
-        int x = 200, y = 200;
-
-        if (DEBUG_PRINT) {
-            std::cout << "depth1 " << depthImage.depth() << " and " << depthImage.channels() << std::endl;
-            std::cout << "depthLow " << depthImageLow.depth() << std::endl;
-            std::cout << "full value is  ?" << depthImageS.ptr<ushort>(y)[x] << std::endl;
-            std::cout << "full value is " << depthImage.ptr<ushort>(y)[x] << std::endl;
-            std::cout << "low value is " << depthImageLow.ptr<ushort>(y)[x] << std::endl;
-            std::cout << "Max depth  " << mDepth1 << " vs low " << mDepthLow << std::endl;
-        }
         for (int i = 0; i < keypoints.size(); ++i) {
             int posInDescriptorVector = 128 * i;
             int currentKeypointDepth = depthImage.at<ushort>(keypoints[i].y, keypoints[i].x);
@@ -485,11 +379,9 @@ int gdr::CorrespondenceGraph::computeRelativePoses() {
                     descriptorsKnownDepth.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
                     currentDescriptors.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
                 }
-                keypointsKnownDepths.push_back(
-                        {keypoints[i], currentKeypointDepth / 5000.0, currentDescriptors});
             }
         }
-        VertexCG currentVertex(currentImage, keypointsKnownDepths, keypointsKnownDepth, descriptorsKnownDepth, depths,
+        VertexCG currentVertex(currentImage, keypointsKnownDepth, descriptorsKnownDepth, depths,
                                imagesRgb[currentImage],
                                imagesD[currentImage]);
         verticesOfCorrespondence.push_back(currentVertex);
@@ -498,46 +390,16 @@ int gdr::CorrespondenceGraph::computeRelativePoses() {
                verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
     }
 
-    if (DEBUG_PRINT) {
-        std::cout << "vertices written" << std::endl;
-    }
+    PRINT_PROGRESS("vertices written");
     matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());
 
 
-    if (DEBUG_PRINT) {
-        std::cout << "trying to find corr" << std::endl;
-    }
+    PRINT_PROGRESS("trying to find correspondences");
     findCorrespondences();
     decreaseDensity();
     findTransformationRtMatrices();
-
-
-    if (DEBUG_PRINT) {
-        for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
-            for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
-                std::cout << "                          " << std::setw(4)
-                          << tranformationRtMatrices[i][j].vertexFrom.index
-                          << std::setw(4) << tranformationRtMatrices[i][j].vertexTo.index << std::endl;
-                std::cout << tranformationRtMatrices[i][j].innerTranformationRtMatrix << std::endl;
-                std::cout << "Rotation " << std::endl;
-                std::cout << tranformationRtMatrices[i][j].R << std::endl;
-                std::cout << "translation " << std::endl;
-                std::cout << tranformationRtMatrices[i][j].t << std::endl;
-                std::cout
-                        << "______________________________________________________________________________________________________"
-                        << std::endl;
-            }
-        }
-    }
-
     std::string poseFile = relativePose;
     printRelativePosesFile(poseFile);
-
-    if (DEBUG_PRINT) {
-        printConnectionsRelative(std::cout);
-        std::cout << "bfs successfull" << std::endl;
-        printConnectionsRelative(std::cout);
-    }
     return 0;
 };
 
@@ -555,16 +417,12 @@ gdr::CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageD
     std::sort(imagesD.begin(), imagesD.end());
 
 
-    if (DEBUG_PRINT) {
-        std::cout << imagesRgb.size() << " vs " << imagesD.size() << std::endl;
-    }
+    PRINT_PROGRESS("images rgb vs d: " << imagesRgb.size() << " vs " << imagesD.size());
     assert(imagesRgb.size() == imagesD.size());
 
     tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
 
-    if (DEBUG_PRINT) {
-        std::cout << "Totally read " << imagesRgb.size() << std::endl;
-    }
+    PRINT_PROGRESS("Totally read " << imagesRgb.size());
 };
 
 int gdr::CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
@@ -610,7 +468,7 @@ std::vector<int> gdr::CorrespondenceGraph::bfs(int currentVertex) {
     assert(verticesOfCorrespondence.size() == tranformationRtMatrices.size());
     while (!queueVertices.empty()) {
         int vertex = queueVertices.front();
-        std::cout << " entered vertex " << vertex << std::endl;
+        PRINT_PROGRESS(" entered vertex " << vertex);
         queueVertices.pop();
         assert(vertex < visited.size() && vertex >= 0);
         visited[vertex] = true;

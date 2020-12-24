@@ -23,15 +23,6 @@
 
 namespace gdr {
 
-    struct keypointWithDepth {
-        SiftGPU::SiftKeypoint keypoint;
-        double depth;
-        std::vector<float> descriptors;
-
-        keypointWithDepth(SiftGPU::SiftKeypoint newKeypoint, double newDepth, const std::vector<float> &newDescriptors);
-    };
-
-
     typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
 
@@ -39,7 +30,6 @@ namespace gdr {
 
         int index;
         Eigen::Matrix4d absoluteRotationTranslation;
-        std::vector<keypointWithDepth> keypointsWithDepths;
         std::vector<SiftGPU::SiftKeypoint> keypoints;
         std::vector<float> descriptors;
         std::vector<double> depths;
@@ -51,7 +41,6 @@ namespace gdr {
         void setRotation(const Eigen::Matrix3d &rotation);
 
         VertexCG(int newIndex,
-                 const std::vector<keypointWithDepth> &newKeypointsWithDepths,
                  const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
                  const std::vector<float> &newDescriptors,
                  const std::vector<double> &newDepths,

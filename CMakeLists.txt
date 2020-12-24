@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.10.0)
 
-project(GlobalReconstructionRGBD)
+project(GDR)
 
 set(CMAKE_CXX_STANDARD 17)
 set(GCC_COVERAGE_COMPILE_FLAGS " -Os")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
+set(GDR_FLAGS "")
 
 include(ExternalProject)
 
@@ -22,11 +24,9 @@ find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-include_directories(${CUDA_INCLUDE_DIRS})
-include_directories(${EIGEN3_INCLUDE_DIRS})
-include_directories(${Sophus_INCLUDE_DIR})
-include_directories(${OpenGL_INCLUDE_DIR})
-include_directories(${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU)
+if (${DEBUG_PRINT_PROGRESS})
+    list(APPEND GDR_FLAGS "-DDEBUG_PRINT_PROGRESS")
+endif()
 
 set(SIFTGPU_LIBS "${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
@@ -46,6 +46,7 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/ICP.h
         ${PROJECT_SOURCE_DIR}/include/umeyama.h
         ${PROJECT_SOURCE_DIR}/include/pseudonames.h
+        ${PROJECT_SOURCE_DIR}/include/printer.h
         )
 
 set(GDR_SOURCE_FILES
@@ -69,8 +70,14 @@ add_library(GDR_LIB
         ${GDR_HEADER_FILES}
         )
 
-add_dependencies(GDR_LIB siftgpu)
+add_dependencies(GDR_LIB
+        siftgpu
+        )
 
+target_compile_definitions(GDR_LIB
+        PUBLIC
+        ${GDR_FLAGS}
+        )
 target_link_libraries(GDR_LIB
         ${CUDA_LIBRARIES}
         ${SIFTGPU_LIBS}
@@ -78,9 +85,14 @@ target_link_libraries(GDR_LIB
         ${Boost_FILESYSTEM_LIBRARIES}
         ${Boost_LIBRARIES}
         )
+
 target_include_directories(GDR_LIB
         PUBLIC
         ${PROJECT_SOURCE_DIR}/include
+        ${EIGEN3_INCLUDE_DIRS}
+        PRIVATE
+        ${OpenGL_INCLUDE_DIR}
+        ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
         )
 
 enable_testing()

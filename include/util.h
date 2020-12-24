@@ -6,7 +6,7 @@
 #ifndef TEST_SIFTGPU_UTIL_H
 #define TEST_SIFTGPU_UTIL_H
 
-#include <Eigen/Eigen>
+//#include <Eigen/Eigen>
 
 #include "pseudonames.h"
 
