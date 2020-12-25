@@ -29,11 +29,11 @@ ExternalProject_Add(siftgpu
     )
 
 ExternalProject_Add(gtsam
-    SOURCE_DIR "${PROJECT_SOURCE_DIR}/external/gtsam"
+    SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam"
 #    BUILD_IN_SOURCE 1
 #    PATCH_COMMAND mkdir gbuild
-    BINARY_DIR "${PROJECT_SOURCE_DIR}/external/gtsam/gbuild"
-    CONFIGURE_COMMAND cmake .. -DBUILD_SHARED_LIBS=0 -DGTSAM_USE_SYSTEM_EIGEN=1 -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_SOURCE_DIR}/external/gtsam/gbuild
+    BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild"
+    CONFIGURE_COMMAND cmake .. -DBUILD_SHARED_LIBS=0 -DGTSAM_USE_SYSTEM_EIGEN=1 -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild
     INSTALL_COMMAND make install
     )
 
@@ -43,12 +43,12 @@ endif()
 
 set(SIFTGPU_LIBS ${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so)
 #
-#set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/external/gtsam/eigenlocal/lib/libgtsam.a)
-#set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/external/gtsam/eigenlocal/include)
+#set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/eigenlocal/lib/libgtsam.a)
+#set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/eigenlocal/include)
 
 
-set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/external/gtsam/gbuild/lib/libgtsam.a)
-set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/external/gtsam/gbuild/include)
+set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/lib/libgtsam.a)
+set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/include)
 
 
 set(GDR_HEADER_FILES
