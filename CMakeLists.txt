@@ -33,9 +33,8 @@ endif ()
 set(SIFTGPU_LIBS "${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
 set(GDR_HEADER_FILES
-        ${PROJECT_SOURCE_DIR}/include/errors.h
-        ${PROJECT_SOURCE_DIR}/include/fileProc.h
         ${PROJECT_SOURCE_DIR}/include/keyFeatures.h
+        ${PROJECT_SOURCE_DIR}/include/fileProc.h
         ${PROJECT_SOURCE_DIR}/include/VertexCG.h
         ${PROJECT_SOURCE_DIR}/include/CorrespondenceGraph.h
         ${PROJECT_SOURCE_DIR}/include/transformationRt.h
@@ -43,13 +42,14 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/siftModule.h
         ${PROJECT_SOURCE_DIR}/include/groundTruthTransformer.h
         ${PROJECT_SOURCE_DIR}/include/rotationAveraging.h
-        ${PROJECT_SOURCE_DIR}/include/util.h
         ${PROJECT_SOURCE_DIR}/include/quaternions.h
+        ${PROJECT_SOURCE_DIR}/include/util.h
         ${PROJECT_SOURCE_DIR}/include/ICP.h
         ${PROJECT_SOURCE_DIR}/include/umeyama.h
+        ${PROJECT_SOURCE_DIR}/include/poseEstimation.h
         ${PROJECT_SOURCE_DIR}/include/pseudonames.h
         ${PROJECT_SOURCE_DIR}/include/printer.h
-        ${PROJECT_SOURCE_DIR}/include/poseEstimation.h
+        ${PROJECT_SOURCE_DIR}/include/errors.h
         )
 
 set(GDR_SOURCE_FILES

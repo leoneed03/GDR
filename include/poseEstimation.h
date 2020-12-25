@@ -18,11 +18,11 @@ namespace gdr {
         errorStats(double mse, double msd);
     };
 
-    std::pair<errorStats, errorStats> getErrorStatsTranslationRotation(
+    std::pair<gdr::errorStats, gdr::errorStats> getErrorStatsTranslationRotation(
             const std::vector<std::map<int, std::pair<double, double>>> &errorRelativePosesTranslationRotation);
 
-    std::pair<errorStats, errorStats> getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
-            const std::string &pathGroundTruth, const std::string &estimatedPairWiseTransformations);
+    std::pair<gdr::errorStats, gdr::errorStats> getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
+            const std::string &pathToGroundTruth, const std::string &estimatedPairWise);
 
     std::vector<std::map<int, std::pair<double, double>>>
     getErrorsTranslationRotation(const std::vector<std::vector<std::vector<double>>> &truePairWiseTransformations,
