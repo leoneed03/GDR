@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef TEST_SIFTGPU_CG_H
-#define TEST_SIFTGPU_CG_H
+#ifndef GDR_SIFTGPU_CG_H
+#define GDR_SIFTGPU_CG_H
 
 #include <queue>
 

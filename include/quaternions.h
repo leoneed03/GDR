@@ -3,11 +3,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef TEST_SIFTGPU_QUATERNIONS_H
-#define TEST_SIFTGPU_QUATERNIONS_H
+#ifndef GDR_QUATERNIONS_H
+#define GDR_QUATERNIONS_H
 
 #include "util.h"
-
 
 namespace gdr {
 

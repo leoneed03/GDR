@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GLOBALRECONSTRUCTIONRGBD_PRINTER_H
-#define GLOBALRECONSTRUCTIONRGBD_PRINTER_H
+#ifndef GDR_PRINTER_H
+#define GDR_PRINTER_H
 
 #include <iostream>
 

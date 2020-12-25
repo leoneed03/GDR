@@ -66,3 +66,57 @@ std::vector<std::vector<double>> gdr::parseAbsoluteRotationsFile(const std::stri
     }
 }
 
+std::vector<std::vector<std::vector<double>>> gdr::getMeasurements(const std::string &pairwiseTransformations) {
+    std::string currentToken;
+    std::ifstream in(pairwiseTransformations);
+    if (!in.is_open()) {
+        exit(ERROR_OPENING_FILE_READ);
+    }
+
+    int poseCounter = 0;
+
+    while (in >> currentToken && currentToken[0] != 'E') {
+        if (currentToken[0] == 'V') {
+            ++poseCounter;
+        }
+    }
+    std::vector<std::vector<std::vector<double>>> relativePoses(poseCounter,
+                                                                std::vector<std::vector<double>>(poseCounter));
+    do {
+        int from;
+        int to;
+        if (!(in >> from && in >> to)) {
+            exit(ERROR_OPENING_FILE_READ);
+        }
+
+        if (from > to) {
+            std::swap(from, to);
+        }
+        std::vector<double> currentRelativePose;
+        for (int i = 0; i < 7; ++i) {
+            double currentVal;
+            if (!(in >> currentVal)) {
+                exit(ERROR_OPENING_FILE_READ);
+            }
+            currentRelativePose.push_back(currentVal);
+        }
+        relativePoses[from][to] = currentRelativePose;
+
+        while (true) {
+            if (!(in >> currentToken)) {
+                return relativePoses;
+            }
+            if (currentToken[0] == 'E') {
+                break;
+            }
+        }
+    } while (true);
+}
+
+
+std::vector<std::pair<double, double>> getErrorMeasurements(const std::string &truePairwiseTransformation,
+                                                            const std::string &estimatedPairwiseTransformations) {
+    return std::vector<std::pair<double, double>>();
+}
+
+

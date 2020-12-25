@@ -101,7 +101,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>>
 gdr::GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
                                                 const std::string &pathToD, const std::string &pathOutDirectory,
                                                 const std::string &timeInfo,
-                                                const std::set<int>& indices) {
+                                                const std::set<int> &indices) {
     std::ifstream in(pathToGroundTruth);
     std::string outRGB = pathOutDirectory + "/rgb";
     std::string outD = pathOutDirectory + "/depth";
@@ -269,10 +269,7 @@ int gdr::GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
 
         out.precision(std::numeric_limits<double>::max_digits10);
         out << std::setw(2 * spaceIO) << e[0];
-
-
         MatrixX currentTranslation = getSomeMatrix(3, 1);
-
         std::vector<double> vectorData = {e[4], e[5], e[6], e[7]};
         Eigen::Quaterniond qd(vectorData.data());
         Eigen::Matrix3d currentRotationMatrix = qd.toRotationMatrix();
@@ -289,8 +286,8 @@ int gdr::GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
         Eigen::Matrix3d matrixDouble = zeroRotationMatrix.transpose() * currentRotationMatrix;
         Eigen::Quaterniond qRelatived(matrixDouble);
 
-        MatrixX deltaTranslation = zeroTranslation - currentTranslation;
-        MatrixX relativeTranslation = zeroRotationMatrix.transpose() * deltaTranslation;
+        Eigen::Vector3d deltaT = currentTranslation - zeroTranslation;
+        Eigen::Vector3d relativeTranslation = zeroRotationMatrix.inverse() * deltaT;
         for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
             out << std::setw(2 * spaceIO) << relativeTranslation.col(0)[posTranslation];
         }
@@ -312,7 +309,7 @@ void gdr::GTT::writeInfo(const std::vector<std::string> &rgb, const std::string 
 
 void
 gdr::GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
-                         const std::string& NewName = "subset") {
+                         const std::string &NewName = "subset") {
     std::string pathNewOut = pathOut + "/" + NewName;
     std::string groundtruth = pathToDataset + "/groundtruth.txt";
     std::string rgb = pathToDataset + "/rgb";
@@ -324,4 +321,85 @@ gdr::GTT::prepareDataset(const std::string &pathToDataset, const std::string &pa
                                           pathNewOut,
                                           timeInfo,
                                           indicesSet);
+}
+
+std::vector<std::vector<double>> gdr::GTT::extractTimeAndTransformation(const std::string &inputFileName) {
+
+    std::ifstream in(inputFileName);
+
+    int lineSize = 8;
+    std::vector<std::vector<double>> timeAndTransformation;
+    if (in) {
+        std::string s;
+        for (int i = 0; i < 3; ++i) {
+            std::getline(in, s);
+            if (s.empty()) {
+                return timeAndTransformation;
+            }
+        }
+
+        int counterLines = 0;
+        double currentValue;
+        std::vector<double> currentPoseInfo;
+        while (in >> currentValue) {
+            ++counterLines;
+            currentPoseInfo.push_back(currentValue);
+
+            if (counterLines == lineSize) {
+                counterLines = 0;
+                timeAndTransformation.push_back(currentPoseInfo);
+                currentPoseInfo.clear();
+            }
+
+        }
+    }
+    return timeAndTransformation;
+}
+
+int gdr::GTT::extractAllRelativeTransformationPairwise(const std::string &in, const std::string &pathOut) {
+    std::vector<std::vector<double>> timeAndAbsolutePoses = extractTimeAndTransformation(in);
+    std::ofstream out(pathOut);
+
+    for (int index = 0; index < timeAndAbsolutePoses.size(); ++index) {
+        auto &pose = timeAndAbsolutePoses[index];
+        assert(pose.size() == 8);
+
+        out << "VERTEX_SE3:QUAT " << index;
+//        out.precision(std::numeric_limits<double>::);
+        for (int i = 1; i < pose.size(); ++i) {
+            out << std::setw(spaceIO) << pose[i];
+        }
+        out << std::endl;
+    }
+    for (int index = 0; index < timeAndAbsolutePoses.size(); ++index) {
+        std::vector<double> &currentPose = timeAndAbsolutePoses[index];
+        std::vector<double> rotationFrom = {currentPose[4], currentPose[5], currentPose[6], currentPose[7]};
+        std::vector<double> translationFrom = {currentPose[1], currentPose[2], currentPose[3]};
+        Eigen::Quaterniond qFrom(rotationFrom.data());
+        Eigen::Vector3d tFrom(translationFrom.data());
+
+        for (int to = index + 1; to < timeAndAbsolutePoses.size(); ++to) {
+            std::vector<double> &currentPoseTo = timeAndAbsolutePoses[to];
+            std::vector<double> rotationTo = {currentPoseTo[4], currentPoseTo[5], currentPoseTo[6], currentPoseTo[7]};
+            std::vector<double> translationTo = {currentPoseTo[1], currentPoseTo[2], currentPoseTo[3]};
+            Eigen::Quaterniond qTo(rotationTo.data());
+            Eigen::Vector3d tTo(translationTo.data());
+
+            //// R_{ij} = R_{j}^T * R_{i}
+            Eigen::Quaterniond relativeRotationQuat = qTo.inverse() * qFrom;
+            //// t_{ij} = R_{j}^T * (t_i - t_j)
+            Eigen::Vector3d relativeTranslation = qTo.inverse().toRotationMatrix() * (tFrom - tTo);
+
+            //// index->to == i->j
+            out << "EDGE_SE3:QUAT " << std::setw(5) << index << std::setw(5) << to;
+
+            for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
+                out << std::setw(spaceIO) << relativeTranslation.col(0)[posTranslation];
+            }
+            out << std::setw(spaceIO) << relativeRotationQuat.x() << std::setw(spaceIO) << relativeRotationQuat.y()
+                << std::setw(spaceIO) << relativeRotationQuat.z() << std::setw(spaceIO) << relativeRotationQuat.w()
+                << std::endl;
+        }
+    }
+    return 0;
 }

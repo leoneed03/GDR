@@ -3,11 +3,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef TEST_SIFTGPU_ROTATIONAVERAGING_H
-#define TEST_SIFTGPU_ROTATIONAVERAGING_H
+#ifndef GDR_ROTATIONAVERAGING_H
+#define GDR_ROTATIONAVERAGING_H
 
 #include <string>
-
 
 namespace gdr {
 

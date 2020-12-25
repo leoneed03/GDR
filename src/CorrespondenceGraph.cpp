@@ -32,7 +32,6 @@ int gdr::CorrespondenceGraph::findCorrespondences() {
 }
 
 int gdr::CorrespondenceGraph::findTransformationRtMatrices() {
-    bool f = true;
 
     for (int i = 0; i < matches.size(); ++i) {
         for (int j = 0; j < matches[i].size(); ++j) {
@@ -137,8 +136,8 @@ gdr::CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int
         MatrixX toBeTransformedPoints = MatrixX(dim + 1, minSize);
         MatrixX originPoints = MatrixX(dim + 1, minSize);
 
-        double mx = 1000, my = 1000, mz = 1000;
-        double Mx = -1000, My = -1000, Mz = -1000;
+        double mz = 1000;
+        double Mz = -1000;
         int num_elements = minSize;
         for (int i = 0; i < minSize; ++i) {
             {
@@ -160,13 +159,9 @@ gdr::CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int
                 y1 = 1.0 * (y1 - cameraRgbd.cy) * z1 / cameraRgbd.fy;
 
                 if (z1 < mz) {
-                    mx = x1;
-                    my = y1;
                     mz = z1;
                 }
                 if (z1 > Mz) {
-                    Mx = x1;
-                    My = y1;
                     Mz = z1;
                 }
 
@@ -212,16 +207,14 @@ gdr::CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int
                                         << Mx << " " << My << " " << Mz);
         assert(mz > 0);
         assert(Mz > 0);
-        Eigen::Matrix4d cR_t_umeyama_1 = umeyama(toBeTransformedPoints.block(0, 0, dim, num_elements),
-                                                 originPoints.block(0, 0, dim, num_elements));
+
         Eigen::Matrix4d cR_t_umeyama_RANSAC = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints,
                                                                                      originPoints,
                                                                                      numIterations, num_elements,
                                                                                      inlierCoeff);
+
         cR_t_umeyama = cR_t_umeyama_RANSAC;
-        PRINT_PROGRESS("simple umeyama " << std::endl
-                                         << cR_t_umeyama_1 << std::endl
-                                         << "RANSAC umeyama " << std::endl
+        PRINT_PROGRESS("RANSAC umeyama " << std::endl
                                          << cR_t_umeyama_RANSAC << std::endl
                                          << "______________________________________________________\n"
                                          << "______________________________________________________\n");
@@ -288,7 +281,10 @@ int gdr::CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutR
                         "EDGE_SE3:QUAT " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " " +
                         std::to_string(i) + " ";
                 auto translationVector = tranformationRtMatrices[i][j].t;
-                std::string edgeWithTranslation = edgeId + "0.0 0.0 0.0 ";
+                std::string edgeWithTranslation = edgeId + " "
+                                                  + std::to_string(translationVector.col(0)[0]) + " "
+                                                  + std::to_string(translationVector.col(0)[1]) + " "
+                                                  + std::to_string(translationVector.col(0)[2]) + " ";
                 const auto &R = tranformationRtMatrices[i][j].R;
 
                 Eigen::Quaterniond qR(R);

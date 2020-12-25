@@ -3,12 +3,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef TEST_SIFTGPU_VERTEXCG_H
-#define TEST_SIFTGPU_VERTEXCG_H
+#ifndef GDR_VERTEXCG_H
+#define GDR_VERTEXCG_H
 
 #include <vector>
 #include <iostream>
-#include <SiftGPU.h>
+#include "SiftGPU.h"
 
 #include <Eigen/Eigen>
 #include <Eigen/Core>

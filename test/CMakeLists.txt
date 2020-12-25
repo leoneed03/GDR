@@ -1,4 +1,4 @@
-set(TESTS testUmeyamaRansac testGDR)
+set(TESTS testUmeyamaRansac testGDR testRelativePosesComputation)
 
 foreach(TEST ${TESTS})
     add_executable(${TEST} ${TEST}.cpp)

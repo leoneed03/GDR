@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GLOBALRECONSTRUCTIONRGBD_UMEYAMA_H
-#define GLOBALRECONSTRUCTIONRGBD_UMEYAMA_H
+#ifndef GDR_UMEYAMA_H
+#define GDR_UMEYAMA_H
 
 #include <Eigen/Eigen>
 #include <Eigen/Core>
@@ -13,7 +13,6 @@
 #include <Eigen/SVD>
 
 #include "pseudonames.h"
-
 
 namespace gdr {
 

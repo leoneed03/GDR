@@ -24,9 +24,11 @@ find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+FIND_PACKAGE(Boost COMPONENTS program_options timer filesystem serialization REQUIRED)
+
 if (${DEBUG_PRINT_PROGRESS})
     list(APPEND GDR_FLAGS "-DDEBUG_PRINT_PROGRESS")
-endif()
+endif ()
 
 set(SIFTGPU_LIBS "${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so")
 
@@ -47,6 +49,7 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/umeyama.h
         ${PROJECT_SOURCE_DIR}/include/pseudonames.h
         ${PROJECT_SOURCE_DIR}/include/printer.h
+        ${PROJECT_SOURCE_DIR}/include/poseEstimation.h
         )
 
 set(GDR_SOURCE_FILES
@@ -63,6 +66,7 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/util.cpp
         ${PROJECT_SOURCE_DIR}/src/ICP.cpp
         ${PROJECT_SOURCE_DIR}/src/umeyama.cpp
+        ${PROJECT_SOURCE_DIR}/src/poseEstimation.cpp
         )
 
 add_library(GDR_LIB

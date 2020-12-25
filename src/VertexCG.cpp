@@ -18,16 +18,16 @@ void gdr::VertexCG::setRotation(const Eigen::Matrix3d &rotation) {
 }
 
 gdr::VertexCG::VertexCG(int newIndex,
-                   const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
-                   const std::vector<float> &newDescriptors,
-                   const std::vector<double> &newDepths,
-                   const std::string &newPathRGB,
-                   const std::string &newPathD) : index(newIndex),
-                                                  keypoints(newKeypoints),
-                                                  descriptors(newDescriptors),
-                                                  depths(newDepths),
-                                                  pathToRGBimage(newPathRGB),
-                                                  pathToDimage(newPathD) {
+                        const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
+                        const std::vector<float> &newDescriptors,
+                        const std::vector<double> &newDepths,
+                        const std::string &newPathRGB,
+                        const std::string &newPathD) : index(newIndex),
+                                                       keypoints(newKeypoints),
+                                                       descriptors(newDescriptors),
+                                                       depths(newDepths),
+                                                       pathToRGBimage(newPathRGB),
+                                                       pathToDimage(newPathD) {
     int transformationMatrixSize = 4;
     absoluteRotationTranslation = getSomeMatrix(transformationMatrixSize, transformationMatrixSize);
     for (int i = 0; i < transformationMatrixSize; ++i) {

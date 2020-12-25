@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GLOBALRECONSTRUCTIONRGBD_ERRORS_H
-#define GLOBALRECONSTRUCTIONRGBD_ERRORS_H
+#ifndef GDR_ERRORS_H
+#define GDR_ERRORS_H
 
 namespace gdr {
 

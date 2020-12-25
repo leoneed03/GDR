@@ -2,7 +2,6 @@
 // Created by leoneed on 12/22/20.
 //
 
-#include <iomanip>
 #include <iostream>
 
 #include "umeyama.h"
@@ -123,6 +122,6 @@ Eigen::Matrix4d gdr::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeT
         }
     }
     PRINT_PROGRESS("cand \n" << cR_t_umeyama_3_points_cand << "RANSAC found on attempt " << attempt
-                                     << " error on last \'inlier\' " << mError);
+                             << " error on last \'inlier\' " << mError);
     return bestMath;
 }

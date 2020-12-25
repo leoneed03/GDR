@@ -1,3 +1,8 @@
+//
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
@@ -15,7 +20,7 @@ int countNumberOfLines(const std::string &relPosesFile) {
     return numberOfLines;
 }
 
-TEST(testCorrespondanceGraph, fullTest) {
+TEST(testCorrespondenceGraph, relativePoseFileCreated) {
 
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth",
                                                  525.0,

@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GLOBALRECONSTRUCTION_ICP_H
-#define GLOBALRECONSTRUCTION_ICP_H
+#ifndef GDR_ICP_H
+#define GDR_ICP_H
 
 namespace gdr {}
 

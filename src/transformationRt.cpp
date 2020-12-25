@@ -6,8 +6,8 @@
 #include "transformationRt.h"
 
 gdr::transformationRtMatrix::transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix,
-                                               const VertexCG &newVertexFrom,
-                                               const VertexCG &newVertexTo)
+                                                    const VertexCG &newVertexFrom,
+                                                    const VertexCG &newVertexTo)
         : innerTranformationRtMatrix(newInnerEssentialMatrix),
           vertexFrom(newVertexFrom), vertexTo(newVertexTo) {
     auto dim = newInnerEssentialMatrix.cols() - 1;

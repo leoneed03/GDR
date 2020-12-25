@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef TEST_SIFTGPU_FILES_H
-#define TEST_SIFTGPU_FILES_H
+#ifndef GDR_FILES_H
+#define GDR_FILES_H
 
 #include <iostream>
 #include <vector>
@@ -20,6 +20,13 @@ namespace gdr {
     std::vector<std::string> readRgbData(std::string pathToRGB);
 
     std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &pathToRotationsFile);
+
+    std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &pathToRotationsFile);
+
+    std::vector<std::vector<std::vector<double>>> getMeasurements(const std::string &truePairwiseTransformation);
+
+    std::vector<std::pair<double, double>> getErrorMeasurements(const std::string &truePairwiseTransformation,
+                                                                const std::string &estimatedPairwiseTransformations);
 }
 
 #endif

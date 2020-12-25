@@ -3,14 +3,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef SIFTGPU_SIFT_H
-#define SIFTGPU_SIFT_H
+#ifndef GDR_SIFT_H
+#define GDR_SIFT_H
 
 #include <vector>
 #include <memory>
 
 #include "SiftGPU.h"
-
 
 namespace gdr {
 

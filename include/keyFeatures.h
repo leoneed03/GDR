@@ -3,11 +3,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef TEST_SIFTGPU_FEATURES_H
-#define TEST_SIFTGPU_FEATURES_H
+#ifndef GDR_FEATURES_H
+#define GDR_FEATURES_H
 
 #include <vector>
-#include <SiftGPU.h>
+#include "SiftGPU.h"
 #include <string>
 #include <iostream>
 

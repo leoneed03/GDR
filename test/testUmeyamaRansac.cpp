@@ -1,20 +1,24 @@
-#include <iostream>
+//
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 
+#include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
+
 #include "CorrespondenceGraph.h"
 
 bool testMSEisLessThanEpsilon(double mse) {
     bool MSEisLessThanEpsilon = mse < 3 * std::numeric_limits<gdr::Scalar>::epsilon();
     if (!MSEisLessThanEpsilon) {
-        std::cout << "error MSE: " << mse << std::endl;
+        std::cout << "error meanError: " << mse << std::endl;
     }
     return MSEisLessThanEpsilon;
 }
 
 TEST(testUmeyamaRansac, allInliers) {
 
-    int iii = 3;
     int numOfPoints = 100;
     Eigen::Matrix3d rotationMatrix;
     std::vector<double> angles = {30, 50, -87};

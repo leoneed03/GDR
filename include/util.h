@@ -3,10 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef TEST_SIFTGPU_UTIL_H
-#define TEST_SIFTGPU_UTIL_H
-
-//#include <Eigen/Eigen>
+#ifndef GDR_UTIL_H
+#define GDR_UTIL_H
 
 #include "pseudonames.h"
 

@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GLOBALRECONSTRUCTIONRGBD_PSEUDONAMES_H
-#define GLOBALRECONSTRUCTIONRGBD_PSEUDONAMES_H
+#ifndef GDR_PSEUDONAMES_H
+#define GDR_PSEUDONAMES_H
 
 #include <Eigen/Eigen>
 
