@@ -6,18 +6,18 @@
 #include "rotationAveraging.h"
 #include "printer.h"
 
-//#include <gtsam/base/timing.h>
-//#include <gtsam/sfm/ShonanAveraging.h>
-//#include <gtsam/slam/InitializePose.h>
-//#include <gtsam/slam/dataset.h>
+#include <gtsam/base/timing.h>
+#include <gtsam/sfm/ShonanAveraging.h>
+#include <gtsam/slam/InitializePose.h>
+#include <gtsam/slam/dataset.h>
 
-//#include <boost/program_options.hpp>
+#include <boost/program_options.hpp>
 
-//using namespace gtsam;
-//namespace po = boost::program_options;
+using namespace gtsam;
+namespace po = boost::program_options;
 
 int gdr::rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
-    /*std::string datasetName;
+    std::string datasetName;
     std::string inputFile = pathToRelativeRotations;
     std::string outputFile = pathOut;
     int d = 3;
@@ -43,6 +43,6 @@ int gdr::rotationAverager::shanonAveraging(const std::string &pathToRelativeRota
         poses = initialize::computePoses<Pose3>(result.first, &poseGraph);
     }
     PRINT_PROGRESS("Writing result to " << outputFile);
-    writeG2o(NonlinearFactorGraph(), poses, outputFile);*/
+    writeG2o(NonlinearFactorGraph(), poses, outputFile);
     return 0;
 }
