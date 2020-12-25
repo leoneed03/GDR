@@ -7,6 +7,7 @@
 #define GDR_POSEESTIMATION_H
 
 #include <vector>
+#include <string>
 #include <map>
 
 namespace gdr {
@@ -18,10 +19,10 @@ namespace gdr {
         errorStats(double mse, double msd);
     };
 
-    std::pair<gdr::errorStats, gdr::errorStats> getErrorStatsTranslationRotation(
+    std::pair<errorStats, errorStats> getErrorStatsTranslationRotation(
             const std::vector<std::map<int, std::pair<double, double>>> &errorRelativePosesTranslationRotation);
 
-    std::pair<gdr::errorStats, gdr::errorStats> getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
+    std::pair<errorStats, errorStats> getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
             const std::string &pathToGroundTruth, const std::string &estimatedPairWise);
 
     std::vector<std::map<int, std::pair<double, double>>>
