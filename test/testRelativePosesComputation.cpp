@@ -7,7 +7,6 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
-#include <fstream>
 
 #include "poseEstimation.h"
 #include "CorrespondenceGraph.h"
