@@ -36,6 +36,7 @@ std::vector<std::pair<int, int>>
 gdr::getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                                   const imageDescriptor &keysDescriptors2,
                                   SiftMatchGPU *matcher) {
+
     auto descriptors1 = keysDescriptors1.second;
     auto descriptors2 = keysDescriptors2.second;
 

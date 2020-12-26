@@ -49,7 +49,6 @@ int gdr::CorrespondenceGraph::findTransformationRtMatrices() {
                                                         << frameFrom.index << " -> " << frameTo.index);
 
             if (success) {
-                int spaceIO = 18;
 
                 Eigen::Matrix3d m3d = cameraMotion.block(0, 0, 3, 3);
                 Eigen::Quaterniond qRelatived(m3d);
@@ -278,7 +277,8 @@ int gdr::CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutR
                 }
                 std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
                 std::string edgeId =
-                        "EDGE_SE3:QUAT " + std::to_string(i) + " " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " ";
+                        "EDGE_SE3:QUAT " + std::to_string(i) + " " +
+                        std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " ";
                 auto translationVector = tranformationRtMatrices[i][j].t;
                 std::string edgeWithTranslation = edgeId + " "
                                                   + std::to_string(translationVector.col(0)[0]) + " "
@@ -287,7 +287,6 @@ int gdr::CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutR
                 const auto &R = tranformationRtMatrices[i][j].R;
 
                 Eigen::Quaterniond qR(R);
-                int space = 12;
                 std::vector<double> vectorDataRotations = {qR.x(), qR.y(), qR.z(), qR.w()};
                 std::string edgeTotal =
                         edgeWithTranslation + std::to_string(qR.x()) + " " + std::to_string(qR.y()) + " " +
@@ -400,8 +399,8 @@ int gdr::CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
 
     os << "======================++++++++++++++++=======================\n" << std::endl;
     for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-        os << "Pose number: " << i << std::endl;
-        os << verticesOfCorrespondence[i].absoluteRotationTranslation;
+        os << "Pose number: " << std::setw(space) << i << std::endl;
+        os << std::setw(space) << verticesOfCorrespondence[i].absoluteRotationTranslation;
         os << "\n_________________________________________________________________\n";
     }
     return 0;
@@ -436,6 +435,7 @@ std::vector<int> gdr::CorrespondenceGraph::bfs(int currentVertex) {
     std::queue<int> queueVertices;
     queueVertices.push(currentVertex);
     assert(verticesOfCorrespondence.size() == tranformationRtMatrices.size());
+
     while (!queueVertices.empty()) {
         int vertex = queueVertices.front();
         PRINT_PROGRESS(" entered vertex " << vertex);

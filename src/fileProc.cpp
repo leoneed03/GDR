@@ -114,9 +114,4 @@ std::vector<std::vector<std::vector<double>>> gdr::getMeasurements(const std::st
 }
 
 
-std::vector<std::pair<double, double>> getErrorMeasurements(const std::string &truePairwiseTransformation,
-                                                            const std::string &estimatedPairwiseTransformations) {
-    return std::vector<std::pair<double, double>>();
-}
-
 

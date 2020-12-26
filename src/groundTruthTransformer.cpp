@@ -19,6 +19,7 @@
 #include <set>
 
 void gdr::putAligned(std::ofstream &of, const std::vector<double> &val) {
+
     for (const auto &vals: val) {
         (of << std::setw(12) << vals << ' ');
     }
@@ -26,6 +27,7 @@ void gdr::putAligned(std::ofstream &of, const std::vector<double> &val) {
 
 int
 gdr::GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std::string &pathToRelativeGroundTruth) {
+
     std::ifstream in(pathToGroundTruth);
     std::ofstream out(pathToRelativeGroundTruth);
     int numOfEmptyLines = 3;
@@ -73,6 +75,7 @@ gdr::GTT::makeRotationsRelative(const std::string &pathToGroundTruth, const std:
 }
 
 std::vector<std::string> gdr::readData(std::string pathToRGB) {
+
     DIR *pDIR;
     struct dirent *entry;
     std::vector<std::string> RgbImages;
@@ -102,6 +105,7 @@ gdr::GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundT
                                                 const std::string &pathToD, const std::string &pathOutDirectory,
                                                 const std::string &timeInfo,
                                                 const std::set<int> &indices) {
+
     std::ifstream in(pathToGroundTruth);
     std::string outRGB = pathOutDirectory + "/rgb";
     std::string outD = pathOutDirectory + "/depth";
@@ -111,6 +115,7 @@ gdr::GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundT
     for (fs::directory_iterator end_dir_it, it(path_to_remove); it != end_dir_it; ++it) {
         fs::remove_all(it->path());
     }
+
     boost::filesystem::create_directory(outD);
     boost::filesystem::create_directory(outRGB);
     std::vector<double> stamp0;
@@ -148,6 +153,7 @@ gdr::GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundT
 std::vector<double> gdr::GTT::createTimestamps(const std::vector<std::string> &rgb,
                                                const std::string &pathTimeRGB, const std::string &pathToGroundTruth,
                                                const std::set<int> &indices) {
+
     std::map<std::string, double> rgbToTime;
     int skipNum = 3;
     std::vector<double> timeStamps;
@@ -192,6 +198,7 @@ std::vector<double> gdr::GTT::createTimestamps(const std::vector<std::string> &r
 
 std::vector<std::vector<double>>
 gdr::GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector<double> &timeStamps) {
+
     std::ifstream in(pathToGroundTruth);
     int numOfEmptyLines = 3;
     int numbersInLine = 8;
@@ -232,10 +239,12 @@ gdr::GTT::getGroundTruth(const std::string &pathToGroundTruth, const std::vector
         resultingTruth.push_back(prevCoordinates);
     }
     assert(resultingTruth.size() == timeStamps.size());
+
     return resultingTruth;
 }
 
 int gdr::GTT::writeGroundTruth(const std::string &pathOut, const std::vector<std::vector<double>> &timeCoordinates) {
+
     std::ofstream out(pathOut);
     int skipN = 3;
     for (int i = 0; i < skipN; ++i) {
@@ -255,28 +264,29 @@ int gdr::GTT::writeGroundTruth(const std::string &pathOut, const std::vector<std
 
 int gdr::GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
                                                  const std::vector<std::vector<double>> &timeCoordinates) {
+
     std::ofstream out(pathOut);
     int skipN = 3;
     for (int i = 0; i < skipN; ++i) {
         out << "#\n";
     }
 
-    MatrixX zeroRotationMatrix;
-    MatrixX zeroTranslation = getSomeMatrix(3, 1);
+    Eigen::Matrix3d zeroRotationMatrix;
+    Eigen::Vector3d zeroTranslation;
 
     for (int index = 0; index < timeCoordinates.size(); ++index) {
         auto &e = timeCoordinates[index];
 
         out.precision(std::numeric_limits<double>::max_digits10);
         out << std::setw(2 * spaceIO) << e[0];
-        MatrixX currentTranslation = getSomeMatrix(3, 1);
+        Eigen::Vector3d currentTranslation;
         std::vector<double> vectorData = {e[4], e[5], e[6], e[7]};
         Eigen::Quaterniond qd(vectorData.data());
         Eigen::Matrix3d currentRotationMatrix = qd.toRotationMatrix();
 
-        currentTranslation.col(0)[0] = e[1];
-        currentTranslation.col(0)[1] = e[2];
-        currentTranslation.col(0)[2] = e[3];
+        currentTranslation[0] = e[1];
+        currentTranslation[1] = e[2];
+        currentTranslation[2] = e[3];
 
         if (index == 0) {
             zeroRotationMatrix = currentRotationMatrix;
@@ -294,7 +304,7 @@ int gdr::GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
         out << std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
             << std::setw(2 * spaceIO) << qRelatived.z() << std::setw(2 * spaceIO) << qRelatived.w() << std::endl;
     }
-    return 1;
+    return 0;
 }
 
 void gdr::GTT::writeInfo(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
@@ -310,6 +320,7 @@ void gdr::GTT::writeInfo(const std::vector<std::string> &rgb, const std::string 
 void
 gdr::GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut, const std::set<int> &indicesSet,
                          const std::string &NewName = "subset") {
+
     std::string pathNewOut = pathOut + "/" + NewName;
     std::string groundtruth = pathToDataset + "/groundtruth.txt";
     std::string rgb = pathToDataset + "/rgb";
@@ -329,6 +340,7 @@ std::vector<std::vector<double>> gdr::GTT::extractTimeAndTransformation(const st
 
     int lineSize = 8;
     std::vector<std::vector<double>> timeAndTransformation;
+
     if (in) {
         std::string s;
         for (int i = 0; i < 3; ++i) {
@@ -357,6 +369,7 @@ std::vector<std::vector<double>> gdr::GTT::extractTimeAndTransformation(const st
 }
 
 int gdr::GTT::extractAllRelativeTransformationPairwise(const std::string &in, const std::string &pathOut) {
+
     std::vector<std::vector<double>> timeAndAbsolutePoses = extractTimeAndTransformation(in);
     std::ofstream out(pathOut);
 
@@ -370,6 +383,7 @@ int gdr::GTT::extractAllRelativeTransformationPairwise(const std::string &in, co
         }
         out << std::endl;
     }
+
     for (int index = 0; index < timeAndAbsolutePoses.size(); ++index) {
         std::vector<double> &currentPose = timeAndAbsolutePoses[index];
         std::vector<double> rotationFrom = {currentPose[4], currentPose[5], currentPose[6], currentPose[7]};

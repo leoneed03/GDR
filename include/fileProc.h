@@ -25,8 +25,6 @@ namespace gdr {
 
     std::vector<std::vector<std::vector<double>>> getMeasurements(const std::string &truePairwiseTransformation);
 
-    std::vector<std::pair<double, double>> getErrorMeasurements(const std::string &truePairwiseTransformation,
-                                                                const std::string &estimatedPairwiseTransformations);
 }
 
 #endif

@@ -6,6 +6,7 @@
 #include "VertexCG.h"
 
 void gdr::VertexCG::setRotation(const Eigen::Matrix3d &rotation) {
+
     assert(rotation.rows() == 3 && rotation.cols() == 3);
     absoluteRotationTranslation.block<3, 3>(0, 0) = rotation;
     assert(abs(rotation.col(3)[3] - 1) < std::numeric_limits<double>::epsilon());
@@ -28,6 +29,7 @@ gdr::VertexCG::VertexCG(int newIndex,
                                                        depths(newDepths),
                                                        pathToRGBimage(newPathRGB),
                                                        pathToDimage(newPathD) {
+
     int transformationMatrixSize = 4;
     absoluteRotationTranslation = getSomeMatrix(transformationMatrixSize, transformationMatrixSize);
     for (int i = 0; i < transformationMatrixSize; ++i) {

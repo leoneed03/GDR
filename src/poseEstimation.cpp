@@ -15,11 +15,13 @@ gdr::errorStats::errorStats(double mse, double msd) : meanError(mse), standartDe
 
 std::pair<gdr::errorStats, gdr::errorStats> gdr::getErrorStatsTranslationRotation(
         const std::vector<std::map<int, std::pair<double, double>>> &errorRelativePosesTranslationRotation) {
+
     double sumT = 0;
     double sumR = 0;
     double sumTsquared = 0;
     double sumRsquared = 0;
     int numberMeasurements = 0;
+
     for (int i = 0; i < errorRelativePosesTranslationRotation.size(); ++i) {
         for (const auto &errorTranslationRotationEntry: errorRelativePosesTranslationRotation[i]) {
             const auto &errorTR = errorTranslationRotationEntry.second;
@@ -46,6 +48,7 @@ std::pair<gdr::errorStats, gdr::errorStats> gdr::getErrorStatsTranslationRotatio
 
 std::pair<gdr::errorStats, gdr::errorStats> gdr::getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
         const std::string &pathToGroundTruth, const std::string &estimatedPairWise) {
+
     std::string groundTruthPairWiseTransformations = "pairwiseTransformations.txt";
 
     gdr::GTT::extractAllRelativeTransformationPairwise(pathToGroundTruth, groundTruthPairWiseTransformations);
@@ -66,6 +69,7 @@ std::pair<gdr::errorStats, gdr::errorStats> gdr::getErrorStatsTranslationRotatio
 std::vector<std::map<int, std::pair<double, double>>>
 gdr::getErrorsTranslationRotation(const std::vector<std::vector<std::vector<double>>> &truePairWiseTransformations,
                                   const std::vector<std::vector<std::vector<double>>> &estimatedPairWiseTransformations) {
+
     int poseNumber = estimatedPairWiseTransformations.size();
     assert(estimatedPairWiseTransformations.size() == truePairWiseTransformations.size());
 
@@ -99,5 +103,6 @@ gdr::getErrorsTranslationRotation(const std::vector<std::vector<std::vector<doub
             tableOfErrorsTranslationRotation[i][j] = {errorTranslation, errorRotation};
         }
     }
+
     return tableOfErrorsTranslationRotation;
 }

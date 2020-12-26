@@ -6,5 +6,6 @@
 #include "util.h"
 
 gdr::MatrixX gdr::getSomeMatrix(int height, int width) {
+
     return MatrixX::Random(height, width);
 }

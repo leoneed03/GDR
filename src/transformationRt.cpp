@@ -10,6 +10,7 @@ gdr::transformationRtMatrix::transformationRtMatrix(const Eigen::Matrix4d &newIn
                                                     const VertexCG &newVertexTo)
         : innerTranformationRtMatrix(newInnerEssentialMatrix),
           vertexFrom(newVertexFrom), vertexTo(newVertexTo) {
+
     auto dim = newInnerEssentialMatrix.cols() - 1;
     R = newInnerEssentialMatrix.block(0, 0, dim, dim);
     t = newInnerEssentialMatrix.block(0, dim, dim, 1);
