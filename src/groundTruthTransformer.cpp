@@ -365,7 +365,6 @@ int gdr::GTT::extractAllRelativeTransformationPairwise(const std::string &in, co
         assert(pose.size() == 8);
 
         out << "VERTEX_SE3:QUAT " << index;
-//        out.precision(std::numeric_limits<double>::);
         for (int i = 1; i < pose.size(); ++i) {
             out << std::setw(spaceIO) << pose[i];
         }

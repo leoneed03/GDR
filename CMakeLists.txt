@@ -22,31 +22,24 @@ find_package(Boost COMPONENTS program_options timer filesystem serialization REQ
 include(ExternalProject)
 
 ExternalProject_Add(siftgpu
-    SOURCE_DIR "${PROJECT_SOURCE_DIR}/siftgpu"
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/siftgpu
     BUILD_IN_SOURCE 1
     BUILD_COMMAND $(MAKE)
     INSTALL_COMMAND ""
     )
 
-ExternalProject_Add(gtsam
-    SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam"
-#    BUILD_IN_SOURCE 1
-#    PATCH_COMMAND mkdir gbuild
-    BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild"
-    CONFIGURE_COMMAND cmake .. -DBUILD_SHARED_LIBS=0 -DGTSAM_USE_SYSTEM_EIGEN=1 -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild
-    INSTALL_COMMAND make install
-    )
+#ExternalProject_Add(gtsam
+#    SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam"
+#    BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild"
+#    CONFIGURE_COMMAND cmake .. -DBUILD_SHARED_LIBS=0 -DGTSAM_USE_SYSTEM_EIGEN=1 -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild
+#    INSTALL_COMMAND make install
+#    )
 
 if(${DEBUG_PRINT_PROGRESS})
   list(APPEND GDR_FLAGS "-DDEBUG_PRINT_PROGRESS")
 endif()
 
 set(SIFTGPU_LIBS ${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so)
-#
-#set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/eigenlocal/lib/libgtsam.a)
-#set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/eigenlocal/include)
-
-
 set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/lib/libgtsam.a)
 set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/include)
 
@@ -95,38 +88,33 @@ add_library(GDR_LIB SHARED
 
 add_dependencies(GDR_LIB
     siftgpu
-    gtsam
+#    gtsam
     )
 
 target_compile_definitions(GDR_LIB
     PUBLIC
     ${GDR_FLAGS}
     )
+
 target_link_libraries(GDR_LIB
     ${CUDA_LIBRARIES}
     ${SIFTGPU_LIBS}
     ${OpenCV_LIBS}
     ${GTSAM_LIBS}
-    #        ${Boost_FILESYSTEM_LIBRARIES}
     ${Boost_LIBRARIES}
     ${METIS_LIBRARIES}
-    #    ${GTSAM_ABS_LIBS}
-
     ${TBB_LIBRARIES}
     )
 
 target_include_directories(GDR_LIB
     PUBLIC
-#    ${GTSAM_INCLUDE}
-    ${GTSAM_INCLUDE_DIRS}
+#    ${GTSAM_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/include
     ${EIGEN3_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
     PRIVATE
     ${OpenGL_INCLUDE_DIR}
     )
-
-link_directories(${GTSAM_LIBS})
 
 enable_testing()
 add_subdirectory(test)

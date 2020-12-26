@@ -25,9 +25,9 @@ TEST(testRelativePosesComputation, getPairwiseTransformations) {
     std::pair<gdr::errorStats, gdr::errorStats> errorsStatsTR = gdr::getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
             pathToGroundTruth, estimatedPairWise);
     std::cout << "=====================================" << std::endl;
-    std::cout << "translation stats: " << errorsStatsTR.first.meanError << " with standart deviation "
+    std::cout << "translation stats: " << errorsStatsTR.first.meanError << " with standard deviation "
               << errorsStatsTR.first.standartDeviation << std::endl;
-    std::cout << "rotation    stats: " << errorsStatsTR.second.meanError << " with standart deviation "
+    std::cout << "rotation    stats: " << errorsStatsTR.second.meanError << " with standard deviation "
               << errorsStatsTR.second.standartDeviation << std::endl;
 
     ASSERT_TRUE(errorsStatsTR.first.meanError < 0.2);
@@ -36,9 +36,6 @@ TEST(testRelativePosesComputation, getPairwiseTransformations) {
 
 int main(int argc, char *argv[]) {
 
-    std::string s = "hi.txt";
-    std::ofstream outp(s);
-    outp << "HELLP" << std::endl;
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

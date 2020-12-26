@@ -278,8 +278,7 @@ int gdr::CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutR
                 }
                 std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
                 std::string edgeId =
-                        "EDGE_SE3:QUAT " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " " +
-                        std::to_string(i) + " ";
+                        "EDGE_SE3:QUAT " + std::to_string(i) + " " + std::to_string(tranformationRtMatrices[i][j].vertexTo.index) + " ";
                 auto translationVector = tranformationRtMatrices[i][j].t;
                 std::string edgeWithTranslation = edgeId + " "
                                                   + std::to_string(translationVector.col(0)[0]) + " "
@@ -325,10 +324,8 @@ int gdr::CorrespondenceGraph::performRotationAveraging() {
 
 int gdr::CorrespondenceGraph::computeRelativePoses() {
 
-    std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> keysDescriptorsAll =
-            getKeypointsDescriptorsAllImages(
-                    siftModule.sift,
-                    pathToImageDirectoryRGB);
+    std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
+            keysDescriptorsAll = getKeypointsDescriptorsAllImages(siftModule.sift, pathToImageDirectoryRGB);
 
     verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
     for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
@@ -338,30 +335,8 @@ int gdr::CorrespondenceGraph::computeRelativePoses() {
         std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
         std::vector<float> descriptorsKnownDepth;
         std::vector<double> depths;
-
-        cv::Mat depthImageLow = cv::imread(imagesD[currentImage], cv::IMREAD_GRAYSCALE);
         cv::Mat depthImage = cv::imread(imagesD[currentImage], cv::IMREAD_ANYDEPTH);
-        cv::Mat depthImageS = cv::imread(imagesD[currentImage]);
-
-        std::ofstream myfile;
-        int mDepth1 = 0, mDepthLow = 0;
-
         PRINT_PROGRESS(depthImage.cols << " " << depthImage.rows);
-
-        cv::Mat imageDepth1(480, 640, CV_16UC1);
-        for (uint x = 0; x < depthImage.cols; ++x) {
-            for (uint y = 0; y < depthImage.rows; ++y) {
-                auto currentDepth = depthImage.ptr<ushort>(y)[x];
-                assert(currentDepth == depthImage.at<ushort>(y, x));
-                if (mDepth1 < currentDepth) {
-                    mDepth1 = currentDepth;
-                }
-                if (mDepthLow < depthImageLow.ptr<ushort>(y)[x]) {
-                    mDepthLow = currentDepth;
-                }
-                imageDepth1.at<ushort>(y, x) = 65535 - currentDepth;
-            }
-        }
         for (int i = 0; i < keypoints.size(); ++i) {
             int posInDescriptorVector = 128 * i;
             int currentKeypointDepth = depthImage.at<ushort>(keypoints[i].y, keypoints[i].x);
@@ -388,7 +363,6 @@ int gdr::CorrespondenceGraph::computeRelativePoses() {
 
     PRINT_PROGRESS("vertices written");
     matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());
-
 
     PRINT_PROGRESS("trying to find correspondences");
     findCorrespondences();
