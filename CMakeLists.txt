@@ -40,8 +40,8 @@ if(${DEBUG_PRINT_PROGRESS})
 endif()
 
 set(SIFTGPU_LIBS ${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so)
-set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/lib/libgtsam.a)
-set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/include)
+#set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/lib/libgtsam.a)
+#set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/include)
 
 
 set(GDR_HEADER_FILES
@@ -100,7 +100,7 @@ target_link_libraries(GDR_LIB
     ${CUDA_LIBRARIES}
     ${SIFTGPU_LIBS}
     ${OpenCV_LIBS}
-    ${GTSAM_LIBS}
+#    ${GTSAM_LIBS}
     ${Boost_LIBRARIES}
     ${METIS_LIBRARIES}
     ${TBB_LIBRARIES}
