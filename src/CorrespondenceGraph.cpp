@@ -88,36 +88,6 @@ namespace gdr {
         }
     }
 
-    void CorrespondenceGraph::showKeypointsOnDephtImage(int vertexFrom) {
-        auto &image = verticesOfCorrespondence[vertexFrom];
-        cv::Mat depthImage = cv::imread(image.pathToDimage, cv::IMREAD_ANYDEPTH);
-        PRINT_PROGRESS(depthImage.cols << ' ' << depthImage.rows);
-
-        cv::Mat imageDepth1(480, 640, CV_16UC1);
-        for (uint x = 0; x < depthImage.cols; ++x) {
-            for (uint y = 0; y < depthImage.rows; ++y) {
-                auto currentDepth = depthImage.ptr<ushort>(y)[x];
-                assert(currentDepth == depthImage.at<ushort>(y, x));
-                imageDepth1.at<ushort>(y, x) = currentDepth;
-            }
-        }
-
-        for (int i = 0; i < image.keypoints.size(); ++i) {
-            int x = image.keypoints[i].x;
-            int y = image.keypoints[i].y;
-            PRINT_PROGRESS(((int) (image.depths[i] * 5000)) << " vs " << depthImage.at<ushort>(y, x));
-            PRINT_PROGRESS(image.depths[i] << " vs " << depthImage.at<ushort>(y, x) * 1.0 / 5000);
-            assert(abs((image.depths[i]) - depthImage.at<ushort>(y, x) / 5000.0) <
-                   std::numeric_limits<float>::epsilon());
-            imageDepth1.at<ushort>(y, x) = std::numeric_limits<ushort>::max();
-        }
-        cv::imshow("Made Depths ?", imageDepth1);
-        cv::waitKey(0);
-        cv::imshow("Known Depths high", depthImage);
-        cv::waitKey(0);
-        cv::destroyAllWindows();
-    }
-
     Eigen::Matrix4d
     CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList,
                                                             bool &success, double inlierCoeff) {
@@ -416,9 +386,8 @@ namespace gdr {
                     Eigen::Matrix4d &newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
                     Eigen::Vector3d newAbsoluteT = predR * relT + predT;
 
-                    for (int counter = 0; counter < 3; ++counter) {
-                        newAbsoluteRt.col(3)[counter] = newAbsoluteT.col(0)[counter];
-                    }
+                    newAbsoluteRt.block(0,3,3,1) = newAbsoluteT;
+
                 }
             }
         }

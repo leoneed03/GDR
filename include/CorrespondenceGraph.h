@@ -63,9 +63,6 @@ namespace gdr {
         getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, bool &success,
                                            double inlierCoeff = 0.6);
 
-        void showKeypointsOnDephtImage(int vertexFrom);
-
-
         void printConnectionsRelative(std::ostream &os, int space = 10);
 
         int printAbsolutePoses(std::ostream &os, int space = 10);
