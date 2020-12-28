@@ -5,7 +5,6 @@
 
 #include "fileProc.h"
 #include "printer.h"
-#include "errors.h"
 
 #include <algorithm>
 #include <fstream>
