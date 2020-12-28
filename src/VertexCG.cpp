@@ -5,7 +5,6 @@
 
 #include "VertexCG.h"
 
-
 namespace gdr {
 
     void VertexCG::setRotation(const Eigen::Matrix3d &rotation) {

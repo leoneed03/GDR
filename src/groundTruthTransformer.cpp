@@ -8,7 +8,6 @@
 
 #include "groundTruthTransformer.h"
 #include "printer.h"
-#include "errors.h"
 
 #include <vector>
 #include <limits>
