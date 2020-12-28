@@ -30,8 +30,8 @@ TEST(testRelativePosesComputation, getPairwiseTransformations) {
               << errorsStatsTR.second.standartDeviation << std::endl;
 
 
-    ASSERT_LE(errorsStatsTR.first.meanError, 0.2);
-    ASSERT_LE(errorsStatsTR.second.meanError, 0.01);
+    ASSERT_LE(errorsStatsTR.first.meanError, 0.15);
+    ASSERT_LE(errorsStatsTR.second.meanError, 0.25);
 }
 
 int main(int argc, char *argv[]) {

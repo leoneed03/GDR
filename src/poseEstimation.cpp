@@ -101,7 +101,7 @@ namespace gdr {
                 Eigen::Quaterniond trueQuaternion(trueQuatVector.data());
                 Eigen::Vector3d trueTranslation(trueT.data());
 
-                double errorRotation = abs(1 - (trueQuaternion.inverse() * estimatedQuaternion).norm());
+                double errorRotation = trueQuaternion.normalized().angularDistance(estimatedQuaternion.normalized());
                 double errorTranslation = (trueTranslation - estimatedTranslation).norm();
 
                 tableOfErrorsTranslationRotation[i][j] = {errorTranslation, errorRotation};
