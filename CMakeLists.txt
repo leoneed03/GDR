@@ -56,11 +56,8 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/groundTruthTransformer.h
     ${PROJECT_SOURCE_DIR}/include/rotationAveraging.h
     ${PROJECT_SOURCE_DIR}/include/quaternions.h
-    ${PROJECT_SOURCE_DIR}/include/util.h
-    ${PROJECT_SOURCE_DIR}/include/ICP.h
     ${PROJECT_SOURCE_DIR}/include/umeyama.h
     ${PROJECT_SOURCE_DIR}/include/poseEstimation.h
-    ${PROJECT_SOURCE_DIR}/include/pseudonames.h
     ${PROJECT_SOURCE_DIR}/include/printer.h
     ${PROJECT_SOURCE_DIR}/include/errors.h)
 
@@ -75,8 +72,6 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/groundTruthTransformer.cpp
     ${PROJECT_SOURCE_DIR}/src/rotationAveraging.cpp
     ${PROJECT_SOURCE_DIR}/src/quaternions.cpp
-    ${PROJECT_SOURCE_DIR}/src/util.cpp
-    ${PROJECT_SOURCE_DIR}/src/ICP.cpp
     ${PROJECT_SOURCE_DIR}/src/umeyama.cpp
     ${PROJECT_SOURCE_DIR}/src/poseEstimation.cpp)
 
