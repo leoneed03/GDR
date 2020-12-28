@@ -29,8 +29,9 @@ TEST(testRelativePosesComputation, getPairwiseTransformations) {
     std::cout << "rotation    stats: " << errorsStatsTR.second.meanError << " with standard deviation "
               << errorsStatsTR.second.standartDeviation << std::endl;
 
-    ASSERT_TRUE(errorsStatsTR.first.meanError < 0.2);
-    ASSERT_TRUE(errorsStatsTR.second.meanError < 0.01);
+
+    ASSERT_LE(errorsStatsTR.first.meanError, 0.2);
+    ASSERT_LE(errorsStatsTR.second.meanError, 0.01);
 }
 
 int main(int argc, char *argv[]) {

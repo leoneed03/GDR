@@ -23,9 +23,6 @@
 
 namespace gdr {
 
-    typedef typename Eigen::internal::traits<Eigen::MatrixXd>::Scalar Scalar;
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
-
     struct VertexCG {
 
         int index;

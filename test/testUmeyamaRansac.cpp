@@ -6,16 +6,9 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
+#include <random>
 
 #include "CorrespondenceGraph.h"
-
-bool testMSEisLessThanEpsilon(double mse) {
-    bool MSEisLessThanEpsilon = mse < 3 * std::numeric_limits<gdr::Scalar>::epsilon();
-    if (!MSEisLessThanEpsilon) {
-        std::cout << "error meanError: " << mse << std::endl;
-    }
-    return MSEisLessThanEpsilon;
-}
 
 TEST(testUmeyamaRansac, allInliers) {
 
@@ -30,26 +23,30 @@ TEST(testUmeyamaRansac, allInliers) {
     Eigen::Matrix4d transformationMatrix;
     transformationMatrix.setIdentity();
     transformationMatrix.block(0, 0, 3, 3) = rotationMatrix;
+
     std::vector<double> translation = {3, 0.5, -0.5};
     for (int i = 0; i < 3; ++i) {
         transformationMatrix.col(3)[i] = translation[i];
     }
 
-    gdr::MatrixX src = gdr::MatrixX::Random(4, numOfPoints);
-    src.row(3) = Eigen::Matrix<gdr::Scalar, 1, Eigen::Dynamic>::Constant(numOfPoints, gdr::Scalar(1));
+    Eigen::Matrix4Xd src(4, numOfPoints);
+    src.setOnes();
+    src.block(0, 0, 3, src.cols()).setRandom();
 
-    gdr::MatrixX dst = transformationMatrix * src;
+    Eigen::Matrix4Xd dst = transformationMatrix * src;
 
+    std::cout << src << std::endl;
+    bool estimationSuccess = true;
+    double maxErrorTreshold = 0.05;
     Eigen::Matrix4d umeyamaTransformation = gdr::getTransformationMatrixUmeyamaLoRANSAC(
-            src, dst, 50, src.cols(), 0.9
+            src, dst, 50, src.cols(), 0.9, estimationSuccess, maxErrorTreshold
     );
 
-    const gdr::Scalar error = (dst - umeyamaTransformation * src).squaredNorm();
+    auto error = (dst - umeyamaTransformation * src).squaredNorm();
 
     auto mse = 1.0 * error / src.cols();
-    bool MSEisLessThanEpsilon = testMSEisLessThanEpsilon(mse);
 
-    ASSERT_TRUE(MSEisLessThanEpsilon);
+    ASSERT_LE(mse, 3 * std::numeric_limits<double>::epsilon());
 }
 
 
@@ -73,26 +70,36 @@ TEST(testUmeyamaRansac, Inliers90percent) {
         transformationMatrix.col(3)[i] = translation[i];
     }
 
-    gdr::MatrixX src = gdr::MatrixX::Random(4, numOfPoints);
-    src.row(3) = Eigen::Matrix<gdr::Scalar, 1, Eigen::Dynamic>::Constant(numOfPoints, gdr::Scalar(1));
+    Eigen::Matrix4Xd src(4, numOfPoints);
+    src.setOnes();
+    src.block(0, 0, 3, src.cols()).setRandom();
 
-    gdr::MatrixX outliers = gdr::MatrixX::Random(4, numOutliers);
-    outliers.row(3) = Eigen::Matrix<gdr::Scalar, 1, Eigen::Dynamic>::Constant(numOutliers, gdr::Scalar(1));
+    Eigen::Matrix4Xd outliers = Eigen::Matrix4Xd::Random(4, numOutliers);
+    outliers.setOnes();
+    outliers.block(0, 0, 3, outliers.cols()).setRandom();
 
 
-    srand((unsigned int) time(0));
+    std::random_device randomDevice;
+    std::mt19937 randomNumberGenerator(randomDevice());
+    std::uniform_int_distribution<> distrib(0, numOfPoints - 1);
+
     for (int i = 0; i < numOutliers; ++i) {
-        int pos = rand() % numOfPoints;
+        int pos = distrib(randomNumberGenerator);
         src.col(pos) = outliers.col(i);
     }
 
-    gdr::MatrixX dst = transformationMatrix * src;
+    Eigen::Matrix4Xd dst = transformationMatrix * src;
+
+    bool estimationSuccess = true;
+    double maxErrorTreshold = 0.05;
 
     Eigen::Matrix4d umeyamaTransformation = gdr::getTransformationMatrixUmeyamaLoRANSAC(
-            src, dst, 50, src.cols(), 0.8
+            src, dst, 50, src.cols(), 0.8, estimationSuccess, maxErrorTreshold
     );
 
-    gdr::MatrixX afterTransformation = umeyamaTransformation * src;
+    ASSERT_TRUE(estimationSuccess);
+
+    Eigen::Matrix4Xd afterTransformation = umeyamaTransformation * src;
 
     std::vector<double> errors;
     for (int i = 0; i < afterTransformation.cols(); ++i) {
@@ -106,9 +113,8 @@ TEST(testUmeyamaRansac, Inliers90percent) {
         mse += e;
     }
     mse /= errors.size();
-    bool MSEisLessThanEpsilon = testMSEisLessThanEpsilon(mse);
 
-    ASSERT_TRUE(MSEisLessThanEpsilon);
+    ASSERT_LE(mse, 3 * std::numeric_limits<double>::epsilon());
 }
 
 int main(int argc, char *argv[]) {

@@ -13,7 +13,6 @@
 
 #include "fileProc.h"
 #include "quaternions.h"
-#include "pseudonames.h"
 
 #include <Eigen/Eigen>
 #include <Eigen/Core>

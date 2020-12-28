@@ -6,7 +6,7 @@
 #ifndef GDR_QUATERNIONS_H
 #define GDR_QUATERNIONS_H
 
-#include "util.h"
+#include <Eigen/Eigen>
 
 namespace gdr {
 

@@ -5,7 +5,11 @@
 
 #include "rotationAveraging.h"
 
-int gdr::rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
 
-    return 0;
+namespace gdr {
+
+    int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
+
+        return 0;
+    }
 }

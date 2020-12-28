@@ -28,14 +28,9 @@ TEST(testCorrespondenceGraph, relativePoseFileCreated) {
     correspondenceGraph.computeRelativePoses();
     int numberOfLines = countNumberOfLines(correspondenceGraph.relativePose);
     int defaultNumberOfLines = 10;
-    bool numberOfLinesBiggerThanNumberOfVertices = numberOfLines >= correspondenceGraph.verticesOfCorrespondence.size();
-    bool numberOfLinesBiggerThanDefault = numberOfLines >= defaultNumberOfLines;
-    bool numberOfLinesOk = numberOfLinesBiggerThanNumberOfVertices && numberOfLinesBiggerThanDefault;
-    if (!numberOfLinesOk) {
-        std::cout << "number of lines in file with relative poses" << numberOfLines << std::endl;
-    }
-    ASSERT_TRUE(numberOfLinesBiggerThanNumberOfVertices);
-    ASSERT_TRUE(numberOfLinesBiggerThanDefault);
+
+    ASSERT_GE(numberOfLines, correspondenceGraph.verticesOfCorrespondence.size());
+    ASSERT_GE(numberOfLines, defaultNumberOfLines);
 }
 
 int main(int argc, char *argv[]) {

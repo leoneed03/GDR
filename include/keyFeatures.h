@@ -6,8 +6,9 @@
 #ifndef GDR_FEATURES_H
 #define GDR_FEATURES_H
 
-#include <vector>
 #include "SiftGPU.h"
+
+#include <vector>
 #include <string>
 #include <iostream>
 

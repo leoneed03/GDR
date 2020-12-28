@@ -3,126 +3,137 @@
 //
 
 #include <iostream>
+#include <algorithm>
+#include <random>
 
 #include "umeyama.h"
 #include "printer.h"
 
-Eigen::Matrix4d gdr::getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints,
-                                                            const MatrixX &destinationPoints,
-                                                            int numIterationsRansac,
-                                                            int numOfPoints,
-                                                            double inlierCoeff) {
-    int dim = 3;
-    int top = 10;
-    if (inlierCoeff > 1) {
-        inlierCoeff = 1;
-    }
+namespace gdr {
 
-    if (inlierCoeff < 0) {
-        inlierCoeff = 0;
-    }
-    assert(numOfPoints == toBeTransormedPoints.cols());
-    assert(toBeTransormedPoints.cols() == destinationPoints.cols());
+    std::vector<std::pair<double, int>> getPartionedByNthElement(const Eigen::Matrix4Xd &toBeTransormedPoints,
+                                                                 const Eigen::Matrix4Xd &destinationPoints,
+                                                                 const Eigen::Matrix4d &cR_t_umeyama,
+                                                                 int numberOfSeparatorElement) {
 
-    int numInliers = (int) (inlierCoeff * numOfPoints);
+        int numInliers = numberOfSeparatorElement + 1;
 
-    std::vector<int> pointsPositions;
-    pointsPositions.reserve(numOfPoints);
-    for (int i = 0; i < numOfPoints; ++i) {
-        pointsPositions.push_back(i);
-    }
-    Eigen::Matrix4d bestMath;
+        auto pointsAfterTransformation = cR_t_umeyama * toBeTransormedPoints;
 
-    double minError = 1e6;
-    int attempt = -1;
-    double mError = -1;
-    std::vector<int> inlierIndices;
-    srand((unsigned int) time(0));
-
-    Eigen::Matrix4d cR_t_umeyama_3_points_cand;
-    std::vector<int> triple;
-
-    for (int i = 0; i < numIterationsRansac; ++i) {
-        std::vector<int> p(dim, 0);
-        MatrixX toBeTransformed3Points = MatrixX(dim + 1, dim);
-        MatrixX dest3Points = MatrixX(dim + 1, dim);
-        p[0] = rand() % numOfPoints;
-        p[1] = rand() % numOfPoints;
-        p[2] = rand() % numOfPoints;
-
-        while (p[0] == p[1]) {
-            p[1] = rand() % numOfPoints;
+        std::vector<std::pair<double, int>> euclideanErrors(toBeTransormedPoints.cols());
+        for (int pointCounter = 0; pointCounter < euclideanErrors.size(); ++pointCounter) {
+            double currentError = (pointsAfterTransformation.col(pointCounter) -
+                                   destinationPoints.col(pointCounter)).norm();
+            euclideanErrors[pointCounter] = {
+                    currentError,
+                    pointCounter};
         }
-        while (p[0] == p[2] || p[1] == p[2]) {
-            p[2] = rand() % numOfPoints;
+
+        int lastInlierPos = std::max(numInliers - 1, 0);
+        std::nth_element(euclideanErrors.begin(), euclideanErrors.begin() + lastInlierPos, euclideanErrors.end());
+
+        return euclideanErrors;
+    }
+
+    Eigen::Matrix4d getTransformationMatrixUmeyamaLoRANSAC(const Eigen::Matrix4Xd &toBeTransormedPoints,
+                                                           const Eigen::Matrix4Xd &destinationPoints,
+                                                           int numIterationsRansac,
+                                                           int numOfPoints,
+                                                           double inlierCoeff,
+                                                           bool &estimationSuccess,
+                                                           double maxErrorCorrespondence) {
+
+        estimationSuccess = true;
+        int dim = 3;
+        if (inlierCoeff > 1) {
+            inlierCoeff = 1;
         }
-        for (int j = 0; j < p.size(); ++j) {
-            toBeTransformed3Points.col(j) = toBeTransormedPoints.col(p[j]);
-            dest3Points.col(j) = destinationPoints.col(p[j]);
-            for (int assertCounter = 0; assertCounter < dim; ++assertCounter) {
-                assert(toBeTransormedPoints.col(p[j])[assertCounter] == toBeTransformed3Points.col(j)[assertCounter]);
-                assert(destinationPoints.col(p[j])[assertCounter] == dest3Points.col(j)[assertCounter]);
+
+        if (inlierCoeff < 0) {
+            inlierCoeff = 0;
+        }
+        assert(numOfPoints == toBeTransormedPoints.cols());
+        assert(toBeTransormedPoints.cols() == destinationPoints.cols());
+
+        int numInliers = (int) (inlierCoeff * numOfPoints);
+        int lastInlierPos = std::max(numInliers - 1, 0);
+
+        Eigen::Matrix4d optimal_cR_t_umeyama_transformation;
+        optimal_cR_t_umeyama_transformation.setIdentity();
+
+        double minError = std::numeric_limits<double>::max();
+        int attempt = -1;
+        double mError = -1;
+        std::vector<int> inlierIndices;
+
+
+        std::random_device randomDevice;
+        std::mt19937 randomNumberGenerator(randomDevice());
+        std::uniform_int_distribution<> distrib(0, numOfPoints - 1);
+
+
+        for (int i = 0; i < numIterationsRansac; ++i) {
+            std::vector<int> p(dim, 0);
+            Eigen::Matrix4Xd toBeTransformed3Points = Eigen::Matrix4Xd(dim + 1, dim);
+            Eigen::Matrix4Xd dest3Points = Eigen::Matrix4Xd(dim + 1, dim);
+            p[0] = distrib(randomNumberGenerator);
+            p[1] = distrib(randomNumberGenerator);
+            p[2] = distrib(randomNumberGenerator);
+
+            while (p[0] == p[1]) {
+                p[1] = distrib(randomNumberGenerator);
+            }
+            while (p[0] == p[2] || p[1] == p[2]) {
+                p[2] = distrib(randomNumberGenerator);
+            }
+            for (int j = 0; j < p.size(); ++j) {
+                toBeTransformed3Points.col(j) = toBeTransormedPoints.col(p[j]);
+                dest3Points.col(j) = destinationPoints.col(p[j]);
+            }
+
+            Eigen::Matrix4d cR_t_umeyama_3_points = umeyama(toBeTransformed3Points.block(0, 0, dim, dim),
+                                                            dest3Points.block(0, 0, dim, dim));
+
+            std::vector<std::pair<double, int>> euclideanErrors = getPartionedByNthElement(toBeTransormedPoints,
+                                                                                           destinationPoints,
+                                                                                           cR_t_umeyama_3_points,
+                                                                                           lastInlierPos);
+            auto errorAndLastInlierNumber = euclideanErrors[lastInlierPos];
+
+            Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
+            Eigen::Matrix4Xd destInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
+            for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
+                int index = euclideanErrors[currentIndex].second;
+                toBeTransformedInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
+                destInlierPoints.col(currentIndex) = destinationPoints.col(index);
+            }
+
+            double normError = errorAndLastInlierNumber.first;
+
+            if (normError < minError) {
+                PRINT_PROGRESS("att " << i << " with error " << normError
+                                      << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers);
+                mError = normError;
+                optimal_cR_t_umeyama_transformation = umeyama(
+                        toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
+                        destInlierPoints.block(0, 0, dim, numInliers));
+                attempt = i;
+                minError = normError;
             }
         }
+        PRINT_PROGRESS("cand \n" << optimal_cR_t_umeyama_transformation << "RANSAC found on attempt " << attempt
+                                 << " error on last \'inlier\' " << mError);
 
-        Eigen::Matrix4d cR_t_umeyama_3_points = umeyama(toBeTransformed3Points.block(0, 0, dim, dim),
-                                                        dest3Points.block(0, 0, dim, dim));
-        std::sort(pointsPositions.begin(), pointsPositions.end(),
-                  [toBeTransormedPoints, destinationPoints, dim, cR_t_umeyama_3_points](const auto &lhs,
-                                                                                        const auto &rhs) {
-                      auto &toBeTransformedLeft = toBeTransormedPoints.col(lhs);
-                      auto &toBeTransformedRight = toBeTransormedPoints.col(rhs);
-                      auto &destinationLeft = destinationPoints.col(lhs);
-                      auto &destinationRight = destinationPoints.col(rhs);
-                      double dist1 = 0;
-                      double dist2 = 0;
-                      auto &destLeft = cR_t_umeyama_3_points * toBeTransformedLeft;
-                      auto &destRight = cR_t_umeyama_3_points * toBeTransformedRight;
-                      for (int pp = 0; pp < dim; ++pp) {
-                          dist1 += pow(destLeft[pp] - destinationLeft[pp], 2);
-                          dist2 += pow(destRight[pp] - destinationRight[pp], 2);
-                      }
-                      return dist1 < dist2;
-                  });
+        std::vector<std::pair<double, int>> totalEuclideanErrors = getPartionedByNthElement(toBeTransormedPoints,
+                                                                                            destinationPoints,
+                                                                                            optimal_cR_t_umeyama_transformation,
+                                                                                            lastInlierPos);
+        auto errorAndLastInlierNumber = totalEuclideanErrors[lastInlierPos];
 
-        MatrixX toBeTransformedInlierPoints = MatrixX(dim + 1, numInliers);
-        MatrixX destInlierPoints = MatrixX(dim + 1, numInliers);
-        for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
-            int index = pointsPositions[currentIndex];
-            toBeTransformedInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
-            destInlierPoints.col(currentIndex) = destinationPoints.col(index);
+        estimationSuccess = errorAndLastInlierNumber.first < maxErrorCorrespondence;
 
-            assert(toBeTransformedInlierPoints.col(currentIndex)[1] == toBeTransormedPoints.col(index)[1]);
-            assert(destInlierPoints.col(currentIndex)[2] == destinationPoints.col(index)[2]);
-        }
-
-        const auto &toBeTransformedColumn = toBeTransformedInlierPoints.col(std::max(numInliers - 1, 0));
-        const auto &destColumn = destInlierPoints.col(std::max(numInliers - 1, 0));
-        auto dest = cR_t_umeyama_3_points * toBeTransformedColumn;
-        double normError = 0;
-        for (int pp = 0; pp < dim; ++pp) {
-            normError += pow(dest[pp] - destColumn[pp], 2);
-        }
-        Eigen::Matrix4d cR_t_umeyama_inlier_points = cR_t_umeyama_3_points;
-        if (normError < minError) {
-            cR_t_umeyama_inlier_points = umeyama(toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
-                                                 destInlierPoints.block(0, 0, dim, numInliers));
-        }
-
-        PRINT_PROGRESS("att " << std::setw(6) << i << " with error " << normError
-                              << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers);
-        if (normError < minError) {
-            cR_t_umeyama_3_points_cand = cR_t_umeyama_3_points;
-            mError = normError;
-            bestMath = cR_t_umeyama_inlier_points;
-            attempt = i;
-            inlierIndices = pointsPositions;
-            minError = normError;
-            triple = p;
-        }
+        return optimal_cR_t_umeyama_transformation;
     }
-    PRINT_PROGRESS("cand \n" << cR_t_umeyama_3_points_cand << "RANSAC found on attempt " << attempt
-                             << " error on last \'inlier\' " << mError);
-
-    return bestMath;
 }
+
+

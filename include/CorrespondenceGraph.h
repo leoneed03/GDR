@@ -8,7 +8,6 @@
 
 #include <queue>
 
-#include "util.h"
 #include "VertexCG.h"
 #include "transformationRt.h"
 #include "cameraRGBD.h"

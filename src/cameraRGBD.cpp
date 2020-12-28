@@ -5,4 +5,7 @@
 
 #include "cameraRGBD.h"
 
-gdr::CameraRGBD::CameraRGBD(float fx1, float cx1, float fy1, float cy1) : fx(fx1), fy(fy1), cx(cx1), cy(cy1) {}
+namespace gdr {
+
+    CameraRGBD::CameraRGBD(float fx1, float cx1, float fy1, float cy1) : fx(fx1), fy(fy1), cx(cx1), cy(cy1) {}
+}

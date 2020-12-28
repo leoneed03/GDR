@@ -12,13 +12,20 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
-#include "pseudonames.h"
-
 namespace gdr {
 
+    std::vector<std::pair<double, int>> getPartionedByNthElement(const Eigen::Matrix4Xd &toBeTransormedPoints,
+                                                                 const Eigen::Matrix4Xd &destinationPoints,
+                                                                 const Eigen::Matrix4d &cR_t,
+                                                                 int numberOfSeparatorElement);
+
     Eigen::Matrix4d
-    getTransformationMatrixUmeyamaLoRANSAC(const MatrixX &toBeTransormedPoints, const MatrixX &destinationPoints,
+    getTransformationMatrixUmeyamaLoRANSAC(const Eigen::Matrix4Xd &toBeTransormedPoints,
+                                           const Eigen::Matrix4Xd &destinationPoints,
                                            const int numIterationsRansac,
-                                           const int numOfElements, double inlierCoeff);
+                                           const int numOfElements, double inlierCoeff,
+                                           bool &estimationSuccess,
+                                           double maxErrorCorrespondence);
 }
+
 #endif

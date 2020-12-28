@@ -6,21 +6,25 @@
 #include "siftModule.h"
 #include "printer.h"
 
-void gdr::SiftModule::siftParseParams(std::vector<char *> &siftGpuArgs) {
-    sift.ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
-}
 
-gdr::SiftModule::SiftModule() {
-
-    std::string siftGpuFarg = std::to_string(SIFTGPU_ARG_V);
-    std::vector<std::string> siftGpuArgsStrings = {"-cuda", "-fo", "-1", "-v", siftGpuFarg};
-    std::vector<char *> siftGpuArgs;
-
-    for (auto &stringArg: siftGpuArgsStrings) {
-        siftGpuArgs.push_back(stringArg.data());
+namespace gdr {
+    
+    void SiftModule::siftParseParams(std::vector<char *> &siftGpuArgs) {
+        sift.ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
     }
-    matcher = std::unique_ptr<SiftMatchGPU>(new SiftMatchGPU(maxSift));
-    PRINT_PROGRESS("Parse params for sift default");
-    siftParseParams(siftGpuArgs);
-    matcher->VerifyContextGL();
+
+    SiftModule::SiftModule() {
+
+        std::string siftGpuFarg = std::to_string(SIFTGPU_ARG_V);
+        std::vector<std::string> siftGpuArgsStrings = {"-cuda", "-fo", "-1", "-v", siftGpuFarg};
+        std::vector<char *> siftGpuArgs;
+
+        for (auto &stringArg: siftGpuArgsStrings) {
+            siftGpuArgs.push_back(stringArg.data());
+        }
+        matcher = std::unique_ptr<SiftMatchGPU>(new SiftMatchGPU(maxSift));
+        PRINT_PROGRESS("Parse params for sift default");
+        siftParseParams(siftGpuArgs);
+        matcher->VerifyContextGL();
+    }
 }

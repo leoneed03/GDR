@@ -21,8 +21,6 @@ namespace gdr {
 
     std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &pathToRotationsFile);
 
-    std::vector<std::vector<double>> parseAbsoluteRotationsFile(const std::string &pathToRotationsFile);
-
     std::vector<std::vector<std::vector<double>>> getMeasurements(const std::string &truePairwiseTransformation);
 
 }
