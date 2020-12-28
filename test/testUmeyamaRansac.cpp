@@ -35,7 +35,6 @@ TEST(testUmeyamaRansac, allInliers) {
 
     Eigen::Matrix4Xd dst = transformationMatrix * src;
 
-    std::cout << src << std::endl;
     bool estimationSuccess = true;
     double maxErrorTreshold = 0.05;
     Eigen::Matrix4d umeyamaTransformation = gdr::getTransformationMatrixUmeyamaLoRANSAC(
