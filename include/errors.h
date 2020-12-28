@@ -9,8 +9,7 @@
 namespace gdr {
 
     enum ERRORS {
-        ERROR_OPENING_FILE_WRITE,
-        ERROR_OPENING_FILE_READ
+        ERROR_OPENING_FILE_WRITE
     };
 }
 
