@@ -22,7 +22,29 @@ find_package(
   COMPONENTS program_options timer filesystem serialization
   REQUIRED)
 
+set(local_custom_Pangolin_INSTALL_DIR _installed_Pangolin)
+set(custom_Pangolin_BUILD_NAME g-build)
+
+set(ICPCUDA_PROJECT_PATH ${PROJECT_SOURCE_DIR}/third-party/ICPCUDA)
+set(ICPCUDA_LIBS ${ICPCUDA_PROJECT_PATH}/${custom_Pangolin_BUILD_NAME}/libICP.so)
+set(ICPCUDA_third_party ${ICPCUDA_PROJECT_PATH}/third-party)
+set(ICPCUDA_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/third-party/ICPCUDA/include")
+
+set(Pangolin_INSTALL_DIR "${PROJECT_SOURCE_DIR}/third-party/ICPCUDA/${custom_Pangolin_BUILD_NAME}/${local_custom_Pangolin_INSTALL_DIR}" CACHE PATH "Pangolin install directory")
+set(Pangolin_INCLUDE_DIRS "${Pangolin_INSTALL_DIR}/include")
+set(Pangolin_LIBRARIES ${Pangolin_INSTALL_DIR}/lib/libpangolin.so)
+
+set(Sophus_INCLUDE_DIRS ${ICPCUDA_third_party}/Sophus)
+
 include(ExternalProject)
+
+ExternalProject_Add(
+    icpCuda
+    SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/ICPCUDA"
+    BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/ICPCUDA/${custom_Pangolin_BUILD_NAME}"
+    CMAKE_ARGS -DPangolin_LOCAL_INSTALL_DIR=${local_custom_Pangolin_INSTALL_DIR}
+    -DPangolin_BUILD_NAME=${custom_Pangolin_BUILD_NAME}
+    INSTALL_COMMAND "")
 
 ExternalProject_Add(
   siftgpu
@@ -44,6 +66,8 @@ endif()
 set(SIFTGPU_LIBS ${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so)
 # set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/lib/libgtsam.a)
 # set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/gbuild/include)
+
+
 
 set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/keyFeatures.h
@@ -98,6 +122,23 @@ target_include_directories(
          ${PROJECT_SOURCE_DIR}/include ${EIGEN3_INCLUDE_DIRS}
          ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
   PRIVATE ${OpenGL_INCLUDE_DIR})
+
+add_executable(main main.cpp)
+add_dependencies(main icpCuda)
+
+target_link_libraries(main
+    ${ICPCUDA_LIBS}
+    ${Pangolin_LIBRARIES}
+    ${CUDA_LIBRARIES}
+    )
+
+target_include_directories(main
+    PUBLIC
+    ${Sophus_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
+    ${ICPCUDA_INCLUDE_DIRS}
+    ${Pangolin_INCLUDE_DIRS}
+    )
 
 enable_testing()
 add_subdirectory(test)

@@ -1,3 +1,6 @@
 [submodule "third-party/gtsam"]
 	path = third-party/gtsam
 	url = https://github.com/borglab/gtsam.git
+[submodule "third-party/ICPCUDA"]
+	path = third-party/ICPCUDA
+	url = https://github.com/leoneed03/ICPCUDA
