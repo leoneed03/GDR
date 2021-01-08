@@ -19,6 +19,7 @@ packages:
   - cmake
 
 before_install:
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 10
   - git submodule update --init --recursive
 # GTest
   - sudo apt-get install libgtest-dev
