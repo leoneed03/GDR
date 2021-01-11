@@ -83,7 +83,9 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/umeyama.h
     ${PROJECT_SOURCE_DIR}/include/poseEstimation.h
     ${PROJECT_SOURCE_DIR}/include/printer.h
-    ${PROJECT_SOURCE_DIR}/include/errors.h)
+    ${PROJECT_SOURCE_DIR}/include/errors.h
+    ${PROJECT_SOURCE_DIR}/include/ICP.h
+    ${PROJECT_SOURCE_DIR}/include/pointCloud.h)
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/keyFeatures.cpp
@@ -97,11 +99,14 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/rotationAveraging.cpp
     ${PROJECT_SOURCE_DIR}/src/quaternions.cpp
     ${PROJECT_SOURCE_DIR}/src/umeyama.cpp
-    ${PROJECT_SOURCE_DIR}/src/poseEstimation.cpp)
+    ${PROJECT_SOURCE_DIR}/src/poseEstimation.cpp
+    ${PROJECT_SOURCE_DIR}/src/ICP.cpp
+    ${PROJECT_SOURCE_DIR}/src/pointCloud.cpp
+    )
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
-add_dependencies(GDR_LIB siftgpu # gtsam
+add_dependencies(GDR_LIB siftgpu icpCuda# gtsam
 )
 
 target_compile_definitions(GDR_LIB PUBLIC ${GDR_FLAGS})
@@ -114,13 +119,20 @@ target_link_libraries(
   # ${GTSAM_LIBS}
   ${Boost_LIBRARIES}
   ${METIS_LIBRARIES}
-  ${TBB_LIBRARIES})
+  ${TBB_LIBRARIES}
+  ${ICPCUDA_LIBS}
+  ${Pangolin_LIBRARIES}
+  ${CUDA_LIBRARIES})
 
 target_include_directories(
   GDR_LIB
   PUBLIC # ${GTSAM_INCLUDE_DIRS}
-         ${PROJECT_SOURCE_DIR}/include ${EIGEN3_INCLUDE_DIRS}
-         ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
+        ${EIGEN3_INCLUDE_DIRS}
+        ${Sophus_INCLUDE_DIRS}
+        ${ICPCUDA_INCLUDE_DIRS}
+        ${Pangolin_INCLUDE_DIRS}
   PRIVATE ${OpenGL_INCLUDE_DIR})
 
 add_executable(main main.cpp)

@@ -13,11 +13,13 @@ namespace gdr {
     }
 
     VertexCG::VertexCG(int newIndex,
+                       const CameraRGBD &newCameraRgbd,
                        const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
                        const std::vector<float> &newDescriptors,
                        const std::vector<double> &newDepths,
                        const std::string &newPathRGB,
                        const std::string &newPathD) : index(newIndex),
+                                                      cameraRgbd(newCameraRgbd),
                                                       keypoints(newKeypoints),
                                                       descriptors(newDescriptors),
                                                       depths(newDepths),

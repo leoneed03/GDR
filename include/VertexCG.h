@@ -19,12 +19,14 @@
 
 #include "keyFeatures.h"
 #include "quaternions.h"
+#include "cameraRGBD.h"
 
 
 namespace gdr {
 
     struct VertexCG {
 
+        CameraRGBD cameraRgbd;
         int index;
         Eigen::Matrix4d absoluteRotationTranslation;
         std::vector<SiftGPU::SiftKeypoint> keypoints;
@@ -38,6 +40,7 @@ namespace gdr {
         void setRotation(const Eigen::Matrix3d &rotation);
 
         VertexCG(int newIndex,
+                 const CameraRGBD& newCameraRgbd,
                  const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
                  const std::vector<float> &newDescriptors,
                  const std::vector<double> &newDepths,

@@ -10,18 +10,14 @@
 
 #include "poseEstimation.h"
 #include "CorrespondenceGraph.h"
+#include "ICP.h"
 
 TEST(testRelativePosesComputation, getPairwiseTransformations) {
 
-//517.3	516.5	318.6	255.3
+
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth",
-                                                 527.3,
-                                                 318.6, 516.5, 255.3);
-//    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth",
-//                                                 525.0,
-//                                                 319.5, 525.0, 239.5);
-//    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth",
-//    517.3,	516.5,	318.6,	255.3);
+                                                 525.0,
+                                                 319.5, 525.0, 239.5);
     correspondenceGraph.computeRelativePoses();
     std::string pathToGroundTruth = "../../data/plantFirst_20_2/groundtruth_new.txt";
     std::string estimatedPairWise = correspondenceGraph.relativePose;
@@ -34,7 +30,6 @@ TEST(testRelativePosesComputation, getPairwiseTransformations) {
     std::cout << "rotation    stats: " << errorsStatsTR.second.meanError << " with standard deviation "
               << errorsStatsTR.second.standartDeviation << std::endl;
 
-    correspondenceGraph.printConnectionsRelative(std::cout, 15);
 
     ASSERT_LE(errorsStatsTR.first.meanError, 0.15);
     ASSERT_LE(errorsStatsTR.second.meanError, 0.25);

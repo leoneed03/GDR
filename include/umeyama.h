@@ -23,7 +23,8 @@ namespace gdr {
     getTransformationMatrixUmeyamaLoRANSAC(const Eigen::Matrix4Xd &toBeTransormedPoints,
                                            const Eigen::Matrix4Xd &destinationPoints,
                                            const int numIterationsRansac,
-                                           const int numOfElements, double inlierCoeff,
+                                           const int numOfElements,
+                                           double inlierCoeff,
                                            bool &estimationSuccess,
                                            double maxErrorCorrespondence);
 }

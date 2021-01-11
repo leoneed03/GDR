@@ -53,6 +53,7 @@ namespace gdr {
                             float fx,
                             float cx, float fy, float cy);
 
+        int refineRelativePose(const VertexCG& vertexToBeTransformed, const VertexCG& vertexDestination, Eigen::Matrix4d& initEstimationRelPos, bool& success);
         int findCorrespondences();
 
         int findTransformationRtMatrices();

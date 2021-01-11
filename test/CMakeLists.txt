@@ -1,4 +1,4 @@
-set(TESTS testUmeyamaRansac testPoseFileCreation testRelativePosesComputation)
+set(TESTS testUmeyamaRansac testPoseFileCreation testRelativePosesComputation testICP)
 
 foreach(TEST ${TESTS})
   add_executable(${TEST} ${TEST}.cpp)

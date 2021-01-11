@@ -17,9 +17,10 @@ namespace gdr {
 
         int numInliers = numberOfSeparatorElement + 1;
 
-        auto pointsAfterTransformation = cR_t_umeyama * toBeTransormedPoints;
+        Eigen::Matrix4Xd pointsAfterTransformation = cR_t_umeyama * toBeTransormedPoints;
 
-        std::vector<std::pair<double, int>> euclideanErrors(toBeTransormedPoints.cols());
+        std::vector<std::pair<double, int>> euclideanErrors(toBeTransormedPoints.cols(), {std::numeric_limits<double>::max(), -1});
+
         for (int pointCounter = 0; pointCounter < euclideanErrors.size(); ++pointCounter) {
             double currentError = (pointsAfterTransformation.col(pointCounter) -
                                    destinationPoints.col(pointCounter)).norm();
@@ -33,6 +34,8 @@ namespace gdr {
 
         return euclideanErrors;
     }
+
+
 
     Eigen::Matrix4d getTransformationMatrixUmeyamaLoRANSAC(const Eigen::Matrix4Xd &toBeTransormedPoints,
                                                            const Eigen::Matrix4Xd &destinationPoints,
@@ -97,8 +100,7 @@ namespace gdr {
                                                                                            destinationPoints,
                                                                                            cR_t_umeyama_3_points,
                                                                                            lastInlierPos);
-            auto errorAndLastInlierNumber = euclideanErrors[lastInlierPos];
-
+            std::pair<double, int> errorAndLastInlierNumber = euclideanErrors[lastInlierPos];
             Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
             Eigen::Matrix4Xd destInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
             for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
@@ -133,6 +135,7 @@ namespace gdr {
 
         return optimal_cR_t_umeyama_transformation;
     }
+
 }
 
 
