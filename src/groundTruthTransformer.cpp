@@ -371,7 +371,7 @@ namespace gdr {
         return timeAndTransformation;
     }
 
-    int GTT::extractAllRelativeTransformationPairwise(const std::string &in, const std::string &pathOut) {
+    int GTT::extractAllRelativeTransformationPairwise(const std::string &in, const std::string &pathOut, std::string noise) {
 
         std::vector<std::vector<double>> timeAndAbsolutePoses = extractTimeAndTransformation(in);
         std::ofstream out(pathOut);
@@ -388,34 +388,68 @@ namespace gdr {
         }
 
         for (int index = 0; index < timeAndAbsolutePoses.size(); ++index) {
+
             std::vector<double> &currentPose = timeAndAbsolutePoses[index];
             std::vector<double> rotationFrom = {currentPose[4], currentPose[5], currentPose[6], currentPose[7]};
             std::vector<double> translationFrom = {currentPose[1], currentPose[2], currentPose[3]};
             Eigen::Quaterniond qFrom(rotationFrom.data());
+            qFrom.normalize();
             Eigen::Vector3d tFrom(translationFrom.data());
 
             for (int to = index + 1; to < timeAndAbsolutePoses.size(); ++to) {
+
+                double maxDiff = 1e-11;
                 std::vector<double> &currentPoseTo = timeAndAbsolutePoses[to];
                 std::vector<double> rotationTo = {currentPoseTo[4], currentPoseTo[5], currentPoseTo[6],
                                                   currentPoseTo[7]};
                 std::vector<double> translationTo = {currentPoseTo[1], currentPoseTo[2], currentPoseTo[3]};
                 Eigen::Quaterniond qTo(rotationTo.data());
+                qTo.normalize();
                 Eigen::Vector3d tTo(translationTo.data());
 
                 //// R_{ij} = R_{j}^T * R_{i}
                 Eigen::Quaterniond relativeRotationQuat = qTo.inverse() * qFrom;
+                relativeRotationQuat.normalize();
+                double angularDistanceComputationTypeMatrixOrQuaternion = Eigen::Quaterniond(qTo.inverse().toRotationMatrix() * qFrom.toRotationMatrix()).normalized().angularDistance(relativeRotationQuat);
+
+                assert(angularDistanceComputationTypeMatrixOrQuaternion < maxDiff);
                 //// t_{ij} = R_{j}^T * (t_i - t_j)
                 Eigen::Vector3d relativeTranslation = qTo.inverse().toRotationMatrix() * (tFrom - tTo);
 
+                ////Alternative way of relative pose computation:
+                Eigen::Matrix4d poseFrom;
+                poseFrom.setIdentity();
+                poseFrom.block<3,3>(0,0) = qFrom.toRotationMatrix();
+                poseFrom.block<3,1>(0, 3) = tFrom;
+
+                Eigen::Matrix4d poseTo;
+                poseTo.setIdentity();
+                poseTo.block<3,3>(0,0) = qTo.toRotationMatrix();
+                poseTo.block<3,1>(0, 3) = tTo;
+
+                Eigen::Matrix4d relativePose = (poseTo.inverse() * poseFrom);
+                Eigen::Vector3d relativeTranslationFromFullPose = relativePose.block<3,1>(0,3);
+                Eigen::Matrix3d relativeRotationFromFullPose = relativePose.block<3,3>(0,0);
+                double angularDistanceRotations = relativeRotationQuat.angularDistance(Eigen::Quaterniond(relativeRotationFromFullPose));
+                Eigen::Vector3d translationDifferenceShouldBeZero = relativeTranslationFromFullPose - relativeTranslation;
+
+                ///Check that alternative way returns same result for relative poses
+                assert(angularDistanceRotations < maxDiff);
+                bool translationDiffCloseToZero = translationDifferenceShouldBeZero.norm() < maxDiff;
+                if (!translationDiffCloseToZero) {
+                    std::cout << "translation diff is " << translationDifferenceShouldBeZero.norm() << std::endl;
+                }
+                assert(translationDiffCloseToZero);
+
                 //// index->to == i->j
-                out << "EDGE_SE3:QUAT " << std::setw(5) << index << std::setw(5) << to;
+                out << "EDGE_SE3:QUAT " << std::setw(5) << to << std::setw(5) << index;
 
                 for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
                     out << std::setw(spaceIO) << relativeTranslation.col(0)[posTranslation];
                 }
                 out << std::setw(spaceIO) << relativeRotationQuat.x() << std::setw(spaceIO) << relativeRotationQuat.y()
                     << std::setw(spaceIO) << relativeRotationQuat.z() << std::setw(spaceIO) << relativeRotationQuat.w()
-                    << std::endl;
+                    << noise << std::endl;
             }
         }
         return 0;

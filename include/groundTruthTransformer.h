@@ -56,7 +56,8 @@ namespace gdr {
 
         static std::vector<std::vector<double>> extractTimeAndTransformation(const std::string &inputFileName);
 
-        static int extractAllRelativeTransformationPairwise(const std::string &in, const std::string &out);
+        static int extractAllRelativeTransformationPairwise(const std::string &in, const std::string &out,
+                                                            std::string noise = "");
     };
 }
 
