@@ -67,22 +67,22 @@ namespace gdr {
         pangolin::ManagedImage<unsigned short> firstData(640, 480);
         pangolin::ManagedImage<unsigned short> secondData(640, 480);
 
-        pangolin::Image<unsigned short> firstRaw(firstData.w, firstData.h,
+        pangolin::Image<unsigned short> imageICP(firstData.w, firstData.h,
                                                  firstData.pitch,
                                                  (unsigned short *) firstData.ptr);
-        pangolin::Image<unsigned short> secondRaw(secondData.w, secondData.h,
-                                                  secondData.pitch,
-                                                  (unsigned short *) secondData.ptr);
+        pangolin::Image<unsigned short> imageICPModel(secondData.w, secondData.h,
+                                                      secondData.pitch,
+                                                      (unsigned short *) secondData.ptr);
 
 
-        loadDepth(firstRaw, poseToBeTransformed.pathToDimage);
-        loadDepth(secondRaw, poseDestination.pathToDimage);
+        loadDepth(imageICP, poseToBeTransformed.pathToDimage);
+        loadDepth(imageICPModel, poseDestination.pathToDimage);
 
 
-        ///swap due to inverse order of images used by ICP
-        std::swap(firstRaw, secondRaw);
-        icpOdom.initICPModel(firstRaw.ptr);
-        icpOdom.initICP(secondRaw.ptr);
+        ///swap due to inverse order of images used by imageICP
+//        std::swap(imageICP, imageICPModel);
+        icpOdom.initICPModel(imageICPModel.ptr);
+        icpOdom.initICP(imageICP.ptr);
 
         T_wc_prev = T_wc_curr;
 

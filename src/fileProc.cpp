@@ -81,13 +81,11 @@ namespace gdr {
         do {
             int from;
             int to;
-            if (!(in >> from && in >> to)) {
+            if (!(in >> to && in >> from)) {
                 return relativePoses;
             }
 
-            if (from > to) {
-                std::swap(from, to);
-            }
+            assert(to > from);
             std::vector<double> currentRelativePose;
             for (int i = 0; i < 7; ++i) {
                 double currentVal;

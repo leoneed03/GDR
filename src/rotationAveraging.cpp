@@ -12,6 +12,8 @@
 #include <gtsam/sfm/ShonanAveraging.h>
 #include <gtsam/slam/InitializePose.h>
 
+#include <gtsam/slam/dataset.h>
+
 namespace gdr {
 
     std::vector<Eigen::Quaterniond> rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {

@@ -371,9 +371,10 @@ namespace gdr {
         return timeAndTransformation;
     }
 
-    int GTT::extractAllRelativeTransformationPairwise(const std::string &in, const std::string &pathOut,
+    std::vector<relativePose> GTT::extractAllRelativeTransformationPairwise(const std::string &in, const std::string &pathOut,
                                                       std::string noise) {
 
+        std::vector<relativePose> relativePoses;
         std::vector<std::vector<double>> timeAndAbsolutePoses = extractTimeAndTransformation(in);
         std::ofstream out(pathOut);
 
@@ -433,9 +434,9 @@ namespace gdr {
                 poseTo.block<3, 3>(0, 0) = qTo.toRotationMatrix();
                 poseTo.block<3, 1>(0, 3) = tTo;
 
-                Eigen::Matrix4d relativePose = (poseTo.inverse() * poseFrom);
-                Eigen::Vector3d relativeTranslationFromFullPose = relativePose.block<3, 1>(0, 3);
-                Eigen::Matrix3d relativeRotationFromFullPose = relativePose.block<3, 3>(0, 0);
+                Eigen::Matrix4d relativePoseMatrix4d = (poseTo.inverse() * poseFrom);
+                Eigen::Vector3d relativeTranslationFromFullPose = relativePoseMatrix4d.block<3, 1>(0, 3);
+                Eigen::Matrix3d relativeRotationFromFullPose = relativePoseMatrix4d.block<3, 3>(0, 0);
                 double angularDistanceRotations = relativeRotationQuat.angularDistance(
                         Eigen::Quaterniond(relativeRotationFromFullPose));
                 Eigen::Vector3d translationDifferenceShouldBeZero =
@@ -452,6 +453,9 @@ namespace gdr {
                 //// index->to == i->j
                 out << "EDGE_SE3:QUAT " << std::setw(spaceIO) << to << std::setw(spaceIO) << index;
 
+                rotationMeasurement relativeRotationMeasurement(relativeRotationQuat, index, to);
+                translationMeasurement relativeTranslationMeasurement(relativeTranslation, index, to);
+                relativePoses.push_back(relativePose(relativeRotationMeasurement, relativeTranslationMeasurement, index, to));
                 for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
                     out << std::setw(spaceIO) << relativeTranslation.col(0)[posTranslation];
                 }
@@ -460,10 +464,10 @@ namespace gdr {
                     << noise << std::endl;
             }
         }
-        return 0;
+        return relativePoses;
     }
 
-    std::vector<poseInfo> GTT::getPoseInfoTimeOrientationTranslation(const std::string &pathToGroundTruthFile) {
+    std::vector<poseInfo> GTT::getPoseInfoTimeTranslationOrientation(const std::string &pathToGroundTruthFile) {
         std::vector<poseInfo> posesInfo;
         std::vector<std::vector<double>> rawPoseInfo = extractTimeAndTransformation(pathToGroundTruthFile);
 

@@ -19,7 +19,9 @@
 namespace gdr {
 
 
-    int CorrespondenceGraph::refineRelativePose(const VertexCG& vertexToBeTransformed, const VertexCG& vertexDestination, Eigen::Matrix4d& initEstimationRelPos, bool& success) {
+    int
+    CorrespondenceGraph::refineRelativePose(const VertexCG &vertexToBeTransformed, const VertexCG &vertexDestination,
+                                            Eigen::Matrix4d &initEstimationRelPos, bool &success) {
 //        VertexCG vertexToBeTransformed = verticesOfCorrespondence[vertexFrom];
         ///wrong vertexNumber -- see struct "Match"
 //        VertexCG vertexDestination = verticesOfCorrespondence[vertexTo];
@@ -27,6 +29,7 @@ namespace gdr {
 
         return 0;
     }
+
     int CorrespondenceGraph::findCorrespondences() {
 
         for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
@@ -84,7 +87,8 @@ namespace gdr {
                             transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
                 } else {
 
-                    std::cout << "                             NOT ___success____ " << frameFrom.index << " -> " << frameTo.index << " \tmatches " << match.matchNumbers.size() << std::endl;
+                    std::cout << "                             NOT ___success____ " << frameFrom.index << " -> "
+                              << frameTo.index << " \tmatches " << match.matchNumbers.size() << std::endl;
                     PRINT_PROGRESS("transformation matrix not found");
                 }
             }
@@ -154,8 +158,10 @@ namespace gdr {
             assert(originPointsVector.size() == minSize);
 
 
-            Eigen::Matrix4Xd toBeTransformedPoints = getPointCloudBeforeProjection(toBeTransformedPointsVector, verticesOfCorrespondence[vertexFrom].cameraRgbd);
-            Eigen::Matrix4Xd originPoints = getPointCloudBeforeProjection(originPointsVector, verticesOfCorrespondence[match.frameNumber].cameraRgbd);
+            Eigen::Matrix4Xd toBeTransformedPoints = getPointCloudBeforeProjection(toBeTransformedPointsVector,
+                                                                                   verticesOfCorrespondence[vertexFrom].cameraRgbd);
+            Eigen::Matrix4Xd originPoints = getPointCloudBeforeProjection(originPointsVector,
+                                                                          verticesOfCorrespondence[match.frameNumber].cameraRgbd);
             assert(toBeTransformedPoints.cols() == minSize);
             assert(originPoints.cols() == minSize);
 
@@ -272,8 +278,11 @@ namespace gdr {
                         continue;
                     }
                     std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
-                    file << "EDGE_SE3:QUAT " << std::to_string(i) << ' ' <<
-                         std::to_string(tranformationRtMatrices[i][j].vertexTo.index) << ' ';
+
+                    int indexTo = tranformationRtMatrices[i][j].vertexTo.index;
+                    int indexFrom = i;
+                    //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format)
+                    file << "EDGE_SE3:QUAT " << indexTo << ' ' << indexFrom << ' ';
                     auto translationVector = tranformationRtMatrices[i][j].t;
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
                          << std::to_string(translationVector.col(0)[1]) << ' '
@@ -294,15 +303,20 @@ namespace gdr {
         return 0;
     }
 
-    int CorrespondenceGraph::performRotationAveraging() {
+    std::vector<Eigen::Quaterniond> CorrespondenceGraph::performRotationAveraging() {
         PRINT_PROGRESS("first print successfull");
-        rotationAverager::shanonAveraging(relativePose, absolutePose);
 
-        PRINT_PROGRESS("Shonan averaging successfull");
-        std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
+        std::vector<Eigen::Quaterniond> absoluteRotationsQuats = rotationAverager::shanonAveraging(relativePose,
+                                                                                              absolutePose);
+//
+//        PRINT_PROGRESS("Shonan averaging successfull");
+//        std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
 
         PRINT_PROGRESS("read quaternions successfull");
-        std::vector<Eigen::Matrix3d> absoluteRotations = getRotationsFromQuaternionVector(quaternions);
+        std::vector<Eigen::Matrix3d> absoluteRotations;
+        for (const auto& absoluteRotationQuat: absoluteRotationsQuats) {
+            absoluteRotations.push_back(absoluteRotationQuat.toRotationMatrix());
+        }
 
         PRINT_PROGRESS("get Rotations from quaternions successfull");
         for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
@@ -310,7 +324,7 @@ namespace gdr {
         }
 
         PRINT_PROGRESS("setting Rotations in vertices successfull");
-        return 0;
+        return absoluteRotationsQuats;
     }
 
     int CorrespondenceGraph::computeRelativePoses() {
@@ -453,7 +467,7 @@ namespace gdr {
                     Eigen::Matrix4d &newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
                     Eigen::Vector3d newAbsoluteT = predR * relT + predT;
 
-                    newAbsoluteRt.block(0,3,3,1) = newAbsoluteT;
+                    newAbsoluteRt.block(0, 3, 3, 1) = newAbsoluteT;
 
                 }
             }

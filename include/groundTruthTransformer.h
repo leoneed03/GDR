@@ -14,6 +14,7 @@
 #include "fileProc.h"
 #include "poseInfo.h"
 #include "quaternions.h"
+#include "relativePose.h"
 
 #include <Eigen/Eigen>
 #include <Eigen/Core>
@@ -58,9 +59,9 @@ namespace gdr {
 
         static std::vector<std::vector<double>> extractTimeAndTransformation(const std::string &inputFileName);
 
-        static int extractAllRelativeTransformationPairwise(const std::string &in, const std::string &out,
+        static std::vector<relativePose> extractAllRelativeTransformationPairwise(const std::string &in, const std::string &out,
                                                             std::string noise = "");
-        static std::vector<poseInfo> getPoseInfoTimeOrientationTranslation(const std::string& pathToGroundTruthFile);
+        static std::vector<poseInfo> getPoseInfoTimeTranslationOrientation(const std::string& pathToGroundTruthFile);
     };
 }
 

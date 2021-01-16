@@ -7,9 +7,9 @@
 
 namespace gdr {
     poseInfo::poseInfo(double newTimestamp, const Eigen::Quaterniond &newOrientationQuat,
-                       const Eigen::Matrix<double, 3, 1> &newCoordinates) : timestamp(newTimestamp),
-                                                                            orientationQuat(newOrientationQuat),
-                                                                            coordinated3d(newCoordinates) {}
+                       const Eigen::Vector3d &newCoordinates) : timestamp(newTimestamp),
+                                                                orientationQuat(newOrientationQuat),
+                                                                coordinated3d(newCoordinates) {}
 
     poseInfo::poseInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation) {
         assert(rawPoseInfoTimestampTranslationOrientation.size() == elementsRaw);

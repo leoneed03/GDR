@@ -67,8 +67,6 @@ set(SIFTGPU_LIBS ${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so)
 set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${custom_Pangolin_BUILD_NAME}/lib/libgtsam.a)
 set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${custom_Pangolin_BUILD_NAME}/include)
 
-
-
 set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/keyFeatures.h
     ${PROJECT_SOURCE_DIR}/include/fileProc.h
@@ -88,7 +86,9 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/pointCloud.h
     ${PROJECT_SOURCE_DIR}/include/translationMeasurement.h
     ${PROJECT_SOURCE_DIR}/include/translationAveraging.h
-    ${PROJECT_SOURCE_DIR}/include/poseInfo.h)
+    ${PROJECT_SOURCE_DIR}/include/poseInfo.h
+    ${PROJECT_SOURCE_DIR}/include/rotationMeasurement.h
+    ${PROJECT_SOURCE_DIR}/include/relativePose.h)
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/keyFeatures.cpp
@@ -107,7 +107,9 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/pointCloud.cpp
     ${PROJECT_SOURCE_DIR}/src/translationAveraging.cpp
     ${PROJECT_SOURCE_DIR}/src/translationMeasurement.cpp
-    ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp)
+    ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
+    ${PROJECT_SOURCE_DIR}/src/rotationMeasurement.cpp
+    ${PROJECT_SOURCE_DIR}/src/relativePose.cpp)
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 

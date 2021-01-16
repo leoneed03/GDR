@@ -68,7 +68,7 @@ namespace gdr {
 
         int printAbsolutePoses(std::ostream &os, int space = 10);
 
-        int performRotationAveraging();
+        std::vector<Eigen::Quaterniond> performRotationAveraging();
 
         int printRelativePosesFile(const std::string &outPutFileRelativePoses);
 

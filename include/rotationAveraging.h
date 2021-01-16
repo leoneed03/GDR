@@ -7,13 +7,18 @@
 #define GDR_ROTATIONAVERAGING_H
 
 #include <string>
+#include <vector>
 #include <Eigen/Eigen>
+
+#include "rotationMeasurement.h"
 
 namespace gdr {
 
     struct rotationAverager {
 
-        static std::vector<Eigen::Quaterniond> shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut);
+        static std::vector<Eigen::Quaterniond>
+        shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut);
+
     };
 }
 
