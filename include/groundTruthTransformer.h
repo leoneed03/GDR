@@ -12,6 +12,7 @@
 #include <map>
 
 #include "fileProc.h"
+#include "poseInfo.h"
 #include "quaternions.h"
 
 #include <Eigen/Eigen>
@@ -25,6 +26,7 @@ namespace gdr {
     std::vector<std::string> readData(std::string pathToRGB);
 
     struct GTT {
+        static const int infoElements = 8;
         static std::vector<double> createTimestamps(const std::vector<std::string> &rgb, const std::string &pathTimeRGB,
                                                     const std::string &pathToGroundTruth, const std::set<int> &indices);
 
@@ -58,6 +60,7 @@ namespace gdr {
 
         static int extractAllRelativeTransformationPairwise(const std::string &in, const std::string &out,
                                                             std::string noise = "");
+        static std::vector<poseInfo> getPoseInfoTimeOrientationTranslation(const std::string& pathToGroundTruthFile);
     };
 }
 

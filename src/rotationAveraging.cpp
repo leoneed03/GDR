@@ -7,15 +7,16 @@
 
 #include <random>
 #include <fstream>
+
 #include <gtsam/base/timing.h>
 #include <gtsam/sfm/ShonanAveraging.h>
 #include <gtsam/slam/InitializePose.h>
-//#include <gtsam/slam/dataset.h>
 
 namespace gdr {
 
-    int rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
+    std::vector<Eigen::Quaterniond> rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
         std::string inputFile = pathToRelativeRotations;
+        std::vector<Eigen::Quaterniond> absoluteRotationsQuat;
 
         // Seed random number generator
         int seed = 42;
@@ -41,6 +42,18 @@ namespace gdr {
         }
         std::cout << "Writing result to " << pathOut << std::endl;
         writeG2o(gtsam::NonlinearFactorGraph(), poses, pathOut);
-        return 0;
+
+        //extract information about poses absolute orientations
+
+        for (const auto key_value : poses) {
+            auto p = dynamic_cast<const gtsam::GenericValue<gtsam::Pose3> *>(&key_value.value);
+            if (!p)
+                continue;
+            const gtsam::Pose3 &pose = p->value();
+            const auto q = pose.rotation().toQuaternion();
+            absoluteRotationsQuat.push_back(q);
+        }
+
+        return absoluteRotationsQuat;
     }
 }

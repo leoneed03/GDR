@@ -7,12 +7,13 @@
 #define GDR_ROTATIONAVERAGING_H
 
 #include <string>
+#include <Eigen/Eigen>
 
 namespace gdr {
 
     struct rotationAverager {
 
-        static int shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut);
+        static std::vector<Eigen::Quaterniond> shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut);
     };
 }
 

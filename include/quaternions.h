@@ -11,6 +11,10 @@
 namespace gdr {
 
     std::vector<Eigen::Matrix3d> getRotationsFromQuaternionVector(const std::vector<std::vector<double>> &quats);
+
+    struct rotationOperations {
+        static void applyRotationToAllFromLeft(std::vector<Eigen::Quaterniond>& orientations, Eigen::Quaterniond rotation);
+    };
 }
 
 #endif

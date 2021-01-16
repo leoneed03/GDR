@@ -19,4 +19,11 @@ namespace gdr {
         }
         return resultMatrices;
     }
+
+    void
+    rotationOperations::applyRotationToAllFromLeft(std::vector<Eigen::Quaterniond> &orientations, Eigen::Quaterniond rotation) {
+        for (auto& orientation: orientations) {
+            orientation = (rotation * orientation).normalized();
+        }
+    }
 }

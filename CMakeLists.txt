@@ -87,7 +87,8 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/ICP.h
     ${PROJECT_SOURCE_DIR}/include/pointCloud.h
     ${PROJECT_SOURCE_DIR}/include/translationMeasurement.h
-    ${PROJECT_SOURCE_DIR}/include/translationAveraging.h)
+    ${PROJECT_SOURCE_DIR}/include/translationAveraging.h
+    ${PROJECT_SOURCE_DIR}/include/poseInfo.h)
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/keyFeatures.cpp
@@ -105,7 +106,8 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/ICP.cpp
     ${PROJECT_SOURCE_DIR}/src/pointCloud.cpp
     ${PROJECT_SOURCE_DIR}/src/translationAveraging.cpp
-    ${PROJECT_SOURCE_DIR}/src/translationMeasurement.cpp)
+    ${PROJECT_SOURCE_DIR}/src/translationMeasurement.cpp
+    ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp)
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 

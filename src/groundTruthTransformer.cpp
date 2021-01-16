@@ -371,18 +371,22 @@ namespace gdr {
         return timeAndTransformation;
     }
 
-    int GTT::extractAllRelativeTransformationPairwise(const std::string &in, const std::string &pathOut, std::string noise) {
+    int GTT::extractAllRelativeTransformationPairwise(const std::string &in, const std::string &pathOut,
+                                                      std::string noise) {
 
         std::vector<std::vector<double>> timeAndAbsolutePoses = extractTimeAndTransformation(in);
         std::ofstream out(pathOut);
 
         for (int index = 0; index < timeAndAbsolutePoses.size(); ++index) {
+            int elementsPoseInfo = 8;
             auto &pose = timeAndAbsolutePoses[index];
-            assert(pose.size() == 8);
-
-            out << "VERTEX_SE3:QUAT " << index;
-            for (int i = 1; i < pose.size(); ++i) {
-                out << std::setw(spaceIO) << pose[i];
+            assert(pose.size() == elementsPoseInfo);
+            std::vector<double> zeroPose(elementsPoseInfo - 1, 0);
+            zeroPose.push_back(1);
+            out << "VERTEX_SE3:QUAT " << std::setw(spaceIO) << index;
+            //we can actually explicitly set orientation of the zero pose but is it necessary?
+            for (int i = 1; i < zeroPose.size(); ++i) {
+                out << std::setw(spaceIO) << zeroPose[i];//timeAndAbsolutePoses[0][i];//pose[i];
             }
             out << std::endl;
         }
@@ -410,7 +414,9 @@ namespace gdr {
                 //// R_{ij} = R_{j}^T * R_{i}
                 Eigen::Quaterniond relativeRotationQuat = qTo.inverse() * qFrom;
                 relativeRotationQuat.normalize();
-                double angularDistanceComputationTypeMatrixOrQuaternion = Eigen::Quaterniond(qTo.inverse().toRotationMatrix() * qFrom.toRotationMatrix()).normalized().angularDistance(relativeRotationQuat);
+                double angularDistanceComputationTypeMatrixOrQuaternion = Eigen::Quaterniond(
+                        qTo.inverse().toRotationMatrix() * qFrom.toRotationMatrix()).normalized().angularDistance(
+                        relativeRotationQuat);
 
                 assert(angularDistanceComputationTypeMatrixOrQuaternion < maxDiff);
                 //// t_{ij} = R_{j}^T * (t_i - t_j)
@@ -419,19 +425,21 @@ namespace gdr {
                 ////Alternative way of relative pose computation:
                 Eigen::Matrix4d poseFrom;
                 poseFrom.setIdentity();
-                poseFrom.block<3,3>(0,0) = qFrom.toRotationMatrix();
-                poseFrom.block<3,1>(0, 3) = tFrom;
+                poseFrom.block<3, 3>(0, 0) = qFrom.toRotationMatrix();
+                poseFrom.block<3, 1>(0, 3) = tFrom;
 
                 Eigen::Matrix4d poseTo;
                 poseTo.setIdentity();
-                poseTo.block<3,3>(0,0) = qTo.toRotationMatrix();
-                poseTo.block<3,1>(0, 3) = tTo;
+                poseTo.block<3, 3>(0, 0) = qTo.toRotationMatrix();
+                poseTo.block<3, 1>(0, 3) = tTo;
 
                 Eigen::Matrix4d relativePose = (poseTo.inverse() * poseFrom);
-                Eigen::Vector3d relativeTranslationFromFullPose = relativePose.block<3,1>(0,3);
-                Eigen::Matrix3d relativeRotationFromFullPose = relativePose.block<3,3>(0,0);
-                double angularDistanceRotations = relativeRotationQuat.angularDistance(Eigen::Quaterniond(relativeRotationFromFullPose));
-                Eigen::Vector3d translationDifferenceShouldBeZero = relativeTranslationFromFullPose - relativeTranslation;
+                Eigen::Vector3d relativeTranslationFromFullPose = relativePose.block<3, 1>(0, 3);
+                Eigen::Matrix3d relativeRotationFromFullPose = relativePose.block<3, 3>(0, 0);
+                double angularDistanceRotations = relativeRotationQuat.angularDistance(
+                        Eigen::Quaterniond(relativeRotationFromFullPose));
+                Eigen::Vector3d translationDifferenceShouldBeZero =
+                        relativeTranslationFromFullPose - relativeTranslation;
 
                 ///Check that alternative way returns same result for relative poses
                 assert(angularDistanceRotations < maxDiff);
@@ -442,7 +450,7 @@ namespace gdr {
                 assert(translationDiffCloseToZero);
 
                 //// index->to == i->j
-                out << "EDGE_SE3:QUAT " << std::setw(5) << to << std::setw(5) << index;
+                out << "EDGE_SE3:QUAT " << std::setw(spaceIO) << to << std::setw(spaceIO) << index;
 
                 for (int posTranslation = 0; posTranslation < 3; ++posTranslation) {
                     out << std::setw(spaceIO) << relativeTranslation.col(0)[posTranslation];
@@ -453,5 +461,26 @@ namespace gdr {
             }
         }
         return 0;
+    }
+
+    std::vector<poseInfo> GTT::getPoseInfoTimeOrientationTranslation(const std::string &pathToGroundTruthFile) {
+        std::vector<poseInfo> posesInfo;
+        std::vector<std::vector<double>> rawPoseInfo = extractTimeAndTransformation(pathToGroundTruthFile);
+
+        std::cout << "========================================================" << std::endl;
+        for (const auto& line: rawPoseInfo) {
+            for (const auto& element: line) {
+                std::cout << element << ' ';
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++=+++" << std::endl;
+        for (const auto &rawPose: rawPoseInfo) {
+            assert(rawPose.size() == infoElements);
+
+            poseInfo currentPose(rawPose);
+            posesInfo.emplace_back(currentPose);
+        }
+        return posesInfo;
     }
 }
