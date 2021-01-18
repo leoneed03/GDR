@@ -61,6 +61,8 @@ namespace gdr {
 
         static std::vector<relativePose> extractAllRelativeTransformationPairwise(const std::string &in, const std::string &out,
                                                             std::string noise = "");
+
+        static std::vector<relativePose> extractAllRelativeTransformationPairwise(const std::string &in);
         static std::vector<poseInfo> getPoseInfoTimeTranslationOrientation(const std::string& pathToGroundTruthFile);
     };
 }

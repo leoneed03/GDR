@@ -11,12 +11,23 @@
 
 namespace gdr {
     struct relativePose {
+
         rotationMeasurement relativeRotation;
+
+        rotationMeasurement getRelativeRotation() const;
+
+        translationMeasurement getRelativeTranslation() const;
+
         translationMeasurement relativeTranslation;
-        int indexFrom;
-        int indexTo;
-        relativePose(const rotationMeasurement& newRotationMeasurement, const translationMeasurement& newTranslationMeasurement,
-                     int newIndexFrom, int newIndexTo);
+
+        relativePose(const rotationMeasurement &newRotationMeasurement,
+                     const translationMeasurement &newTranslationMeasurement);
+
+        Eigen::Quaterniond getRotationRelative() const;
+        Eigen::Vector3d getTranslationRelative() const;
+        int getIndexFromToBeTransformed() const;
+        int getIndexToDestination() const;
+
     };
 }
 

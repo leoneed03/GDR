@@ -11,5 +11,16 @@ namespace gdr {
                                                    int newIndexTo) : translation3d(newTranslation3d),
                                                                      indexFrom(newIndexFrom),
                                                                      indexTo(newIndexTo) {}
+    Eigen::Vector3d translationMeasurement::getTranslation() const {
+        return translation3d;
+    }
+
+
+    int translationMeasurement::getIndexFromToBeTransformed() const {
+        return indexFrom;
+    }
+    int translationMeasurement::getIndexToDestination() const {
+        return indexTo;
+    }
 }
 

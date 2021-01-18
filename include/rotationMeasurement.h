@@ -16,6 +16,10 @@ namespace gdr {
         int indexTo;
 
         rotationMeasurement(const Eigen::Quaterniond& newRelativeRotationQuat, int newIndexFrom, int newIndexTo);
+        Eigen::Quaterniond getRotationQuat() const;
+
+        int getIndexFromToBeTransformed() const;
+        int getIndexToDestination() const;
 
     };
 }

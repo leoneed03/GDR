@@ -48,4 +48,12 @@ namespace gdr {
            << std::setw(space) << timeTranslationOrientation.orientationQuat.w();
         return os;
     }
+
+    Eigen::Quaterniond poseInfo::getOrientationQuat() const {
+        return orientationQuat;
+    }
+
+    Eigen::Vector3d poseInfo::getTranslation() const {
+        return coordinated3d;
+    }
 }

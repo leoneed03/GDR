@@ -22,6 +22,9 @@ namespace gdr {
 
         poseInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation);
 
+        Eigen::Quaterniond getOrientationQuat() const;
+        Eigen::Vector3d getTranslation() const;
+
         friend std::ostream &operator<<(std::ostream &os, const poseInfo &dt);
     };
 }
