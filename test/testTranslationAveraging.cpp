@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 #include <vector>
+#include <random>
 
 #include "groundTruthTransformer.h"
 #include "translationAveraging.h"
@@ -44,7 +45,7 @@ TEST(testTranslationAveraging, translationRecovery19PosesFromFile) {
     std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesFile);
     std::vector<gdr::translationMeasurement> relativeTs;
     std::vector<Eigen::Matrix4d> absolutePoses;
-    for (const auto& absolutePoseEntry: absolutePosesInfo) {
+    for (const auto &absolutePoseEntry: absolutePosesInfo) {
         Eigen::Matrix4d newAbsolutePose;
         newAbsolutePose.setIdentity();
         newAbsolutePose.block<3, 3>(0, 0) =
@@ -65,7 +66,7 @@ TEST(testTranslationAveraging, translationRecovery19PosesFromFile) {
     assert(absoluteTranslations.size() == absolutePosesInfo.size());
     std::vector<Eigen::Vector3d> absoluteTranslationsFirstZero = absoluteTranslations;
 
-    for (auto& movedTranslation: absoluteTranslationsFirstZero) {
+    for (auto &movedTranslation: absoluteTranslationsFirstZero) {
         movedTranslation -= absoluteTranslations[0];
         movedTranslation += absolutePosesInfo[0].getTranslation();
     }
@@ -90,13 +91,10 @@ TEST(testTranslationAveraging, translationRecovery4PosesFromFile) {
     std::vector<gdr::relativePose> relativePoses = gdr::GTT::extractAllRelativeTransformationPairwise(
             absolutePosesFile);
     std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesFile);
-//
-//    std::cout << "Poses " << absolutePosesInfo.size() << std::endl;
-//    exit(0);
 
     std::vector<gdr::translationMeasurement> relativeTs;
     std::vector<Eigen::Matrix4d> absolutePoses;
-    for (const auto& absolutePoseEntry: absolutePosesInfo) {
+    for (const auto &absolutePoseEntry: absolutePosesInfo) {
         Eigen::Matrix4d newAbsolutePose;
         newAbsolutePose.setIdentity();
         newAbsolutePose.block<3, 3>(0, 0) =
@@ -118,7 +116,7 @@ TEST(testTranslationAveraging, translationRecovery4PosesFromFile) {
     assert(absoluteTranslations.size() == absolutePosesInfo.size());
     std::vector<Eigen::Vector3d> absoluteTranslationsFirstZero = absoluteTranslations;
 
-    for (auto& movedTranslation: absoluteTranslationsFirstZero) {
+    for (auto &movedTranslation: absoluteTranslationsFirstZero) {
         movedTranslation -= absoluteTranslations[0];
         movedTranslation += absolutePosesInfo[0].getTranslation();
     }
@@ -133,6 +131,286 @@ TEST(testTranslationAveraging, translationRecovery4PosesFromFile) {
     double averageError = sumError / absoluteTranslationsFirstZero.size();
 
     ASSERT_TRUE(averageError < 1e-10);
+}
+
+
+TEST(testTranslationAveraging, translationRecovery4PosesFromFileCorrespondencesPerVertex1) {
+
+    std::string absolutePosesFile = "../../data/files/absolutePoses_4.txt";
+
+    std::vector<gdr::relativePose> relativePoses = gdr::GTT::extractAllRelativeTransformationPairwise(
+            absolutePosesFile);
+    std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesFile);
+
+
+    std::vector<gdr::translationMeasurement> relativeTs;
+    std::vector<Eigen::Matrix4d> absolutePoses;
+    for (const auto &absolutePoseEntry: absolutePosesInfo) {
+        Eigen::Matrix4d newAbsolutePose;
+        newAbsolutePose.setIdentity();
+        newAbsolutePose.block<3, 3>(0, 0) =
+                absolutePoseEntry
+                        .getOrientationQuat()
+                        .normalized()
+                        .toRotationMatrix();
+        absolutePoses.emplace_back(newAbsolutePose);
+
+    }
+
+    for (const auto &relativePosePair: relativePoses) {
+        gdr::translationMeasurement relativeT = relativePosePair.getRelativeTranslation();
+        if (relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 1) {
+            relativeTs.emplace_back(relativePosePair.getRelativeTranslation());
+        }
+    }
+
+    assert(relativeTs.size() == absolutePosesInfo.size() - 1);
+    std::vector<Eigen::Vector3d> absoluteTranslations = gdr::translationAverager::recoverTranslations(relativeTs,
+                                                                                                      absolutePoses);
+
+    assert(absoluteTranslations.size() == absolutePosesInfo.size());
+    std::vector<Eigen::Vector3d> absoluteTranslationsFirstZero = absoluteTranslations;
+
+    for (auto &movedTranslation: absoluteTranslationsFirstZero) {
+        movedTranslation -= absoluteTranslations[0];
+        movedTranslation += absolutePosesInfo[0].getTranslation();
+    }
+
+    double sumError = 0;
+    for (int i = 0; i < absoluteTranslationsFirstZero.size(); ++i) {
+        double error = (absoluteTranslationsFirstZero[i] - absolutePosesInfo[i].getTranslation()).norm();
+        sumError += error;
+    }
+
+    double averageError = sumError / absoluteTranslationsFirstZero.size();
+
+    ASSERT_TRUE(averageError < 1e-10);
+}
+
+
+TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex3NoOutliers) {
+
+    int numPoses = 19;
+    int dim = 3;
+    std::string absolutePosesFile = "../../data/files/absolutePoses_" + std::to_string(numPoses) + ".txt";
+
+    std::vector<gdr::relativePose> relativePoses = gdr::GTT::extractAllRelativeTransformationPairwise(
+            absolutePosesFile);
+    std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesFile);
+
+    std::vector<gdr::translationMeasurement> relativeTs;
+    std::vector<Eigen::Matrix4d> absolutePoses;
+    for (const auto &absolutePoseEntry: absolutePosesInfo) {
+        Eigen::Matrix4d newAbsolutePose;
+        newAbsolutePose.setIdentity();
+        newAbsolutePose.block<3, 3>(0, 0) =
+                absolutePoseEntry
+                        .getOrientationQuat()
+                        .normalized()
+                        .toRotationMatrix();
+        absolutePoses.emplace_back(newAbsolutePose);
+
+    }
+
+
+    for (const auto &relativePosePair: relativePoses) {
+        gdr::translationMeasurement relativeT = relativePosePair.getRelativeTranslation();
+        if (relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 1
+            || relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 2
+            || relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 3) {
+            relativeTs.emplace_back(relativePosePair.getRelativeTranslation());
+        }
+    }
+
+    bool successIRLS = true;
+    std::vector<Eigen::Vector3d> absoluteTranslations = gdr::translationAverager::recoverTranslations(relativeTs,
+                                                                                                      absolutePoses);
+    absoluteTranslations = gdr::translationAverager::recoverTranslationsIRLS(
+            relativeTs,
+            absolutePoses,
+            absoluteTranslations,
+            successIRLS);
+    assert((absoluteTranslations.size() - 2) * dim == relativeTs.size());
+    assert(absoluteTranslations.size() == numPoses);
+    assert(absoluteTranslations.size() == absolutePosesInfo.size());
+    std::vector<Eigen::Vector3d> absoluteTranslationsFirstZero = absoluteTranslations;
+
+    for (auto &movedTranslation: absoluteTranslationsFirstZero) {
+        movedTranslation -= absoluteTranslations[0];
+        movedTranslation += absolutePosesInfo[0].getTranslation();
+    }
+
+    double sumError = 0;
+    for (int i = 0; i < absoluteTranslationsFirstZero.size(); ++i) {
+        double error = (absoluteTranslationsFirstZero[i] - absolutePosesInfo[i].getTranslation()).norm();
+        sumError += error;
+    }
+
+    double averageError = sumError / absoluteTranslationsFirstZero.size();
+
+    ASSERT_TRUE(averageError < 1e-10);
+}
+
+TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex3SomeOutliers) {
+
+    int dim = 3;
+    int numPoses = 19;
+    std::string absolutePosesFile = "../../data/files/absolutePoses_" + std::to_string(numPoses) + ".txt";
+
+    std::vector<gdr::relativePose> relativePoses = gdr::GTT::extractAllRelativeTransformationPairwise(
+            absolutePosesFile);
+    std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesFile);
+
+    std::vector<gdr::translationMeasurement> relativeTs;
+    std::vector<Eigen::Matrix4d> absolutePoses;
+    for (const auto &absolutePoseEntry: absolutePosesInfo) {
+        Eigen::Matrix4d newAbsolutePose;
+        newAbsolutePose.setIdentity();
+        newAbsolutePose.block<3, 3>(0, 0) =
+                absolutePoseEntry
+                        .getOrientationQuat()
+                        .normalized()
+                        .toRotationMatrix();
+        absolutePoses.emplace_back(newAbsolutePose);
+
+    }
+
+
+    std::random_device randomDevice;
+    std::mt19937 randomNumberGenerator(randomDevice());
+    double maxTranslationCoord = 1;
+    std::uniform_real_distribution<> distrib(0, maxTranslationCoord);
+    for (const auto &relativePosePair: relativePoses) {
+        gdr::translationMeasurement relativeT = relativePosePair.getRelativeTranslation();
+        if (relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 1
+            || relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 2) {
+            relativeTs.emplace_back(relativePosePair.getRelativeTranslation());
+        }
+        if (relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 3) {
+            std::vector<double> randomTranslation;
+            for (int i = 0; i < dim; ++i) {
+                randomTranslation.push_back(distrib(randomNumberGenerator));
+            }
+            Eigen::Vector3d random3dVector(randomTranslation.data());
+            gdr::translationMeasurement relativeTOutlier(random3dVector,
+                                                         relativeT.getIndexFromToBeTransformed(),
+                                                         relativeT.getIndexFromToBeTransformed() + 3);
+            std::cout << "vector\n" << random3dVector << std::endl;
+            relativeTs.emplace_back(relativeTOutlier);
+        }
+
+    }
+
+    bool successIRLS = true;
+    std::vector<Eigen::Vector3d> absoluteTranslations = gdr::translationAverager::recoverTranslations(relativeTs,
+                                                                                                      absolutePoses);
+//    absoluteTranslations = gdr::translationAverager::recoverTranslationsIRLS(
+//            relativeTs,
+//            absolutePoses,
+//            absoluteTranslations,
+//            successIRLS);
+
+    assert(absoluteTranslations.size() == numPoses);
+    assert(absoluteTranslations.size() == absolutePosesInfo.size());
+    std::vector<Eigen::Vector3d> absoluteTranslationsFirstZero = absoluteTranslations;
+
+    for (auto &movedTranslation: absoluteTranslationsFirstZero) {
+        movedTranslation -= absoluteTranslations[0];
+        movedTranslation += absolutePosesInfo[0].getTranslation();
+    }
+
+    double sumError = 0;
+    for (int i = 0; i < absoluteTranslationsFirstZero.size(); ++i) {
+        double error = (absoluteTranslationsFirstZero[i] - absolutePosesInfo[i].getTranslation()).norm();
+        sumError += error;
+    }
+
+    double averageError = sumError / absoluteTranslationsFirstZero.size();
+
+    std::cout << "error is " << averageError << std::endl;
+    ASSERT_GE(averageError, 1);
+}
+
+
+TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex4SomeOutliers) {
+
+    int dim = 3;
+    int numPoses = 19;
+    std::string absolutePosesFile = "../../data/files/absolutePoses_" + std::to_string(numPoses) + ".txt";
+
+    std::vector<gdr::relativePose> relativePoses = gdr::GTT::extractAllRelativeTransformationPairwise(
+            absolutePosesFile);
+    std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesFile);
+
+    std::vector<gdr::translationMeasurement> relativeTs;
+    std::vector<Eigen::Matrix4d> absolutePoses;
+    for (const auto &absolutePoseEntry: absolutePosesInfo) {
+        Eigen::Matrix4d newAbsolutePose;
+        newAbsolutePose.setIdentity();
+        newAbsolutePose.block<3, 3>(0, 0) =
+                absolutePoseEntry
+                        .getOrientationQuat()
+                        .normalized()
+                        .toRotationMatrix();
+        absolutePoses.emplace_back(newAbsolutePose);
+
+    }
+
+
+    std::random_device randomDevice;
+    std::mt19937 randomNumberGenerator(randomDevice());
+    double maxTranslationCoord = 1;
+    std::uniform_real_distribution<> distrib(0, maxTranslationCoord);
+    for (const auto &relativePosePair: relativePoses) {
+        gdr::translationMeasurement relativeT = relativePosePair.getRelativeTranslation();
+        if (relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 1
+            || relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 2
+            || relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 4){
+            relativeTs.emplace_back(relativePosePair.getRelativeTranslation());
+        }
+        if (relativeT.getIndexToDestination() == relativeT.getIndexFromToBeTransformed() + 3) {
+            std::vector<double> randomTranslation;
+            for (int i = 0; i < dim; ++i) {
+                randomTranslation.push_back(distrib(randomNumberGenerator));
+            }
+            Eigen::Vector3d random3dVector(randomTranslation.data());
+            gdr::translationMeasurement relativeTOutlier(random3dVector,
+                                                         relativeT.getIndexFromToBeTransformed(),
+                                                         relativeT.getIndexFromToBeTransformed() + 3);
+            std::cout << "vector\n" << random3dVector << std::endl;
+            relativeTs.emplace_back(relativeTOutlier);
+        }
+
+    }
+
+    bool successIRLS = true;
+    std::vector<Eigen::Vector3d> absoluteTranslations = gdr::translationAverager::recoverTranslations(relativeTs,
+                                                                                                      absolutePoses);
+    absoluteTranslations = gdr::translationAverager::recoverTranslationsIRLS(
+            relativeTs,
+            absolutePoses,
+            absoluteTranslations,
+            successIRLS);
+
+    assert(absoluteTranslations.size() == numPoses);
+    assert(absoluteTranslations.size() == absolutePosesInfo.size());
+    std::vector<Eigen::Vector3d> absoluteTranslationsFirstZero = absoluteTranslations;
+
+    for (auto &movedTranslation: absoluteTranslationsFirstZero) {
+        movedTranslation -= absoluteTranslations[0];
+        movedTranslation += absolutePosesInfo[0].getTranslation();
+    }
+
+    double sumError = 0;
+    for (int i = 0; i < absoluteTranslationsFirstZero.size(); ++i) {
+        double error = (absoluteTranslationsFirstZero[i] - absolutePosesInfo[i].getTranslation()).norm();
+        sumError += error;
+    }
+
+    double averageError = sumError / absoluteTranslationsFirstZero.size();
+
+    std::cout << "error is " << averageError << std::endl;
+    ASSERT_LE(averageError, 1e-2);
 }
 
 int main(int argc, char *argv[]) {
