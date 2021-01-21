@@ -88,7 +88,8 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/translationAveraging.h
     ${PROJECT_SOURCE_DIR}/include/poseInfo.h
     ${PROJECT_SOURCE_DIR}/include/rotationMeasurement.h
-    ${PROJECT_SOURCE_DIR}/include/relativePose.h)
+    ${PROJECT_SOURCE_DIR}/include/relativePose.h
+    ${PROJECT_SOURCE_DIR}/include/Vectors3d.h)
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/keyFeatures.cpp
@@ -109,7 +110,8 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/translationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/rotationMeasurement.cpp
-    ${PROJECT_SOURCE_DIR}/src/relativePose.cpp)
+    ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
+    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp)
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 

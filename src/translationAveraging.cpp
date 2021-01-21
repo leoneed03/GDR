@@ -6,13 +6,14 @@
 #include <iostream>
 
 #include "translationAveraging.h"
+#include "printer.h"
+#include "Vectors3d.h"
 
 namespace gdr {
-    translationAverager::SparseMatrixd
+    SparseMatrixd
     translationAverager::constructSparseMatrix(const std::vector<translationMeasurement> &relativeTranslations,
                                                const std::vector<Eigen::Matrix4d> &absolutePoses) {
         int numberOfAbsolutePoses = absolutePoses.size();
-//        std::cout << "should be little " << absolutePoses.size() << std::endl;
         int vectorDim = 3;
         std::vector<Tripletd> coefficients;
 
@@ -36,15 +37,15 @@ namespace gdr {
         SparseMatrixd systemSparseMatrix(vectorDim * relativeTranslations.size(), vectorDim * absolutePoses.size());
         systemSparseMatrix.setFromTriplets(coefficients.begin(), coefficients.end());
 
-        std::cout << "Sparse A is " << systemSparseMatrix.rows() / 3 << " * " << systemSparseMatrix.cols() / 3
-                  << std::endl;
+        PRINT_PROGRESS("Sparse A is " << systemSparseMatrix.rows() / 3 << " * " << systemSparseMatrix.cols() / 3
+                                      << std::endl);
         assert(systemSparseMatrix.rows() / 3 == relativeTranslations.size());
         assert(systemSparseMatrix.cols() / 3 == absolutePoses.size());
 
         return systemSparseMatrix;
     }
 
-    std::vector<Eigen::Vector3d>
+    Vectors3d
     translationAverager::constructColumnTermB(const std::vector<translationMeasurement> &relativeTranslations,
                                               const std::vector<Eigen::Matrix4d> &absolutePoses) {
         std::vector<Eigen::Vector3d> b;
@@ -52,30 +53,25 @@ namespace gdr {
         for (const auto &relativeT: relativeTranslations) {
             b.push_back(absolutePoses[relativeT.indexTo].block<3, 3>(0, 0) * relativeT.translation3d);
         }
-        return b;
+        return Vectors3d(b);
     }
 
-    std::vector<Eigen::Vector3d>
-    translationAverager::findLeastSquaresSolution(const translationAverager::SparseMatrixd &anyMatrixA,
-                                                  const std::vector<Eigen::Vector3d> &resultVector_b,
+    Vectors3d
+    translationAverager::findLeastSquaresSolution(const SparseMatrixd &anyMatrixA,
+                                                  const Vectors3d &resultVector_b,
                                                   bool &success,
-                                                  const translationAverager::SparseMatrixd &weightDiagonalMatrix,
+                                                  const SparseMatrixd &weightDiagonalMatrix,
                                                   bool useInitialGuess,
-                                                  std::vector<Eigen::Vector3d> initialGuessX) {
+                                                  Vectors3d initialGuessX) {
 
         success = true;
         int dim = 3;
-        assert(dim * resultVector_b.size() == anyMatrixA.rows());
+        assert(dim * resultVector_b.getSize() == anyMatrixA.rows());
 
         if (useInitialGuess) {
-            assert(dim * initialGuessX.size() == anyMatrixA.cols());
+            assert(dim * initialGuessX.getSize() == anyMatrixA.cols());
         }
-        Eigen::VectorXd guessRaw(dim * initialGuessX.size());
-        for (int i = 0; i < initialGuessX.size(); ++i) {
-            for (int toDim = 0; toDim < dim; ++toDim) {
-                guessRaw[dim * i + toDim] = initialGuessX[i][toDim];
-            }
-        }
+        Eigen::VectorXd guessRaw = initialGuessX.getVectorRaw();
 
 
         auto SymMatrix = anyMatrixA.transpose() * weightDiagonalMatrix * anyMatrixA;
@@ -85,10 +81,7 @@ namespace gdr {
         if (cg.info() != Eigen::Success) {
             success = false;
         }
-        Eigen::VectorXd b(3 * resultVector_b.size());
-        for (int i = 0; i < resultVector_b.size(); ++i) {
-            b.block<3, 1>(3 * i, 0) = resultVector_b[i];
-        }
+        Eigen::VectorXd b = resultVector_b.getVectorRaw();
 
 
         Eigen::VectorXd freeTermToSolveB = anyMatrixA.transpose() * weightDiagonalMatrix * b;
@@ -115,10 +108,8 @@ namespace gdr {
 
         assert(x.rows() % 3 == 0);
         std::cout << "rows after solution " << x.rows() / 3 << std::endl;
-        std::vector<Eigen::Vector3d> solution(x.rows() / 3);
-        for (int i = 0; i < solution.size(); ++i) {
-            solution[i] = x.block<3, 1>(3 * i, 0);
-        }
+        Vectors3d solution(x);
+
 
         if (success) {
             std::cout << "SUCCESS!!" << std::endl;
@@ -128,7 +119,7 @@ namespace gdr {
 
     }
 
-    translationAverager::SparseMatrixd
+    SparseMatrixd
     translationAverager::getWeightMatrixRaw(const std::vector<double> &weights,
                                             double epsilonWeightMin) {
 
@@ -141,7 +132,8 @@ namespace gdr {
             for (int toDim = 0; toDim < dim; ++toDim) {
 
                 int newRowColumnNumber = dim * i + toDim;
-                double newWeight = 1.0 / std::max(weights[i], epsilonWeightMin);
+                //square the residual
+                double newWeight = 1.0 / std::max(pow(weights[i], 2), epsilonWeightMin);
                 coefficients.emplace_back(Tripletd(newRowColumnNumber, newRowColumnNumber, newWeight));
             }
         }
@@ -150,67 +142,67 @@ namespace gdr {
         return weightDiagonalMatrix;
     }
 
+//
+//    Vectors3d subVectorOfTranslations(const Vectors3d &leftVector,
+//                                      const Vectors3d &rightVector) {
+//
+//        assert(leftVector.size() == rightVector.size());
+//        Vectors3d result;
+//        result.reserve(rightVector.size());
+//
+//        for (int i = 0; i < leftVector.size(); ++i) {
+//            result.emplace_back(leftVector[i] - rightVector[i]);
+//        }
+//
+//        return result;
+//    }
 
-    std::vector<Eigen::Vector3d> subVectorOfTranslations(const std::vector<Eigen::Vector3d> &leftVector,
-                                                         const std::vector<Eigen::Vector3d> &rightVector) {
+//    std::vector<double> getVectorOfNorms(const Vectors3d &objectVector) {
+//
+//        std::vector<double> norms;
+//        norms.reserve(objectVector.size());
+//        for (auto &t: objectVector) {
+//            norms.emplace_back(t.norm());
+//        }
+//
+//        return norms;
+//    }
 
-        assert(leftVector.size() == rightVector.size());
-        std::vector<Eigen::Vector3d> result;
-        result.reserve(rightVector.size());
-
-        for (int i = 0; i < leftVector.size(); ++i) {
-            result.emplace_back(leftVector[i] - rightVector[i]);
-        }
-
-        return result;
-    }
-
-    std::vector<double> getVectorOfNorms(const std::vector<Eigen::Vector3d> &objectVector) {
-
-        std::vector<double> norms;
-        norms.reserve(objectVector.size());
-        for (auto &t: objectVector) {
-            norms.emplace_back(t.norm());
-        }
-
-        return norms;
-    }
-
-    std::vector<Eigen::Vector3d> applyOperator(const translationAverager::SparseMatrixd &matrix,
-                                               const std::vector<Eigen::Vector3d> &rightVector) {
-
-        int dim = 3;
-        Eigen::VectorXd rawVector(dim * rightVector.size());
-        for (int i = 0; i < rightVector.size(); ++i) {
-            for (int toDim = 0; toDim < dim; ++toDim) {
-                rawVector[dim * i + toDim] = rightVector[i][toDim];
-            }
-        }
-        Eigen::VectorXd resultRaw = matrix * rawVector;
-        int outputVectorLength = resultRaw.rows() / dim;
-        std::vector<Eigen::Vector3d> result(outputVectorLength);
-        assert(resultRaw.rows() % dim == 0);
-        for (int i = 0; i < outputVectorLength; ++i) {
-            for (int toDim = 0; toDim < dim; ++toDim) {
-                result[i][toDim] = resultRaw[dim * i + toDim];
-            }
-        }
+//    Vectors3d applyOperator(const SparseMatrixd &matrix,
+//                            const Vectors3d &rightVector) {
+//
+//        int dim = 3;
+//        Eigen::VectorXd rawVector(dim * rightVector.size());
+//        for (int i = 0; i < rightVector.size(); ++i) {
+//            for (int toDim = 0; toDim < dim; ++toDim) {
+//                rawVector[dim * i + toDim] = rightVector[i][toDim];
+//            }
+//        }
+//        Eigen::VectorXd resultRaw = matrix * rawVector;
+////        int outputVectorLength = resultRaw.rows() / dim;
+////        Vectors3d result(outputVectorLength);
+////        assert(resultRaw.rows() % dim == 0);
+////        for (int i = 0; i < outputVectorLength; ++i) {
+////            for (int toDim = 0; toDim < dim; ++toDim) {
+////                result[i][toDim] = resultRaw[dim * i + toDim];
+////            }
+////        }
+//
+//
+//        return Vectors3d(resultRaw);
+//    }
 
 
-        return result;
-    }
-
-
-    std::vector<Eigen::Vector3d>
+    Vectors3d
     translationAverager::IRLS(const SparseMatrixd &systemMatrix,
-                              const std::vector<Eigen::Vector3d> &b,
-                              translationAverager::SparseMatrixd &weightDiagonalMatrix,
-                              const std::vector<Eigen::Vector3d> &translationsGuess,
+                              const Vectors3d &b,
+                              SparseMatrixd &weightDiagonalMatrix,
+                              const Vectors3d &translationsGuess,
                               bool &success,
                               int numOfIterations,
                               double epsilonIRLS) {
 
-        std::vector<Eigen::Vector3d> currentSolutionAbsoluteTranslations = translationsGuess;
+        Vectors3d currentSolutionAbsoluteTranslations = translationsGuess;
 
         for (int iteration = 0; iteration < numOfIterations; ++iteration) {
 
@@ -218,27 +210,26 @@ namespace gdr {
             currentSolutionAbsoluteTranslations =
                     findLeastSquaresSolution(systemMatrix, b, successCurrentIteration, weightDiagonalMatrix, true,
                                              currentSolutionAbsoluteTranslations);
-            std::vector<Eigen::Vector3d> residuals = subVectorOfTranslations(
-                    b,
-                    applyOperator(systemMatrix, currentSolutionAbsoluteTranslations));
-            weightDiagonalMatrix = getWeightMatrixRaw(getVectorOfNorms(residuals), epsilonIRLS);
+            Vectors3d residuals =
+                    b - (SparseMatrixClass(systemMatrix) * currentSolutionAbsoluteTranslations);
+            weightDiagonalMatrix = getWeightMatrixRaw(residuals.getVectorOfNorms(), epsilonIRLS);
 
         }
         return currentSolutionAbsoluteTranslations;
     }
 
-    std::vector<Eigen::Vector3d>
+    Vectors3d
     translationAverager::recoverTranslationsIRLS(const std::vector<translationMeasurement> &relativeTranslations,
                                                  std::vector<Eigen::Matrix4d> &absolutePosesGuess,
-                                                 const std::vector<Eigen::Vector3d> &absoluteTranslations,
+                                                 const Vectors3d &absoluteTranslations,
                                                  bool &successIRLS,
                                                  int numOfIterations,
                                                  double epsilonIRLS) {
 
         int dim = 3;
         SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslations, absolutePosesGuess);
-        std::vector<Eigen::Vector3d> b = constructColumnTermB(relativeTranslations, absolutePosesGuess);
-//        std::vector<Eigen::Vector3d> translationsGuess;
+        Vectors3d b = constructColumnTermB(relativeTranslations, absolutePosesGuess);
+//        Vectors3d translationsGuess;
 //        translationsGuess.reserve(absolutePosesGuess.size());
 //
 //        for (const auto &absolutePose: absolutePosesGuess) {
@@ -246,21 +237,21 @@ namespace gdr {
 //        }
 
         successIRLS = true;
-        std::vector<double> weightsId(b.size(), 1.0);
+        std::vector<double> weightsId(b.getSize(), 1.0);
         SparseMatrixd weightMatrixSparse = getWeightMatrixRaw(weightsId, epsilonIRLS);
         return IRLS(systemMatrix, b, weightMatrixSparse, absoluteTranslations, successIRLS, numOfIterations,
                     epsilonIRLS);
     }
 
-    std::vector<Eigen::Vector3d>
+    Vectors3d
     translationAverager::recoverTranslations(const std::vector<translationMeasurement> &relativeTranslations,
                                              const std::vector<Eigen::Matrix4d> &absolutePoses,
                                              double epsilonIRLSWeightMin) {
 
         SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslations, absolutePoses);
-        std::vector<Eigen::Vector3d> b = constructColumnTermB(relativeTranslations, absolutePoses);
+        Vectors3d b = constructColumnTermB(relativeTranslations, absolutePoses);
         bool success = true;
-        std::vector<double> weightsId(b.size(), 1.0);
+        std::vector<double> weightsId(b.getSize(), 1.0);
 
         return findLeastSquaresSolution(systemMatrix, b, success, getWeightMatrixRaw(weightsId, epsilonIRLSWeightMin));
     }
