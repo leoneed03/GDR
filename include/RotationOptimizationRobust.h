@@ -32,10 +32,10 @@ namespace gdr {
                         T* residuals) const {
 
 
-            std::cout << "init raw vectors" << std::endl;
+//            std::cout << "init raw vectors" << std::endl;
             std::vector<T> qRawFrom = {rotFrom[0], rotFrom[1], rotFrom[2], rotFrom[3]};
             std::vector<T> qRawTo = {rotTo[0], rotTo[1], rotTo[2], rotTo[3]};
-            std::cout << "init raw vectors end" << std::endl;
+//            std::cout << "init raw vectors end" << std::endl;
             Eigen::Map<const Eigen::Quaternion<T>> qFrom(qRawFrom.data());
             Eigen::Map<const Eigen::Quaternion<T>> qTo(qRawTo.data());
 

@@ -203,7 +203,7 @@ TEST(testRobustRotationOptimization, errorShouldBeZeroFirstPoseNotZero) {
     double dev = 0;
 
     for (int i = 0; i < posesInfo.size(); ++i) {
-        double currentAngleError = absoluteRotationsQuatFromGroundTruth[i].angularDistance(absoluteRotationsQuat[i]);
+        double currentAngleError = absoluteRotationsQuatFromGroundTruth[i].angularDistance(optimizedRotations[0].inverse().normalized() * optimizedRotations[i]);
         std::cout << i << ":\t" << currentAngleError << std::endl;
         sumErrors += currentAngleError;
         sumErrorsSquared += pow(currentAngleError, 2);
@@ -216,7 +216,7 @@ TEST(testRobustRotationOptimization, errorShouldBeZeroFirstPoseNotZero) {
     std::cout << "standard deviation(error) = " << meanSquaredError - pow(meanError, 2) << std::endl;
 
 
-    ASSERT_LE(meanError, 1e-5);
+    ASSERT_LE(meanError, 1e-2);
 }
 
 
