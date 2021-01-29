@@ -145,7 +145,9 @@ target_link_libraries(
   ${ICPCUDA_LIBS}
   ${Pangolin_LIBRARIES}
   ${CUDA_LIBRARIES}
-  ceres)
+    ${CERES_LIBRARIES}
+#  ceres
+)
 
 target_include_directories(
   GDR_LIB
@@ -156,6 +158,7 @@ target_include_directories(
         ${Sophus_INCLUDE_DIRS}
         ${ICPCUDA_INCLUDE_DIRS}
         ${Pangolin_INCLUDE_DIRS}
+        ${CERES_INCLUDE_DIRS}
   PRIVATE ${OpenGL_INCLUDE_DIR})
 
 
