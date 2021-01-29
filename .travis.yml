@@ -33,6 +33,11 @@ before_install:
 #  - sudo apt update
 #  - sudo apt install -y libgtsam-dev libgtsam-unstable-dev
 
+
+  - sudo apt-get -y install libgoogle-glog-dev libgflags-dev
+  - sudo apt-get -y install libceres-dev
+  # BLAS & LAPACK
+  - sudo apt-get -y install libatlas-base-dev
   - sudo apt-get -y install libmetis-dev
   - sudo apt-get -y install python3.7-dev
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
