@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10.0)
 project(GDR)
 
 set(CMAKE_CXX_STANDARD 17)
-#set(GCC_COVERAGE_COMPILE_FLAGS " -Os -march=native")
+set(GCC_COVERAGE_COMPILE_FLAGS " -Os")
 
 #set(GCC_COVERAGE_COMPILE_FLAGS " -march=native")
 
@@ -29,7 +29,7 @@ find_package(
   REQUIRED)
 
 set(local_custom_Pangolin_INSTALL_DIR _installed_Pangolin)
-set(custom_Pangolin_BUILD_NAME g-build)
+set(custom_Pangolin_BUILD_NAME g-build-concurrent)
 
 set(ICPCUDA_PROJECT_PATH ${PROJECT_SOURCE_DIR}/third-party/ICPCUDA)
 set(ICPCUDA_LIBS ${ICPCUDA_PROJECT_PATH}/${custom_Pangolin_BUILD_NAME}/libICP.so)
@@ -42,7 +42,7 @@ set(Pangolin_LIBRARIES ${Pangolin_INSTALL_DIR}/lib/libpangolin.so)
 
 set(Sophus_INCLUDE_DIRS ${ICPCUDA_third_party}/Sophus)
 
-set(GTSAM_BUILD_NAME mbuild)
+set(GTSAM_BUILD_NAME mbuild-concurrent)
 
 include(ExternalProject)
 
@@ -52,6 +52,7 @@ ExternalProject_Add(
     BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/ICPCUDA/${custom_Pangolin_BUILD_NAME}"
     CMAKE_ARGS -DPangolin_LOCAL_INSTALL_DIR=${local_custom_Pangolin_INSTALL_DIR}
     -DPangolin_BUILD_NAME=${custom_Pangolin_BUILD_NAME}
+    BUILD_COMMAND $(MAKE) -j3
     INSTALL_COMMAND "")
 
 ExternalProject_Add(
@@ -65,6 +66,7 @@ ExternalProject_Add(
  BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}" CONFIGURE_COMMAND
  cmake .. -DBUILD_SHARED_LIBS=0 -DGTSAM_USE_SYSTEM_EIGEN=1 -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF
      -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}
+ BUILD_COMMAND $(MAKE) -j3
  INSTALL_COMMAND make install )
 
 if(${DEBUG_PRINT_PROGRESS})
@@ -143,7 +145,7 @@ target_link_libraries(
   ${ICPCUDA_LIBS}
   ${Pangolin_LIBRARIES}
   ${CUDA_LIBRARIES}
-  Ceres::ceres)
+  ceres)
 
 target_include_directories(
   GDR_LIB
