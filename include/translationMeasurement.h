@@ -13,6 +13,9 @@ namespace gdr {
         Eigen::Vector3d translation3d;
         int indexFrom;
         int indexTo;
+
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         translationMeasurement(const Eigen::Vector3d& newTranslation3d, int newIndexFrom, int newIndexTo);
         Eigen::Vector3d getTranslation() const;
 

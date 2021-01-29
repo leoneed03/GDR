@@ -20,12 +20,19 @@ namespace gdr {
 
         translationMeasurement relativeTranslation;
 
+
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         relativePose(const rotationMeasurement &newRotationMeasurement,
                      const translationMeasurement &newTranslationMeasurement);
 
         Eigen::Quaterniond getRotationRelative() const;
+
         Eigen::Vector3d getTranslationRelative() const;
+
         int getIndexFromToBeTransformed() const;
+
         int getIndexToDestination() const;
 
     };

@@ -17,12 +17,17 @@ namespace gdr {
         Eigen::Quaterniond orientationQuat;
         Eigen::Vector3d coordinated3d;
 
+
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         poseInfo(double newTimestamp, const Eigen::Quaterniond &newOrientationQuat,
                  const Eigen::Vector3d &newCoordinates);
 
         poseInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation);
 
         Eigen::Quaterniond getOrientationQuat() const;
+
         Eigen::Vector3d getTranslation() const;
 
         friend std::ostream &operator<<(std::ostream &os, const poseInfo &dt);

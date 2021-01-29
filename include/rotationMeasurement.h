@@ -8,15 +8,21 @@
 
 #include <Eigen/Eigen>
 
+#include "Rotation3d.h"
+
 namespace gdr {
     struct rotationMeasurement {
 
-        Eigen::Quaterniond relativeRotationQuat;
+        Rotation3d relativeRotationQuat;
         int indexFrom;
         int indexTo;
 
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         rotationMeasurement(const Eigen::Quaterniond& newRelativeRotationQuat, int newIndexFrom, int newIndexTo);
         Eigen::Quaterniond getRotationQuat() const;
+        const Rotation3d& getRotation3d() const;
 
         int getIndexFromToBeTransformed() const;
         int getIndexToDestination() const;

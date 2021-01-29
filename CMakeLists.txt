@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.10.0)
 project(GDR)
 
 set(CMAKE_CXX_STANDARD 17)
-set(GCC_COVERAGE_COMPILE_FLAGS " -Os -march=native")
+#set(GCC_COVERAGE_COMPILE_FLAGS " -Os -march=native")
+
+#set(GCC_COVERAGE_COMPILE_FLAGS " -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(GDR_FLAGS "")
@@ -16,6 +18,8 @@ find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
+
+find_package(Ceres REQUIRED)
 
 find_package(
   Boost
@@ -111,12 +115,13 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/rotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
-    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp)
+    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h)
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
 add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
 
+#add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY)
 target_compile_definitions(GDR_LIB PUBLIC ${GDR_FLAGS})
 
 target_link_libraries(
@@ -130,7 +135,8 @@ target_link_libraries(
   ${TBB_LIBRARIES}
   ${ICPCUDA_LIBS}
   ${Pangolin_LIBRARIES}
-  ${CUDA_LIBRARIES})
+  ${CUDA_LIBRARIES}
+  Ceres::ceres)
 
 target_include_directories(
   GDR_LIB
@@ -143,22 +149,6 @@ target_include_directories(
         ${Pangolin_INCLUDE_DIRS}
   PRIVATE ${OpenGL_INCLUDE_DIR})
 
-add_executable(main main.cpp)
-add_dependencies(main icpCuda)
-
-target_link_libraries(main
-    ${ICPCUDA_LIBS}
-    ${Pangolin_LIBRARIES}
-    ${CUDA_LIBRARIES}
-    )
-
-target_include_directories(main
-    PUBLIC
-    ${Sophus_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIRS}
-    ${ICPCUDA_INCLUDE_DIRS}
-    ${Pangolin_INCLUDE_DIRS}
-    )
 
 enable_testing()
 add_subdirectory(test)

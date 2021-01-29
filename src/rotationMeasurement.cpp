@@ -12,8 +12,14 @@ namespace gdr {
                                                                indexFrom(newIndexFrom),
                                                                indexTo(newIndexTo) {}
     Eigen::Quaterniond rotationMeasurement::getRotationQuat() const {
+        return relativeRotationQuat.getUnitQuaternion();
+    }
+
+
+    const Rotation3d& rotationMeasurement::getRotation3d() const {
         return relativeRotationQuat;
     }
+
 
     int rotationMeasurement::getIndexFromToBeTransformed() const {
         return indexFrom;

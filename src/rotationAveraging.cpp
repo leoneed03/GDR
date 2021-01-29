@@ -16,8 +16,8 @@
 
 namespace gdr {
 
-    std::vector<Eigen::Quaterniond> rotationAverager::shanonAveraging(const std::string &pathToRelativeRotations, const std::string &pathOut) {
-        std::string inputFile = pathToRelativeRotations;
+    std::vector<Eigen::Quaterniond> rotationAverager::shanonAveraging(const std::string &pathToRelativeRotationsInput, const std::string &pathOut) {
+        std::string inputFile = pathToRelativeRotationsInput;
         std::vector<Eigen::Quaterniond> absoluteRotationsQuat;
 
         // Seed random number generator

@@ -20,6 +20,9 @@ namespace gdr {
         Eigen::Matrix3d R;
         Eigen::Vector3d t;
 
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix, const VertexCG &newVertexFrom,
                                const VertexCG &newVertexTo);
     };

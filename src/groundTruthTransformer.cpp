@@ -567,4 +567,132 @@ namespace gdr {
         }
         return posesInfo;
     }
+
+
+    int GTT::printRelativePosesFile(const std::vector<relativePose> &relativePoses,
+                                    const std::string &pathOutRelativePoseFile, int numPoses) {
+
+        std::ofstream file(pathOutRelativePoseFile);
+
+        if (file.is_open()) {
+
+            for (int i = 0; i < numPoses; ++i) {
+                std::string s1 = "VERTEX_SE3:QUAT ";
+                std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
+                file << s1 + s2;
+            }
+            for (const auto &relPose: relativePoses) {
+                {
+                    std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
+
+                    int indexTo = relPose.getIndexToDestination();
+                    int indexFrom = relPose.getIndexFromToBeTransformed();
+                    assert(indexTo > indexFrom);
+                    assert(indexTo < numPoses);
+                    assert(indexFrom < numPoses);
+
+                    //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format)
+                    file << "EDGE_SE3:QUAT " << indexTo << ' ' << indexFrom << ' ';
+                    auto translationVector = relPose.getTranslationRelative();
+                    file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
+                         << std::to_string(translationVector.col(0)[1]) << ' '
+                         << std::to_string(translationVector.col(0)[2]) << ' ';
+                    const auto &qR = relPose.getRotationRelative();
+
+                    std::vector<double> vectorDataRotations = {qR.x(), qR.y(), qR.z(), qR.w()};
+                    file << std::to_string(qR.x()) << ' ' << std::to_string(qR.y()) << ' ' <<
+                         std::to_string(qR.z()) << ' '
+                         << std::to_string(qR.w()) << noise << '\n';
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    std::vector<relativePose> GTT::readRelativePoses(const std::string &relativePosesFile) {
+
+        std::vector<relativePose> resultRelativePoses;
+
+        std::ifstream in(relativePosesFile);
+        int numbersInLine = 8;
+        int qDim = 4;
+        int dim = 3;
+        if (in) {
+            while (true) {
+                std::string currentToken = "_";
+                while (currentToken[0] != 'E') {
+                    if (!(in >> currentToken)) {
+                        return resultRelativePoses;
+                    }
+                }
+                int indexFrom = -1;
+                int indexTo = -1;
+                in >> indexTo;
+                in >> indexFrom;
+                assert(indexFrom < indexTo);
+
+
+                std::vector<double> currentT(3, 0);
+                for (int i = 0; i < dim; ++i) {
+                    in >> currentT[i];
+                }
+
+                std::vector<double> currentPose(4, 0);
+                for (int i = 0; i < qDim; ++i) {
+                    in >> currentPose[i];
+                }
+                resultRelativePoses.push_back(
+                        relativePose(rotationMeasurement(Eigen::Quaterniond(currentPose.data()), indexFrom, indexTo),
+                                     translationMeasurement(Eigen::Vector3d(currentT.data()), indexFrom, indexTo)));
+
+            }
+        }
+
+
+        return resultRelativePoses;
+//        std::ifstream in(pathToGroundTruth);
+//        int numOfEmptyLines = 3;
+//        int numbersInLine = 8;
+//        std::vector<double> stamp0;
+//        std::vector<double> prevCoordinates = {0, 0, 0, 0, 0, 0, 0, 0};
+//        std::vector<std::vector<double>> coordAndQuat;
+//
+//        if (in) {
+//            for (int i = 0; i < numOfEmptyLines; ++i) {
+//                std::string s;
+//                std::getline(in, s);
+//            }
+//            double currVal = -1;
+//            bool run = true;
+//            while (run) {
+//                std::vector<double> stamps;
+//                for (int i = 0; i < numbersInLine; ++i) {
+//                    if (in >> currVal) {
+//                        stamps.push_back(currVal);
+//                    } else {
+//                        run = false;
+//                        break;
+//                    }
+//                }
+//                if (run) {
+//                    assert(stamps.size() == 8);
+//                    coordAndQuat.push_back(stamps);
+//                }
+//            }
+//        }
+//        std::vector<std::vector<double>> resultingTruth;
+//        for (int i = 0; i < timeStamps.size(); ++i) {
+//            for (int posInFile = 0; posInFile < coordAndQuat.size(); ++posInFile) {
+//                if (abs(coordAndQuat[posInFile][0] - timeStamps[i]) < abs(prevCoordinates[0] - timeStamps[i])) {
+//                    prevCoordinates = coordAndQuat[posInFile];
+//                }
+//            }
+//            resultingTruth.push_back(prevCoordinates);
+//        }
+//        assert(resultingTruth.size() == timeStamps.size());
+//
+//        return resultingTruth;
+    }
+
 }

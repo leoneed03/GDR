@@ -37,10 +37,13 @@ namespace gdr {
         int heightMirrorParameter = 480;
         int widthMirrorParameter = 640;
 
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         void setRotation(const Eigen::Matrix3d &rotation);
 
         VertexCG(int newIndex,
-                 const CameraRGBD& newCameraRgbd,
+                 const CameraRGBD &newCameraRgbd,
                  const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
                  const std::vector<float> &newDescriptors,
                  const std::vector<double> &newDepths,

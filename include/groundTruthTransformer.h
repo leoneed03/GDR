@@ -63,7 +63,10 @@ namespace gdr {
                                                             std::string noise = "");
 
         static std::vector<relativePose> extractAllRelativeTransformationPairwise(const std::string &in);
+
+        static std::vector<relativePose> readRelativePoses(const std::string &in);
         static std::vector<poseInfo> getPoseInfoTimeTranslationOrientation(const std::string& pathToGroundTruthFile);
+        static int printRelativePosesFile(const std::vector<relativePose>& relativePoses, const std::string &pathOutRelativePoseFile, int numAbsPoses);
     };
 }
 
