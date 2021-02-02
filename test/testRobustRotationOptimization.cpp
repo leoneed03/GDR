@@ -254,7 +254,7 @@ TEST(testRobustRotationOptimization, fromAbsolutePoses) {
     std::cout << "PERFORM CERES" << std::endl;
     auto optimizedRotations = rotationOptimizer.getOptimizedOrientation();
 
-    std::cout << "\n\nPERFORMED\n\n\n" << std::endl;
+    std::cout << "\n\n_____________________________PERFORMED_________________________________\n\n\n" << std::endl;
 
     std::vector<Eigen::Quaterniond> absoluteRotationsQuat;
     for (const auto& q: optimizedRotations) {

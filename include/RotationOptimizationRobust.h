@@ -43,8 +43,8 @@ namespace gdr {
 
             Eigen::Quaternion<T> qToQuat(qRawTo.data());
 
-            qFromQuat.normalize();
-            qToQuat.normalize();
+//            qFromQuat.normalize();
+//            qToQuat.normalize();
 
 
             Eigen::Quaternion<T> relativeRotationComputed = qTo.inverse() * qFrom;
@@ -69,30 +69,13 @@ namespace gdr {
             Eigen::Map<const Eigen::Quaternion<T>> qMeasured(rawRelRotObserved.data());
             Eigen::Quaternion<T> qMeasuredQuat(rawRelRotObserved.data());
             qMeasuredQuat.normalize();
-//            qMeasuredQuat.normalize();
-//            Eigen::Quaternion<T> delta_q = qMeasuredQuat.template cast<T>() * relativeRotationComputed.conjugate();
 
             Eigen::Quaternion<T> delta_q = qMeasuredQuat * relativeRotationComputed.inverse();
             Sophus::SO3<T> quatErrorSophus(delta_q.normalized().toRotationMatrix());
             Eigen::Map<Eigen::Matrix<T, 3, 1>> residualsM(residuals);
             auto logError = quatErrorSophus.log();
-//            std::cout << "before residuals" << std::endl;
-//            residualsM.template block<3, 1>(0, 0) = T(2.0) * delta_q.vec();
 
             residualsM.template block<3, 1>(0, 0) = T(2.0) * logError;
-
-//            std::cout << "after residuals" << std::endl;
-
-//
-//            Eigen::Map<Eigen::Matrix<T, 3, 1>> residualsM(residuals);
-//            residualsM.template block<3, 1>(0, 0) = T(2.0) * delta_q.vec();
-
-//            Sophus::SO3<T> quatErrorSophus(quatError.toRotationMatrix());
-//            auto logError = quatErrorSophus.log();
-//
-//            residuals[0] = logError[0];
-//            residuals[1] = logError[1];
-//            residuals[2] = logError[2];
 
             return true;
         }
@@ -155,7 +138,7 @@ namespace gdr {
 
         RotationOptimizer(const std::vector<Rotation3d>& newOrientations, const std::vector<rotationMeasurement>& pairWiseRotations);
 
-        std::vector<Eigen::Quaterniond> getOptimizedOrientation() const;
+        std::vector<Eigen::Quaterniond> getOptimizedOrientation(int indexFixed = 0) const;
     };
 }
 

@@ -13,17 +13,9 @@ namespace gdr {
                                          const std::vector<rotationMeasurement> &pairWiseRotationsVector) :
             orientations(newOrientations),
             relativeRotations(pairWiseRotationsVector) {
-
-//        std::vector<std::map<int, Rotation3d>> relativeRotTable(newOrientations.size());
-//
-//        for (const auto& relativeRot: pairWiseRotationsVector) {
-//            relativeRotTable[relativeRot.getIndexFromToBeTransformed()].insert(std::make_pair(relativeRot.getIndexToDestination(), relativeRot.getRotation3d()));
-//        }
-//
-//        std::swap(pairWiseRotations, relativeRotTable);
     }
 
-    std::vector<Eigen::Quaterniond> RotationOptimizer::getOptimizedOrientation() const {
+    std::vector<Eigen::Quaterniond> RotationOptimizer::getOptimizedOrientation(int indexFixed) const {
 
         int dim = 4;
         std::vector<std::vector<double>> result(orientations.size());
@@ -43,6 +35,8 @@ namespace gdr {
 
 
         ceres::Problem problem;
+        ceres::LocalParameterization* quaternion_local_parameterization =
+                new ceres::EigenQuaternionParameterization;
         for (const auto &relativeRotObservation: relativeRotations) {
 
             Eigen::Quaterniond quat = relativeRotObservation.getRotationQuat();
@@ -58,9 +52,14 @@ namespace gdr {
                                      new ceres::CauchyLoss(0.5),
                                      result[indexFrom].data(),
                                      result[indexTo].data());
+            problem.SetParameterization(result[indexFrom].data(), quaternion_local_parameterization);
+            problem.SetParameterization(result[indexTo].data(), quaternion_local_parameterization);
         }
+        problem.SetParameterBlockConstant(result[indexFixed].data());
+
+
         ceres::Solver::Options options;
-        options.linear_solver_type = ceres::DENSE_SCHUR;
+        options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
         options.minimizer_progress_to_stdout = true;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
@@ -86,70 +85,3 @@ namespace gdr {
         return optimizedOrientations;
     }
 }
-
-/*
-
-//
-// Copyright (c) Leonid Seniukov. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for details.
-//
-
-
-
-#include "RotationOptimizationRobust.h"
-
-namespace gdr {
-
-    RotationOptimizer::RotationOptimizer(const std::vector<Rotation3d> &newOrientations,
-                                         const std::vector<rotationMeasurement> &pairWiseRotationsVector):
-            orientations(newOrientations),
-            relativeRotations(pairWiseRotationsVector) {
-
-//        std::vector<std::map<int, Rotation3d>> relativeRotTable(newOrientations.size());
-//
-//        for (const auto& relativeRot: pairWiseRotationsVector) {
-//            relativeRotTable[relativeRot.getIndexFromToBeTransformed()].insert(std::make_pair(relativeRot.getIndexToDestination(), relativeRot.getRotation3d()));
-//        }
-//
-//        std::swap(pairWiseRotations, relativeRotTable);
-    }
-
-    std::vector<Rotation3d> RotationOptimizer::getOptimizedOrientation() const {
-
-        int dim = 4;
-        std::vector<std::vector<double>> result(orientations.size());
-        for (int i = 0; i < orientations.size(); ++i) {
-            Eigen::Quaterniond quat = orientations[i].getUnitQuaternion();
-            result[i] = {quat.x(), quat.y(), quat.z(), quat.w()};
-        }
-
-
-        ceres::Problem problem;
-        for (const auto& relativeRotObservation: relativeRotations) {
-
-            for (const auto& relativeRotObservation: rel[i]) {
-
-                Eigen::Quaterniond quat = relativeRotObservation.second.getUnitQuaternion();
-                std::vector<double> quatVector = {quat.x(), quat.y(), quat.z(), quat.w()};
-                assert(result[i].size() == dim);
-                assert(result[relativeRotObservation.first].size() == dim);
-                assert(i < relativeRotObservation.first);
-                ceres::CostFunction *cost_function =
-                        SnavelyReprojectionError::Create(quat);
-                problem.AddResidualBlock(cost_function,
-                                         new ceres::CauchyLoss(0.5),
-                                         result[i].data(),
-                                         result[relativeRotObservation.first].data());
-            }
-        }
-        ceres::Solver::Options options;
-        options.linear_solver_type = ceres::DENSE_SCHUR;
-        options.minimizer_progress_to_stdout = true;
-        ceres::Solver::Summary summary;
-        ceres::Solve(options, &problem, &summary);
-        std::cout << summary.FullReport() << "\n";
-
-        return orientations;
-    }
-}
-*/
