@@ -9,7 +9,7 @@
 
 #include "Rotation3d.h"
 
-#define epsilonD3 (3 * std::numeric_limits<double>::epsilon())
+#define epsilonD3 (10 * std::numeric_limits<double>::epsilon())
 
 TEST(testRotationRepresentation, fromQuaternion) {
 

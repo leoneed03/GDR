@@ -58,5 +58,9 @@ namespace gdr {
         return resultKeyPointsObserved;
     }
 
+    int CloudProjector::getPoseNumber() const {
+        return poses.size();
+    }
+
 
 }

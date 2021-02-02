@@ -41,6 +41,8 @@ namespace gdr {
 
         const VertexCG& getPoseByPoseNumber(int poseNumber) const;
 
+        int getPoseNumber() const;
+
 //        KeyPointInfo& getKeyPointInfoByPoseNumberAndPointIndex(int PoseNumber, int PointIndex) const;
 
         std::vector<std::pair<int, KeyPointInfo>> getKeyPointsIndicesAndInfoByPose(int poseNumber) const;

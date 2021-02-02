@@ -56,19 +56,24 @@ namespace gdr {
             insertedGlobalIndices.push_back(pointGlobalIndex);
         }
 
-//        for (int i = 0; i < insertedGlobalIndices.size(); ++i) {
-//            for (int j = i + 1; j < insertedGlobalIndices.size(); ++j) {
-//
-//                int globalIndexI = insertedGlobalIndices[i];
-//                int globalIndexJ = insertedGlobalIndices[j];
-//
-////                int globalIndRange = poseNumberAndPointLocalIndexByGlobalIndex.size();
-//                assert(globalIndexI < matchesGlobalIndicesByPose.size() &&
-//                       globalIndexJ < matchesGlobalIndicesByPose.size());
-//                matchesGlobalIndicesByPose[globalIndexI].push_back(globalIndexJ);
-//                matchesGlobalIndicesByPose[globalIndexJ].push_back(globalIndexI);
-//            }
-//        }
+        for (int i = 0; i < insertedGlobalIndices.size(); ++i) {
+            for (int j = i + 1; j < insertedGlobalIndices.size(); ++j) {
+
+                int globalIndexI = insertedGlobalIndices[i];
+                int globalIndexJ = insertedGlobalIndices[j];
+
+                for (int to2 = 0; to2 < 2; ++to2) {
+                    auto foundListOfAdjVertices = edgesBetweenPointsByGlobalIndices.find(globalIndexI);
+                    if (foundListOfAdjVertices != edgesBetweenPointsByGlobalIndices.end()) {
+                        foundListOfAdjVertices->second.push_back(globalIndexJ);
+                    } else {
+                        std::pair<int, std::vector<int>> pairToInsert = {globalIndexI, {globalIndexJ}};
+                        edgesBetweenPointsByGlobalIndices.insert(pairToInsert);
+                    }
+                    std::swap(globalIndexJ, globalIndexI);
+                }
+            }
+        }
     }
 
     int PointMatcher::getUnknownClassIndex() const {
@@ -105,13 +110,16 @@ namespace gdr {
 
             globalIndicesToVisit.push(globalIndexToVisit);
 
+            std::cout << "====================================NEW COMPONENT " << globalIndexToVisit << " class is " << newClassNumber << std::endl;
+
             std::vector<int> currentClassGlobalIndices;
 
             while (!globalIndicesToVisit.empty()) {
                 int currentGlobalIndex = globalIndicesToVisit.front();
                 globalIndicesToVisit.pop();
 
-                assert(!visitedGlobalIndices[currentGlobalIndex]);
+                std::cout << "enter while " << currentGlobalIndex << std::endl;
+//                assert(!visitedGlobalIndices[currentGlobalIndex]);
                 visitedGlobalIndices[currentGlobalIndex] = true;
 
                 classByGlobalIndex[currentGlobalIndex] = newClassNumber;
@@ -119,6 +127,19 @@ namespace gdr {
                 assert(pointClassesByPose[poseAndLocalInd.first].find(poseAndLocalInd.second) ==
                        pointClassesByPose[poseAndLocalInd.first].end());
                 pointClassesByPose[poseAndLocalInd.first][poseAndLocalInd.second] = newClassNumber;
+
+                std::cout << " SIZE of list for " << currentGlobalIndex << " is " << edgesBetweenPointsByGlobalIndices[currentGlobalIndex].size() << std::endl;
+                for (const auto& samePoint: edgesBetweenPointsByGlobalIndices[currentGlobalIndex]) {
+                    if (!visitedGlobalIndices[samePoint]) {
+
+                        std::cout << "         pushed from " << currentGlobalIndex << " to " << samePoint << std::endl;
+                        globalIndicesToVisit.push(samePoint);
+                        visitedGlobalIndices[samePoint] = true;
+                    } else {
+
+                        std::cout << "        NOT pushed from " << currentGlobalIndex << " to " << samePoint << std::endl;
+                    }
+                }
             }
 
             ++numClasses;

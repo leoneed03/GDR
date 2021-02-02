@@ -16,6 +16,7 @@ namespace gdr {
         int numClasses = 0;
 
 //        std::vector<std::vector<int>> matchesGlobalIndicesByPose;
+        std::unordered_map<int, std::vector<int>> edgesBetweenPointsByGlobalIndices;
         std::vector<std::pair<int, int>> poseNumberAndPointLocalIndexByGlobalIndex;
         std::vector<std::unordered_map<int, int>> pointGlobalIndexByPose;
         std::vector<std::unordered_map<int, int>> pointClassesByPose;

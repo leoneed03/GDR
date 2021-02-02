@@ -278,7 +278,7 @@ namespace gdr {
                                                                                          vertexInList,
                                                                                          neighbourhoodRadius,
                                                                                          cR_t_umeyama);
-        for (const auto& matchPair: inlierMatchesCorrespondingKeypoints) {
+        for (const auto &matchPair: inlierMatchesCorrespondingKeypoints) {
             inlierCorrespondencesPoints.push_back(matchPair);
         }
         return cR_t_umeyama;
@@ -518,6 +518,7 @@ namespace gdr {
     void CorrespondenceGraph::computePointClasses() {
         computePointClasses(inlierCorrespondencesPoints);
     }
+
     void CorrespondenceGraph::computePointClasses(
             const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints) {
 
@@ -558,7 +559,8 @@ namespace gdr {
             int pointClassNumber = pointClasses[pointIncrementor];
             std::pair<int, int> poseNumberAndLocalIndex = pointMatcher.getPoseNumberAndLocalIndex(pointIncrementor);
             std::vector<KeyPointInfo> keyPointInfo;
-            keyPointInfo.push_back(keyPointInfoByPoseNumAndLocalInd[poseNumberAndLocalIndex.first][poseNumberAndLocalIndex.second]);
+            keyPointInfo.push_back(
+                    keyPointInfoByPoseNumAndLocalInd[poseNumberAndLocalIndex.first][poseNumberAndLocalIndex.second]);
             cloudProjector.addPoint(pointClassNumber, keyPointInfo);
         }
 
