@@ -27,4 +27,12 @@ namespace gdr {
                                                       pathToDimage(newPathD) {
         absoluteRotationTranslation.setIdentity();
     }
+
+    std::string VertexCG::getPathRGBImage() const {
+        return pathToRGBimage;
+    }
+
+    std::string VertexCG::getPathDImage() const {
+        return pathToDimage;
+    }
 }

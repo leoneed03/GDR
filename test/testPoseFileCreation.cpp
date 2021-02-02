@@ -22,12 +22,13 @@ int countNumberOfLines(const std::string &relPosesFile) {
 
 TEST(testCorrespondenceGraph, relativePoseFileCreated) {
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth",
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
                                                  525.0,
                                                  319.5, 525.0, 239.5);
+    std::cout << "compute poses" << std::endl;
     correspondenceGraph.computeRelativePoses();
     int numberOfLines = countNumberOfLines(correspondenceGraph.relativePose);
-    int defaultNumberOfLines = 10;
+    int defaultNumberOfLines = 19;
 
     ASSERT_GE(numberOfLines, correspondenceGraph.verticesOfCorrespondence.size());
     ASSERT_GE(numberOfLines, defaultNumberOfLines);

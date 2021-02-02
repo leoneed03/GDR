@@ -8,6 +8,7 @@
 
 #include <queue>
 
+#include "CloudProjector.h"
 #include "VertexCG.h"
 #include "transformationRt.h"
 #include "cameraRGBD.h"
@@ -16,8 +17,8 @@
 #include "quaternions.h"
 #include "errors.h"
 #include "umeyama.h"
-
-#include <opencv2/opencv.hpp>
+//
+//#include <opencv2/opencv.hpp>
 
 namespace gdr {
     struct Match {
@@ -31,13 +32,15 @@ namespace gdr {
 
     struct CorrespondenceGraph {
 
+        PointMatcher pointMatcher;
+        CloudProjector cloudProjector;
         CameraRGBD cameraRgbd;
         SiftModule siftModule;
         std::vector<VertexCG> verticesOfCorrespondence;
         int maxVertexDegree = 80;
         int numIterations = 50;
         std::vector<std::vector<Match>> matches;
-        std::vector<std::vector<transformationRtMatrix>> tranformationRtMatrices;
+        std::vector<std::vector<transformationRtMatrix>> transformationRtMatrices;
         double neighbourhoodRadius = 0.05;
         int minNumberOfInliersAfterRobust = 10;
         const std::string redCode = "\033[0;31m";
@@ -49,16 +52,37 @@ namespace gdr {
         std::string pathToImageDirectoryRGB;
         std::string pathToImageDirectoryD;
 
+        const CloudProjector& getCloudProjector() const;
+
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
+
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
+        findInlierPointCorrespondences(int vertexFrom,
+                                       int vertexInList,
+                                       double inlierCoeff,
+                                       Eigen::Matrix4d &transformation);
+
         CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD,
                             float fx,
                             float cx, float fy, float cy);
 
-        int refineRelativePose(const VertexCG& vertexToBeTransformed, const VertexCG& vertexDestination, Eigen::Matrix4d& initEstimationRelPos, bool& success);
+        int refineRelativePose(const VertexCG &vertexToBeTransformed, const VertexCG &vertexDestination,
+                               Eigen::Matrix4d &initEstimationRelPos, bool &success);
+
         int findCorrespondences();
 
         int findTransformationRtMatrices();
 
         void decreaseDensity();
+
+        // each pair is poseNumber and point's local index
+        // paired with its KeyPointInfo
+        // pairs are grouped in one vector if representing same global point
+
+        void computePointClasses(
+                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints);
+
+        void computePointClasses();
 
         Eigen::Matrix4d
         getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, bool &success,

@@ -4,7 +4,6 @@
 //
 
 #include "CorrespondenceGraph.h"
-#include "groundTruthTransformer.h"
 #include "printer.h"
 #include "ICP.h"
 #include "pointCloud.h"
@@ -14,7 +13,7 @@
 #include <cmath>
 #include <fstream>
 #include <string>
-
+#include <opencv2/opencv.hpp>
 
 namespace gdr {
 
@@ -28,6 +27,81 @@ namespace gdr {
         ProcessorICP::refineRelativePoseICP(vertexToBeTransformed, vertexDestination, initEstimationRelPos);
 
         return 0;
+    }
+
+    std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
+    CorrespondenceGraph::findInlierPointCorrespondences(int vertexFrom,
+                                                        int vertexInList,
+                                                        double maxErrorL2,
+                                                        Eigen::Matrix4d &transformation) {
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
+        const auto &match = matches[vertexFrom][vertexInList];
+        int minSize = match.matchNumbers.size();
+
+        std::vector<std::vector<double>> toBeTransformedPointsVector;
+        std::vector<std::vector<double>> originPointsVector;
+
+        for (int i = 0; i < minSize; ++i) {
+
+            double x_origin, y_origin, z_origin;
+            int localIndexOrigin = match.matchNumbers[i].first;
+            const auto &siftKeyPointOrigin = verticesOfCorrespondence[vertexFrom].keypoints[localIndexOrigin];
+            x_origin = siftKeyPointOrigin.x;
+            y_origin = siftKeyPointOrigin.y;
+            z_origin = verticesOfCorrespondence[vertexFrom].depths[localIndexOrigin];
+            originPointsVector.push_back({x_origin, y_origin, z_origin, 1});
+            KeyPointInfo keyPointInfoOrigin(siftKeyPointOrigin, z_origin, vertexFrom);
+
+
+//            std::pair<std::pair<int, int>, KeyPointInfo> infoOriginKeyPoint = std::make_pair(std::make_pair(vertexFrom, localIndexOrigin), keyPointInfoOrigin);
+            std::pair<std::pair<int, int>, KeyPointInfo> infoOriginKeyPoint = {{vertexFrom, localIndexOrigin},
+                                                                               KeyPointInfo(siftKeyPointOrigin,
+                                                                                            z_origin,
+                                                                                            vertexFrom)};
+
+            double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
+            int localIndexToBeTransformed = match.matchNumbers[i].second;
+            int vertexToBeTransformed = match.frameNumber;
+            const auto &siftKeyPointToBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
+            x_toBeTransformed = siftKeyPointToBeTransformed.x;
+            y_toBeTransformed = siftKeyPointToBeTransformed.y;
+            z_toBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].depths[localIndexToBeTransformed];
+            toBeTransformedPointsVector.push_back({x_toBeTransformed, y_toBeTransformed, z_toBeTransformed, 1});
+
+
+            std::pair<std::pair<int, int>, KeyPointInfo> infoToBeTransformedKeyPoint = {
+                    {vertexToBeTransformed, localIndexToBeTransformed},
+                    KeyPointInfo(siftKeyPointToBeTransformed,
+                                 z_toBeTransformed,
+                                 vertexToBeTransformed)};
+            correspondencesBetweenTwoImages.push_back({infoOriginKeyPoint, infoToBeTransformedKeyPoint});
+
+        }
+        assert(toBeTransformedPointsVector.size() == minSize);
+        assert(originPointsVector.size() == minSize);
+
+
+        Eigen::Matrix4Xd toBeTransformedPoints = getPointCloudBeforeProjection(toBeTransformedPointsVector,
+                                                                               verticesOfCorrespondence[vertexFrom].cameraRgbd);
+        Eigen::Matrix4Xd originPoints = getPointCloudBeforeProjection(originPointsVector,
+                                                                      verticesOfCorrespondence[match.frameNumber].cameraRgbd);
+        Eigen::Matrix4Xd residuals = originPoints - transformation * toBeTransformedPoints;
+
+        std::vector<bool> inliersCorrespondencesKeyPoints(correspondencesBetweenTwoImages.size(), true);
+        assert(inliersCorrespondencesKeyPoints.size() == minSize);
+        assert(inliersCorrespondencesKeyPoints.size() == residuals.cols());
+
+
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondences;
+
+        for (int i = 0; i < residuals.cols(); ++i) {
+            double normResidual = residuals.col(i).norm();
+            if (normResidual < maxErrorL2) {
+                inlierCorrespondences.push_back(correspondencesBetweenTwoImages[i]);
+            }
+        }
+
+        return inlierCorrespondences;
     }
 
     int CorrespondenceGraph::findCorrespondences() {
@@ -82,8 +156,8 @@ namespace gdr {
                                                           << std::setw(2 * spaceIO) << qRelatived.z()
                                                           << std::setw(2 * spaceIO) << qRelatived.w());
 
-                    tranformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo));
-                    tranformationRtMatrices[frameTo.index].push_back(
+                    transformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo));
+                    transformationRtMatrices[frameTo.index].push_back(
                             transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
                 } else {
 
@@ -113,8 +187,10 @@ namespace gdr {
     }
 
     Eigen::Matrix4d
-    CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList,
-                                                            bool &success, double inlierCoeff) {
+    CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom,
+                                                            int vertexInList,
+                                                            bool &success,
+                                                            double inlierCoeff) {
         Eigen::Matrix4d cR_t_umeyama;
         cR_t_umeyama.setIdentity();
         success = true;
@@ -139,20 +215,27 @@ namespace gdr {
             std::vector<std::vector<double>> originPointsVector;
 
             for (int i = 0; i < minSize; ++i) {
-                {
-                    double x_origin, y_origin, z_origin;
-                    x_origin = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].x;
-                    y_origin = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].y;
-                    z_origin = verticesOfCorrespondence[vertexFrom].depths[match.matchNumbers[i].first];
-                    originPointsVector.push_back({x_origin, y_origin, z_origin, 1});
-                }
-                {
-                    double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
-                    x_toBeTransformed = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].x;
-                    y_toBeTransformed = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].y;
-                    z_toBeTransformed = verticesOfCorrespondence[match.frameNumber].depths[match.matchNumbers[i].second];
-                    toBeTransformedPointsVector.push_back({x_toBeTransformed, y_toBeTransformed, z_toBeTransformed, 1});
-                }
+
+                double x_origin, y_origin, z_origin;
+                int localIndexOrigin = match.matchNumbers[i].first;
+                const auto &siftKeyPointOrigin = verticesOfCorrespondence[vertexFrom].keypoints[localIndexOrigin];
+                x_origin = siftKeyPointOrigin.x;
+                y_origin = siftKeyPointOrigin.y;
+                z_origin = verticesOfCorrespondence[vertexFrom].depths[localIndexOrigin];
+                originPointsVector.push_back({x_origin, y_origin, z_origin, 1});
+
+                double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
+                int localIndexToBeTransformed = match.matchNumbers[i].second;
+                int vertexToBeTransformed = match.frameNumber;
+                const auto &siftKeyPointToBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
+                x_toBeTransformed = siftKeyPointToBeTransformed.x;
+                y_toBeTransformed = siftKeyPointToBeTransformed.y;
+                z_toBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].depths[localIndexToBeTransformed];
+                toBeTransformedPointsVector.push_back({x_toBeTransformed, y_toBeTransformed, z_toBeTransformed, 1});
+
+                std::vector<std::pair<int, int>> points = {{vertexFrom,            localIndexOrigin},
+                                                           {vertexToBeTransformed, localIndexToBeTransformed}};
+
             }
             assert(toBeTransformedPointsVector.size() == minSize);
             assert(originPointsVector.size() == minSize);
@@ -164,78 +247,6 @@ namespace gdr {
                                                                           verticesOfCorrespondence[match.frameNumber].cameraRgbd);
             assert(toBeTransformedPoints.cols() == minSize);
             assert(originPoints.cols() == minSize);
-
-
-
-
-            //old version start
-
-            /*
-            Eigen::Matrix4Xd toBeTransformedPoints(4, minSize);
-            Eigen::Matrix4Xd originPoints(4, minSize);
-
-            double mz = 1000;
-            double Mz = -1000;
-            for (int i = 0; i < minSize; ++i) {
-                {
-                    double x1, y1, z1;
-                    x1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].x;
-                    y1 = verticesOfCorrespondence[vertexFrom].keypoints[match.matchNumbers[i].first].y;
-                    z1 = verticesOfCorrespondence[vertexFrom].depths[match.matchNumbers[i].first];
-
-                    double mirrorParameterH = verticesOfCorrespondence[vertexFrom].heightMirrorParameter;
-                    assert(y1 < mirrorParameterH && y1 > 0);
-                    y1 = mirrorParameterH - y1;
-
-                    double mirrorParameterW = verticesOfCorrespondence[vertexFrom].widthMirrorParameter;
-                    assert(x1 < mirrorParameterW && x1 > 0);
-                    x1 = mirrorParameterW - x1;
-
-                    x1 = 1.0 * (x1 - cameraRgbd.cx) * z1 / cameraRgbd.fx;
-                    y1 = 1.0 * (y1 - cameraRgbd.cy) * z1 / cameraRgbd.fy;
-
-                    if (z1 < mz) {
-                        mz = z1;
-                    }
-                    if (z1 > Mz) {
-                        Mz = z1;
-                    }
-
-
-                    assert(z1 > 3 * std::numeric_limits<double>::epsilon());
-                    assert(z1 < 14);
-                    originPoints.col(i) << x1, y1, z1, 1;
-                }
-
-                {
-                    double x2, y2, z2;
-                    x2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].x;
-                    y2 = verticesOfCorrespondence[match.frameNumber].keypoints[match.matchNumbers[i].second].y;
-                    z2 = verticesOfCorrespondence[match.frameNumber].depths[match.matchNumbers[i].second];
-
-                    double mirrorParameterH = verticesOfCorrespondence[vertexFrom].heightMirrorParameter;
-                    assert(y2 < mirrorParameterH && y2 >= 0);
-                    y2 = mirrorParameterH - y2;
-
-                    double mirrorParameterW = verticesOfCorrespondence[vertexFrom].widthMirrorParameter;
-                    assert(x2 < mirrorParameterW && x2 > 0);
-                    x2 = mirrorParameterW - x2;
-
-                    x2 = 1.0 * (x2 - cameraRgbd.cx) * z2 / cameraRgbd.fx;
-                    y2 = 1.0 * (y2 - cameraRgbd.cy) * z2 / cameraRgbd.fy;
-
-                    assert(z2 > 3 * std::numeric_limits<double>::epsilon());
-                    assert(z2 < 14);
-                    toBeTransformedPoints.col(i) << x2, y2, z2, 1;
-                }
-            }
-
-            assert(mz > 0);
-            assert(Mz > 0);
-
-
-            //old version end
-             */
 
             cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints,
                                                                   originPoints,
@@ -258,6 +269,18 @@ namespace gdr {
         }
 
         PRINT_PROGRESS("return success -- transformation matrix found");
+
+
+
+
+        // look for inliers after umeyama
+        const auto &inlierMatchesCorrespondingKeypoints = findInlierPointCorrespondences(vertexFrom,
+                                                                                         vertexInList,
+                                                                                         neighbourhoodRadius,
+                                                                                         cR_t_umeyama);
+        for (const auto& matchPair: inlierMatchesCorrespondingKeypoints) {
+            inlierCorrespondencesPoints.push_back(matchPair);
+        }
         return cR_t_umeyama;
     }
 
@@ -266,28 +289,28 @@ namespace gdr {
         std::ofstream file(pathOutRelativePoseFile);
 
         if (file.is_open()) {
-            int numPoses = tranformationRtMatrices.size();
+            int numPoses = transformationRtMatrices.size();
             for (int i = 0; i < numPoses; ++i) {
                 std::string s1 = "VERTEX_SE3:QUAT ";
                 std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
                 file << s1 + s2;
             }
-            for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
-                for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
-                    if (i >= tranformationRtMatrices[i][j].vertexTo.index) {
+            for (int i = 0; i < transformationRtMatrices.size(); ++i) {
+                for (int j = 0; j < transformationRtMatrices[i].size(); ++j) {
+                    if (i >= transformationRtMatrices[i][j].vertexTo.index) {
                         continue;
                     }
                     std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
 
-                    int indexTo = tranformationRtMatrices[i][j].vertexTo.index;
+                    int indexTo = transformationRtMatrices[i][j].vertexTo.index;
                     int indexFrom = i;
                     //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format)
                     file << "EDGE_SE3:QUAT " << indexTo << ' ' << indexFrom << ' ';
-                    auto translationVector = tranformationRtMatrices[i][j].t;
+                    auto translationVector = transformationRtMatrices[i][j].t;
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
                          << std::to_string(translationVector.col(0)[1]) << ' '
                          << std::to_string(translationVector.col(0)[2]) << ' ';
-                    const auto &R = tranformationRtMatrices[i][j].R;
+                    const auto &R = transformationRtMatrices[i][j].R;
 
                     Eigen::Quaterniond qR(R);
                     std::vector<double> vectorDataRotations = {qR.x(), qR.y(), qR.z(), qR.w()};
@@ -307,14 +330,11 @@ namespace gdr {
         PRINT_PROGRESS("first print successfull");
 
         std::vector<Eigen::Quaterniond> absoluteRotationsQuats = rotationAverager::shanonAveraging(relativePose,
-                                                                                              absolutePose);
-//
-//        PRINT_PROGRESS("Shonan averaging successfull");
-//        std::vector<std::vector<double>> quaternions = parseAbsoluteRotationsFile(absolutePose);
+                                                                                                   absolutePose);
 
         PRINT_PROGRESS("read quaternions successfull");
         std::vector<Eigen::Matrix3d> absoluteRotations;
-        for (const auto& absoluteRotationQuat: absoluteRotationsQuats) {
+        for (const auto &absoluteRotationQuat: absoluteRotationsQuats) {
             absoluteRotations.push_back(absoluteRotationQuat.toRotationMatrix());
         }
 
@@ -333,15 +353,19 @@ namespace gdr {
                 keysDescriptorsAll = getKeypointsDescriptorsAllImages(siftModule.sift, pathToImageDirectoryRGB);
 
         verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
+
         for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
+
             auto keypointAndDescriptor = keysDescriptorsAll[currentImage];
             std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
             std::vector<float> &descriptors = keypointAndDescriptor.second;
             std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
             std::vector<float> descriptorsKnownDepth;
             std::vector<double> depths;
+
             cv::Mat depthImage = cv::imread(imagesD[currentImage], cv::IMREAD_ANYDEPTH);
             PRINT_PROGRESS(depthImage.cols << ' ' << depthImage.rows);
+
             for (int i = 0; i < keypoints.size(); ++i) {
                 int posInDescriptorVector = 128 * i;
                 int currentKeypointDepth = depthImage.at<ushort>(keypoints[i].y, keypoints[i].x);
@@ -357,6 +381,7 @@ namespace gdr {
                     }
                 }
             }
+
             VertexCG currentVertex(currentImage, cameraRgbd, keypointsKnownDepth, descriptorsKnownDepth, depths,
                                    imagesRgb[currentImage],
                                    imagesD[currentImage]);
@@ -370,9 +395,22 @@ namespace gdr {
         matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());
 
         PRINT_PROGRESS("trying to find correspondences");
+
+        {
+            std::vector<VertexCG *> posesForCloudProjector;
+            posesForCloudProjector.reserve(verticesOfCorrespondence.size());
+
+            for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+                posesForCloudProjector.push_back(&verticesOfCorrespondence[i]);
+            }
+            assert(posesForCloudProjector.size() == verticesOfCorrespondence.size());
+            cloudProjector.setPoses(posesForCloudProjector);
+            pointMatcher.setNumberOfPoses(verticesOfCorrespondence.size());
+        }
         findCorrespondences();
         decreaseDensity();
         findTransformationRtMatrices();
+        computePointClasses();
         std::string poseFile = relativePose;
         printRelativePosesFile(poseFile);
         return 0;
@@ -395,7 +433,7 @@ namespace gdr {
         PRINT_PROGRESS("images rgb vs d: " << imagesRgb.size() << " vs " << imagesD.size());
         assert(imagesRgb.size() == imagesD.size());
 
-        tranformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
+        transformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
 
         PRINT_PROGRESS("Totally read " << imagesRgb.size());
     }
@@ -417,21 +455,21 @@ namespace gdr {
         int counter = 0;
         int counterSquared = 0;
         os << "EDGES of the Correspondence Graph:" << std::endl;
-        for (int i = 0; i < tranformationRtMatrices.size(); ++i) {
+        for (int i = 0; i < transformationRtMatrices.size(); ++i) {
             os << std::setw(space / 5) << i << ":";
-            counter += tranformationRtMatrices[i].size();
-            counterSquared += tranformationRtMatrices[i].size() * tranformationRtMatrices[i].size();
-            for (int j = 0; j < tranformationRtMatrices[i].size(); ++j) {
-                const transformationRtMatrix &e = tranformationRtMatrices[i][j];
+            counter += transformationRtMatrices[i].size();
+            counterSquared += transformationRtMatrices[i].size() * transformationRtMatrices[i].size();
+            for (int j = 0; j < transformationRtMatrices[i].size(); ++j) {
+                const transformationRtMatrix &e = transformationRtMatrices[i][j];
                 assert(i == e.vertexFrom.index);
                 os << std::setw(space / 2) << e.vertexTo.index << ",";
             }
             os << std::endl;
         }
-        os << "average number of edges " << counter / tranformationRtMatrices.size() << std::endl;
+        os << "average number of edges " << counter / transformationRtMatrices.size() << std::endl;
 
-        os << "sq D " << sqrt(counterSquared * 1.0 / tranformationRtMatrices.size() -
-                              pow(counter * 1.0 / tranformationRtMatrices.size(), 2)) << std::endl;
+        os << "sq D " << sqrt(counterSquared * 1.0 / transformationRtMatrices.size() -
+                              pow(counter * 1.0 / transformationRtMatrices.size(), 2)) << std::endl;
 
     }
 
@@ -440,7 +478,7 @@ namespace gdr {
         std::vector<int> preds(verticesOfCorrespondence.size(), -1);
         std::queue<int> queueVertices;
         queueVertices.push(currentVertex);
-        assert(verticesOfCorrespondence.size() == tranformationRtMatrices.size());
+        assert(verticesOfCorrespondence.size() == transformationRtMatrices.size());
         while (!queueVertices.empty()) {
             int vertex = queueVertices.front();
             PRINT_PROGRESS(" entered vertex " << vertex);
@@ -448,8 +486,8 @@ namespace gdr {
             assert(vertex < visited.size() && vertex >= 0);
             visited[vertex] = true;
 
-            for (int i = 0; i < tranformationRtMatrices[vertex].size(); ++i) {
-                int to = tranformationRtMatrices[vertex][i].vertexTo.index;
+            for (int i = 0; i < transformationRtMatrices[vertex].size(); ++i) {
+                int to = transformationRtMatrices[vertex][i].vertexTo.index;
                 if (!visited[to]) {
                     queueVertices.push(to);
                     visited[to] = true;
@@ -461,7 +499,7 @@ namespace gdr {
                     Eigen::Matrix3d predR = predAbsoluteRt.block(0, 0, 3, 3);
                     Eigen::Vector3d predT = predAbsoluteRt.block(0, 3, 3, 1);
 
-                    const Eigen::Matrix4d &relativeRt = tranformationRtMatrices[vertex][i].innerTranformationRtMatrix;
+                    const Eigen::Matrix4d &relativeRt = transformationRtMatrices[vertex][i].innerTranformationRtMatrix;
                     Eigen::Vector3d relT = relativeRt.block(0, 3, 3, 1);
 
                     Eigen::Matrix4d &newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
@@ -473,5 +511,61 @@ namespace gdr {
             }
         }
         return preds;
+    }
+
+    // each inner vector represents matches (usually 2) between keypoint: pose number and local point index & key point info
+
+    void CorrespondenceGraph::computePointClasses() {
+        computePointClasses(inlierCorrespondencesPoints);
+    }
+    void CorrespondenceGraph::computePointClasses(
+            const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints) {
+
+
+        for (const std::vector<std::pair<std::pair<int, int>, KeyPointInfo>> &vectorOfMatches: matchesBetweenPoints) {
+
+            std::vector<std::pair<int, int>> poseAndLocalIndices;
+            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
+                poseAndLocalIndices.push_back(fullPointInfo.first);
+            }
+            pointMatcher.insertPointsWithNewClasses(poseAndLocalIndices);
+        }
+
+
+        // unordered map's Key is local index
+        std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPoseNumAndLocalInd(
+                pointMatcher.getNumberOfPoses());
+
+
+        for (const std::vector<std::pair<std::pair<int, int>, KeyPointInfo>> &vectorOfMatches: matchesBetweenPoints) {
+
+            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
+                const auto &poseNumAndLocalInd = fullPointInfo.first;
+                const auto &foundIt = keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].find(
+                        poseNumAndLocalInd.second);
+                if (foundIt != keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].end()) {
+                    assert(foundIt->second == fullPointInfo.second);
+                } else {
+                    keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].insert(
+                            std::make_pair(poseNumAndLocalInd.second, fullPointInfo.second));
+                }
+            }
+        }
+
+        auto pointClasses = pointMatcher.assignPointClasses();
+
+        for (int pointIncrementor = 0; pointIncrementor < pointClasses.size(); ++pointIncrementor) {
+            int pointClassNumber = pointClasses[pointIncrementor];
+            std::pair<int, int> poseNumberAndLocalIndex = pointMatcher.getPoseNumberAndLocalIndex(pointIncrementor);
+            std::vector<KeyPointInfo> keyPointInfo;
+            keyPointInfo.push_back(keyPointInfoByPoseNumAndLocalInd[poseNumberAndLocalIndex.first][poseNumberAndLocalIndex.second]);
+            cloudProjector.addPoint(pointClassNumber, keyPointInfo);
+        }
+
+
+    }
+
+    const CloudProjector &CorrespondenceGraph::getCloudProjector() const {
+        return cloudProjector;
     }
 }

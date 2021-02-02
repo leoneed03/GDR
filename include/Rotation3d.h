@@ -21,7 +21,8 @@ namespace gdr {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        Rotation3d();
+
+        Rotation3d() = delete;
 
 //        Rotation3d(const Sophus::SO3d &rotationSophus);
 
@@ -34,6 +35,10 @@ namespace gdr {
         Eigen::Quaterniond getUnitQuaternion() const;
 
         const Sophus::SO3d &getRotationSophus() const;
+
+        static Eigen::Matrix3d getRandomRotationMatrix3d();
+
+        static Eigen::Quaterniond getRandomUnitQuaternion();
 
         Rotation3d& operator=(const Rotation3d& right);
 

@@ -119,8 +119,8 @@ TEST(testRotationAveraging, errorShouldBeZeroFirstPoseNotZero) {
 }
 TEST(testRotationAveraging, computeAbsoluteRotationsDatasetPlant_19) {
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantFirst_20_2/rgb", "../../data/plantFirst_20_2/depth",
-                                                 527.3,
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
+                                                 517.3,
                                                  318.6, 516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientations = correspondenceGraph.performRotationAveraging();

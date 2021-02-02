@@ -49,6 +49,8 @@ namespace gdr {
                  const std::vector<double> &newDepths,
                  const std::string &newPathRGB,
                  const std::string &newPathD);
+        std::string getPathRGBImage() const;
+        std::string getPathDImage() const;
     };
 }
 

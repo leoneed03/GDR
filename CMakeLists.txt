@@ -124,7 +124,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/rotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
-    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h)
+    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h)
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
