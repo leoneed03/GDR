@@ -7,6 +7,7 @@
 #include "printer.h"
 #include "ICP.h"
 #include "pointCloud.h"
+#include "RotationOptimizationRobust.h"
 
 #include <vector>
 #include <algorithm>
@@ -14,6 +15,7 @@
 #include <fstream>
 #include <string>
 #include <opencv2/opencv.hpp>
+#include <translationAveraging.h>
 
 namespace gdr {
 
@@ -131,7 +133,7 @@ namespace gdr {
                 const auto &frameFrom = verticesOfCorrespondence[i];
                 const auto &frameTo = verticesOfCorrespondence[match.frameNumber];
                 PRINT_PROGRESS("check this " << frameFrom.index << " -> " << frameTo.index);
-                assert(frameTo.index > frameFrom.index);
+                assert(frameTo.getIndex() > frameFrom.getIndex());
                 bool success = true;
                 bool successICP = true;
                 auto cameraMotion = getTransformationRtMatrixTwoImages(i, j, success);
@@ -156,9 +158,16 @@ namespace gdr {
                                                           << std::setw(2 * spaceIO) << qRelatived.z()
                                                           << std::setw(2 * spaceIO) << qRelatived.w());
 
-                    transformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo));
-                    transformationRtMatrices[frameTo.index].push_back(
-                            transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
+                    Sophus::SE3d relativeTransformationSE3 = Sophus::SE3d::fitToSE3(cameraMotion);
+//                    relativeTransformationSE3 = relativeTransformationSE3.inverse();
+                    // fill info about relative pairwise transformations Rt
+
+
+                    transformationRtMatrices[i].push_back(transformationRtMatrix(relativeTransformationSE3.matrix(), frameFrom, frameTo));
+                    transformationRtMatrices[frameTo.index].push_back(transformationRtMatrix(relativeTransformationSE3.inverse().matrix(), frameTo, frameFrom));
+
+//                    transformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo));
+//                    transformationRtMatrices[frameTo.index].push_back(transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
                 } else {
 
                     std::cout << "                             NOT ___success____ " << frameFrom.index << " -> "
@@ -333,6 +342,13 @@ namespace gdr {
                                                                                                    absolutePose);
 
         PRINT_PROGRESS("read quaternions successfull");
+
+        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+            verticesOfCorrespondence[i].setRotation(absoluteRotationsQuats[i]);
+        }
+
+
+        /*
         std::vector<Eigen::Matrix3d> absoluteRotations;
         for (const auto &absoluteRotationQuat: absoluteRotationsQuats) {
             absoluteRotations.push_back(absoluteRotationQuat.toRotationMatrix());
@@ -342,6 +358,7 @@ namespace gdr {
         for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
             verticesOfCorrespondence[i].setRotation(absoluteRotations[i]);
         }
+        */
 
         PRINT_PROGRESS("setting Rotations in vertices successfull");
         return absoluteRotationsQuats;
@@ -449,6 +466,7 @@ namespace gdr {
         }
         return 0;
     }
+
 
     void CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) {
 
@@ -569,5 +587,112 @@ namespace gdr {
 
     const CloudProjector &CorrespondenceGraph::getCloudProjector() const {
         return cloudProjector;
+    }
+
+    std::vector<Eigen::Quaterniond> CorrespondenceGraph::optimizeRotationsRobust() {
+
+        std::vector<Rotation3d> shonanOptimizedAbsolutePoses;
+
+        for (const auto &vertexPose: verticesOfCorrespondence) {
+            shonanOptimizedAbsolutePoses.push_back(Rotation3d(vertexPose.getRotationQuat()));
+        }
+
+        assert(shonanOptimizedAbsolutePoses.size() == verticesOfCorrespondence.size());
+
+
+        std::vector<rotationMeasurement> relativeRotationsAfterICP;
+
+        assert(verticesOfCorrespondence.size() == transformationRtMatrices.size());
+        for (int indexFrom = 0; indexFrom < verticesOfCorrespondence.size(); ++indexFrom) {
+            for (const auto &knownRelativePose: transformationRtMatrices[indexFrom]) {
+                assert(indexFrom == knownRelativePose.getIndexFrom());
+                if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
+
+                    relativeRotationsAfterICP.push_back(
+                            rotationMeasurement(knownRelativePose.getRelativeRotation(),
+                                                knownRelativePose.getIndexFrom(),
+                                                knownRelativePose.getIndexTo()));
+                }
+            }
+        }
+
+        RotationOptimizer rotationOptimizer(shonanOptimizedAbsolutePoses, relativeRotationsAfterICP);
+        std::vector<Eigen::Quaterniond> optimizedPosesRobust = rotationOptimizer.getOptimizedOrientation();
+
+        assert(verticesOfCorrespondence.size() == optimizedPosesRobust.size());
+        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+            verticesOfCorrespondence[i].setRotation(optimizedPosesRobust[i]);
+        }
+
+        return optimizedPosesRobust;
+    }
+
+    std::vector<Eigen::Matrix4d> CorrespondenceGraph::getAbsolutePosesEigenMatrix4d() const {
+        std::vector<Eigen::Matrix4d> poses;
+
+        for (const auto &pose: verticesOfCorrespondence) {
+            poses.push_back(pose.getEigenMatrixAbsolutePose4d());
+        }
+
+        return poses;
+    }
+
+    std::vector<Eigen::Vector3d> CorrespondenceGraph::optimizeAbsoluteTranslations(int indexFixedToZero) {
+
+        std::vector<translationMeasurement> relativeTranslations;
+        std::vector<Eigen::Matrix4d> absolutePoses = getAbsolutePosesEigenMatrix4d();
+//        std::vector<Eigen::Quaterniond> absolutePosesQuat = optimizeRotationsRobust();
+//
+//        assert(absolutePoses.size() == absolutePosesQuat.size());
+//        for (int i = 0; i < absolutePoses.size(); ++i) {
+//            absolutePoses[i].block<3,3>(0,0) = absolutePosesQuat[i].toRotationMatrix();
+//        }
+
+        for (int indexFrom = 0; indexFrom < verticesOfCorrespondence.size(); ++indexFrom) {
+            for (const auto &knownRelativePose: transformationRtMatrices[indexFrom]) {
+                assert(indexFrom == knownRelativePose.getIndexFrom());
+
+//                assert(knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo());
+                // changed order here of indexFrom indexTo
+
+
+                if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
+                    relativeTranslations.push_back(
+                            translationMeasurement(knownRelativePose.getRelativeTranslation(),
+                                                   knownRelativePose.getIndexFrom(),
+                                                   knownRelativePose.getIndexTo()));
+                }
+            }
+        }
+
+        std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = gdr::translationAverager::recoverTranslations(
+                relativeTranslations,
+                absolutePoses).toVectorOfVectors();
+
+
+
+        bool successIRLS = true;
+
+
+        // Now run IRLS with PCG answer as init solution
+
+        optimizedAbsoluteTranslationsIRLS = gdr::translationAverager::recoverTranslationsIRLS(
+                relativeTranslations,
+                absolutePoses,
+                optimizedAbsoluteTranslationsIRLS,
+                successIRLS).toVectorOfVectors();
+
+
+        Eigen::Vector3d zeroTranslation = optimizedAbsoluteTranslationsIRLS[indexFixedToZero];
+        for (auto& translation: optimizedAbsoluteTranslationsIRLS) {
+            translation -= zeroTranslation;
+        }
+
+
+        assert(verticesOfCorrespondence.size() == optimizedAbsoluteTranslationsIRLS.size());
+        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+            verticesOfCorrespondence[i].setTranslation(optimizedAbsoluteTranslationsIRLS[i]);
+        }
+        return optimizedAbsoluteTranslationsIRLS;
     }
 }

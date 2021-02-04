@@ -29,17 +29,21 @@ namespace gdr {
 
 //        CloudProjector() = delete;
 
+        std::vector<Point3d> setComputedPointsGlobalCoordinates();
+
         void setPoses(const std::vector<VertexCG *> &cameraPoses);
 
-        // vector contains information about which poses observe specific point
-        // and Sift keypoint info like x, y, scale and orientation
+        /*
+         * vector contains information about which poses observe specific point
+         * and Sift keypoint info like x, y, scale and orientation
+         */
 
         int addPoint(int indexedPoint,
                      const std::vector<KeyPointInfo> &poseNumberAndProjectedKeyPointInfo);
 
-        const Point3d& getPointByIndex3d(int pointNumber3d) const;
+        const Point3d &getPointByIndex3d(int pointNumber3d) const;
 
-        const VertexCG& getPoseByPoseNumber(int poseNumber) const;
+        const VertexCG &getPoseByPoseNumber(int poseNumber) const;
 
         int getPoseNumber() const;
 

@@ -13,8 +13,8 @@
 #define epsilonD (std::numeric_limits<double>::epsilon())
 
 // visualize points on different images
-
 /*
+
 TEST(testPointCloudCorrespondences, showOnePoint) {
 
     std::string pathToRGBImage = "../../data/plantDataset_19_3/depth/1305032354.109860.png";
@@ -30,14 +30,14 @@ TEST(testPointCloudCorrespondences, showOnePoint) {
 
 
 //        cv::namedWindow( );
-    cv::imshow( "Showing " + pathToRGBImage + " " + std::to_string(0), imageWithKeyPoint);
+    cv::imshow("Showing " + pathToRGBImage + " " + std::to_string(0), imageWithKeyPoint);
     cv::waitKey(0);
 
     cv::Mat imageRaw = cv::imread(pathToRGBImage, cv::IMREAD_COLOR);
 
-    cv::Vec3b & color = imageRaw.at<cv::Vec3b>(cv::Point(x,y));
+    cv::Vec3b &color = imageRaw.at<cv::Vec3b>(cv::Point(x, y));
     color[0] = color[1] = color[2] = 255;
-    cv::imshow( "Showing x=50 y=200 at(x,y)", imageRaw);
+    cv::imshow("Showing x=50 y=200 at(x,y)", imageRaw);
     cv::waitKey(0);
 
 }
@@ -52,12 +52,21 @@ TEST(testPointCloudCorrespondences, cloudProjectorShouldBeFilled) {
     correspondenceGraph.computeRelativePoses();
 
     auto &cloudProjector = correspondenceGraph.getCloudProjector();
-    const auto& pointsToShow = cloudProjector.getKeyPointsIndicesAndInfoByPose(0);
-    gdr::ImageDrawer::showKeyPointOnImage(cloudProjector.getPoseByPoseNumber(0).getPathDImage(), pointsToShow[0].second, 0);
+//    gdr::ImageDrawer::showKeyPointOnImage(cloudProjector.getPoseByPoseNumber(0).getPathDImage(), pointsToShow[0].second, 0);
 
-    ASSERT_GE(pointsToShow.size(), 1);
-}*/
+    for (int i = 0; i < cloudProjector.getPoseNumber(); ++i) {
 
+        const auto &pointsToShow = cloudProjector.getKeyPointsIndicesAndInfoByPose(i);
+        std::cout << "to show " << pointsToShow.size() << " on image " << i << std::endl;
+        gdr::ImageDrawer::showKeyPointsOnImage(cloudProjector.getPoseByPoseNumber(i).getPathDImage(),
+                                               pointsToShow,
+                                               100,
+                                               "../../data/tempImagesWIthKeyPointsCorrespondences",
+                                               std::to_string(i) + ".png");
+    }
+
+}
+*/
 int main(int argc, char *argv[]) {
 
     ::testing::InitGoogleTest(&argc, argv);

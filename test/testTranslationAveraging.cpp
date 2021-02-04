@@ -196,6 +196,7 @@ TEST(testTranslationAveraging, translationRecovery4PosesFromFileCorrespondencesP
     ASSERT_TRUE(averageError < 1e-10);
 }
 
+/*
 
 TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex3NoOutliers) {
 
@@ -259,9 +260,9 @@ TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex3NoOut
 
     std::cout << "ERROR is " << averageError << std::endl;
     ASSERT_TRUE(averageError < 1e-8);
-}
+}*/
 
-TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex3SomeOutliers) {
+TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex3SomeOutliersNoIRLSLargeError) {
 
     int dim = 3;
     int numPoses = 19;
@@ -340,7 +341,6 @@ TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex3SomeO
     std::cout << "error is " << averageError << std::endl;
     ASSERT_GE(averageError, 1);
 }
-
 
 TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex4SomeOutliers) {
 

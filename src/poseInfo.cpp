@@ -49,6 +49,10 @@ namespace gdr {
         return os;
     }
 
+
+    double poseInfo::getTimestamp() const {
+        return timestamp;
+    }
     Eigen::Quaterniond poseInfo::getOrientationQuat() const {
         return orientationQuat;
     }

@@ -20,6 +20,9 @@
 
 namespace gdr {
 
+
+    namespace fs = boost::filesystem;
+
     void putAligned(std::ofstream &of, const std::vector<double> &val) {
 
         for (const auto &vals: val) {
@@ -255,13 +258,17 @@ namespace gdr {
 
         for (const auto &e: timeCoordinates) {
             out.precision(std::numeric_limits<double>::max_digits10);
-            out << std::setw(2 * spaceIO) << e[0];
+            out << e[0];
+//            out << std::setw(2 * spaceIO) << e[0];
+
             for (int i = 1; i < e.size(); ++i) {
-                out << std::setw(2 * spaceIO) << e[i];
+
+                out << ' ' << e[i];
+//                out << std::setw(2 * spaceIO) << e[i];
             }
             out << std::endl;
         }
-        return 1;
+        return 0;
     }
 
     int GTT::writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
@@ -320,7 +327,8 @@ namespace gdr {
     }
 
     void
-    GTT::prepareDataset(const std::string &pathToDataset, const std::string &pathOut,
+    GTT::prepareDataset(const std::string &pathToDataset,
+                        const std::string &pathOut,
                         const std::set<int> &indicesSet,
                         const std::string &NewName = "subset") {
 
@@ -693,6 +701,54 @@ namespace gdr {
 //        assert(resultingTruth.size() == timeStamps.size());
 //
 //        return resultingTruth;
+    }
+
+    GTT::EXIT_CODES_CLASS
+    GTT::createDepthTxtFile(const std::string &pathToRgbdDirectory, const std::string &toBeCreatedFilename) {
+
+        fs::path p(pathToRgbdDirectory);
+
+        std::cout << "start reading depth directory " << std::endl;
+        std::vector<std::pair<std::string, std::string>> pairOfTimestampAndDotExtension;
+
+        if (exists(p)) {
+            if (is_regular_file(p)) {
+                std::cout << "provide a directory path as argument, not a regular file" << std::endl;
+                return EXIT_CODES_CLASS::NOT_A_DIRECTORY_ERROR;
+            } else if (is_directory(p)) {
+                for (const auto &file: fs::directory_iterator(p)) {
+                    std::cout << file.path() << std::endl;
+                    fs::path depthFile = file.path();
+
+                    for (const auto &namePart: depthFile) {
+                        if (namePart.has_extension()) {
+                            std::cout << namePart.stem() << " vs " << namePart.extension() << std::endl;
+                            pairOfTimestampAndDotExtension.push_back(
+                                    {namePart.stem().string(), namePart.extension().string()});
+                        }
+                    }
+                }
+            } else {
+                std::cout << p << "provide a directory path as argument" << std::endl;
+                return EXIT_CODES_CLASS::NOT_A_DIRECTORY_ERROR;
+            }
+        } else {
+            std::cout << p << "invalid path" << std::endl;
+            return EXIT_CODES_CLASS::INVALID_DIRECTORY_PATH;
+        }
+
+        std::sort(pairOfTimestampAndDotExtension.begin(), pairOfTimestampAndDotExtension.end());
+        std::ofstream depthTxtFile(toBeCreatedFilename);
+
+        depthTxtFile << "# depth maps" << std::endl;
+        depthTxtFile << "# file: rgbd_dataset_freiburg1_plant_19_3.bag" << std::endl;
+        depthTxtFile << "# timestamp filename" << std::endl;
+        for (const auto &timestampAndExtension: pairOfTimestampAndDotExtension) {
+            depthTxtFile << timestampAndExtension.first << ' ' << "depth/" << timestampAndExtension.first + timestampAndExtension.second << std::endl;
+        }
+
+
+        return EXIT_CODES_CLASS::OK;
     }
 
 }

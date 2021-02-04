@@ -22,6 +22,7 @@ namespace gdr {
             const auto &relativeT = relativeTranslations[i];
             int posLeftPlus = relativeT.indexFrom;
             int posRightMinus = relativeT.indexTo;
+            std::cout << "processing " << i << " rel T" << std::endl;
             assert(posLeftPlus < posRightMinus);
             assert(posLeftPlus >= 0);
             assert(posRightMinus < numberOfAbsolutePoses);
@@ -81,6 +82,7 @@ namespace gdr {
         if (cg.info() != Eigen::Success) {
             success = false;
         }
+        assert(cg.info() == Eigen::Success);
         Eigen::VectorXd b = resultVector_b.getVectorRaw();
 
 
@@ -106,6 +108,7 @@ namespace gdr {
             success = false;
         }
 
+//        assert(cg.info() == Eigen::Success);
         assert(x.rows() % 3 == 0);
         std::cout << "rows after solution " << x.rows() / 3 << std::endl;
         Vectors3d solution(x);
@@ -141,57 +144,6 @@ namespace gdr {
 
         return weightDiagonalMatrix;
     }
-
-//
-//    Vectors3d subVectorOfTranslations(const Vectors3d &leftVector,
-//                                      const Vectors3d &rightVector) {
-//
-//        assert(leftVector.size() == rightVector.size());
-//        Vectors3d result;
-//        result.reserve(rightVector.size());
-//
-//        for (int i = 0; i < leftVector.size(); ++i) {
-//            result.emplace_back(leftVector[i] - rightVector[i]);
-//        }
-//
-//        return result;
-//    }
-
-//    std::vector<double> getVectorOfNorms(const Vectors3d &objectVector) {
-//
-//        std::vector<double> norms;
-//        norms.reserve(objectVector.size());
-//        for (auto &t: objectVector) {
-//            norms.emplace_back(t.norm());
-//        }
-//
-//        return norms;
-//    }
-
-//    Vectors3d applyOperator(const SparseMatrixd &matrix,
-//                            const Vectors3d &rightVector) {
-//
-//        int dim = 3;
-//        Eigen::VectorXd rawVector(dim * rightVector.size());
-//        for (int i = 0; i < rightVector.size(); ++i) {
-//            for (int toDim = 0; toDim < dim; ++toDim) {
-//                rawVector[dim * i + toDim] = rightVector[i][toDim];
-//            }
-//        }
-//        Eigen::VectorXd resultRaw = matrix * rawVector;
-////        int outputVectorLength = resultRaw.rows() / dim;
-////        Vectors3d result(outputVectorLength);
-////        assert(resultRaw.rows() % dim == 0);
-////        for (int i = 0; i < outputVectorLength; ++i) {
-////            for (int toDim = 0; toDim < dim; ++toDim) {
-////                result[i][toDim] = resultRaw[dim * i + toDim];
-////            }
-////        }
-//
-//
-//        return Vectors3d(resultRaw);
-//    }
-
 
     Vectors3d
     translationAverager::IRLS(const SparseMatrixd &systemMatrix,

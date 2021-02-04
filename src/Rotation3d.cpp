@@ -4,6 +4,7 @@
 //
 
 #include "Rotation3d.h"
+#include <iomanip>
 
 namespace gdr {
 
@@ -35,23 +36,16 @@ namespace gdr {
         return rotationInner.unit_quaternion();
     }
 
-
-    Rotation3d &Rotation3d::operator=(const Rotation3d &right) {
-
-        if (this == &right) {
-            return *this;
-        }
-        rotationInner = right.getRotationSophus();
-        return *this;
-    }
-
     const Sophus::SO3d &Rotation3d::getRotationSophus() const {
         return rotationInner;
     }
 
     std::ostream &operator<<(std::ostream &os, const Rotation3d &rotation3D) {
-//        os << rotation3D.rotationInner;
-        os << rotation3D.getRotationSophus().matrix();
+        auto quat = rotation3D.getUnitQuaternion();
+        os << "[qx, qy, qz, qw]:" << std::setw(rotation3D.getSpaceIO()) << quat.x() << ' '
+        << std::setw(rotation3D.getSpaceIO()) << quat.y() << ' '
+        << std::setw(rotation3D.getSpaceIO()) << quat.z() << ' '
+        << std::setw(rotation3D.getSpaceIO()) << quat.w() << std::endl;
         return os;
     }
 
@@ -84,5 +78,14 @@ namespace gdr {
         quaternionRotation.normalize();
 
         return quaternionRotation;
+    }
+
+    Rotation3d::Rotation3d(const Sophus::SO3d &rotationSophus) {
+        rotationInner = rotationSophus;
+        assert(rotationInner.unit_quaternion().angularDistance(rotationSophus.unit_quaternion()) < std::numeric_limits<double>::epsilon());
+    }
+
+    int Rotation3d::getSpaceIO() const {
+        return spaceIOiomanip;
     }
 }

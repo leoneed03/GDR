@@ -17,27 +17,37 @@ namespace gdr {
         double depth;
         int observingPoseNumber;
 
+        double defValue = -1;
         double epsilonD = 1e-10;
 //        double epsilonD = 3 * std::numeric_limits<double>::epsilon();
 
         KeyPointInfo();
 
-        KeyPointInfo(const SiftGPU::SiftKeypoint& newKeypoint, double newDepth, int newObservingPoseNumber);
+        KeyPointInfo(const SiftGPU::SiftKeypoint &newKeypoint, double newDepth, int newObservingPoseNumber);
 
 
-        KeyPointInfo(const KeyPointInfo& newKeypoint);
+        KeyPointInfo(const KeyPointInfo &newKeypoint);
+
+
+        double getDefValue() const;
 
         double getX() const;
+
         double getY() const;
+
         double getScale() const;
+
         double getOrientation() const;
+
         double getDepth() const;
 
         int getObservingPoseNumber() const;
 
+        bool isInitialized() const;
 
-        KeyPointInfo& operator=(const KeyPointInfo& right);
-        bool operator==(const KeyPointInfo& right);
+        KeyPointInfo &operator=(const KeyPointInfo &right);
+
+        bool operator==(const KeyPointInfo &right);
 
 
     };

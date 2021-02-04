@@ -12,10 +12,36 @@ namespace gdr {
                                                    const VertexCG &newVertexFrom,
                                                    const VertexCG &newVertexTo)
             : innerTranformationRtMatrix(newInnerEssentialMatrix),
-              vertexFrom(newVertexFrom), vertexTo(newVertexTo) {
+              vertexFrom(newVertexFrom),
+              vertexTo(newVertexTo) {
 
         auto dim = newInnerEssentialMatrix.cols() - 1;
         R = newInnerEssentialMatrix.block(0, 0, dim, dim);
         t = newInnerEssentialMatrix.block(0, dim, dim, 1);
+        relativePoseSE3d = Sophus::SE3d::fitToSE3(newInnerEssentialMatrix);
+    }
+
+    int transformationRtMatrix::getIndexTo() const {
+        return vertexTo.getIndex();
+    }
+
+    int transformationRtMatrix::getIndexFrom() const {
+        return vertexFrom.getIndex();
+    }
+
+    Eigen::Quaterniond transformationRtMatrix::getRelativeRotation() const {
+        return relativePoseSE3d.unit_quaternion();
+    }
+
+    Eigen::Vector3d transformationRtMatrix::getRelativeTranslation() const {
+//        return relativePoseSE3d.translation();
+        return innerTranformationRtMatrix.block<3,1>(0,3);
+    }
+
+    void transformationRtMatrix::setRotation(const Eigen::Quaterniond &newRelativeRotation) {
+        relativePoseSE3d.setQuaternion(newRelativeRotation.normalized());
+        R = newRelativeRotation.normalized().toRotationMatrix();
+        int dim = 3;
+        innerTranformationRtMatrix.block(0, 0, dim, dim) = R;
     }
 }

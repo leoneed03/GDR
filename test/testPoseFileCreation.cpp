@@ -9,6 +9,7 @@
 #include <fstream>
 
 #include "CorrespondenceGraph.h"
+#include "groundTruthTransformer.h"
 
 int countNumberOfLines(const std::string &relPosesFile) {
     int numberOfLines = 0;
@@ -32,6 +33,20 @@ TEST(testCorrespondenceGraph, relativePoseFileCreated) {
 
     ASSERT_GE(numberOfLines, correspondenceGraph.verticesOfCorrespondence.size());
     ASSERT_GE(numberOfLines, defaultNumberOfLines);
+}
+
+TEST(testDepthTxtFile, fileCreated) {
+    gdr::GTT::createDepthTxtFile("../../data/plantDataset_19_3/depth", "../../data/plantDataset_19_3/depth.txt");
+}
+
+
+TEST(testGroundTrurhFileCreation, isFileCreated) {
+
+    std::set<int> indices;
+    for (int i = 0; i < 20; ++i) {
+        indices.insert(3 * i);
+    }
+//    gdr::GTT::prepareDataset("/home/leoneed/Desktop/plant_dataset", "/home/leoneed/testGDR1/GDR/data/temp", indices, "subset");
 }
 
 int main(int argc, char *argv[]) {

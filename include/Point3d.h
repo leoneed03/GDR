@@ -23,12 +23,18 @@ namespace gdr {
 
         Point3d(double coordX, double coordY, double coordZ, int newIndex);
 
+        void setNewCoordinates(double newX, double newY, double newZ);
+
+
+        void setEigenVector3dPointXYZ(const Eigen::Vector3d& XYZ);
 
         Eigen::Vector4d getEigenVector4dPointXYZ1() const;
 
         Eigen::Vector3d getEigenVector3dPointXYZ() const;
 
         std::vector<double> getVectorPointXYZ() const;
+
+        std::vector<double> getVectorPointXYZ1() const;
 
         int getIndex() const;
 

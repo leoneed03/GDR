@@ -17,8 +17,7 @@
 #include "quaternions.h"
 #include "errors.h"
 #include "umeyama.h"
-//
-//#include <opencv2/opencv.hpp>
+#include "Vectors3d.h"
 
 namespace gdr {
     struct Match {
@@ -94,11 +93,18 @@ namespace gdr {
 
         std::vector<Eigen::Quaterniond> performRotationAveraging();
 
+
+        std::vector<Eigen::Quaterniond> optimizeRotationsRobust();
+
         int printRelativePosesFile(const std::string &outPutFileRelativePoses);
 
         std::vector<int> bfs(int currentVertex);
 
         int computeRelativePoses();
+
+        std::vector<Eigen::Matrix4d> getAbsolutePosesEigenMatrix4d() const;
+
+        std::vector<Eigen::Vector3d> optimizeAbsoluteTranslations(int indexFixedToZero = 0);
     };
 }
 

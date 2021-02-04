@@ -30,6 +30,8 @@ namespace gdr {
 
         Eigen::Vector3d getTranslation() const;
 
+        double getTimestamp() const;
+
         friend std::ostream &operator<<(std::ostream &os, const poseInfo &dt);
     };
 }

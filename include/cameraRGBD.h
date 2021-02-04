@@ -6,6 +6,8 @@
 #ifndef GDR_CAMERARGBD_H
 #define GDR_CAMERARGBD_H
 
+#include <Eigen/Eigen>
+
 namespace gdr {
 
     struct CameraRGBD {
@@ -16,6 +18,13 @@ namespace gdr {
         float cy = 239.5;
 
         CameraRGBD(float fx, float cx, float fy, float cy);
+
+        Eigen::Matrix3Xd getIntrinsicsMatrix3x4() const;
+
+        Eigen::Matrix3d getIntrinsicsMatrix3x3() const;
+
+
+
     };
 }
 

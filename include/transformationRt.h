@@ -7,6 +7,7 @@
 #define GDR_ESSENTIALMATRIX_H
 
 #include <opencv2/opencv.hpp>
+#include <sophus/se3.hpp>
 
 #include "VertexCG.h"
 
@@ -19,12 +20,25 @@ namespace gdr {
         const VertexCG &vertexTo;
         Eigen::Matrix3d R;
         Eigen::Vector3d t;
+        Sophus::SE3d relativePoseSE3d;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix, const VertexCG &newVertexFrom,
+        transformationRtMatrix(const Eigen::Matrix4d &newInnerEssentialMatrix,
+                               const VertexCG &newVertexFrom,
                                const VertexCG &newVertexTo);
+
+        int getIndexTo() const;
+
+        int getIndexFrom() const;
+
+        void setRotation(const Eigen::Quaterniond& newRelativeRotation);
+
+        Eigen::Quaterniond getRelativeRotation() const;
+
+        Eigen::Vector3d getRelativeTranslation() const;
+
     };
 }
 #endif

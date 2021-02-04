@@ -4,6 +4,7 @@
 //
 
 #include "CloudProjector.h"
+#include "pointCloud.h"
 
 namespace gdr {
 
@@ -51,7 +52,7 @@ namespace gdr {
 
         std::vector<std::pair<int, KeyPointInfo>> resultKeyPointsObserved;
 
-        for (const auto& pairIndexInfo: keyPointInfoByPose[poseNumber]) {
+        for (const auto &pairIndexInfo: keyPointInfoByPose[poseNumber]) {
             resultKeyPointsObserved.push_back(pairIndexInfo);
         }
 
@@ -60,6 +61,61 @@ namespace gdr {
 
     int CloudProjector::getPoseNumber() const {
         return poses.size();
+    }
+
+    std::vector<Point3d> CloudProjector::setComputedPointsGlobalCoordinates() {
+
+        int pointsSize = indexedPoints.size();
+        for (int i = 0; i < pointsSize; ++i) {
+            assert(indexedPoints[i].getIndex() == i);
+        }
+
+        std::vector<std::vector<Eigen::Vector3d>> computedCoordinatesByPointIndex(pointsSize);
+
+        int posesSize = poses.size();
+        for (int i = 0; i < posesSize; ++i) {
+            for (const auto &observedPoints: keyPointInfoByPose[i]) {
+
+                const KeyPointInfo &currentInfoBeforeProjection = observedPoints.second;
+
+                assert(currentInfoBeforeProjection.isInitialized());
+                int currentPointIndex = observedPoints.first;
+
+                double newX = currentInfoBeforeProjection.getX();
+                double newY = currentInfoBeforeProjection.getY();
+                double newZ = currentInfoBeforeProjection.getDepth();
+
+                std::vector<double> infoBeforeProjection = {newX, newY, newZ, 1.0};
+
+                assert(i == poses[i]->getIndex());
+                assert(i == currentInfoBeforeProjection.getObservingPoseNumber());
+
+                Eigen::Vector4d localCoordinatesBeforeProjection =
+                        getPointBeforeProjection(infoBeforeProjection,
+                                                 poses[i]->getCamera());
+                Eigen::Vector4d globalCoordinates =
+                        poses[i]->getEigenMatrixAbsolutePose4d().inverse() * localCoordinatesBeforeProjection;
+
+                computedCoordinatesByPointIndex[currentPointIndex].push_back(globalCoordinates.block<3, 1>(0, 0));
+            }
+        }
+
+        for (int i = 0; i < computedCoordinatesByPointIndex.size(); ++i) {
+            Eigen::Vector3d sumCoordinates;
+            sumCoordinates.setZero();
+            assert(sumCoordinates.norm() < 3 * std::numeric_limits<double>::epsilon());
+
+            for (const auto &coordinates: computedCoordinatesByPointIndex[i]) {
+                sumCoordinates += coordinates;
+            }
+            for (int toDim = 0; toDim < sumCoordinates.rows(); ++i) {
+                sumCoordinates[toDim] /= computedCoordinatesByPointIndex[i].size();
+            }
+            indexedPoints[i].setEigenVector3dPointXYZ(sumCoordinates);
+        }
+
+
+        return indexedPoints;
     }
 
 

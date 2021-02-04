@@ -85,11 +85,27 @@ namespace gdr {
     }
 
     KeyPointInfo::KeyPointInfo() {
-        x = -1;
-        y = -1;
-        scale = -1;
-        orientation = -1;
-        depth = -1;
-        observingPoseNumber = -1;
+        x = getDefValue();
+        y = getDefValue();
+        scale = getDefValue();
+        orientation = getDefValue();
+        depth = getDefValue();
+        observingPoseNumber = getDefValue();
+    }
+
+    double KeyPointInfo::getDefValue() const {
+        return defValue;
+    }
+
+    bool KeyPointInfo::isInitialized() const {
+        if (std::abs(x - getDefValue()) < epsilonD
+            || std::abs(y - getDefValue()) < epsilonD
+            || std::abs(scale - getDefValue()) < epsilonD
+            || std::abs(orientation - getDefValue()) < epsilonD
+            || std::abs(depth - getDefValue()) < epsilonD) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }

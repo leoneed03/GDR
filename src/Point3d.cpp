@@ -48,4 +48,19 @@ namespace gdr {
     int Point3d::getIndex() const {
         return index;
     }
+
+    std::vector<double> Point3d::getVectorPointXYZ1() const {
+        std::vector<double> resultVectorXYZ = {x, y, z, 1};
+        return resultVectorXYZ;
+    }
+
+    void Point3d::setNewCoordinates(double newX, double newY, double newZ) {
+        x = newX;
+        y = newY;
+        z = newZ;
+    }
+
+    void Point3d::setEigenVector3dPointXYZ(const Eigen::Vector3d& XYZ) {
+        setNewCoordinates(XYZ[0], XYZ[1], XYZ[2]);
+    }
 }

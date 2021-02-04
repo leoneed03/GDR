@@ -17,14 +17,13 @@ namespace gdr {
     private:
         Sophus::SO3d rotationInner;
 
-
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        const static int spaceIOiomanip = 15;
+        int getSpaceIO() const;
+        Rotation3d() = default;
 
-
-        Rotation3d() = delete;
-
-//        Rotation3d(const Sophus::SO3d &rotationSophus);
+        Rotation3d(const Sophus::SO3d &rotationSophus);
 
         Rotation3d(const Eigen::Matrix3d &rotationEigenMatrix);
 
@@ -39,8 +38,6 @@ namespace gdr {
         static Eigen::Matrix3d getRandomRotationMatrix3d();
 
         static Eigen::Quaterniond getRandomUnitQuaternion();
-
-        Rotation3d& operator=(const Rotation3d& right);
 
         friend std::ostream& operator<<(std::ostream& os, const Rotation3d& rotation3D);
 

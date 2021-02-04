@@ -124,7 +124,22 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/rotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
-    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h)
+    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h)
+
+add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
+
+add_dependencies(readerVisionTumICP icpCuda)
+target_link_libraries(readerVisionTumICP
+    ${ICPCUDA_LIBS}
+    ${Pangolin_LIBRARIES}
+    ${CUDA_LIBRARIES})
+target_include_directories(
+    readerVisionTumICP
+    PUBLIC
+    ${EIGEN3_INCLUDE_DIRS}
+    ${Sophus_INCLUDE_DIRS}
+    ${ICPCUDA_INCLUDE_DIRS}
+    ${Pangolin_INCLUDE_DIRS})
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
