@@ -105,6 +105,8 @@ namespace gdr {
         std::vector<Eigen::Matrix4d> getAbsolutePosesEigenMatrix4d() const;
 
         std::vector<Eigen::Vector3d> optimizeAbsoluteTranslations(int indexFixedToZero = 0);
+
+        std::vector<Sophus::SE3d> performBundleAdjustment(int indexFixedToZero = 0);
     };
 }
 

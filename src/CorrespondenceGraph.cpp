@@ -4,6 +4,7 @@
 //
 
 #include "CorrespondenceGraph.h"
+#include "BundleAduster.h"
 #include "printer.h"
 #include "ICP.h"
 #include "pointCloud.h"
@@ -694,5 +695,34 @@ namespace gdr {
             verticesOfCorrespondence[i].setTranslation(optimizedAbsoluteTranslationsIRLS[i]);
         }
         return optimizedAbsoluteTranslationsIRLS;
+    }
+
+
+    std::vector<Sophus::SE3d> CorrespondenceGraph::performBundleAdjustment(int indexFixedToZero) {
+        std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
+        std::cout << "ready " << std::endl;
+        std::vector<std::pair<Sophus::SE3d, CameraRGBD>> posesAndCameraParams;
+        for (const auto& vertexPose: verticesOfCorrespondence) {
+            posesAndCameraParams.push_back({vertexPose.absolutePose, cameraRgbd});
+        }
+        std::cout << "BA" << std::endl;
+
+
+
+        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams, cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
+
+        std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPoses(indexFixedToZero);
+
+        assert(posesOptimized.size() == verticesOfCorrespondence.size());
+
+        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+            auto& vertexPose = verticesOfCorrespondence[i];
+            vertexPose.setRotationTranslation(posesOptimized[i]);
+        }
+
+
+        // visualize point correspondences:
+//        cloudProjector.showPointsProjection(bundleAdjuster.getPointsGlobalCoordinatesOptimized());
+        return posesOptimized;
     }
 }

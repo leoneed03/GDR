@@ -33,6 +33,8 @@ namespace gdr {
 
         Eigen::Quaterniond getUnitQuaternion() const;
 
+        std::vector<double> getUnitQuaternionRawVector() const;
+
         const Sophus::SO3d &getRotationSophus() const;
 
         static Eigen::Matrix3d getRandomRotationMatrix3d();

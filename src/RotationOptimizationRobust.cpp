@@ -66,6 +66,9 @@ namespace gdr {
         std::cout << "done ceres" << std::endl;
         std::cout << summary.FullReport() << "\n";
 
+        // check if we can use solution
+        assert(summary.IsSolutionUsable());
+
 
 
         for (int i = 0; i < result.size(); ++i) {

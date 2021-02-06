@@ -12,6 +12,10 @@
 #include "cameraRGBD.h"
 
 namespace gdr {
+    Eigen::Vector3d mirrorPoint(const Eigen::Vector3d &point, double mirrorParamH = 480, double mirrorParamW = 640);
+
+    Eigen::Vector4d mirrorPoint(const Eigen::Vector4d &point, double mirrorParamH = 480, double mirrorParamW = 640);
+
     std::vector<std::vector<double>> getPointCloudFromImage(const std::string &pathToImageDepth);
 
     cv::Mat getProjectedPointCloud(const std::string &pathToImageDepth,

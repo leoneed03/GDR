@@ -124,7 +124,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/rotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
-    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h)
+    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h include/BundleAduster.cpp include/BundleAduster.h)
 
 add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
 
@@ -146,7 +146,8 @@ add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
 
 #add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY)
-target_compile_definitions(GDR_LIB PUBLIC ${GDR_FLAGS})
+target_compile_definitions(GDR_LIB PUBLIC ${GDR_FLAGS} PRIVATE CERES_USE_CXX11_THREADS=1)
+
 
 target_link_libraries(
   GDR_LIB

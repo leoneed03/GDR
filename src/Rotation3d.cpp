@@ -36,6 +36,21 @@ namespace gdr {
         return rotationInner.unit_quaternion();
     }
 
+    std::vector<double> Rotation3d::getUnitQuaternionRawVector() const {
+        Eigen::Quaterniond quat = rotationInner.unit_quaternion();
+        quat.normalize();
+
+        int dimQuat = 4;
+        std::vector<double> rawQuat;
+        rawQuat.reserve(dimQuat);
+        rawQuat.push_back(quat.x());
+        rawQuat.push_back(quat.y());
+        rawQuat.push_back(quat.z());
+        rawQuat.push_back(quat.w());
+
+        return rawQuat;
+    }
+
     const Sophus::SO3d &Rotation3d::getRotationSophus() const {
         return rotationInner;
     }

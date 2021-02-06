@@ -8,7 +8,7 @@
 
 namespace gdr {
 
-    Eigen::Vector3d mirrorPoint(const Eigen::Vector3d &point, double mirrorParamH = 480, double mirrorParamW = 640) {
+    Eigen::Vector3d mirrorPoint(const Eigen::Vector3d &point, double mirrorParamH, double mirrorParamW) {
         Eigen::Vector3d newPoint = point;
         newPoint[0] = mirrorParamW - point[0];
         newPoint[1] = mirrorParamH - point[1];
@@ -16,7 +16,7 @@ namespace gdr {
         return newPoint;
     }
 
-    Eigen::Vector4d mirrorPoint(const Eigen::Vector4d &point, double mirrorParamH = 480, double mirrorParamW = 640) {
+    Eigen::Vector4d mirrorPoint(const Eigen::Vector4d &point, double mirrorParamH, double mirrorParamW) {
         Eigen::Vector4d newPoint = point;
         newPoint[0] = mirrorParamW - point[0];
         newPoint[1] = mirrorParamH - point[1];
@@ -35,9 +35,9 @@ namespace gdr {
     cv::Mat visualizeTransformedCloud(const Eigen::Matrix4Xd &pointCloud, const Eigen::Matrix4d &transformation,
                                       const CameraRGBD &cameraRgbd) {
 
-        int mirrorParamH = 480;
-        int mirrorParamW = 640;
-        cv::Mat emptyDepthImage = cv::Mat::zeros(cv::Size(mirrorParamW, mirrorParamH), CV_16UC1);
+        int paramH = 480;
+        int paramW = 640;
+        cv::Mat emptyDepthImage = cv::Mat::zeros(cv::Size(paramW, paramH), CV_16UC1);
         Eigen::Matrix3Xd intrinsicsMatrix(3, 4);
         intrinsicsMatrix.setZero();
         intrinsicsMatrix.col(0)[0] = cameraRgbd.fx;
@@ -60,7 +60,7 @@ namespace gdr {
             int y = newPoint[1];
             int depth = static_cast<int>(pointCloud.col(i)[2] * 5000.0);
             assert(depth <= std::numeric_limits<ushort>::max());
-            if (x < 0 || x >= mirrorParamW || y < 0 || y >= mirrorParamH || depth <= 0) {
+            if (x < 0 || x >= paramW || y < 0 || y >= paramH || depth <= 0) {
                 continue;
             }
 
@@ -133,13 +133,13 @@ namespace gdr {
         return points3D;
     }
 
-    Eigen::Vector4d getPointBeforeProjection(const std::vector<double> &pointFromImageXYZ1,
+    Eigen::Vector4d getPointBeforeProjection(const std::vector<double> &pointFromImageXYZ1keyPointFormat,
                                              const CameraRGBD &cameraRgbd) {
 
 
         int dimXYZ1 = 4;
-        assert(pointFromImageXYZ1.size() == dimXYZ1);
-        Eigen::Vector4d point(pointFromImageXYZ1.data());
+        assert(pointFromImageXYZ1keyPointFormat.size() == dimXYZ1);
+        Eigen::Vector4d point(pointFromImageXYZ1keyPointFormat.data());
 
         ///mirror x, y coordinates if necessary
         Eigen::Vector4d newPoint = mirrorPoint(point);
