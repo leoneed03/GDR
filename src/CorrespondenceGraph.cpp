@@ -707,6 +707,9 @@ namespace gdr {
         }
         std::cout << "BA" << std::endl;
 
+        //vizualize points and matches
+//        cloudProjector.showPointsProjection(observedPoints);
+
 
 
         BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams, cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());

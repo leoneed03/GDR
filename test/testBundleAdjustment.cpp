@@ -180,7 +180,7 @@ TEST(testBundleAdjustment, BundleAdjustedPosesAreBetterThanAveraged) {
     double dev = 0;
 
 //    std::string outputName = "absolutePoses_19_BA.txt";
-    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/ba/absolutePoses_19_BA_500_iterations_1.txt";
+    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/b/absolutePoses_19_BA.txt";
     std::ofstream computedPoses(outputName);
 
     assert(computedAbsoluteTranslationsIRLS.size() == absoluteTranslationsFromGroundTruth.size());

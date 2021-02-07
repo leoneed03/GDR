@@ -106,8 +106,11 @@ namespace gdr {
                 Eigen::Vector4d localCoordinatesBeforeProjection =
                         getPointBeforeProjection(infoBeforeProjection,
                                                  poses[i]->getCamera());
+
+
+                // better with inverse CHANGE
                 Eigen::Vector4d globalCoordinates =
-                        poses[i]->getEigenMatrixAbsolutePose4d() * localCoordinatesBeforeProjection;
+                        poses[i]->getEigenMatrixAbsolutePose4d().inverse() * localCoordinatesBeforeProjection;
 
 
 //                std::cout << currentPointIndex << " / " << computedCoordinatesByPointIndex.size() << "__precomputed " << pointsSize << std::endl;
@@ -166,6 +169,7 @@ namespace gdr {
             sumCoordinates.setZero();
 
             assert(sumCoordinates.norm() < 3 * std::numeric_limits<double>::epsilon());
+            assert(!computedCoordinatesByPointIndex[i].empty());
             for (const auto &coordinates: computedCoordinatesByPointIndex[i]) {
                 sumCoordinates += coordinates;
             }
@@ -175,6 +179,12 @@ namespace gdr {
 //                std::cout << "dim index " << toDim << std::endl;
                 sumCoordinates[toDim] /= computedCoordinatesByPointIndex[i].size();
             }
+
+//            // only take point coordinates from first camera NO POINT COORDINATES AVERAGING
+//            sumCoordinates = computedCoordinatesByPointIndex[i][0];
+
+
+
             indexedPoints[i].setEigenVector3dPointXYZ(sumCoordinates);
         }
 
@@ -189,7 +199,6 @@ namespace gdr {
 
     void CloudProjector::showPointsProjection(const std::vector<Point3d>& pointsGlobalCoordinates) const {
 
-        std::cout << numbersOfPosesObservingSpecificPoint.size() << " vs passed number of points " << pointsGlobalCoordinates.size() << std::endl;
         assert(numbersOfPosesObservingSpecificPoint.size() == pointsGlobalCoordinates.size());
         for (int i = 0; i < numbersOfPosesObservingSpecificPoint.size(); ++i) {
             assert(!numbersOfPosesObservingSpecificPoint[i].empty());
@@ -212,7 +221,15 @@ namespace gdr {
                 const auto& camera = poses[poseIndex]->getCamera();
                 auto cameraIntr = BundleAdjuster::getCameraIntr<double>(camera.fx, camera.cx, camera.fy, camera.cy);
                 Eigen::Vector4d pointGlobal = pointsGlobalCoordinates[i].getEigenVector4dPointXYZ1();
-                Eigen::Vector3d projected = cameraIntr * poses[poseIndex]->getEigenMatrixAbsolutePose4d().inverse() * pointGlobal;
+                if (poseIndex == 0) {
+                    std::cout << poses[poseIndex]->getEigenMatrixAbsolutePose4d() << std::endl;
+                }
+
+
+
+                // without inverse better.....
+                // PositionMatrix * Global_ie_LocalZeroFrameCoordinates = LocalCurrentFrameCoordinates
+                Eigen::Vector3d projected = cameraIntr * poses[poseIndex]->getEigenMatrixAbsolutePose4d() * pointGlobal;
                 double projectedX = projected[0] / projected[2];
                 double projectedY = projected[1] / projected[2];
                 projectedX = 640 - projectedX;
@@ -223,7 +240,8 @@ namespace gdr {
                 cv::Mat imageKeyPoints = cv::imread(poses.at(poseIndex)->getPathDImage(), cv::IMREAD_COLOR);
                 cv::drawKeypoints(imageNoKeyPoints, keyPointsToShow, imageKeyPoints);
                 cv::putText(imageKeyPoints, //target image
-                            "from sift", //text
+                            "from sift(" + std::to_string((int)p.getX()) + ", " + std::to_string((int)p.getY())
+                            + "), computed should be x,y: " + std::to_string((int)projectedX) + ", " + std::to_string((int)projectedY), //text
                             cv::Point(p.getX(), p.getY()), //top-left position
                             cv::FONT_HERSHEY_DUPLEX,
                             0.4,

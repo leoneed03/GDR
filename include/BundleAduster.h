@@ -106,7 +106,7 @@ namespace gdr {
                 residuals[1] = T(observedY) - computedY;
 
                 // here is depth diff (for is not used)
-                residuals[2] = T(0);
+//                residuals[2] = T(0);
 
                 return true;
             }
@@ -116,7 +116,7 @@ namespace gdr {
             double observedDepth;
 
             static ceres::CostFunction* Create(double newObservedX, double newObservedY, double newObservedDepth) {
-                return (new ceres::AutoDiffCostFunction<ReprojectionError, 3, dimPoint, dimPose, dimOrientation, cameraDim>(
+                return (new ceres::AutoDiffCostFunction<ReprojectionError, 2, dimPoint, dimPose, dimOrientation, cameraDim>(
                         new ReprojectionError(newObservedX, newObservedY, newObservedDepth)));
             }
 

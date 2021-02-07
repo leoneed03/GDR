@@ -78,7 +78,9 @@ namespace gdr {
                 ceres::CostFunction *cost_function =
                         ReprojectionError::Create(observedX, observedY, keyPointInfo.getDepth());
                 problem.AddResidualBlock(cost_function,
-                                         new ceres::CauchyLoss(0.5),
+//                                         nullptr,
+//                                         new ceres::CauchyLoss(0.5),
+                                         new ceres::HuberLoss(1.0),
                                          point.data(),
                                          pose.data(),
                                          orientation.data(),
