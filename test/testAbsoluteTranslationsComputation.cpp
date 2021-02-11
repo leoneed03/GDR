@@ -75,7 +75,7 @@ TEST(testAbsoluteTranslationsComputation, IRLSForAbsoluteTranslations) {
     double sumErrorsSquared = 0;
     double dev = 0;
 
-//    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/ba/absolutePoses_19_robust.txt";
+//    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/ba/absolutePoses_19_robust_not_inversed.txt";
     std::string outputName = "absolutePoses_19_robust.txt";
     std::ofstream computedPoses(outputName);
 

@@ -124,7 +124,7 @@ namespace gdr {
                 }
                 computedCoordinatesByPointIndex[currentPointIndex].push_back(coordinates3d);
 
-                const auto& camera = poses[i]->getCamera();
+                const auto &camera = poses[i]->getCamera();
                 auto cameraIntr = BundleAdjuster::getCameraIntr<double>(camera.fx, camera.cx, camera.fy, camera.cy);
                 Eigen::Vector3d projected = cameraIntr * localCoordinatesBeforeProjection;
                 double projectedX = projected[0] / projected[2];
@@ -136,9 +136,10 @@ namespace gdr {
                 bool okY = std::abs(projectedY - currentInfoBeforeProjection.getY()) < 1e-10;
 
                 if (!okX || !okY) {
-                    std::cout << "error is (abs): " << std::abs(projectedX - currentInfoBeforeProjection.getX()) << std::endl;
-                    std::cout <<  projectedX << " vs " << currentInfoBeforeProjection.getX() << std::endl;
-                    std::cout <<  projectedY << " vs " << currentInfoBeforeProjection.getY() << std::endl;
+                    std::cout << "error is (abs): " << std::abs(projectedX - currentInfoBeforeProjection.getX())
+                              << std::endl;
+                    std::cout << projectedX << " vs " << currentInfoBeforeProjection.getX() << std::endl;
+                    std::cout << projectedY << " vs " << currentInfoBeforeProjection.getY() << std::endl;
                 }
                 assert(okX);
                 assert(okY);
@@ -148,7 +149,7 @@ namespace gdr {
 
 
         // test visualize
-        for (auto& posesObservingPoint: numbersOfPosesObservingSpecificPoint) {
+        for (auto &posesObservingPoint: numbersOfPosesObservingSpecificPoint) {
             std::sort(posesObservingPoint.begin(), posesObservingPoint.end());
         }
         int pointIndexObseredByMaxPoses = -1;
@@ -189,7 +190,6 @@ namespace gdr {
         }
 
 
-
         std::cout << "points are computed" << std::endl;
         for (int i = 0; i < pointsSize; ++i) {
             assert(indexedPoints[i].getIndex() == i);
@@ -197,20 +197,32 @@ namespace gdr {
         return indexedPoints;
     }
 
-    void CloudProjector::showPointsProjection(const std::vector<Point3d>& pointsGlobalCoordinates) const {
+    void CloudProjector::showPointsProjection(const std::vector<Point3d> &pointsGlobalCoordinates) const {
 
+        bool showOnce = true;
+        bool shown = false;
+//        assert(shown);
         assert(numbersOfPosesObservingSpecificPoint.size() == pointsGlobalCoordinates.size());
         for (int i = 0; i < numbersOfPosesObservingSpecificPoint.size(); ++i) {
             assert(!numbersOfPosesObservingSpecificPoint[i].empty());
 
+//            if (shown) {
+//                break;
+//            }
             // look at points far away from the (0;0;0)
-            if (i < 0.75 * pointsGlobalCoordinates.size()) {
+
+//            if (numbersOfPosesObservingSpecificPoint[i][0] != 16 || numbersOfPosesObservingSpecificPoint[i].size() <= 1) //|| keyPointInfoByPose[numbersOfPosesObservingSpecificPoint[i][0]].find(i)->second.getDepth() < 2.0) {
+//            {   continue;
+//            }
+            if (numbersOfPosesObservingSpecificPoint[i][0] < 10 || numbersOfPosesObservingSpecificPoint[i].size() <= 3) {
                 continue;
             }
+            shown = true;
+
 
             std::vector<cv::Mat> imagesObservingCurrentPoint;
 
-            for (const auto& poseIndex: numbersOfPosesObservingSpecificPoint[i]) {
+            for (const auto &poseIndex: numbersOfPosesObservingSpecificPoint[i]) {
 
 
                 KeyPointInfo p = keyPointInfoByPose[poseIndex].find(i)->second;
@@ -218,7 +230,7 @@ namespace gdr {
                 cv::Mat imageNoKeyPoints = cv::imread(poses.at(poseIndex)->getPathDImage(), cv::IMREAD_COLOR);
 
 
-                const auto& camera = poses[poseIndex]->getCamera();
+                const auto &camera = poses[poseIndex]->getCamera();
                 auto cameraIntr = BundleAdjuster::getCameraIntr<double>(camera.fx, camera.cx, camera.fy, camera.cy);
                 Eigen::Vector4d pointGlobal = pointsGlobalCoordinates[i].getEigenVector4dPointXYZ1();
                 if (poseIndex == 0) {
@@ -240,15 +252,16 @@ namespace gdr {
                 cv::Mat imageKeyPoints = cv::imread(poses.at(poseIndex)->getPathDImage(), cv::IMREAD_COLOR);
                 cv::drawKeypoints(imageNoKeyPoints, keyPointsToShow, imageKeyPoints);
                 cv::putText(imageKeyPoints, //target image
-                            "from sift(" + std::to_string((int)p.getX()) + ", " + std::to_string((int)p.getY())
-                            + "), computed should be x,y: " + std::to_string((int)projectedX) + ", " + std::to_string((int)projectedY), //text
+                            "from sift(" + std::to_string((int) p.getX()) + ", " + std::to_string((int) p.getY())
+                            + "), computed should be x,y: " + std::to_string((int) projectedX) + ", " +
+                            std::to_string((int) projectedY), //text
                             cv::Point(p.getX(), p.getY()), //top-left position
                             cv::FONT_HERSHEY_DUPLEX,
                             0.4,
                             CV_RGB(118, 185, 0), //font color
                             1);
                 cv::putText(imageKeyPoints, //target image
-                            "computed", //text
+                            "computed point no " + std::to_string(i) + ". pose no " + std::to_string(poseIndex), //text
                             cv::Point(projectedX, projectedY), //top-left position
                             cv::FONT_HERSHEY_DUPLEX,
                             0.4,
@@ -257,16 +270,23 @@ namespace gdr {
 
                 imagesObservingCurrentPoint.push_back(imageKeyPoints);
             }
+            if (shown) {
+                int cc = 0;
+                for (const auto &image: imagesObservingCurrentPoint) {
 
-            int cc = 0;
-            for (const auto& image: imagesObservingCurrentPoint) {
-
-                cv::imshow("pose " + std::to_string(cc), image);
-                ++cc;
+                    cv::imshow("pose " + std::to_string(cc), image);
+                    ++cc;
+                }
+                cv::waitKey(0);
+                cv::destroyAllWindows();
             }
-            cv::waitKey(0);
-            cv::destroyAllWindows();
+            if (showOnce) {
+                break;
+            }
+//            assert(shown);
+
         }
+
 
 
     };

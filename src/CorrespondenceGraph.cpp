@@ -200,7 +200,9 @@ namespace gdr {
     CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom,
                                                             int vertexInList,
                                                             bool &success,
-                                                            double inlierCoeff) {
+                                                            bool useProjection,
+                                                            double inlierCoeff,
+                                                            double maxProjectionErrorPixels) {
         Eigen::Matrix4d cR_t_umeyama;
         cR_t_umeyama.setIdentity();
         success = true;
@@ -215,7 +217,7 @@ namespace gdr {
         {
             const auto &match = matches[vertexFrom][vertexInList];
             int minSize = match.matchNumbers.size();
-            if (minSize < minNumberOfInliersAfterRobust / inlierCoeff) {
+            if (minSize < minNumberOfMatches) {
                 success = false;
                 return cR_t_umeyama;
             }
@@ -223,6 +225,7 @@ namespace gdr {
 
             std::vector<std::vector<double>> toBeTransformedPointsVector;
             std::vector<std::vector<double>> originPointsVector;
+            int vertexToBeTransformed = match.frameNumber;
 
             for (int i = 0; i < minSize; ++i) {
 
@@ -236,7 +239,7 @@ namespace gdr {
 
                 double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
                 int localIndexToBeTransformed = match.matchNumbers[i].second;
-                int vertexToBeTransformed = match.frameNumber;
+
                 const auto &siftKeyPointToBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
                 x_toBeTransformed = siftKeyPointToBeTransformed.x;
                 y_toBeTransformed = siftKeyPointToBeTransformed.y;
@@ -258,13 +261,25 @@ namespace gdr {
             assert(toBeTransformedPoints.cols() == minSize);
             assert(originPoints.cols() == minSize);
 
-            cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints,
-                                                                  originPoints,
-                                                                  numIterations,
-                                                                  minSize,
-                                                                  inlierCoeff,
-                                                                  success,
-                                                                  neighbourhoodRadius);
+            if (useProjection) {
+                cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSACProjectiveError(toBeTransformedPoints,
+                                                                                     originPoints,
+                                                                                     verticesOfCorrespondence[vertexToBeTransformed].getCamera().getIntrinsicsMatrix3x3(),
+                                                                                     verticesOfCorrespondence[vertexFrom].getCamera().getIntrinsicsMatrix3x3(),
+                                                                                     numIterations,
+                                                                                     minSize,
+                                                                                     inlierCoeff,
+                                                                                     success,
+                                                                                     maxProjectionErrorPixels);
+            } else {
+                cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints,
+                                                                      originPoints,
+                                                                      numIterations,
+                                                                      minSize,
+                                                                      inlierCoeff,
+                                                                      success,
+                                                                      neighbourhoodRadius);
+            }
             if (!success) {
                 PRINT_PROGRESS("no stable transformation matrix estimation was found with umeyama");
                 cR_t_umeyama.setIdentity();
@@ -707,7 +722,7 @@ namespace gdr {
         }
         std::cout << "BA" << std::endl;
 
-        //vizualize points and matches
+        //visualize points and matches
 //        cloudProjector.showPointsProjection(observedPoints);
 
 
@@ -715,6 +730,37 @@ namespace gdr {
         BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams, cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
 
         std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPoses(indexFixedToZero);
+
+        assert(posesOptimized.size() == verticesOfCorrespondence.size());
+
+        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+            auto& vertexPose = verticesOfCorrespondence[i];
+            vertexPose.setRotationTranslation(posesOptimized[i]);
+        }
+
+
+        // visualize point correspondences:
+//        cloudProjector.showPointsProjection(bundleAdjuster.getPointsGlobalCoordinatesOptimized());
+        return posesOptimized;
+    }
+
+    std::vector<Sophus::SE3d> CorrespondenceGraph::performBundleAdjustmentUsingDepth(int indexFixedToZero) {
+        std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
+        std::cout << "ready " << std::endl;
+        std::vector<std::pair<Sophus::SE3d, CameraRGBD>> posesAndCameraParams;
+        for (const auto& vertexPose: verticesOfCorrespondence) {
+            posesAndCameraParams.push_back({vertexPose.absolutePose, cameraRgbd});
+        }
+        std::cout << "BA depth create BundleAdjuster" << std::endl;
+
+        //vizualize points and matches
+//        cloudProjector.showPointsProjection(observedPoints);
+
+
+
+        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams, cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
+
+        std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPosesUsingDepthInfo(indexFixedToZero);
 
         assert(posesOptimized.size() == verticesOfCorrespondence.size());
 

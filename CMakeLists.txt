@@ -20,6 +20,7 @@ find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED)
 
 find_package(Ceres REQUIRED)
 
@@ -124,7 +125,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/rotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
-    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h include/BundleAduster.cpp include/BundleAduster.h)
+    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h include/BundleAduster.cpp include/BundleAduster.h include/SmoothPointCloud.cpp include/SmoothPointCloud.h)
 
 add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
 
@@ -148,6 +149,7 @@ add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
 #add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY)
 target_compile_definitions(GDR_LIB PUBLIC ${GDR_FLAGS} PRIVATE CERES_USE_CXX11_THREADS=1)
 
+add_definitions(${PCL_DEFINITIONS})
 
 target_link_libraries(
   GDR_LIB
@@ -162,6 +164,8 @@ target_link_libraries(
   ${Pangolin_LIBRARIES}
   ${CUDA_LIBRARIES}
     ${CERES_LIBRARIES}
+    ${PCL_LIBRARY_DIRS}
+    ${PCL_LIBRARIES}
 #  ceres
 )
 
@@ -175,6 +179,7 @@ target_include_directories(
         ${ICPCUDA_INCLUDE_DIRS}
         ${Pangolin_INCLUDE_DIRS}
         ${CERES_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
   PRIVATE ${OpenGL_INCLUDE_DIR})
 
 

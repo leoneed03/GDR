@@ -37,11 +37,11 @@ namespace gdr {
         SiftModule siftModule;
         std::vector<VertexCG> verticesOfCorrespondence;
         int maxVertexDegree = 80;
-        int numIterations = 50;
+        int numIterations = 100;
         std::vector<std::vector<Match>> matches;
         std::vector<std::vector<transformationRtMatrix>> transformationRtMatrices;
         double neighbourhoodRadius = 0.05;
-        int minNumberOfInliersAfterRobust = 10;
+        int minNumberOfMatches = 15;
         const std::string redCode = "\033[0;31m";
         const std::string resetCode = "\033[0m";
         const std::string relativePose = "relativeRotations.txt";
@@ -84,8 +84,11 @@ namespace gdr {
         void computePointClasses();
 
         Eigen::Matrix4d
-        getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList, bool &success,
-                                           double inlierCoeff = 0.6);
+        getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList,
+                                           bool &success,
+                                           bool useProjection = false,
+                                           double inlierCoeff = 0.6,
+                                           double maxProjectionErrorPixels = 1.0);
 
         void printConnectionsRelative(std::ostream &os, int space = 10);
 
@@ -107,6 +110,8 @@ namespace gdr {
         std::vector<Eigen::Vector3d> optimizeAbsoluteTranslations(int indexFixedToZero = 0);
 
         std::vector<Sophus::SE3d> performBundleAdjustment(int indexFixedToZero = 0);
+
+        std::vector<Sophus::SE3d> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
     };
 }
 

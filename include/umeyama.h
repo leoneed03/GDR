@@ -14,6 +14,12 @@
 
 namespace gdr {
 
+    std::vector<std::pair<double, int>> calculateProjectionErrors(const Eigen::Matrix4Xd &toBeTransormedPoints,
+                                                                  const Eigen::Matrix4Xd &destinationPoints,
+                                                                  const Eigen::Matrix3d &cameraIntr3x3Destination,
+                                                                  const Eigen::Matrix4d &cR_t_umeyama,
+                                                                  double maxProjectionErrorPixels);
+
     std::vector<std::pair<double, int>> getPartionedByNthElement(const Eigen::Matrix4Xd &toBeTransormedPoints,
                                                                  const Eigen::Matrix4Xd &destinationPoints,
                                                                  const Eigen::Matrix4d &cR_t,
@@ -27,6 +33,17 @@ namespace gdr {
                                            double inlierCoeff,
                                            bool &estimationSuccess,
                                            double maxErrorCorrespondence);
+
+    Eigen::Matrix4d
+    getTransformationMatrixUmeyamaLoRANSACProjectiveError(const Eigen::Matrix4Xd &toBeTransormedPoints,
+                                                          const Eigen::Matrix4Xd &destinationPoints,
+                                                          const Eigen::Matrix3d &cameraIntr3x3ToBeTransformed,
+                                                          const Eigen::Matrix3d &cameraIntr3x3Destination,
+                                                          const int numIterationsRansac,
+                                                          const int numOfElements,
+                                                          double inlierCoeff,
+                                                          bool &estimationSuccess,
+                                                          double maxProjectionErrorPixels);
 }
 
 #endif

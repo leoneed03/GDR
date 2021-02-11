@@ -57,7 +57,8 @@ namespace gdr {
         std::vector<std::pair<int, KeyPointInfo>> getKeyPointsIndicesAndInfoByPose(int poseNumber) const;
 
         const std::vector<std::unordered_map<int, KeyPointInfo>> getKeyPointInfoByPoseNumberAndPointClass() const;
-        void showPointsProjection(const std::vector<Point3d>& pointsGlobalCoordinates) const;
+
+        void showPointsProjection(const std::vector<Point3d> &pointsGlobalCoordinates) const;
     };
 }
 
