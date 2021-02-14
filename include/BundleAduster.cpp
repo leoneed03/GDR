@@ -16,8 +16,8 @@ namespace gdr {
         assert(keyPointinfo.size() == absolutePoses.size());
         assert(!absolutePoses.empty());
         assert(absolutePoses.size() > 0);
-        double width = 640;
-        double height = 480;
+        double widthAssert = 640;
+        double heightAssert = 480;
         std::cout << "poses: " << absolutePoses.size() << std::endl;
         for (const auto &point: points) {
             pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
@@ -25,8 +25,8 @@ namespace gdr {
 
         for (const auto& mapIntInfo: keyPointinfo) {
             for (const auto& pairIntInfo: mapIntInfo) {
-                assert(pairIntInfo.second.getX() < width && pairIntInfo.second.getX() >= 0);
-                assert(pairIntInfo.second.getY() < height && pairIntInfo.second.getY() >= 0);
+                assert(pairIntInfo.second.getX() < widthAssert && pairIntInfo.second.getX() >= 0);
+                assert(pairIntInfo.second.getY() < heightAssert && pairIntInfo.second.getY() >= 0);
             }
         }
         keyPointInfoByPoseNumberAndPointNumber = keyPointinfo;
@@ -78,13 +78,15 @@ namespace gdr {
 //                auto& observedKeyPoints = keyPointInfoByPoseNumberAndPointNumber[poseIndex];
                 const auto& keyPointInfo = indexAndKeyPointInfo.second;
 
-                double width = 640;
-                double height = 480;
-                double observedX = width - keyPointInfo.getX();
-                double observedY = height - keyPointInfo.getY();
+                double widthAssert = 640;
+                double heightAssert = 480;
+                double observedX = keyPointInfo.getX();
+                double observedY = keyPointInfo.getY();
+//                double observedX = width - keyPointInfo.getX();
+//                double observedY = height - keyPointInfo.getY();
 
-                assert(observedX > 0 && observedX < width);
-                assert(observedY > 0 && observedY < height);
+                assert(observedX > 0 && observedX < widthAssert);
+                assert(observedY > 0 && observedY < heightAssert);
 
                 ceres::CostFunction *cost_function =
                         ReprojectionError::Create(observedX, observedY, keyPointInfo.getDepth());
@@ -142,15 +144,10 @@ namespace gdr {
             double errorCx = std::abs(camera.cx - intr[cameraIntrStartIndex + 1]);
             double errorFy = std::abs(camera.fy - intr[cameraIntrStartIndex + 2]);
             double errorCy = std::abs(camera.cy - intr[cameraIntrStartIndex + 3]);
-            std::cout << camera.fx << " vs (camera.fx) " << intr[cameraIntrStartIndex] << " with error " << errorFx << std::endl;
-            std::cout << camera.cx << " vs (camera.cx) " << intr[cameraIntrStartIndex + 1] << " with error " << errorCx << std::endl;
-            std::cout << camera.fy << " vs (camera.fy) " << intr[cameraIntrStartIndex + 2] << " with error " << errorFy << std::endl;
-            std::cout << camera.cy << " vs (camera.cy) " << intr[cameraIntrStartIndex + 3] << " with error " << errorCy << std::endl;
             assert(errorFx < eps);
             assert(errorCx < eps);
             assert(errorCy < eps);
             assert(errorFy < eps);
-            std::cout << "camera params constant -- ok" << std::endl;
 
 
         }
@@ -205,10 +202,10 @@ namespace gdr {
                 Eigen::Vector3d imageCoordinates = camera.getIntrinsicsMatrix3x3() * localCameraCoordinatesOfPoint;
                 double computedX = imageCoordinates[0] / imageCoordinates[2];
                 double computedY = imageCoordinates[1] / imageCoordinates[2];
-                double width = 640;
-                double height = 480;
-                computedX = width - computedX;
-                computedY = height - computedY;
+//                double width = 640;
+//                double height = 480;
+//                computedX = width - computedX;
+//                computedY = height - computedY;
 
                 double computedDepth = localCameraCoordinatesOfPoint[2];
 
@@ -244,7 +241,7 @@ namespace gdr {
         assert(!orientationsqxyzwByPoseNumber.empty());
         for (int poseIndex = 0; poseIndex < poseTxTyTzByPoseNumber.size(); ++poseIndex) {
 
-            std::cout << "init pose " << poseIndex << std::endl;
+//            std::cout << "init pose " << poseIndex << std::endl;
             auto &pose = poseTxTyTzByPoseNumber[poseIndex];
             auto &orientation = orientationsqxyzwByPoseNumber[poseIndex];
 
@@ -259,19 +256,19 @@ namespace gdr {
                 const auto& keyPointInfo = indexAndKeyPointInfo.second;
 
                 assert(keyPointInfo.isInitialized());
-                double width = 640;
-                double height = 480;
-                double observedX = width - keyPointInfo.getX();
-                double observedY = height - keyPointInfo.getY();
+                double widthAssert = 640;
+                double heightAssert = 480;
+                double observedX = keyPointInfo.getX();
+                double observedY = keyPointInfo.getY();
 
-                if (!(observedX > 0 && observedX < width)) {
+                if (!(observedX > 0 && observedX < widthAssert)) {
                     std::cout << "observed x: " << observedX << std::endl;
                 }
-                if (!(observedY > 0 && observedY < height)) {
+                if (!(observedY > 0 && observedY < heightAssert)) {
                     std::cout << "observed y: " << observedY << std::endl;
                 }
-                assert(observedX > 0 && observedX < width);
-                assert(observedY > 0 && observedY < height);
+                assert(observedX > 0 && observedX < widthAssert);
+                assert(observedY > 0 && observedY < heightAssert);
 
                 ceres::CostFunction *cost_function =
                         ReprojectionWithDepthError::Create(observedX, observedY, keyPointInfo.getDepth(),
@@ -297,7 +294,8 @@ namespace gdr {
 //        options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
         options.linear_solver_type = ceres::SPARSE_SCHUR;
         options.minimizer_progress_to_stdout = true;
-        options.max_num_iterations = 500;
+        options.max_num_iterations = 100;
+        options.num_threads = 6;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
         std::cout << "done ceres BA" << std::endl;
@@ -331,15 +329,10 @@ namespace gdr {
             double errorCx = std::abs(camera.cx - intr[cameraIntrStartIndex + 1]);
             double errorFy = std::abs(camera.fy - intr[cameraIntrStartIndex + 2]);
             double errorCy = std::abs(camera.cy - intr[cameraIntrStartIndex + 3]);
-            std::cout << camera.fx << " vs (camera.fx) " << intr[cameraIntrStartIndex] << " with error " << errorFx << std::endl;
-            std::cout << camera.cx << " vs (camera.cx) " << intr[cameraIntrStartIndex + 1] << " with error " << errorCx << std::endl;
-            std::cout << camera.fy << " vs (camera.fy) " << intr[cameraIntrStartIndex + 2] << " with error " << errorFy << std::endl;
-            std::cout << camera.cy << " vs (camera.cy) " << intr[cameraIntrStartIndex + 3] << " with error " << errorCy << std::endl;
             assert(errorFx < eps);
             assert(errorCx < eps);
             assert(errorCy < eps);
             assert(errorFy < eps);
-            std::cout << "camera params constant -- ok" << std::endl;
 
         }
 

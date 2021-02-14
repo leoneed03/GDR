@@ -36,7 +36,7 @@ namespace gdr {
         CameraRGBD cameraRgbd;
         SiftModule siftModule;
         std::vector<VertexCG> verticesOfCorrespondence;
-        int maxVertexDegree = 80;
+        int maxVertexDegree = 20;
         int numIterations = 100;
         std::vector<std::vector<Match>> matches;
         std::vector<std::vector<transformationRtMatrix>> transformationRtMatrices;
@@ -50,6 +50,8 @@ namespace gdr {
         std::vector<std::string> imagesD;
         std::string pathToImageDirectoryRGB;
         std::string pathToImageDirectoryD;
+        int totalMeausedRelativePoses = 0;
+        int refinedPoses = 0;
 
         const CloudProjector& getCloudProjector() const;
 
@@ -59,7 +61,8 @@ namespace gdr {
         findInlierPointCorrespondences(int vertexFrom,
                                        int vertexInList,
                                        double inlierCoeff,
-                                       Eigen::Matrix4d &transformation);
+                                       Eigen::Matrix4d &transformation,
+                                       bool isICP);
 
         CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD,
                             float fx,
@@ -84,7 +87,7 @@ namespace gdr {
         void computePointClasses();
 
         Eigen::Matrix4d
-        getTransformationRtMatrixTwoImages(int vertexFrom, int vertexInList,
+        getTransformationRtMatrixTwoImages(int vertexFromDestOrigin, int vertexInListToBeTransformedCanBeComputed,
                                            bool &success,
                                            bool useProjection = false,
                                            double inlierCoeff = 0.6,

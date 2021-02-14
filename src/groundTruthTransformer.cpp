@@ -129,6 +129,7 @@ namespace gdr {
         std::vector<std::string> dData = readRgbData(pathToD);
 
         assert(rgbData.size() == dData.size());
+        assert(!rgbData.empty());
 
         std::vector<std::string> onlyTakenRGB;
         int cntr = 0;
@@ -142,6 +143,7 @@ namespace gdr {
             PRINT_PROGRESS("write D " << toD);
             boost::filesystem::copy_file(rgbData[e], toRGB);
             boost::filesystem::copy_file(dData[e], toD);
+            std::cout << e << " copied rgb " << toRGB << std::endl;
             PRINT_PROGRESS("success" << std::endl);
             onlyTakenRGB.push_back(rgbDataR[e]);
             ++cntr;
@@ -409,6 +411,13 @@ namespace gdr {
             Eigen::Quaterniond qFrom(rotationFrom.data());
             qFrom.normalize();
             Eigen::Vector3d tFrom(translationFrom.data());
+            Sophus::SE3d fromSE3;
+            fromSE3.setQuaternion(qFrom);
+            fromSE3.translation() = tFrom;
+            fromSE3 = fromSE3.inverse();
+
+            qFrom = fromSE3.unit_quaternion();
+            tFrom = fromSE3.translation();
 
             for (int to = index + 1; to < timeAndAbsolutePoses.size(); ++to) {
 
@@ -420,6 +429,14 @@ namespace gdr {
                 Eigen::Quaterniond qTo(rotationTo.data());
                 qTo.normalize();
                 Eigen::Vector3d tTo(translationTo.data());
+
+                Sophus::SE3d toSE3;
+                toSE3.setQuaternion(qTo);
+                toSE3.translation() = tTo;
+                toSE3 = toSE3.inverse();
+
+                qTo = toSE3.unit_quaternion();
+                tTo = toSE3.translation();
 
                 //// R_{ij} = R_{j}^T * R_{i}
                 Eigen::Quaterniond relativeRotationQuat = qTo.inverse() * qFrom;

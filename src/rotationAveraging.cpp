@@ -30,8 +30,11 @@ namespace gdr {
         {
             std::cout << "Running Shonan averaging for SO(3) on " << inputFile << std::endl;
             gtsam::ShonanAveraging3 shonan(inputFile);
+            std::cout << "init randomly" << std::endl;
             auto initial = shonan.initializeRandomly(rng);
             auto result = shonan.run(initial);
+
+//            auto result = shonan.run(initial, 3, 30);
 
             // Parse file again to set up translation problem, adding a prior
             boost::tie(inputGraph, posesInFile) = gtsam::load3D(inputFile);

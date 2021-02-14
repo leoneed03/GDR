@@ -39,17 +39,18 @@ namespace gdr {
 
                 double localZ = currentKeypointDepth / coeffDepth;
 
-                std::vector<double> coordinatesPixelCenteredImage = {x + 0.5,
-                                                                     y + 0.5,
+                std::vector<double> coordinatesPixelCenteredImage = {(x + 0.5),
+                                                                     (y + 0.5),
                                                                      localZ,
                                                                      1.0};
                 auto localCoordinatesXYZ1 = getPointBeforeProjection(coordinatesPixelCenteredImage,
                                                                      poseToBeRegistered.getCamera());
 
-                Eigen::Vector4d globalCoordinates = poseMatrix * localCoordinatesXYZ1;
+                // ground truth
+                Eigen::Vector4d globalCoordinates = poseMatrix.inverse() * localCoordinatesXYZ1;
 
-                double globalX = globalCoordinates[0];
-                double globalY = globalCoordinates[1];
+                double globalX = -globalCoordinates[0];
+                double globalY = -globalCoordinates[1];
                 double globalZ = globalCoordinates[2];
 
 

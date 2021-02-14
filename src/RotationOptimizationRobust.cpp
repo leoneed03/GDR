@@ -24,13 +24,6 @@ namespace gdr {
             result[i] = {quat.x(), quat.y(), quat.z(), quat.w()};
         }
 
-        for (int i = 0; i < result.size(); ++i) {
-            std::cout << i << ": \t POSE_Quat ";
-            for (const auto& e: result[i]) {
-                std::cout << e << ' ';
-            }
-            std::cout << std::endl;
-        }
 
 
 
@@ -68,16 +61,6 @@ namespace gdr {
 
         // check if we can use solution
         assert(summary.IsSolutionUsable());
-
-
-
-        for (int i = 0; i < result.size(); ++i) {
-            std::cout << i << ": \t optimized_POSE_Quat ";
-            for (const auto& e: result[i]) {
-                std::cout << e << ' ';
-            }
-            std::cout << std::endl;
-        }
 
         std::vector<Eigen::Quaterniond> optimizedOrientations;
         for (const auto& orientationVectorRaw: result) {

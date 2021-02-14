@@ -17,7 +17,7 @@
 
 
 
-TEST(testRelativePosesComputation, getPairwiseTransformations) {
+TEST(testRelativePosesComputation, getPairwiseTransformationsICPinversedComputedPoses) {
 
 
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
@@ -32,7 +32,30 @@ TEST(testRelativePosesComputation, getPairwiseTransformations) {
     std::cout << "=====================================" << std::endl;
     std::cout << "translation stats: " << errorsStatsTR.first.meanError << " with standard deviation "
               << errorsStatsTR.first.standartDeviation << std::endl;
-    std::cout << "rotation    stats: " << errorsStatsTR.second.meanError << " with standard deviation "
+    std::cout << "roTation    stats: " << errorsStatsTR.second.meanError << " with standard deviation "
+              << errorsStatsTR.second.standartDeviation << std::endl;
+
+
+    ASSERT_LE(errorsStatsTR.first.meanError, 0.06);
+    ASSERT_LE(errorsStatsTR.second.meanError, 0.06);
+}
+
+TEST(testRelativePosesComputation, getPairwiseTransformationsICP) {
+
+
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
+                                                 517.3,
+                                                 318.6, 516.5, 255.3);
+    correspondenceGraph.computeRelativePoses();
+    std::string pathToGroundTruth = "../../data/plantDataset_19_3/groundtruth_new.txt";
+    std::string estimatedPairWise = correspondenceGraph.relativePose;
+    ASSERT_TRUE(correspondenceGraph.verticesOfCorrespondence.size() == 19);
+    std::pair<gdr::errorStats, gdr::errorStats> errorsStatsTR = gdr::getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
+            pathToGroundTruth, estimatedPairWise);
+    std::cout << "=====================================" << std::endl;
+    std::cout << "translation stats: " << errorsStatsTR.first.meanError << " with standard deviation "
+              << errorsStatsTR.first.standartDeviation << std::endl;
+    std::cout << "roTation    stats: " << errorsStatsTR.second.meanError << " with standard deviation "
               << errorsStatsTR.second.standartDeviation << std::endl;
 
 

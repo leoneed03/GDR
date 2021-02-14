@@ -12,22 +12,25 @@
 #include "cameraRGBD.h"
 
 namespace gdr {
-    Eigen::Vector3d mirrorPoint(const Eigen::Vector3d &point, double mirrorParamH = 480, double mirrorParamW = 640);
-
-    Eigen::Vector4d mirrorPoint(const Eigen::Vector4d &point, double mirrorParamH = 480, double mirrorParamW = 640);
+//    Eigen::Vector3d mirrorPoint(const Eigen::Vector3d &point, double mirrorParamH = 480, double mirrorParamW = 640);
+//
+//    Eigen::Vector4d mirrorPoint(const Eigen::Vector4d &point, double mirrorParamH = 480, double mirrorParamW = 640);
 
     std::vector<std::vector<double>> getPointCloudFromImage(const std::string &pathToImageDepth);
 
     cv::Mat getProjectedPointCloud(const std::string &pathToImageDepth,
                                    const Eigen::Matrix4d &transformation,
-                                   const CameraRGBD &cameraRgbd);
+                                   const CameraRGBD &cameraRgbd,
+                                   bool isICP = false);
 
     cv::Mat visualizeTransformedCloud(const Eigen::Matrix4Xd &pointCloud,
                                       const Eigen::Matrix4d &transformation,
-                                      const CameraRGBD &cameraRgbd);
+                                      const CameraRGBD &cameraRgbd,
+                                      bool isICP = false);
 
     Eigen::Matrix4Xd getPointCloudBeforeProjection(const std::vector<std::vector<double>> &pointsFromImage,
-                                                   const CameraRGBD &cameraRgbd);
+                                                   const CameraRGBD &cameraRgbd,
+                                                   bool isICP = false);
 
     Eigen::Vector4d getPointBeforeProjection(const std::vector<double> &pointFromImageXYZ1,
                                              const CameraRGBD &cameraRgbd);

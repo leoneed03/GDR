@@ -108,9 +108,9 @@ namespace gdr {
                                                  poses[i]->getCamera());
 
 
-                // better with inverse CHANGE
+                // better with inverse CHANGE TODO
                 Eigen::Vector4d globalCoordinates =
-                        poses[i]->getEigenMatrixAbsolutePose4d().inverse() * localCoordinatesBeforeProjection;
+                        poses[i]->getEigenMatrixAbsolutePose4d() * localCoordinatesBeforeProjection;
 
 
 //                std::cout << currentPointIndex << " / " << computedCoordinatesByPointIndex.size() << "__precomputed " << pointsSize << std::endl;
@@ -129,8 +129,8 @@ namespace gdr {
                 Eigen::Vector3d projected = cameraIntr * localCoordinatesBeforeProjection;
                 double projectedX = projected[0] / projected[2];
                 double projectedY = projected[1] / projected[2];
-                projectedX = 640 - projectedX;
-                projectedY = 480 - projectedY;
+//                projectedX = 640 - projectedX;
+//                projectedY = 480 - projectedY;
 
                 bool okX = std::abs(projectedX - currentInfoBeforeProjection.getX()) < 1e-10;
                 bool okY = std::abs(projectedY - currentInfoBeforeProjection.getY()) < 1e-10;
@@ -240,12 +240,12 @@ namespace gdr {
 
 
                 // without inverse better.....
-                // PositionMatrix * Global_ie_LocalZeroFrameCoordinates = LocalCurrentFrameCoordinates
-                Eigen::Vector3d projected = cameraIntr * poses[poseIndex]->getEigenMatrixAbsolutePose4d() * pointGlobal;
+                // PositionMatrix * Global_ie_LocalZeroFrameCoordinates = LocalCurrentFrameCoordinates TODO
+                Eigen::Vector3d projected = cameraIntr * poses[poseIndex]->getEigenMatrixAbsolutePose4d().inverse() * pointGlobal;
                 double projectedX = projected[0] / projected[2];
                 double projectedY = projected[1] / projected[2];
-                projectedX = 640 - projectedX;
-                projectedY = 480 - projectedY;
+//                projectedX = 640 - projectedX;
+//                projectedY = 480 - projectedY;
                 cv::KeyPoint keyPointComputed(cv::Point(projectedX, projectedY), 50);
                 std::vector<cv::KeyPoint> keyPointsToShow = {keyPointToShow, keyPointComputed};
 

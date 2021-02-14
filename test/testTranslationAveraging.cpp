@@ -37,6 +37,49 @@ TEST(testTranslationAveraging, translationRecovery3Poses) {
     ASSERT_TRUE(true);
 }
 
+
+TEST(testTranslationAveraging, translationRecovery19PosesFromFileUsingSE3) {
+    std::string absolutePoses = "../../data/files/absolutePoses_19.txt";
+    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
+
+    std::vector<Sophus::SE3d> absolutePosesFromGroundTruth;
+    Sophus::SE3d poseZeroGT;
+    poseZeroGT.setQuaternion(posesInfo[0].getOrientationQuat().normalized());
+    poseZeroGT.translation() = posesInfo[0].getTranslation();
+
+    for (int i = 0; i < posesInfo.size(); ++i) {
+        Sophus::SE3d absolutePoseGT;
+        absolutePoseGT.setQuaternion(posesInfo[i].getOrientationQuat().normalized());
+        absolutePoseGT.translation() = posesInfo[i].getTranslation();
+        absolutePosesFromGroundTruth.push_back(poseZeroGT.inverse() * absolutePoseGT);
+    }
+
+    std::vector<Eigen::Matrix4d> absolutePosesOnlyRotations;
+    for (const auto &absolutePoseEntry: absolutePosesFromGroundTruth) {
+        Eigen::Matrix4d newAbsolutePose;
+        newAbsolutePose.setIdentity();
+        newAbsolutePose.block<3, 3>(0, 0) =
+                absolutePoseEntry.unit_quaternion().toRotationMatrix();
+        absolutePosesOnlyRotations.emplace_back(newAbsolutePose);
+    }
+    std::vector<gdr::translationMeasurement> relativeTs;
+
+    for (int i = 0; i < posesInfo.size() - 1; ++i) {
+        gdr::translationMeasurement relT((absolutePosesFromGroundTruth[i].inverse() * absolutePosesFromGroundTruth[i + 1]).translation(), i, i + 1);
+        relativeTs.push_back(relT);
+    }
+    gdr::Vectors3d absoluteTranslations = gdr::translationAverager::recoverTranslations(relativeTs, absolutePosesOnlyRotations);
+    std::vector<Eigen::Vector3d> absoluteTranslationsFirstZero = absoluteTranslations.toVectorOfVectors();
+
+    for (int i = 0; i < absolutePosesFromGroundTruth.size(); ++i) {
+        double errorT = (absolutePosesFromGroundTruth[i].translation() - (absoluteTranslationsFirstZero[i] - absoluteTranslationsFirstZero[0])).norm();
+        std::cout << "pose " << i << " error: " << errorT << std::endl;
+        std::cout << "computed " << absoluteTranslationsFirstZero[i] << std::endl;
+        ASSERT_LE(errorT, 1e-10);
+    }
+
+}
+
 TEST(testTranslationAveraging, translationRecovery19PosesFromFile) {
 
     int numPoses = 19;

@@ -9,6 +9,8 @@
 #include "printer.h"
 #include "Vectors3d.h"
 
+#include <sophus/se3.hpp>
+
 namespace gdr {
     SparseMatrixd
     translationAverager::constructSparseMatrix(const std::vector<translationMeasurement> &relativeTranslations,
@@ -22,7 +24,6 @@ namespace gdr {
             const auto &relativeT = relativeTranslations[i];
             int posLeftPlus = relativeT.indexFrom;
             int posRightMinus = relativeT.indexTo;
-            std::cout << "processing " << i << " rel T" << std::endl;
             assert(posLeftPlus < posRightMinus);
             assert(posLeftPlus >= 0);
             assert(posRightMinus < numberOfAbsolutePoses);
@@ -38,8 +39,6 @@ namespace gdr {
         SparseMatrixd systemSparseMatrix(vectorDim * relativeTranslations.size(), vectorDim * absolutePoses.size());
         systemSparseMatrix.setFromTriplets(coefficients.begin(), coefficients.end());
 
-        PRINT_PROGRESS("Sparse A is " << systemSparseMatrix.rows() / 3 << " * " << systemSparseMatrix.cols() / 3
-                                      << std::endl);
         assert(systemSparseMatrix.rows() / 3 == relativeTranslations.size());
         assert(systemSparseMatrix.cols() / 3 == absolutePoses.size());
 
@@ -94,14 +93,14 @@ namespace gdr {
         } else {
             x = cg.solveWithGuess(freeTermToSolveB, guessRaw);
         }
-
-        std::cout << "A is " << anyMatrixA.rows() / 3 << " * " << anyMatrixA.cols() / 3 << std::endl;
-        std::cout << "A^T is " << anyMatrixA.transpose().rows() / 3 << " * " << anyMatrixA.transpose().cols() / 3
-                  << std::endl;
-        std::cout << "System Matrix Symmetric is " << SymMatrix.rows() / 3 << " * " << SymMatrix.cols() / 3
-                  << std::endl;
-        std::cout << "Free term is " << freeTermToSolveB.rows() / 3 << std::endl;
-        std::cout << "Solution is " << x.rows() / 3 << std::endl;
+//
+//        std::cout << "A is " << anyMatrixA.rows() / 3 << " * " << anyMatrixA.cols() / 3 << std::endl;
+//        std::cout << "A^T is " << anyMatrixA.transpose().rows() / 3 << " * " << anyMatrixA.transpose().cols() / 3
+//                  << std::endl;
+//        std::cout << "System Matrix Symmetric is " << SymMatrix.rows() / 3 << " * " << SymMatrix.cols() / 3
+//                  << std::endl;
+//        std::cout << "Free term is " << freeTermToSolveB.rows() / 3 << std::endl;
+//        std::cout << "Solution is " << x.rows() / 3 << std::endl;
 
 
         if (cg.info() != Eigen::Success) {
@@ -170,6 +169,7 @@ namespace gdr {
         return currentSolutionAbsoluteTranslations;
     }
 
+
     Vectors3d
     translationAverager::recoverTranslationsIRLS(const std::vector<translationMeasurement> &relativeTranslations,
                                                  std::vector<Eigen::Matrix4d> &absolutePosesGuess,
@@ -178,9 +178,22 @@ namespace gdr {
                                                  int numOfIterations,
                                                  double epsilonIRLS) {
 
-        int dim = 3;
-        SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslations, absolutePosesGuess);
-        Vectors3d b = constructColumnTermB(relativeTranslations, absolutePosesGuess);
+        const int dim = 3;
+        std::vector<translationMeasurement> newRelativeTranslations;
+        for (int i = 0; i < relativeTranslations.size(); ++i) {
+            int indexFrom = relativeTranslations[i].getIndexFromToBeTransformed();
+            int indexTo = relativeTranslations[i].getIndexToDestination();
+            assert(indexFrom < indexTo);
+            Sophus::SE3d relativePoseFromTo;
+            Eigen::Matrix3d relRot = absolutePosesGuess[indexFrom].topLeftCorner<dim,dim>().inverse() * absolutePosesGuess[indexTo].topLeftCorner<dim,dim>();
+            Eigen::Quaterniond relQ(relRot);
+            relativePoseFromTo.setQuaternion(relQ.normalized());
+            relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
+            relativePoseFromTo = relativePoseFromTo.inverse();
+            newRelativeTranslations.push_back(translationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
+        }
+        SparseMatrixd systemMatrix = constructSparseMatrix(newRelativeTranslations, absolutePosesGuess);
+        Vectors3d b = constructColumnTermB(newRelativeTranslations, absolutePosesGuess);
 //        Vectors3d translationsGuess;
 //        translationsGuess.reserve(absolutePosesGuess.size());
 //
@@ -200,8 +213,23 @@ namespace gdr {
                                              const std::vector<Eigen::Matrix4d> &absolutePoses,
                                              double epsilonIRLSWeightMin) {
 
-        SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslations, absolutePoses);
-        Vectors3d b = constructColumnTermB(relativeTranslations, absolutePoses);
+        const int dim = 3;
+        std::vector<translationMeasurement> newRelativeTranslations;
+        for (int i = 0; i < relativeTranslations.size(); ++i) {
+            int indexFrom = relativeTranslations[i].getIndexFromToBeTransformed();
+            int indexTo = relativeTranslations[i].getIndexToDestination();
+            assert(indexFrom < indexTo);
+            Sophus::SE3d relativePoseFromTo;
+            Eigen::Matrix3d relRot = absolutePoses[indexFrom].topLeftCorner<dim,dim>().inverse() * absolutePoses[indexTo].topLeftCorner<dim,dim>();
+            Eigen::Quaterniond relQ(relRot);
+            relativePoseFromTo.setQuaternion(relQ.normalized());
+            relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
+            relativePoseFromTo = relativePoseFromTo.inverse();
+            newRelativeTranslations.push_back(translationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
+        }
+
+        SparseMatrixd systemMatrix = constructSparseMatrix(newRelativeTranslations, absolutePoses);
+        Vectors3d b = constructColumnTermB(newRelativeTranslations, absolutePoses);
         bool success = true;
         std::vector<double> weightsId(b.getSize(), 1.0);
 

@@ -35,16 +35,6 @@ namespace gdr {
                                             const VertexCG &poseDestination,
                                             Eigen::Matrix4d &initRelPosEstimation) {
 
-//        cv::Mat depthImageToBeTransformed = cv::imread(poseToBeTransformed.pathToDimage, cv::IMREAD_ANYDEPTH);
-//        cv::Mat projectedImageUmeyama = getProjectedPointCloud(poseToBeTransformed.pathToDimage, initRelPosEstimation, poseToBeTransformed.cameraRgbd);
-//        cv::Mat depthImageDestination = cv::imread(poseDestination.pathToDimage, cv::IMREAD_ANYDEPTH);
-//        //std::cout << "to be transformed \n"<< poseToBeTransformed.pathToDimage << std::endl;
-//        //std::cout << "dest pos\n" << poseDestination.pathToDimage << std::endl;
-//        cv::imshow("Before Transformation", depthImageToBeTransformed);
-//        cv::imshow("got this (after transformation)", projectedImageUmeyama);
-//        cv::imshow("Should get this (destination)", depthImageDestination);
-//        cv::waitKey(0);
-//        cv::destroyAllWindows();
 
 
 
@@ -75,38 +65,24 @@ namespace gdr {
                                                       (unsigned short *) secondData.ptr);
 
 
-        loadDepth(imageICP, poseToBeTransformed.pathToDimage);
+        //swap here
         loadDepth(imageICPModel, poseDestination.pathToDimage);
+        loadDepth(imageICP, poseToBeTransformed.pathToDimage);
 
 
-        ///swap due to inverse order of images used by imageICP
+        ///TODO: swap due to inverse order of images used by imageICP (?)
 //        std::swap(imageICP, imageICPModel);
         icpOdom.initICPModel(imageICPModel.ptr);
         icpOdom.initICP(imageICP.ptr);
 
         T_wc_prev = T_wc_curr;
-
-//        Sophus::SE3d T_prev_curr = T_wc_prev.inverse() * T_wc_curr;
-//        Sophus::SE3d relativeSE3_Rt(initRelPosEstimation.block<3, 3>(0, 0),
-//                                    initRelPosEstimation.block<3, 1>(0, 3));
         Sophus::SE3d relativeSE3_Rt = Sophus::SE3d::fitToSE3(initRelPosEstimation);
-//        relativeSE3_Rt = relativeSE3_Rt.inverse();
-
         Sophus::SE3d preICP_SE3 = relativeSE3_Rt;
 
-
-        //std::cout << "Eigen Rotation Translation" << std::endl << initRelPosEstimation << std::endl;
-//        //std::cout << "Sophus Translation" << relativeSE3_Rt.translation() << std::endl;
-
-        //std::cout << "Sophus Rotation" << std::endl << relativeSE3_Rt.rotationMatrix() << std::endl;
-        //std::cout << "Sophus Translation" << std::endl << relativeSE3_Rt.translation() << std::endl;
-        //        = initRelPosEstimation;
+        // TODO: use init umeyama as init
         icpOdom.getIncrementalTransformation(relativeSE3_Rt, threads, blocks);
+//        icpOdom.getIncrementalTransformation(relativeSE3_Rt, threads, blocks);
 
-
-        //std::cout << "_______________________________________________" << std::endl;
-//        std::cout << "Sophus Rotation AFTER" << std::endl << relativeSE3_Rt.rotationMatrix() << std::endl;
-        //std::cout << "Sophus Translation AFTER" << std::endl << relativeSE3_Rt.translation() << std::endl;
 
         Eigen::Quaterniond sophusBeforeToEigen(preICP_SE3.rotationMatrix().matrix());
         Eigen::Quaterniond sophusAfterToEigen(relativeSE3_Rt.rotationMatrix().matrix());
@@ -117,22 +93,8 @@ namespace gdr {
 
 
         ///finally refine the measurement
+//        initRelPosEstimation = relativeSE3_Rt.matrix();
         initRelPosEstimation = relativeSE3_Rt.matrix();
-
-//        //std::cout << "After all " << std::endl << initRelPosEstimation << std::endl;
-////        //std::cout << "Total " << std::endl << initRelPosEstimation << std::endl;
-//        cv::Mat depthImageToBeTransformed = cv::imread(poseToBeTransformed.pathToDimage, cv::IMREAD_ANYDEPTH);
-//        cv::Mat projectedImageUmeyama = getProjectedPointCloud(poseToBeTransformed.pathToDimage, initRelPosEstimation,
-//                                                               poseToBeTransformed.cameraRgbd);
-//        cv::Mat depthImageDestination = cv::imread(poseDestination.pathToDimage, cv::IMREAD_ANYDEPTH);
-//        //std::cout << "to be transformed \n" << poseToBeTransformed.pathToDimage << std::endl;
-//        //std::cout << "dest pos\n" << poseDestination.pathToDimage << std::endl;
-//        cv::imshow("Before Transformation", depthImageToBeTransformed);
-//        cv::imshow("got this (after transformation)", projectedImageUmeyama);
-//        cv::imshow("Should get this (destination)", depthImageDestination);
-//        cv::waitKey(0);
-//        cv::destroyAllWindows();
-
         return 0;
     }
 }

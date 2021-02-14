@@ -47,7 +47,7 @@ namespace gdr {
 //            qToQuat.normalize();
 
 
-            Eigen::Quaternion<T> relativeRotationComputed = qTo.inverse() * qFrom;
+            Eigen::Quaternion<T> relativeRotationComputed = qFrom.inverse() * qTo;
 
 //////            Eigen::Quaternion<T> relativeRotationComputed = qTo.conjugate() * qFrom;
 //            std::vector<T> rawRelRotObserved = {T(relativeRotation[0]), T(relativeRotation[1]), T(relativeRotation[2]), T(relativeRotation[3])};

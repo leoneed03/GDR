@@ -8,32 +8,32 @@
 
 namespace gdr {
 
-    Eigen::Vector3d mirrorPoint(const Eigen::Vector3d &point, double mirrorParamH, double mirrorParamW) {
-        Eigen::Vector3d newPoint = point;
-        newPoint[0] = mirrorParamW - point[0];
-        newPoint[1] = mirrorParamH - point[1];
-        newPoint[2] = point[2];
-        return newPoint;
-    }
-
-    Eigen::Vector4d mirrorPoint(const Eigen::Vector4d &point, double mirrorParamH, double mirrorParamW) {
-        Eigen::Vector4d newPoint = point;
-        newPoint[0] = mirrorParamW - point[0];
-        newPoint[1] = mirrorParamH - point[1];
-        newPoint[2] = point[2];
-        newPoint[3] = 1;
-        return newPoint;
-    }
+//    Eigen::Vector3d mirrorPoint(const Eigen::Vector3d &point, double mirrorParamH, double mirrorParamW) {
+//        Eigen::Vector3d newPoint = point;
+//        newPoint[0] = mirrorParamW - point[0];
+//        newPoint[1] = mirrorParamH - point[1];
+//        newPoint[2] = point[2];
+//        return newPoint;
+//    }
+//
+//    Eigen::Vector4d mirrorPoint(const Eigen::Vector4d &point, double mirrorParamH, double mirrorParamW) {
+//        Eigen::Vector4d newPoint = point;
+//        newPoint[0] = mirrorParamW - point[0];
+//        newPoint[1] = mirrorParamH - point[1];
+//        newPoint[2] = point[2];
+//        newPoint[3] = 1;
+//        return newPoint;
+//    }
 
     cv::Mat getProjectedPointCloud(const std::string &pathToImageDepth, const Eigen::Matrix4d &transformation,
-                                   const CameraRGBD &cameraRgbd) {
+                                   const CameraRGBD &cameraRgbd, bool isICP) {
         return visualizeTransformedCloud(
-                getPointCloudBeforeProjection(getPointCloudFromImage(pathToImageDepth), cameraRgbd), transformation,
-                cameraRgbd);
+                getPointCloudBeforeProjection(getPointCloudFromImage(pathToImageDepth), cameraRgbd, isICP), transformation,
+                cameraRgbd, isICP);
     }
 
     cv::Mat visualizeTransformedCloud(const Eigen::Matrix4Xd &pointCloud, const Eigen::Matrix4d &transformation,
-                                      const CameraRGBD &cameraRgbd) {
+                                      const CameraRGBD &cameraRgbd, bool isICP) {
 
         int paramH = 480;
         int paramW = 640;
@@ -45,7 +45,6 @@ namespace gdr {
         intrinsicsMatrix.col(2)[0] = cameraRgbd.cx;
         intrinsicsMatrix.col(2)[1] = cameraRgbd.cy;
         intrinsicsMatrix.col(2)[2] = 1;
-        std::cout << "intrinsics matrix \n" << intrinsicsMatrix << std::endl;
         Eigen::Matrix4Xd afterTransformation = transformation * pointCloud;
         Eigen::Matrix3Xd afterProjection = intrinsicsMatrix * afterTransformation;
 
@@ -55,7 +54,8 @@ namespace gdr {
             Eigen::Vector3d newPoint = point;
             newPoint[0] /= point[2];
             newPoint[1] /= point[2];
-            newPoint = mirrorPoint(newPoint);
+            if (!isICP) {
+            }
             int x = newPoint[0];
             int y = newPoint[1];
             int depth = static_cast<int>(pointCloud.col(i)[2] * 5000.0);
@@ -106,7 +106,7 @@ namespace gdr {
      */
 
     Eigen::Matrix4Xd getPointCloudBeforeProjection(const std::vector<std::vector<double>> &pointsFromImageXYZ1,
-                                                   const CameraRGBD &cameraRgbd) {
+                                                   const CameraRGBD &cameraRgbd, bool isICP) {
 
         Eigen::Matrix4Xd points3D(4, pointsFromImageXYZ1.size());
 
@@ -116,17 +116,13 @@ namespace gdr {
             assert(pointsFromImageXYZ1[i].size() == dimXYZ1);
             Eigen::Vector4d point(pointsFromImageXYZ1[i].data());
 
-            ///mirror x, y coordinates if necessary
-            Eigen::Vector4d newPoint = mirrorPoint(point);
 
-            double oldX = newPoint[0];
-            double oldY = newPoint[1];
-            double oldZ = newPoint[2];
+            double oldX = point[0];
+            double oldY = point[1];
+            double oldZ = point[2];
 
             double X = 1.0 * (oldX - cameraRgbd.cx) * oldZ / cameraRgbd.fx;
-//            x1 = 1.0 * (x1 - cameraRgbd.cx) * z1 / cameraRgbd.fx;
             double Y = 1.0 * (oldY - cameraRgbd.cy) * oldZ / cameraRgbd.fy;
-//            y1 = 1.0 * (y1 - cameraRgbd.cy) * z1 / cameraRgbd.fy;
             points3D.col(i) << X, Y, oldZ, 1;
         }
 
@@ -142,11 +138,11 @@ namespace gdr {
         Eigen::Vector4d point(pointFromImageXYZ1keyPointFormat.data());
 
         ///mirror x, y coordinates if necessary
-        Eigen::Vector4d newPoint = mirrorPoint(point);
+//        Eigen::Vector4d newPoint = mirrorPoint(point);
 
-        double oldX = newPoint[0];
-        double oldY = newPoint[1];
-        double oldZ = newPoint[2];
+        double oldX = point[0];
+        double oldY = point[1];
+        double oldZ = point[2];
 
         double X = 1.0 * (oldX - cameraRgbd.cx) * oldZ / cameraRgbd.fx;
         double Y = 1.0 * (oldY - cameraRgbd.cy) * oldZ / cameraRgbd.fy;

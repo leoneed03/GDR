@@ -36,7 +36,8 @@ namespace gdr {
     CorrespondenceGraph::findInlierPointCorrespondences(int vertexFrom,
                                                         int vertexInList,
                                                         double maxErrorL2,
-                                                        Eigen::Matrix4d &transformation) {
+                                                        Eigen::Matrix4d &transformation,
+                                                        bool isICP) {
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
         const auto &match = matches[vertexFrom][vertexInList];
         int minSize = match.matchNumbers.size();
@@ -52,6 +53,7 @@ namespace gdr {
             x_origin = siftKeyPointOrigin.x;
             y_origin = siftKeyPointOrigin.y;
             z_origin = verticesOfCorrespondence[vertexFrom].depths[localIndexOrigin];
+
             originPointsVector.push_back({x_origin, y_origin, z_origin, 1});
             KeyPointInfo keyPointInfoOrigin(siftKeyPointOrigin, z_origin, vertexFrom);
 
@@ -69,6 +71,7 @@ namespace gdr {
             x_toBeTransformed = siftKeyPointToBeTransformed.x;
             y_toBeTransformed = siftKeyPointToBeTransformed.y;
             z_toBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].depths[localIndexToBeTransformed];
+
             toBeTransformedPointsVector.push_back({x_toBeTransformed, y_toBeTransformed, z_toBeTransformed, 1});
 
 
@@ -88,6 +91,7 @@ namespace gdr {
                                                                                verticesOfCorrespondence[vertexFrom].cameraRgbd);
         Eigen::Matrix4Xd originPoints = getPointCloudBeforeProjection(originPointsVector,
                                                                       verticesOfCorrespondence[match.frameNumber].cameraRgbd);
+
         Eigen::Matrix4Xd residuals = originPoints - transformation * toBeTransformedPoints;
 
         std::vector<bool> inliersCorrespondencesKeyPoints(correspondencesBetweenTwoImages.size(), true);
@@ -112,7 +116,7 @@ namespace gdr {
         for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
             for (int j = i + 1; j < verticesOfCorrespondence.size(); ++j) {
 
-                PRINT_PROGRESS("currently " << i << ' ' << j);
+                std::cout << "matching images " << i << " and " << j << std::endl;
                 std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
                         std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
                         std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
@@ -131,10 +135,10 @@ namespace gdr {
             for (int j = 0; j < matches[i].size(); ++j) {
 
                 const auto &match = matches[i][j];
-                const auto &frameFrom = verticesOfCorrespondence[i];
-                const auto &frameTo = verticesOfCorrespondence[match.frameNumber];
+                const auto &frameFromDestination = verticesOfCorrespondence[i];
+                const auto &frameToToBeTransformed = verticesOfCorrespondence[match.frameNumber];
                 PRINT_PROGRESS("check this " << frameFrom.index << " -> " << frameTo.index);
-                assert(frameTo.getIndex() > frameFrom.getIndex());
+                assert(frameToToBeTransformed.getIndex() > frameFromDestination.getIndex());
                 bool success = true;
                 bool successICP = true;
                 auto cameraMotion = getTransformationRtMatrixTwoImages(i, j, success);
@@ -146,11 +150,28 @@ namespace gdr {
 
                 if (success) {
                     int spaceIO = 18;
-                    std::cout << "success " << frameFrom.index << " -> " << frameTo.index << std::endl;
+                    std::cout << "success frameFrom -> frameTo" << frameFromDestination.index << " -> "
+                              << frameToToBeTransformed.index << std::endl;
 
 
-                    /////use ICPCUDA to refine estimation
-                    refineRelativePose(frameFrom, frameTo, cameraMotion, successICP);
+//                    cv::Mat transformedCloudProjectedToDestination = getProjectedPointCloud(
+//                            frameToToBeTransformed.getPathDImage(), cameraMotion, frameToToBeTransformed.getCamera());
+//                    cv::Mat imageFromDest = cv::imread(frameFromDestination.getPathDImage(), cv::IMREAD_ANYDEPTH);
+//                    cv::Mat imageToToBeTransformed = cv::imread(frameToToBeTransformed.getPathDImage(),
+//                                                                cv::IMREAD_COLOR);
+
+                    /////TODO: use ICPCUDA to refine estimation (needs to be checked with keypoint correspondences)
+//                    refineRelativePose(frameToToBeTransformed, frameFromDestination, cameraMotion, successICP);
+//
+//                    cv::Mat transformedCloudProjectedToDestinationICP = getProjectedPointCloud(frameToToBeTransformed.getPathDImage(), cameraMotion, frameToToBeTransformed.getCamera());
+//                    cv::imshow("From (Dest)", imageFromDest);
+//                    cv::imshow("To (to be transformed)", imageToToBeTransformed);
+//                    cv::imshow("To projected -> From LoRansac Umeyama", transformedCloudProjectedToDestination);
+//
+//                    cv::imshow("To projected -> From ICP", transformedCloudProjectedToDestinationICP);
+//                    cv::imshow("To projected -> From ICP [INVERSED]", getProjectedPointCloud(frameToToBeTransformed.getPathDImage(), cameraMotion.inverse(), frameToToBeTransformed.getCamera()));
+//                    cv::waitKey(0);
+//                    cv::destroyAllWindows();
 
                     Eigen::Matrix3d m3d = cameraMotion.block(0, 0, 3, 3);
                     Eigen::Quaterniond qRelatived(m3d);
@@ -164,15 +185,19 @@ namespace gdr {
                     // fill info about relative pairwise transformations Rt
 
 
-                    transformationRtMatrices[i].push_back(transformationRtMatrix(relativeTransformationSE3.matrix(), frameFrom, frameTo));
-                    transformationRtMatrices[frameTo.index].push_back(transformationRtMatrix(relativeTransformationSE3.inverse().matrix(), frameTo, frameFrom));
+                    transformationRtMatrices[i].push_back(
+                            transformationRtMatrix(relativeTransformationSE3.matrix(), frameFromDestination,
+                                                   frameToToBeTransformed));
+                    transformationRtMatrices[frameToToBeTransformed.index].push_back(
+                            transformationRtMatrix(relativeTransformationSE3.inverse().matrix(), frameToToBeTransformed,
+                                                   frameFromDestination));
 
-//                    transformationRtMatrices[i].push_back(transformationRtMatrix(cameraMotion, frameFrom, frameTo));
-//                    transformationRtMatrices[frameTo.index].push_back(transformationRtMatrix(cameraMotion.inverse(), frameTo, frameFrom));
                 } else {
 
-                    std::cout << "                             NOT ___success____ " << frameFrom.index << " -> "
-                              << frameTo.index << " \tmatches " << match.matchNumbers.size() << std::endl;
+                    std::cout << "                             NOT ___success____ " << frameFromDestination.index
+                              << " -> "
+                              << frameToToBeTransformed.index << " \tmatches " << match.matchNumbers.size()
+                              << std::endl;
                     PRINT_PROGRESS("transformation matrix not found");
                 }
             }
@@ -197,8 +222,8 @@ namespace gdr {
     }
 
     Eigen::Matrix4d
-    CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFrom,
-                                                            int vertexInList,
+    CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFromDestOrigin,
+                                                            int vertexInListToBeTransformedCanBeComputed,
                                                             bool &success,
                                                             bool useProjection,
                                                             double inlierCoeff,
@@ -214,84 +239,86 @@ namespace gdr {
             success = false;
             return cR_t_umeyama;
         }
-        {
-            const auto &match = matches[vertexFrom][vertexInList];
-            int minSize = match.matchNumbers.size();
-            if (minSize < minNumberOfMatches) {
-                success = false;
-                return cR_t_umeyama;
-            }
 
-
-            std::vector<std::vector<double>> toBeTransformedPointsVector;
-            std::vector<std::vector<double>> originPointsVector;
-            int vertexToBeTransformed = match.frameNumber;
-
-            for (int i = 0; i < minSize; ++i) {
-
-                double x_origin, y_origin, z_origin;
-                int localIndexOrigin = match.matchNumbers[i].first;
-                const auto &siftKeyPointOrigin = verticesOfCorrespondence[vertexFrom].keypoints[localIndexOrigin];
-                x_origin = siftKeyPointOrigin.x;
-                y_origin = siftKeyPointOrigin.y;
-                z_origin = verticesOfCorrespondence[vertexFrom].depths[localIndexOrigin];
-                originPointsVector.push_back({x_origin, y_origin, z_origin, 1});
-
-                double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
-                int localIndexToBeTransformed = match.matchNumbers[i].second;
-
-                const auto &siftKeyPointToBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
-                x_toBeTransformed = siftKeyPointToBeTransformed.x;
-                y_toBeTransformed = siftKeyPointToBeTransformed.y;
-                z_toBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].depths[localIndexToBeTransformed];
-                toBeTransformedPointsVector.push_back({x_toBeTransformed, y_toBeTransformed, z_toBeTransformed, 1});
-
-                std::vector<std::pair<int, int>> points = {{vertexFrom,            localIndexOrigin},
-                                                           {vertexToBeTransformed, localIndexToBeTransformed}};
-
-            }
-            assert(toBeTransformedPointsVector.size() == minSize);
-            assert(originPointsVector.size() == minSize);
-
-
-            Eigen::Matrix4Xd toBeTransformedPoints = getPointCloudBeforeProjection(toBeTransformedPointsVector,
-                                                                                   verticesOfCorrespondence[vertexFrom].cameraRgbd);
-            Eigen::Matrix4Xd originPoints = getPointCloudBeforeProjection(originPointsVector,
-                                                                          verticesOfCorrespondence[match.frameNumber].cameraRgbd);
-            assert(toBeTransformedPoints.cols() == minSize);
-            assert(originPoints.cols() == minSize);
-
-            if (useProjection) {
-                cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSACProjectiveError(toBeTransformedPoints,
-                                                                                     originPoints,
-                                                                                     verticesOfCorrespondence[vertexToBeTransformed].getCamera().getIntrinsicsMatrix3x3(),
-                                                                                     verticesOfCorrespondence[vertexFrom].getCamera().getIntrinsicsMatrix3x3(),
-                                                                                     numIterations,
-                                                                                     minSize,
-                                                                                     inlierCoeff,
-                                                                                     success,
-                                                                                     maxProjectionErrorPixels);
-            } else {
-                cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints,
-                                                                      originPoints,
-                                                                      numIterations,
-                                                                      minSize,
-                                                                      inlierCoeff,
-                                                                      success,
-                                                                      neighbourhoodRadius);
-            }
-            if (!success) {
-                PRINT_PROGRESS("no stable transformation matrix estimation was found with umeyama");
-                cR_t_umeyama.setIdentity();
-                return cR_t_umeyama;
-            }
-
-
-            PRINT_PROGRESS("RANSAC umeyama " << std::endl
-                                             << cR_t_umeyama << std::endl
-                                             << "______________________________________________________\n"
-                                             << "______________________________________________________\n");
+        const auto &match = matches[vertexFromDestOrigin][vertexInListToBeTransformedCanBeComputed];
+        int minSize = match.matchNumbers.size();
+        if (minSize < minNumberOfMatches) {
+            success = false;
+            return cR_t_umeyama;
         }
+
+
+        std::vector<std::vector<double>> toBeTransformedPointsVector;
+        std::vector<std::vector<double>> originPointsVector;
+        int vertexToBeTransformed = match.frameNumber;
+
+        for (int i = 0; i < minSize; ++i) {
+
+            double x_origin, y_origin, z_origin;
+            int localIndexOrigin = match.matchNumbers[i].first;
+            const auto &siftKeyPointOrigin = verticesOfCorrespondence[vertexFromDestOrigin].keypoints[localIndexOrigin];
+            x_origin = siftKeyPointOrigin.x;
+            y_origin = siftKeyPointOrigin.y;
+            z_origin = verticesOfCorrespondence[vertexFromDestOrigin].depths[localIndexOrigin];
+            originPointsVector.push_back({x_origin, y_origin, z_origin, 1});
+
+            double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
+            int localIndexToBeTransformed = match.matchNumbers[i].second;
+
+            const auto &siftKeyPointToBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
+            x_toBeTransformed = siftKeyPointToBeTransformed.x;
+            y_toBeTransformed = siftKeyPointToBeTransformed.y;
+            z_toBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].depths[localIndexToBeTransformed];
+            toBeTransformedPointsVector.push_back({x_toBeTransformed, y_toBeTransformed, z_toBeTransformed, 1});
+
+            std::vector<std::pair<int, int>> points = {{vertexFromDestOrigin,  localIndexOrigin},
+                                                       {vertexToBeTransformed, localIndexToBeTransformed}};
+
+        }
+        assert(toBeTransformedPointsVector.size() == minSize);
+        assert(originPointsVector.size() == minSize);
+
+
+        Eigen::Matrix4Xd toBeTransformedPoints = getPointCloudBeforeProjection(toBeTransformedPointsVector,
+                                                                               verticesOfCorrespondence[vertexFromDestOrigin].cameraRgbd);
+        Eigen::Matrix4Xd originPoints = getPointCloudBeforeProjection(originPointsVector,
+                                                                      verticesOfCorrespondence[match.frameNumber].cameraRgbd);
+        assert(toBeTransformedPoints.cols() == minSize);
+        assert(originPoints.cols() == minSize);
+
+        if (useProjection) {
+            std::cout << "use projection?! Shure?" << std::endl;
+            exit(-1);
+            cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSACProjectiveError(toBeTransformedPoints,
+                                                                                 originPoints,
+                                                                                 verticesOfCorrespondence[vertexToBeTransformed].getCamera().getIntrinsicsMatrix3x3(),
+                                                                                 verticesOfCorrespondence[vertexFromDestOrigin].getCamera().getIntrinsicsMatrix3x3(),
+                                                                                 numIterations,
+                                                                                 minSize,
+                                                                                 inlierCoeff,
+                                                                                 success,
+                                                                                 maxProjectionErrorPixels);
+        } else {
+            cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSAC(toBeTransformedPoints,
+                                                                  originPoints,
+                                                                  numIterations,
+                                                                  minSize,
+                                                                  inlierCoeff,
+                                                                  success,
+                                                                  neighbourhoodRadius);
+        }
+        if (!success) {
+            PRINT_PROGRESS("no stable transformation matrix estimation was found with umeyama");
+            cR_t_umeyama.setIdentity();
+            return cR_t_umeyama;
+        }
+
+
+        PRINT_PROGRESS("RANSAC umeyama " << std::endl
+                                         << cR_t_umeyama << std::endl
+                                         << "______________________________________________________\n"
+                                         << "______________________________________________________\n");
+
 
         PRINT_PROGRESS("return success -- transformation matrix found");
 
@@ -299,11 +326,74 @@ namespace gdr {
 
 
         // look for inliers after umeyama
-        const auto &inlierMatchesCorrespondingKeypoints = findInlierPointCorrespondences(vertexFrom,
-                                                                                         vertexInList,
-                                                                                         neighbourhoodRadius,
-                                                                                         cR_t_umeyama);
-        for (const auto &matchPair: inlierMatchesCorrespondingKeypoints) {
+        Sophus::SE3d RtbeforeRefinement = Sophus::SE3d::fitToSE3(cR_t_umeyama);
+        auto inlierMatchesCorrespondingKeypointsLoRansac = findInlierPointCorrespondences(vertexFromDestOrigin,
+                                                                                          vertexInListToBeTransformedCanBeComputed,
+                                                                                          neighbourhoodRadius,
+                                                                                          cR_t_umeyama,
+                                                                                          false);
+
+        bool successRefine = true;
+        refineRelativePose(verticesOfCorrespondence[vertexToBeTransformed],
+                           verticesOfCorrespondence[vertexFromDestOrigin], cR_t_umeyama, successRefine);
+
+
+
+        auto inlierMatchesCorrespondingKeypointsAfterRefinement = findInlierPointCorrespondences(vertexFromDestOrigin,
+                                                                                                 vertexInListToBeTransformedCanBeComputed,
+                                                                                                 neighbourhoodRadius,
+                                                                                                 cR_t_umeyama,
+                                                                                                 true);
+
+        Eigen::Matrix4d inverseICP = cR_t_umeyama.inverse();
+        auto inlierMatchesCorrespondingKeypointsAfterRefinementInverse = findInlierPointCorrespondences(
+                vertexFromDestOrigin,
+                vertexInListToBeTransformedCanBeComputed,
+                neighbourhoodRadius,
+                inverseICP,
+                true);
+
+        ++totalMeausedRelativePoses;
+        int ransacInliers = inlierMatchesCorrespondingKeypointsLoRansac.size();
+        int ICPinliers = inlierMatchesCorrespondingKeypointsAfterRefinement.size();
+        int ICPinliersInverse = inlierMatchesCorrespondingKeypointsAfterRefinementInverse.size();
+        std::cout << "              " << "ransac got " << ransacInliers << "/" << toBeTransformedPoints.cols()
+                  << " vs " << ICPinliers << " vs [inverse] " << ICPinliersInverse << std::endl;
+
+
+        // Show Rt results
+
+//        const VertexCG &frameToToBeTransformed = verticesOfCorrespondence[vertexToBeTransformed];
+//        const VertexCG &frameFromDestination = verticesOfCorrespondence[vertexFromDestOrigin];
+//
+//        cv::Mat transformedCloudProjectedToDestination = getProjectedPointCloud(
+//                frameToToBeTransformed.getPathDImage(), RtbeforeRefinement.matrix(),
+//                frameToToBeTransformed.getCamera());
+//        cv::Mat imageFromDest = cv::imread(frameFromDestination.getPathDImage(), cv::IMREAD_ANYDEPTH);
+//        cv::Mat imageToToBeTransformed = cv::imread(frameToToBeTransformed.getPathDImage(),
+//                                                    cv::IMREAD_COLOR);
+//        cv::Mat transformedCloudProjectedToDestinationICP = getProjectedPointCloud(
+//                frameToToBeTransformed.getPathDImage(), cR_t_umeyama, frameToToBeTransformed.getCamera(), true);
+//        cv::imshow("From (Dest)", imageFromDest);
+//        cv::imshow("To (to be transformed)", imageToToBeTransformed);
+//        cv::imshow("To projected -> From LoRansac Umeyama", transformedCloudProjectedToDestination);
+//
+//        cv::imshow("To projected -> From ICP", transformedCloudProjectedToDestinationICP);
+//        cv::waitKey(0);
+//        cv::destroyAllWindows();
+
+        if (ransacInliers > ICPinliers) {
+            // ICP did not refine the relative pose -- return umeyama result
+            cR_t_umeyama = RtbeforeRefinement.matrix();
+
+        } else {
+            // ICP did refine the relative pose -- return ICP inliers
+            std::cout << "REFINED________________________________________________" << std::endl;
+            ++refinedPoses;
+            std::swap(inlierMatchesCorrespondingKeypointsAfterRefinement, inlierMatchesCorrespondingKeypointsLoRansac);
+        }
+
+        for (const auto &matchPair: inlierMatchesCorrespondingKeypointsLoRansac) {
             inlierCorrespondencesPoints.push_back(matchPair);
         }
         return cR_t_umeyama;
@@ -329,8 +419,8 @@ namespace gdr {
 
                     int indexTo = transformationRtMatrices[i][j].vertexTo.index;
                     int indexFrom = i;
-                    //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format)
-                    file << "EDGE_SE3:QUAT " << indexTo << ' ' << indexFrom << ' ';
+                    //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format) TODO: actually seems like NOT
+                    file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
                     auto translationVector = transformationRtMatrices[i][j].t;
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
                          << std::to_string(translationVector.col(0)[1]) << ' '
@@ -382,6 +472,7 @@ namespace gdr {
 
     int CorrespondenceGraph::computeRelativePoses() {
 
+        std::cout << "start computing descriptors" << std::endl;
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
                 keysDescriptorsAll = getKeypointsDescriptorsAllImages(siftModule.sift, pathToImageDirectoryRGB);
 
@@ -389,6 +480,7 @@ namespace gdr {
 
         for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
 
+            std::cout << "start filtering keypoints for image pair " << currentImage << std::endl;
             auto keypointAndDescriptor = keysDescriptorsAll[currentImage];
             std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
             std::vector<float> &descriptors = keypointAndDescriptor.second;
@@ -456,8 +548,10 @@ namespace gdr {
             pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
             pathToImageDirectoryD(newPathToImageDirectoryD) {
 
+        std::cout << "construct Graph" << std::endl;
         imagesRgb = readRgbData(pathToImageDirectoryRGB);
         imagesD = readRgbData(pathToImageDirectoryD);
+        std::cout << "data have been read" << std::endl;
 
         std::sort(imagesRgb.begin(), imagesRgb.end());
         std::sort(imagesD.begin(), imagesD.end());
@@ -686,7 +780,6 @@ namespace gdr {
                 absolutePoses).toVectorOfVectors();
 
 
-
         bool successIRLS = true;
 
 
@@ -700,7 +793,7 @@ namespace gdr {
 
 
         Eigen::Vector3d zeroTranslation = optimizedAbsoluteTranslationsIRLS[indexFixedToZero];
-        for (auto& translation: optimizedAbsoluteTranslationsIRLS) {
+        for (auto &translation: optimizedAbsoluteTranslationsIRLS) {
             translation -= zeroTranslation;
         }
 
@@ -717,7 +810,7 @@ namespace gdr {
         std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
         std::cout << "ready " << std::endl;
         std::vector<std::pair<Sophus::SE3d, CameraRGBD>> posesAndCameraParams;
-        for (const auto& vertexPose: verticesOfCorrespondence) {
+        for (const auto &vertexPose: verticesOfCorrespondence) {
             posesAndCameraParams.push_back({vertexPose.absolutePose, cameraRgbd});
         }
         std::cout << "BA" << std::endl;
@@ -727,14 +820,15 @@ namespace gdr {
 
 
 
-        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams, cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
+        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams,
+                                      cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
 
         std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPoses(indexFixedToZero);
 
         assert(posesOptimized.size() == verticesOfCorrespondence.size());
 
         for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            auto& vertexPose = verticesOfCorrespondence[i];
+            auto &vertexPose = verticesOfCorrespondence[i];
             vertexPose.setRotationTranslation(posesOptimized[i]);
         }
 
@@ -748,7 +842,7 @@ namespace gdr {
         std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
         std::cout << "ready " << std::endl;
         std::vector<std::pair<Sophus::SE3d, CameraRGBD>> posesAndCameraParams;
-        for (const auto& vertexPose: verticesOfCorrespondence) {
+        for (const auto &vertexPose: verticesOfCorrespondence) {
             posesAndCameraParams.push_back({vertexPose.absolutePose, cameraRgbd});
         }
         std::cout << "BA depth create BundleAdjuster" << std::endl;
@@ -758,14 +852,16 @@ namespace gdr {
 
 
 
-        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams, cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
+        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams,
+                                      cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
 
-        std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPosesUsingDepthInfo(indexFixedToZero);
+        std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPosesUsingDepthInfo(
+                indexFixedToZero);
 
         assert(posesOptimized.size() == verticesOfCorrespondence.size());
 
         for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            auto& vertexPose = verticesOfCorrespondence[i];
+            auto &vertexPose = verticesOfCorrespondence[i];
             vertexPose.setRotationTranslation(posesOptimized[i]);
         }
 

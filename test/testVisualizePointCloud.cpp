@@ -72,11 +72,6 @@ void visualizeSimple() {
 
 }
 
-TEST(testVisualization, smallCloud) {
-    visualizeSimple();
-}
-
-
 
 TEST(testVisualizationGT, SmoothedPointCloudGroundTruthPosesNumber2) {
 
@@ -108,7 +103,8 @@ TEST(testVisualizationGT, SmoothedPointCloudGroundTruthPosesNumber2) {
 
         vertex->setRotationTranslation(poseI);
 
-        std::cout << "pose " << i << " qx qy qz qw: " <<vertex->getRotationQuat().coeffs().transpose() << " tx ty tz: " << vertex->getEigenMatrixAbsolutePose4d().topRightCorner<3,1>().transpose() << std::endl;
+        std::cout << "pose " << i << " qx qy qz qw: " << vertex->getRotationQuat().coeffs().transpose() << " tx ty tz: "
+                  << vertex->getEigenMatrixAbsolutePose4d().topRightCorner<3, 1>().transpose() << std::endl;
 
         auto se3 = vertex->getEigenMatrixAbsolutePose4d();
         bool isId = (se3.inverse() * poseI.matrix()).isIdentity();
@@ -141,6 +137,7 @@ TEST(testVisualizationGT, SmoothedPointCloudGroundTruth) {
 
     assert(poses.size() == correspondenceGraph.verticesOfCorrespondence.size());
     assert(poses.size() == 19);
+
     Sophus::SE3d pose0;
     pose0.setQuaternion(poses[0].getOrientationQuat());
     pose0.translation() = poses[0].getTranslation();
@@ -152,7 +149,8 @@ TEST(testVisualizationGT, SmoothedPointCloudGroundTruth) {
 
         vertex->setRotationTranslation(pose0.inverse() * poseI);
 
-        std::cout << "pose " << i << " qx qy qz qw: " << vertex->getRotationQuat().coeffs().transpose() << " tx ty tz: " << vertex->getEigenMatrixAbsolutePose4d().topRightCorner<3,1>().transpose() << std::endl;
+        std::cout << "pose " << i << " qx qy qz qw: " << vertex->getRotationQuat().coeffs().transpose() << " tx ty tz: "
+                  << vertex->getEigenMatrixAbsolutePose4d().topRightCorner<3, 1>().transpose() << std::endl;
 
         auto se3 = vertex->getEigenMatrixAbsolutePose4d();
         vertices.push_back(vertex);
@@ -173,16 +171,95 @@ TEST(testVisualization, SmoothedPointCloud) {
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
     std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
-    std::vector<Sophus::SE3d> bundleAdjustedPoses = correspondenceGraph.performBundleAdjustmentUsingDepth();
+//    std::vector<Sophus::SE3d> bundleAdjustedPoses = correspondenceGraph.performBundleAdjustmentUsingDepth();
     std::vector<gdr::VertexCG *> vertices;
     for (auto &vertex: correspondenceGraph.verticesOfCorrespondence) {
         vertices.push_back(&vertex);
     }
+
+
+    std::cout << "total Umeyama poses " << correspondenceGraph.totalMeausedRelativePoses << std::endl;
+    std::cout << " ICP refined poses " << correspondenceGraph.refinedPoses << " percentage:  "
+              << 1.0 * correspondenceGraph.refinedPoses / correspondenceGraph.totalMeausedRelativePoses << std::endl;
+
     gdr::SmoothPointCloud smoothCloud;
     smoothCloud.registerPointCloudFromImage(vertices);
 
 }
 
+TEST(testVisualization, ShonanConverges) {
+
+    int iterations = 10;
+    for (int i = 0; i < iterations; ++i) {
+        gdr::CorrespondenceGraph correspondenceGraph("../../data/360_dataset_sampled/each5/rgb",
+                                                     "../../data/360_dataset_sampled/each5/depth",
+                                                     517.3, 318.6,
+                                                     516.5, 255.3);
+        correspondenceGraph.computeRelativePoses();
+        std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
+        std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
+        std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
+        std::vector<Sophus::SE3d> bundleAdjustedPoses = correspondenceGraph.performBundleAdjustmentUsingDepth();
+        std::vector<gdr::VertexCG *> vertices;
+        for (auto &vertex: correspondenceGraph.verticesOfCorrespondence) {
+            vertices.push_back(&vertex);
+        }
+    }
+    std::cout << "shonan converged " << iterations << std::endl;
+    ASSERT_TRUE(true);
+
+}
+
+
+TEST(testVisualization, SmoothedPointCloud360Office) {
+
+    std::set<int> sampledIndices;
+    for (int i = 0; i < 755; i += 5) {
+        sampledIndices.insert(i);
+    }
+//    gdr::GTT::prepareDataset("/home/leoneed/Desktop/360dataset", "/home/leoneed/testGDR1/GDR/data/360_dataset_sampled", sampledIndices, "each5");
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/360_dataset_sampled/each5/rgb",
+                                                 "../../data/360_dataset_sampled/each5/depth",
+                                                 517.3,
+                                                 318.6, 516.5, 255.3);
+    correspondenceGraph.computeRelativePoses();
+    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
+    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
+    std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
+    std::vector<Sophus::SE3d> bundleAdjustedPoses = correspondenceGraph.performBundleAdjustmentUsingDepth();
+    std::vector<gdr::VertexCG *> vertices;
+    for (auto &vertex: correspondenceGraph.verticesOfCorrespondence) {
+        vertices.push_back(&vertex);
+    }
+
+    std::string absolutePosesGT = "../../data/360_dataset_sampled/each5/groundtruth_new.txt";
+    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesGT);
+    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/360_sampled/absolutePoses_150.txt";
+    std::ofstream computedPoses(outputName);
+
+    assert(posesInfo.size() == correspondenceGraph.verticesOfCorrespondence.size());
+    assert(!posesInfo.empty());
+    for (int i = 0; i < correspondenceGraph.verticesOfCorrespondence.size(); ++i) {
+        const auto to = bundleAdjustedPoses[i].translation();
+        computedPoses.precision(std::numeric_limits<double>::max_digits10);
+        computedPoses << posesInfo[i].getTimestamp() << ' ';
+        for (int j = 0; j < 3; ++j) {
+            computedPoses << to[j] << ' ';
+        }
+        auto quatComputed = bundleAdjustedPoses[i].unit_quaternion();
+
+        computedPoses << quatComputed.x() << ' ' << quatComputed.y() << ' ' << quatComputed.z() << ' '
+                      << quatComputed.w() << std::endl;
+    }
+
+    std::cout << "total Umeyama poses " << correspondenceGraph.totalMeausedRelativePoses << std::endl;
+    std::cout << " ICP refined poses " << correspondenceGraph.refinedPoses << " percentage:  "
+              << 1.0 * correspondenceGraph.refinedPoses / correspondenceGraph.totalMeausedRelativePoses << std::endl;
+
+    gdr::SmoothPointCloud smoothCloud;
+    smoothCloud.registerPointCloudFromImage(vertices);
+
+}
 
 
 TEST(testBundleAdjustment, BundleAdjustedUsingDepthPosesAreBetterThanAveraged) {
@@ -210,6 +287,7 @@ TEST(testBundleAdjustment, BundleAdjustedUsingDepthPosesAreBetterThanAveraged) {
     for (int i = 0; i < posesInfo.size(); ++i) {
         absoluteTranslationsFromGroundTruth.push_back(posesInfo[i].getTranslation());
     }
+    assert(posesInfo.size() == correspondenceGraph.verticesOfCorrespondence.size());
     assert(posesInfo.size() == correspondenceGraph.verticesOfCorrespondence.size());
 
 
