@@ -22,8 +22,10 @@ namespace gdr {
 
 
     int
-    CorrespondenceGraph::refineRelativePose(const VertexCG &vertexToBeTransformed, const VertexCG &vertexDestination,
-                                            Eigen::Matrix4d &initEstimationRelPos, bool &success) {
+    CorrespondenceGraph::refineRelativePose(const VertexCG &vertexToBeTransformed,
+                                            const VertexCG &vertexDestination,
+                                            Eigen::Matrix4d &initEstimationRelPos,
+                                            bool &success) {
 //        VertexCG vertexToBeTransformed = verticesOfCorrespondence[vertexFrom];
         ///wrong vertexNumber -- see struct "Match"
 //        VertexCG vertexDestination = verticesOfCorrespondence[vertexTo];
@@ -111,23 +113,6 @@ namespace gdr {
         return inlierCorrespondences;
     }
 
-    int CorrespondenceGraph::findCorrespondences() {
-
-        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            for (int j = i + 1; j < verticesOfCorrespondence.size(); ++j) {
-
-                std::cout << "matching images " << i << " and " << j << std::endl;
-                std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
-                        std::make_pair(verticesOfCorrespondence[i].keypoints, verticesOfCorrespondence[i].descriptors),
-                        std::make_pair(verticesOfCorrespondence[j].keypoints, verticesOfCorrespondence[j].descriptors),
-                        siftModule.matcher.get());
-                PRINT_PROGRESS("total matches " << matchingNumbers.size() << std::endl);
-                matches[i].push_back({j, matchingNumbers});
-            }
-        }
-
-        return 0;
-    }
 
     int CorrespondenceGraph::findTransformationRtMatrices() {
 
@@ -153,26 +138,6 @@ namespace gdr {
                     std::cout << "success frameFrom -> frameTo" << frameFromDestination.index << " -> "
                               << frameToToBeTransformed.index << std::endl;
 
-
-//                    cv::Mat transformedCloudProjectedToDestination = getProjectedPointCloud(
-//                            frameToToBeTransformed.getPathDImage(), cameraMotion, frameToToBeTransformed.getCamera());
-//                    cv::Mat imageFromDest = cv::imread(frameFromDestination.getPathDImage(), cv::IMREAD_ANYDEPTH);
-//                    cv::Mat imageToToBeTransformed = cv::imread(frameToToBeTransformed.getPathDImage(),
-//                                                                cv::IMREAD_COLOR);
-
-                    /////TODO: use ICPCUDA to refine estimation (needs to be checked with keypoint correspondences)
-//                    refineRelativePose(frameToToBeTransformed, frameFromDestination, cameraMotion, successICP);
-//
-//                    cv::Mat transformedCloudProjectedToDestinationICP = getProjectedPointCloud(frameToToBeTransformed.getPathDImage(), cameraMotion, frameToToBeTransformed.getCamera());
-//                    cv::imshow("From (Dest)", imageFromDest);
-//                    cv::imshow("To (to be transformed)", imageToToBeTransformed);
-//                    cv::imshow("To projected -> From LoRansac Umeyama", transformedCloudProjectedToDestination);
-//
-//                    cv::imshow("To projected -> From ICP", transformedCloudProjectedToDestinationICP);
-//                    cv::imshow("To projected -> From ICP [INVERSED]", getProjectedPointCloud(frameToToBeTransformed.getPathDImage(), cameraMotion.inverse(), frameToToBeTransformed.getCamera()));
-//                    cv::waitKey(0);
-//                    cv::destroyAllWindows();
-
                     Eigen::Matrix3d m3d = cameraMotion.block(0, 0, 3, 3);
                     Eigen::Quaterniond qRelatived(m3d);
 
@@ -181,10 +146,8 @@ namespace gdr {
                                                           << std::setw(2 * spaceIO) << qRelatived.w());
 
                     Sophus::SE3d relativeTransformationSE3 = Sophus::SE3d::fitToSE3(cameraMotion);
-//                    relativeTransformationSE3 = relativeTransformationSE3.inverse();
+
                     // fill info about relative pairwise transformations Rt
-
-
                     transformationRtMatrices[i].push_back(
                             transformationRtMatrix(relativeTransformationSE3.matrix(), frameFromDestination,
                                                    frameToToBeTransformed));
@@ -198,7 +161,6 @@ namespace gdr {
                               << " -> "
                               << frameToToBeTransformed.index << " \tmatches " << match.matchNumbers.size()
                               << std::endl;
-                    PRINT_PROGRESS("transformation matrix not found");
                 }
             }
         }
@@ -287,8 +249,7 @@ namespace gdr {
         assert(originPoints.cols() == minSize);
 
         if (useProjection) {
-            std::cout << "use projection?! Shure?" << std::endl;
-            exit(-1);
+            std::cout << "use projection x,y error?! Are you shure?" << std::endl;
             cR_t_umeyama = getTransformationMatrixUmeyamaLoRANSACProjectiveError(toBeTransformedPoints,
                                                                                  originPoints,
                                                                                  verticesOfCorrespondence[vertexToBeTransformed].getCamera().getIntrinsicsMatrix3x3(),
@@ -308,22 +269,9 @@ namespace gdr {
                                                                   neighbourhoodRadius);
         }
         if (!success) {
-            PRINT_PROGRESS("no stable transformation matrix estimation was found with umeyama");
             cR_t_umeyama.setIdentity();
             return cR_t_umeyama;
         }
-
-
-        PRINT_PROGRESS("RANSAC umeyama " << std::endl
-                                         << cR_t_umeyama << std::endl
-                                         << "______________________________________________________\n"
-                                         << "______________________________________________________\n");
-
-
-        PRINT_PROGRESS("return success -- transformation matrix found");
-
-
-
 
         // look for inliers after umeyama
         Sophus::SE3d RtbeforeRefinement = Sophus::SE3d::fitToSE3(cR_t_umeyama);
@@ -336,7 +284,6 @@ namespace gdr {
         bool successRefine = true;
         refineRelativePose(verticesOfCorrespondence[vertexToBeTransformed],
                            verticesOfCorrespondence[vertexFromDestOrigin], cR_t_umeyama, successRefine);
-
 
 
         auto inlierMatchesCorrespondingKeypointsAfterRefinement = findInlierPointCorrespondences(vertexFromDestOrigin,
@@ -453,73 +400,71 @@ namespace gdr {
             verticesOfCorrespondence[i].setRotation(absoluteRotationsQuats[i]);
         }
 
-
-        /*
-        std::vector<Eigen::Matrix3d> absoluteRotations;
-        for (const auto &absoluteRotationQuat: absoluteRotationsQuats) {
-            absoluteRotations.push_back(absoluteRotationQuat.toRotationMatrix());
-        }
-
-        PRINT_PROGRESS("get Rotations from quaternions successfull");
-        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            verticesOfCorrespondence[i].setRotation(absoluteRotations[i]);
-        }
-        */
-
         PRINT_PROGRESS("setting Rotations in vertices successfull");
         return absoluteRotationsQuats;
+    }
+
+    keyPointsDepthDescriptor filterKeypointsByKnownDepth(
+            const std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> &keypointAndDescriptor,
+            const std::string &pathToDImage) {
+
+        double depthCoefficient = 5000.0;
+        std::cout << "start filtering keypoints for image pair " << pathToDImage << std::endl;
+        const std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
+        const std::vector<float> &descriptors = keypointAndDescriptor.second;
+        std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
+        std::vector<float> descriptorsKnownDepth;
+        std::vector<double> depths;
+
+        cv::Mat depthImage = cv::imread(pathToDImage, cv::IMREAD_ANYDEPTH);
+
+        for (int i = 0; i < keypoints.size(); ++i) {
+            int posInDescriptorVector = 128 * i;
+            int maxDepthValue = 65536;
+            auto coordY = keypoints[i].y;
+            auto coordX = keypoints[i].x;
+            assert(coordX >= 0 && coordX < depthImage.cols);
+            assert(coordY >= 0 && coordY < depthImage.rows);
+            int currentKeypointDepth = depthImage.at<ushort>(static_cast<ushort>(coordY),
+                                                             static_cast<ushort>(coordX));
+
+            if (currentKeypointDepth > 0) {
+                assert(currentKeypointDepth < maxDepthValue);
+                depths.push_back(currentKeypointDepth / depthCoefficient);
+                keypointsKnownDepth.push_back(keypoints[i]);
+                std::vector<float> currentDescriptors;
+                for (int descriptorCounter = 0; descriptorCounter < 128; ++descriptorCounter) {
+                    descriptorsKnownDepth.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
+                    currentDescriptors.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
+                }
+            }
+        }
+
+        return {keypointsKnownDepth, descriptorsKnownDepth, depths};
+
     }
 
     int CorrespondenceGraph::computeRelativePoses() {
 
         std::cout << "start computing descriptors" << std::endl;
+
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
-fix                 keysDescriptorsAll = getKeypointsDescriptorsAllImages(siftModule.sift.get(), pathToImageDirectoryRGB);
+                keysDescriptorsAll = siftModule.getKeypointsDescriptorsAllImages(readRgbData(pathToImageDirectoryRGB), {0});
 
         verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
 
         for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
 
-            std::cout << "start filtering keypoints for image pair " << currentImage << std::endl;
-            auto keypointAndDescriptor = keysDescriptorsAll[currentImage];
-            std::vector<SiftGPU::SiftKeypoint> &keypoints = keypointAndDescriptor.first;
-            std::vector<float> &descriptors = keypointAndDescriptor.second;
-            std::vector<SiftGPU::SiftKeypoint> keypointsKnownDepth;
-            std::vector<float> descriptorsKnownDepth;
-            std::vector<double> depths;
-
-            cv::Mat depthImage = cv::imread(imagesD[currentImage], cv::IMREAD_ANYDEPTH);
-            PRINT_PROGRESS(depthImage.cols << ' ' << depthImage.rows);
-
-            for (int i = 0; i < keypoints.size(); ++i) {
-                int posInDescriptorVector = 128 * i;
-                int currentKeypointDepth = depthImage.at<ushort>(keypoints[i].y, keypoints[i].x);
-
-                if (currentKeypointDepth > 0) {
-                    assert(currentKeypointDepth < 66000);
-                    depths.push_back(currentKeypointDepth / 5000.0);
-                    keypointsKnownDepth.push_back(keypoints[i]);
-                    std::vector<float> currentDescriptors;
-                    for (int descriptorCounter = 0; descriptorCounter < 128; ++descriptorCounter) {
-                        descriptorsKnownDepth.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
-                        currentDescriptors.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
-                    }
-                }
-            }
-
-            VertexCG currentVertex(currentImage, cameraRgbd, keypointsKnownDepth, descriptorsKnownDepth, depths,
+            keyPointsDepthDescriptor keyPointsDepthDescriptor = filterKeypointsByKnownDepth(keysDescriptorsAll[currentImage], imagesD[currentImage]);
+            VertexCG currentVertex(currentImage,
+                                   cameraRgbd,
+                                   keyPointsDepthDescriptor,
                                    imagesRgb[currentImage],
                                    imagesD[currentImage]);
             verticesOfCorrespondence.push_back(currentVertex);
-            assert(keypointsKnownDepth.size() == depths.size());
             assert(verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].depths.size() ==
                    verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
         }
-
-        PRINT_PROGRESS("vertices written");
-        matches = std::vector<std::vector<Match>>(verticesOfCorrespondence.size());
-
-        PRINT_PROGRESS("trying to find correspondences");
 
         {
             std::vector<VertexCG *> posesForCloudProjector;
@@ -532,12 +477,14 @@ fix                 keysDescriptorsAll = getKeypointsDescriptorsAllImages(siftMo
             cloudProjector.setPoses(posesForCloudProjector);
             pointMatcher.setNumberOfPoses(verticesOfCorrespondence.size());
         }
-        findCorrespondences();
+
+        matches = siftModule.findCorrespondences(verticesOfCorrespondence);
         decreaseDensity();
         findTransformationRtMatrices();
         computePointClasses();
         std::string poseFile = relativePose;
         printRelativePosesFile(poseFile);
+
         return 0;
     }
 

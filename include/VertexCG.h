@@ -22,7 +22,7 @@
 #include "keyFeatures.h"
 #include "quaternions.h"
 #include "cameraRGBD.h"
-
+#include "KeyPointsDepthDescriptor.h"
 
 namespace gdr {
 
@@ -64,6 +64,12 @@ namespace gdr {
                  const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
                  const std::vector<float> &newDescriptors,
                  const std::vector<double> &newDepths,
+                 const std::string &newPathRGB,
+                 const std::string &newPathD);
+
+        VertexCG(int newIndex,
+                 const CameraRGBD &newCameraRgbd,
+                 const keyPointsDepthDescriptor& keyPointsDepthDescriptor,
                  const std::string &newPathRGB,
                  const std::string &newPathD);
 

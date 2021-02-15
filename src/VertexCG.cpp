@@ -48,6 +48,7 @@ namespace gdr {
         absolutePose.setQuaternion(quatRotation);
         absoluteRotationTranslation.block<3, 3>(0, 0) = rotation;
     }
+
     void VertexCG::setRotation(const Eigen::Quaterniond &rotationQuatd) {
 
         absolutePose.setQuaternion(rotationQuatd.normalized());
@@ -79,5 +80,20 @@ namespace gdr {
 
     Eigen::Quaterniond VertexCG::getRotationQuat() const {
         return absolutePose.unit_quaternion();
+    }
+
+    VertexCG::VertexCG(int newIndex,
+                       const CameraRGBD &newCameraRgbd,
+                       const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
+                       const std::string &newPathRGB,
+                       const std::string &newPathD) : index(newIndex),
+                                                      cameraRgbd(newCameraRgbd),
+                                                      keypoints(keyPointsDepthDescriptor.getKeyPointsKnownDepth()),
+                                                      descriptors(keyPointsDepthDescriptor.getDescriptorsKnownDepth()),
+                                                      depths(keyPointsDepthDescriptor.getDepths()),
+                                                      pathToRGBimage(newPathRGB),
+                                                      pathToDimage(newPathD) {
+        absoluteRotationTranslation.setIdentity();
+
     }
 }

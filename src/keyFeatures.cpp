@@ -53,8 +53,8 @@ namespace gdr {
         assert(num1 * 128 == descriptors1.size());
         assert(num2 * 128 == descriptors2.size());
 
-        matcher->SetDescriptors(0, num1, &descriptors1[0]); //image 1
-        matcher->SetDescriptors(1, num2, &descriptors2[0]); //image 2
+        matcher->SetDescriptors(0, num1, descriptors1.data()); //image 1
+        matcher->SetDescriptors(1, num2, descriptors2.data()); //image 2
 
 
         std::vector<std::pair<int, int>> matchingKeypoints;
@@ -63,7 +63,7 @@ namespace gdr {
         matchingKeypoints.reserve(num_match);
 
         for (int i = 0; i < num_match; ++i) {
-            matchingKeypoints.push_back({match_buf[i][0], match_buf[i][1]});
+            matchingKeypoints.emplace_back(match_buf[i][0], match_buf[i][1]);
         }
         delete[] match_buf;
         return matchingKeypoints;

@@ -8,12 +8,47 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include <fstream>
+#include <thread>
 
 #include "poseEstimation.h"
 #include "CorrespondenceGraph.h"
 #include "groundTruthTransformer.h"
 
 
+void f(SiftGPU* sift, std::string s) {
+    sift->RunSIFT(s.data());
+}
+TEST(testBundleAdjustment, concurrentSiftDetector) {
+    SiftGPU d1;
+    SiftGPU d2;
+
+    std::vector<std::string> siftGpuArgsStrings = {"-cuda", "0", "-fo", "-1", "-v", "1"};
+
+    std::vector<std::string> siftGpuArgsStringsGLSL = {"-fo", "-1", "-v", "1"};
+    std::vector<char *> siftGpuArgs;
+    std::vector<char *> siftGpuArgsGLSL;
+
+    for (auto &stringArg: siftGpuArgsStrings) {
+        siftGpuArgs.push_back(stringArg.data());
+    }
+    for (auto &stringArg: siftGpuArgsStringsGLSL) {
+        siftGpuArgs.push_back(stringArg.data());
+    }
+    d1.ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
+    d2.ParseParam(siftGpuArgsGLSL.size(), siftGpuArgsGLSL.data());
+
+    if (d2.VerifyContextGL() == 0 || d2.VerifyContextGL() == 0) {
+        std::cout << "_____________________________________________________detection context not verified"
+                  << std::endl;
+        ASSERT_TRUE(false);
+    }
+
+//    std::thread t1(f, &d1, "../../data/plantDataset_19_3/rgb/1305032354.093194.png");
+    std::thread t2(f, &d2, "../../data/plantDataset_19_3/rgb/1305032354.193245.png");
+//    t1.join();
+    t2.join();
+
+}
 TEST(testBundleAdjustment, justIRLS) {
 
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
@@ -34,7 +69,6 @@ TEST(testBundleAdjustment, justIRLS) {
     for (int i = 0; i < posesInfo.size(); ++i) {
         auto pose = correspondenceGraph.verticesOfCorrespondence[i].getEigenMatrixAbsolutePose4d();
         Sophus::SE3d poseSE3 = Sophus::SE3d::fitToSE3(pose);
-//        poseSE3 = poseSE3.inverse();
         computedPoses.precision(std::numeric_limits<double>::max_digits10);
         computedPoses << posesInfo[i].getTimestamp() << ' ';
         const auto to = poseSE3.translation();

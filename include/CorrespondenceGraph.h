@@ -20,14 +20,7 @@
 #include "Vectors3d.h"
 
 namespace gdr {
-    struct Match {
-        int frameNumber;
-        std::vector<std::pair<int, int>> matchNumbers;
 
-        Match(int newFrameNumber, const std::vector<std::pair<int, int>> &newMatchNumbers) :
-                frameNumber(newFrameNumber),
-                matchNumbers(newMatchNumbers) {};
-    };
 
     struct CorrespondenceGraph {
 
@@ -70,8 +63,6 @@ namespace gdr {
 
         int refineRelativePose(const VertexCG &vertexToBeTransformed, const VertexCG &vertexDestination,
                                Eigen::Matrix4d &initEstimationRelPos, bool &success);
-
-        int findCorrespondences();
 
         int findTransformationRtMatrices();
 
