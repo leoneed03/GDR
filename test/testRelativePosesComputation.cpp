@@ -16,8 +16,8 @@
 TEST(testRelativePosesComputation, PlantPASSED) {
 
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-                                                 517.3,
-                                                 318.6, 516.5, 255.3);
+                                                 517.3, 318.6,
+                                                 516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
 
     std::string absolutePoses = "../../data/files/absolutePoses_19.txt";
@@ -54,7 +54,6 @@ TEST(testRelativePosesComputation, PlantPASSED) {
                 Sophus::SE3d Rt = Sophus::SE3d::fitToSE3(relativeTransformation.innerTranformationRtMatrix);
                 Sophus::SE3d relativeGT =
                         absolutePosesFromGroundTruth[indexFrom].inverse() * absolutePosesFromGroundTruth[indexTo];
-//                relativeGT = relativeGT.inverse();
                 double rotError = Rt.unit_quaternion().angularDistance(relativeGT.unit_quaternion());
                 errorRot += rotError;
                 double tError = (Rt.translation() - relativeGT.translation()).norm();
@@ -79,36 +78,6 @@ TEST(testRelativePosesComputation, PlantPASSED) {
 
     ASSERT_LE(meanErrorRot, 0.02);
     ASSERT_LE(meanError, 0.02);
-}
-
-
-TEST(testRelativePosesComputation, getPairwiseTransformations) {
-
-//517.3	516.5	318.6	255.3
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-                                                 517.3,
-                                                 318.6, 516.5, 255.3);
-//    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-//                                                 525.0,
-//                                                 319.5, 525.0, 239.5);
-//    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-//    517.3,	516.5,	318.6,	255.3);
-    correspondenceGraph.computeRelativePoses();
-    std::string pathToGroundTruth = "../../data/plantDataset_19_3/groundtruth_new.txt";
-    std::string estimatedPairWise = correspondenceGraph.relativePose;
-    ASSERT_TRUE(correspondenceGraph.verticesOfCorrespondence.size() == 19);
-    std::pair<gdr::errorStats, gdr::errorStats> errorsStatsTR = gdr::getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
-            pathToGroundTruth, estimatedPairWise);
-    std::cout << "=====================================" << std::endl;
-    std::cout << "translation stats: " << errorsStatsTR.first.meanError << " with standard deviation "
-              << errorsStatsTR.first.standartDeviation << std::endl;
-    std::cout << "rotation    stats: " << errorsStatsTR.second.meanError << " with standard deviation "
-              << errorsStatsTR.second.standartDeviation << std::endl;
-
-    correspondenceGraph.printConnectionsRelative(std::cout, 15);
-
-    ASSERT_LE(errorsStatsTR.first.meanError, 0.15);
-    ASSERT_LE(errorsStatsTR.second.meanError, 0.25);
 }
 
 int main(int argc, char *argv[]) {

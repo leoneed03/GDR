@@ -617,7 +617,7 @@ namespace gdr {
                     assert(indexFrom < numPoses);
 
                     //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format)
-                    file << "EDGE_SE3:QUAT " << indexTo << ' ' << indexFrom << ' ';
+                    file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
                     auto translationVector = relPose.getTranslationRelative();
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
                          << std::to_string(translationVector.col(0)[1]) << ' '

@@ -27,41 +27,6 @@ using ceres::Problem;
 using ceres::Solve;
 using ceres::Solver;
 
-struct CostFunctor {
-    template<typename T>
-    bool operator()(const T *const x, T *residual) const {
-        residual[0] = 10.0 - x[0];
-        return true;
-    }
-};
-
-int fCeres() {
-    // The variable to solve for with its initial value. It will be
-    // mutated in place by the solver.
-    double x = 0.5;
-    const double initial_x = x;
-    // Build the problem.
-    Problem problem;
-    // Set up the only cost function (also known as residual). This uses
-    // auto-differentiation to obtain the derivative (jacobian).
-    CostFunction *cost_function =
-            new AutoDiffCostFunction<CostFunctor, 1, 1>(new CostFunctor);
-    problem.AddResidualBlock(cost_function, nullptr, &x);
-    // Run the solver!
-    Solver::Options options;
-    options.minimizer_progress_to_stdout = true;
-    Solver::Summary summary;
-    Solve(options, &problem, &summary);
-    std::cout << summary.BriefReport() << "\n";
-    std::cout << "x : " << initial_x << " -> " << x << "\n";
-    return 0;
-}
-
-TEST(testRotationRepresentation, Ceres) {
-
-//    fCeres();
-
-}
 
 TEST(testRotationRepresentation, testConstructor) {
 
@@ -83,13 +48,13 @@ TEST(testRotationRepresentation, testConstructor) {
 
     Eigen::Matrix3d rotationMatrixId;
     rotationMatrixId.setIdentity();
-    gdr::Rotation3d randomRotationId(rotationMatrixId);
+    gdr::Rotation3d rotationId(rotationMatrixId);
     std::cout << "Id rotation" << std::endl;
-    std::cout << randomRotationId << std::endl;
+    std::cout << rotationId << std::endl;
     std::cout << "log ID is " << std::endl;
-    std::cout << randomRotationId.getRotationSophus().log() << std::endl;
+    std::cout << rotationId.getRotationSophus().log() << std::endl;
 
-    Eigen::Vector3d logV = randomRotationId.getLog();
+    Eigen::Vector3d logV = rotationId.getLog();
     std::cout << "zero?" << std::endl;
     std::cout << logV << std::endl;
 
@@ -117,6 +82,19 @@ TEST(testRobustRotationOptimization, errorShouldBeZeroFirstPoseNotZero) {
             "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000");
     std::vector<gdr::relativePose> lessRelRotations;
 
+    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
+    std::vector<Sophus::SE3d> absolutePosesFromGroundTruth;
+    Sophus::SE3d poseZeroGT;
+    poseZeroGT.setQuaternion(posesInfo[0].getOrientationQuat().normalized());
+    poseZeroGT.translation() = posesInfo[0].getTranslation();
+
+    for (int i = 0; i < posesInfo.size(); ++i) {
+        Sophus::SE3d absolutePoseGT;
+        absolutePoseGT.setQuaternion(posesInfo[i].getOrientationQuat().normalized());
+        absolutePoseGT.translation() = posesInfo[i].getTranslation();
+        absolutePosesFromGroundTruth.push_back(poseZeroGT.inverse() * absolutePoseGT);
+    }
+
     for (int i = 0; i < relativePosesVector.size(); ++i) {
 
         const auto &relRot = relativePosesVector[i];
@@ -139,7 +117,8 @@ TEST(testRobustRotationOptimization, errorShouldBeZeroFirstPoseNotZero) {
         if (indexTo == indexFrom + 1 ||
             indexTo == indexFrom + 2 ||
             indexTo == indexFrom + 3) {
-            lessRelRotations.emplace_back(relRot);
+            lessRelRotations.emplace_back(gdr::relativePose(gdr::rotationMeasurement((absolutePosesFromGroundTruth[indexFrom].inverse() * absolutePosesFromGroundTruth[indexTo]).unit_quaternion(), indexFrom, indexTo),
+                                                            gdr::translationMeasurement(Eigen::Vector3d(), indexFrom, indexTo)));
         }
 
         if (indexTo == 4 || indexTo == 6 || indexTo == 10) {
@@ -152,13 +131,6 @@ TEST(testRobustRotationOptimization, errorShouldBeZeroFirstPoseNotZero) {
 
     }
     gdr::GTT::printRelativePosesFile(lessRelRotations, relativeRotationsLess, numPoses);
-
-
-//    std::vector<gdr::poseInfo> posesInfoLess = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
-//    std::vector<Eigen::Quaterniond> absoluteRotationsQuat;
-//    for (const auto& pose: posesInfoLess) {
-//        absoluteRotationsQuat.push_back(pose.getOrientationQuat());
-//    }
     std::vector<Eigen::Quaterniond> absoluteRotationsQuat = gdr::rotationAverager::shanonAveraging(
             relativeRotationsLess,
             absoluteRotations);
@@ -176,34 +148,18 @@ TEST(testRobustRotationOptimization, errorShouldBeZeroFirstPoseNotZero) {
 
 
     std::cout << "PERFORM CERES" << std::endl;
-    auto optimizedRotations = rotationOptimizer.getOptimizedOrientation();
+    std::vector<Eigen::Quaterniond> optimizedRotations;
+    optimizedRotations = rotationOptimizer.getOptimizedOrientation();
 
     std::cout << "\n\nPERFORMED\n\n\n" << std::endl;
 
-    Eigen::Matrix3d id;
-    id.setIdentity();
-    Eigen::Quaterniond qid(id);
-
-    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
-    std::vector<Eigen::Quaterniond> absoluteRotationsQuatFromGroundTruth;
-
-    for (int i = 0; i < posesInfo.size(); ++i) {
-        absoluteRotationsQuatFromGroundTruth.push_back(posesInfo[i].orientationQuat);
-    }
-
-    gdr::rotationOperations::applyRotationToAllFromLeft(absoluteRotationsQuatFromGroundTruth,
-                                                        absoluteRotationsQuatFromGroundTruth[0].inverse().normalized());
-
-    assert(absoluteRotationsQuat.size() == absoluteRotationsQuatFromGroundTruth.size());
-
     std::cout << "________________________________________________" << std::endl;
 
     double sumErrors = 0;
     double sumErrorsSquared = 0;
-    double dev = 0;
 
     for (int i = 0; i < posesInfo.size(); ++i) {
-        double currentAngleError = absoluteRotationsQuatFromGroundTruth[i].angularDistance(optimizedRotations[0].inverse().normalized() * optimizedRotations[i]);
+        double currentAngleError = absolutePosesFromGroundTruth[i].unit_quaternion().angularDistance(optimizedRotations[0].inverse().normalized() * optimizedRotations[i]);
         std::cout << i << ":\t" << currentAngleError << std::endl;
         sumErrors += currentAngleError;
         sumErrorsSquared += pow(currentAngleError, 2);
@@ -214,153 +170,9 @@ TEST(testRobustRotationOptimization, errorShouldBeZeroFirstPoseNotZero) {
 
     std::cout << "E(error) = " << meanError << std::endl;
     std::cout << "standard deviation(error) = " << meanSquaredError - pow(meanError, 2) << std::endl;
-
 
     ASSERT_LE(meanError, 1e-2);
 }
-
-
-TEST(testRobustRotationOptimization, fromAbsolutePoses) {
-
-    int numPoses = 19;
-    std::cout << "hey" << std::endl;
-
-
-    std::string absolutePosesGroundTruth = "../../data/files/absolutePoses_19.txt";
-    std::string relPoses = "../../data/files/pairWiseFirstPoseZero_19_less.txt";
-    std::string absolutePoses = "../../data/files/absolutePoses_19_less.txt";
-
-    std::vector<gdr::relativePose> relativePoses = gdr::GTT::readRelativePoses(relPoses);
-    std::vector<gdr::poseInfo> posesRelInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
-
-    std::vector<gdr::Rotation3d> orientations;
-    for (int i = 0; i < posesRelInfo.size(); ++i) {
-        orientations.push_back(gdr::Rotation3d(posesRelInfo[i].orientationQuat));
-    }
-
-    for (int i = 0; i < orientations.size(); ++i) {
-        std::cout << i << "______" << orientations[i] << std::endl;
-    }
-    std::vector<gdr::rotationMeasurement> relRotMeasurements;
-
-
-    for (const auto &relPose: relativePoses) {
-        relRotMeasurements.push_back(relPose.getRelativeRotation());
-    }
-
-    gdr::RotationOptimizer rotationOptimizer(orientations, relRotMeasurements);
-
-
-    std::cout << "PERFORM CERES" << std::endl;
-    auto optimizedRotations = rotationOptimizer.getOptimizedOrientation();
-
-    std::cout << "\n\n_____________________________PERFORMED_________________________________\n\n\n" << std::endl;
-
-    std::vector<Eigen::Quaterniond> absoluteRotationsQuat;
-    for (const auto& q: optimizedRotations) {
-        absoluteRotationsQuat.push_back(q);
-    }
-
-    gdr::rotationOperations::applyRotationToAllFromLeft(absoluteRotationsQuat,
-                                                        absoluteRotationsQuat[0].inverse().normalized());
-
-
-    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesGroundTruth);
-    std::vector<Eigen::Quaterniond> absoluteRotationsQuatFromGroundTruth;
-
-    for (int i = 0; i < posesInfo.size(); ++i) {
-        absoluteRotationsQuatFromGroundTruth.push_back(posesInfo[i].orientationQuat);
-    }
-
-    gdr::rotationOperations::applyRotationToAllFromLeft(absoluteRotationsQuatFromGroundTruth,
-                                                        absoluteRotationsQuatFromGroundTruth[0].inverse().normalized());
-
-    assert(optimizedRotations.size() == absoluteRotationsQuatFromGroundTruth.size());
-
-    std::cout << "________________________________________________" << std::endl;
-
-    double sumErrors = 0;
-    double sumErrorsSquared = 0;
-    double dev = 0;
-
-    for (int i = 0; i < posesInfo.size(); ++i) {
-        double currentAngleError = absoluteRotationsQuatFromGroundTruth[i].angularDistance(absoluteRotationsQuat[i]);
-        std::cout << i << ":\t" << currentAngleError << std::endl;
-        sumErrors += currentAngleError;
-        sumErrorsSquared += pow(currentAngleError, 2);
-
-    }
-    double meanError = sumErrors / posesInfo.size();
-    double meanSquaredError = sumErrorsSquared / posesInfo.size();
-
-    int counter = 0;
-    for (const auto& optimizedOrientation: optimizedRotations) {
-        Eigen::Quaterniond q = optimizedOrientation;
-        std::cout << counter << "<optimized>: " << q.x() << ' ' << q.y() << ' ' << q.z() << ' ' << q.w() << ' '<< std::endl;
-    }
-    std::cout << "E(error) = " << meanError << std::endl;
-    std::cout << "standard deviation(error) = " << meanSquaredError - pow(meanError, 2) << std::endl;
-
-
-
-    ASSERT_LE(meanError, 1e-2);
-}
-
-
-TEST(testRobustRotationOptimization, fromAbsolutePosesNoCeres) {
-
-    int numPoses = 19;
-    std::cout << "hey" << std::endl;
-
-
-    std::string absolutePosesGroundTruth = "../../data/files/absolutePoses_19.txt";
-    std::string relPoses = "../../data/files/pairWiseFirstPoseZero_19_less.txt";
-    std::string absolutePoses = "../../data/files/absolutePoses_19_less.txt";
-
-    std::vector<gdr::relativePose> relativePoses = gdr::GTT::readRelativePoses(relPoses);
-    std::vector<gdr::poseInfo> absolutePosesWithOutliers = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
-
-    std::vector<Eigen::Quaterniond> orientationsQuat;
-    for (int i = 0; i < absolutePosesWithOutliers.size(); ++i) {
-        orientationsQuat.push_back(absolutePosesWithOutliers[i].orientationQuat);
-    }
-
-    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesGroundTruth);
-    std::vector<Eigen::Quaterniond> absoluteRotationsQuatFromGroundTruth;
-
-    for (int i = 0; i < posesInfo.size(); ++i) {
-        absoluteRotationsQuatFromGroundTruth.push_back(posesInfo[i].orientationQuat);
-    }
-
-    gdr::rotationOperations::applyRotationToAllFromLeft(absoluteRotationsQuatFromGroundTruth,
-                                                        absoluteRotationsQuatFromGroundTruth[0].inverse().normalized());
-
-    assert(orientationsQuat.size() == absoluteRotationsQuatFromGroundTruth.size());
-
-    std::cout << "________________________________________________" << std::endl;
-
-    double sumErrors = 0;
-    double sumErrorsSquared = 0;
-    double dev = 0;
-
-    for (int i = 0; i < posesInfo.size(); ++i) {
-        double currentAngleError = absoluteRotationsQuatFromGroundTruth[i].angularDistance(orientationsQuat[i]);
-        std::cout << i << ":\t" << currentAngleError << std::endl;
-        sumErrors += currentAngleError;
-        sumErrorsSquared += pow(currentAngleError, 2);
-
-    }
-    double meanError = sumErrors / posesInfo.size();
-    double meanSquaredError = sumErrorsSquared / posesInfo.size();
-
-    std::cout << "E(error) = " << meanError << std::endl;
-    std::cout << "standard deviation(error) = " << meanSquaredError - pow(meanError, 2) << std::endl;
-
-
-
-    ASSERT_GE(meanError, 1e-1);
-}
-
 
 
 int main(int argc, char *argv[]) {

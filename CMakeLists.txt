@@ -147,7 +147,8 @@ add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
 
 #add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY)
-target_compile_definitions(GDR_LIB PUBLIC ${GDR_FLAGS} PRIVATE CERES_USE_CXX11_THREADS=1)
+target_compile_definitions(GDR_LIB PUBLIC ${GDR_FLAGS} #PRIVATE CERES_USE_CXX11_THREADS=1
+    )
 
 add_definitions(${PCL_DEFINITIONS})
 

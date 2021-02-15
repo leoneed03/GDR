@@ -10,21 +10,21 @@
 namespace gdr {
 
     std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
-            SiftGPU &sift,
+            SiftGPU *sift,
             const std::string &pathToTheImage) {
 
-        sift.RunSIFT(pathToTheImage.data());
-        int num1 = sift.GetFeatureNum();
+        sift->RunSIFT(pathToTheImage.data());
+        int num1 = sift->GetFeatureNum();
         std::vector<float> descriptors1(128 * num1);
         std::vector<SiftGPU::SiftKeypoint> keys1(num1);
-        sift.GetFeatureVector(&keys1[0], &descriptors1[0]);
+        sift->GetFeatureVector(&keys1[0], &descriptors1[0]);
         PRINT_PROGRESS(num1 << " -- total number of keypoints");
         return {keys1, descriptors1};
     }
 
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
     getKeypointsDescriptorsAllImages(
-            SiftGPU &sift,
+            SiftGPU *sift,
             const std::string &pathToTheDirectory) {
 
         std::vector<std::string> pathsToAllImages = readRgbData(pathToTheDirectory);

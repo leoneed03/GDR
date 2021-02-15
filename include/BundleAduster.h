@@ -209,7 +209,7 @@ namespace gdr {
                 std::vector<T> pointRaw = {point[0], point[1], point[2], T(1.0)};
                 Sophus::Vector<T, 4> point4d(pointRaw.data());
 
-                Sophus::Vector<T, 4> pointCameraCoordinates = poseSE3.matrix() * point4d;
+                Sophus::Vector<T, 4> pointCameraCoordinates = poseSE3.inverse().matrix() * point4d;
                 Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
 
                 T computedX = imageCoordinates[0] / imageCoordinates[2];

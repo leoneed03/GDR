@@ -16,7 +16,7 @@ namespace gdr {
     struct SiftModule {
 
         std::unique_ptr<SiftMatchGPU> matcher;
-        SiftGPU sift;
+        std::unique_ptr<SiftGPU> sift;
         int maxSift = 4096;
 
         SiftModule();

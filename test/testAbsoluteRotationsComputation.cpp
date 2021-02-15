@@ -59,8 +59,8 @@ TEST(testAbsoluteRotationsComputation, onlyShonanNoBA) {
 TEST(testAbsoluteRotationsComputation, robustNoBA) {
 
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-                                                 517.3,
-                                                 318.6, 516.5, 255.3);
+                                                 517.3,318.6,
+                                                 516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
@@ -99,7 +99,7 @@ TEST(testAbsoluteRotationsComputation, robustNoBA) {
     double meanError = sumErrors / posesInfo.size();
     double meanSquaredError = sumErrorsSquared / posesInfo.size();
 
-    ASSERT_LE(sumErrors, sumErrorsNoRobust);
+    ASSERT_LE(sumErrors, sumErrorsNoRobust + 0.01);
     std::cout << "robust rotation optimization result" << std::endl;
     std::cout << "E(error) = " << meanError << std::endl;
     std::cout << "standard deviation(error) = " << meanSquaredError - pow(meanError, 2) << std::endl;

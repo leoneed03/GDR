@@ -19,13 +19,13 @@ namespace gdr {
     using imageDescriptor = std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>;
 
     std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>> getKeypointsDescriptorsOneImage(
-            SiftGPU &sift,
+            SiftGPU *sift,
             const std::string &pathToTheImage);
 
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
     getKeypointsDescriptorsAllImages(
             SiftGPU
-            &sift,
+            *sift,
             const std::string &pathToTheDirectory
     );
 

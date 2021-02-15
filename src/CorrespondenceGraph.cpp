@@ -474,7 +474,7 @@ namespace gdr {
 
         std::cout << "start computing descriptors" << std::endl;
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
-                keysDescriptorsAll = getKeypointsDescriptorsAllImages(siftModule.sift, pathToImageDirectoryRGB);
+fix                 keysDescriptorsAll = getKeypointsDescriptorsAllImages(siftModule.sift.get(), pathToImageDirectoryRGB);
 
         verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
 

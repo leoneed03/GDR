@@ -21,33 +21,27 @@ int countNumberOfLines(const std::string &relPosesFile) {
     return numberOfLines;
 }
 
-TEST(testCorrespondenceGraph, relativePoseFileCreated) {
+TEST(testCorrespondenceGraph, relativePoseFileCreated_iterations) {
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-                                                 525.0,
-                                                 319.5, 525.0, 239.5);
-    std::cout << "compute poses" << std::endl;
-    correspondenceGraph.computeRelativePoses();
-    int numberOfLines = countNumberOfLines(correspondenceGraph.relativePose);
-    int defaultNumberOfLines = 19;
+    for (int iterations = 0; iterations < 1; ++iterations) {
+        gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb",
+                                                     "../../data/plantDataset_19_3/depth",
+                                                     525.0, 319.5,
+                                                     525.0, 239.5);
+        std::cout << "compute poses" << std::endl;
+        correspondenceGraph.computeRelativePoses();
+        int numberOfLines = countNumberOfLines(correspondenceGraph.relativePose);
+        int defaultNumberOfLines = 19;
 
-    ASSERT_GE(numberOfLines, correspondenceGraph.verticesOfCorrespondence.size());
-    ASSERT_GE(numberOfLines, defaultNumberOfLines);
-}
-
-TEST(testDepthTxtFile, fileCreated) {
-    gdr::GTT::createDepthTxtFile("../../data/plantDataset_19_3/depth", "../../data/plantDataset_19_3/depth.txt");
-}
-
-
-TEST(testGroundTrurhFileCreation, isFileCreated) {
-
-    std::set<int> indices;
-    for (int i = 0; i < 20; ++i) {
-        indices.insert(3 * i);
+        ASSERT_GE(numberOfLines, correspondenceGraph.verticesOfCorrespondence.size());
+        ASSERT_GE(numberOfLines, defaultNumberOfLines);
     }
-//    gdr::GTT::prepareDataset("/home/leoneed/Desktop/plant_dataset", "/home/leoneed/testGDR1/GDR/data/temp", indices, "subset");
 }
+
+//TEST(testDepthTxtFile, fileCreated) {
+//    gdr::GTT::createDepthTxtFile("../../data/plantDataset_19_3/depth", "../../data/plantDataset_19_3/depth.txt");
+//}
+
 
 int main(int argc, char *argv[]) {
 

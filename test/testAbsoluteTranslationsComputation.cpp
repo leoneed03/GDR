@@ -16,7 +16,7 @@
 
 
 TEST(testAbsoluteTranslationsComputation, IRLSForAbsoluteTranslations) {
-
+    double coefficient = 1.5;
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
                                                  517.3,
                                                  318.6, 516.5, 255.3);
@@ -25,87 +25,72 @@ TEST(testAbsoluteTranslationsComputation, IRLSForAbsoluteTranslations) {
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
     std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
 
-
-
-    for (int i = 0; i < computedAbsoluteOrientationsRobust.size(); ++i) {
-        ASSERT_LE(computedAbsoluteOrientationsRobust[i].normalized().angularDistance(correspondenceGraph.verticesOfCorrespondence[i].getRotationQuat().normalized()), 1e-10);
+    // compute absolute poses IRLS
+    std::vector<Sophus::SE3d> posesIRLS;
+    for (int i = 0; i < computedAbsoluteTranslationsIRLS.size(); ++i) {
+        Sophus::SE3d poseIRLS;
+        poseIRLS.setQuaternion(computedAbsoluteOrientationsRobust[i]);
+        poseIRLS.translation() = computedAbsoluteTranslationsIRLS[i];
+        posesIRLS.push_back(poseIRLS);
     }
+
+    // set origin at zero pose [IRLS]
+    Sophus::SE3d poseIRLSzero = posesIRLS[0];
+    for (auto& poseIRLS: posesIRLS) {
+        poseIRLS = poseIRLSzero.inverse() * poseIRLS;
+    }
+
     std::string absolutePoses = "../../data/files/absolutePoses_19.txt";
     std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
-    std::vector<Eigen::Vector3d> absoluteTranslationsFromGroundTruth;
 
-    for (int i = 0; i < posesInfo.size(); ++i) {
-        absoluteTranslationsFromGroundTruth.push_back(posesInfo[i].getTranslation());
+    std::vector<Sophus::SE3d> posesGT;
+
+    for (const auto& poseGT: posesInfo) {
+        Sophus::SE3d poseSE3;
+        poseSE3.setQuaternion(poseGT.getOrientationQuat());
+        poseSE3.translation() = poseGT.getTranslation();
+        posesGT.push_back(poseSE3);
     }
-    assert(posesInfo.size() == correspondenceGraph.verticesOfCorrespondence.size());
-
-    double errorRot = 0;
-    for (int i = 0; i < correspondenceGraph.verticesOfCorrespondence.size(); ++i) {
-        auto quatShouldBeId = correspondenceGraph.verticesOfCorrespondence[i].getRotationQuat();
-        std::cout << "POSE " << i << std::endl;
-        std::cout << quatShouldBeId.coeffs() << std::endl;
-
-        std::cout << quatShouldBeId.x() << ' ' << quatShouldBeId.y() << ' ' << quatShouldBeId.z() << ' '
-                  << quatShouldBeId.w() << std::endl;
-        double dError = quatShouldBeId.angularDistance(posesInfo[0].getOrientationQuat().inverse().normalized() * posesInfo[i].getOrientationQuat());
-        std::cout << "error is " << dError << std::endl;
-        errorRot += dError;
-    }
-    std::cout << "Mean Rot angle error " << errorRot / correspondenceGraph.verticesOfCorrespondence.size() << std::endl;
-    auto zeroT = absoluteTranslationsFromGroundTruth[0];
-
-    for (auto& translations: absoluteTranslationsFromGroundTruth) {
-        translations -= zeroT;
+    Sophus::SE3d poseGTzero = posesGT[0];
+    for (auto& poseGT: posesGT) {
+        poseGT = poseGTzero.inverse() * poseGT;
     }
 
+    double sumErrorT_IRLS = 0;
+    double sumErrorR_IRLS = 0;
 
-    std::cout << "_______________________VS_______________________________________" << std::endl;
-    for (int i = 0; i < absoluteTranslationsFromGroundTruth.size(); ++i) {
-        const auto& t = absoluteTranslationsFromGroundTruth[i];
-        const auto& to = computedAbsoluteTranslationsIRLS[i];
-        std::cout << i << ": \t" << t[0] << " \t" << t[1] << " \t" << t[2] << std::endl;
-        std::cout << " : \t" << to[0] << " \t" << to[1] << " \t" << to[2] << std::endl;
+    double maxErrorR_IRLS = 0;
+    double maxErrorT_IRLS = 0;
+
+    assert(posesGT.size() == posesIRLS.size());
+    assert(posesGT.size() == 19);
+
+    for (int i = 0; i < posesGT.size(); ++i) {
+        const auto& poseGT = posesGT[i];
+        const auto& poseIRLS = posesIRLS[i];
+
+
+        double errorR_IRLS = poseGT.unit_quaternion().angularDistance(poseIRLS.unit_quaternion());
+        double errorT_IRLS = (poseGT.translation() - poseIRLS.translation()).norm();
+        sumErrorR_IRLS += errorR_IRLS;
+        sumErrorT_IRLS += errorT_IRLS;
+
+        maxErrorR_IRLS = std::max(errorR_IRLS, maxErrorR_IRLS);
+        maxErrorT_IRLS = std::max(errorT_IRLS, maxErrorT_IRLS);
     }
 
-    std::cout << "______________________________________________________________" << std::endl;
+    double meanErrorT_IRLS_L2 = sumErrorT_IRLS / posesGT.size();
+    double meanErrorR_IRLS_angDist = sumErrorR_IRLS / posesGT.size();
 
+    std::cout << "__________IRLS test report 19 poses_____________" << std::endl;
+    std::cout << "mean error translation: " << meanErrorT_IRLS_L2 << std::endl;
+    std::cout << "mean error rotation: " << meanErrorR_IRLS_angDist << std::endl;
+    std::cout << "MAX error translation: " << maxErrorT_IRLS << std::endl;
+    std::cout << "MAX error rotation: " << maxErrorR_IRLS << std::endl;
 
+    ASSERT_LE(meanErrorR_IRLS_angDist, 0.03);
+    ASSERT_LE(meanErrorT_IRLS_L2, 0.02);
 
-    double sumErrors = 0;
-    double sumErrorsSquared = 0;
-    double dev = 0;
-
-//    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/ba/absolutePoses_19_robust_not_inversed.txt";
-    std::string outputName = "absolutePoses_19_robust.txt";
-    std::ofstream computedPoses(outputName);
-
-    assert(computedAbsoluteTranslationsIRLS.size() == absoluteTranslationsFromGroundTruth.size());
-    for (int i = 0; i < posesInfo.size(); ++i) {
-        double currentL2Error = (absoluteTranslationsFromGroundTruth[i] - computedAbsoluteTranslationsIRLS[i]).norm();
-        computedPoses.precision(std::numeric_limits<double>::max_digits10);
-        std::cout << i << ":\t" << currentL2Error << std::endl;
-        computedPoses << posesInfo[i].getTimestamp() << ' ';
-        const auto& to = computedAbsoluteTranslationsIRLS[i];
-        for (int j = 0; j < 3; ++j) {
-            computedPoses << to[j] << ' ';
-        }
-        auto quatComputed = correspondenceGraph.verticesOfCorrespondence[i].getRotationQuat();
-
-        computedPoses << quatComputed.x() << ' ' << quatComputed.y() << ' ' << quatComputed.z() << ' '
-                  << quatComputed.w() << std::endl;
-        sumErrors += currentL2Error;
-        sumErrorsSquared += pow(currentL2Error, 2);
-
-    }
-    double meanError = sumErrors / posesInfo.size();
-    double meanSquaredError = sumErrorsSquared / posesInfo.size();
-
-
-    correspondenceGraph.printConnectionsRelative(std::cout);
-    std::cout << "IRLS for translations result" << std::endl;
-    std::cout << "E(error) = " << meanError << std::endl;
-    std::cout << "standard deviation(error) = " << meanSquaredError - pow(meanError, 2) << std::endl;
-    ASSERT_LE(meanError, 0.15);
 }
 
 int main(int argc, char *argv[]) {
