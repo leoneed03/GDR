@@ -9,6 +9,7 @@
 #include <vector>
 #include <memory>
 #include <tbb/concurrent_queue.h>
+#include <tbb/concurrent_vector.h>
 
 #include "VertexCG.h"
 #include "SiftGPU.h"
@@ -31,19 +32,26 @@ namespace gdr {
 
         SiftModule();
 
-        void siftParseParams(SiftGPU* sift, std::vector<char *> &siftGpuArgs);
+        void siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs);
 
         static void
-        getKeypointsDescriptorsOneImage(SiftGPU* detectorSift,
-                                        tbb::concurrent_queue<std::pair<std::string, int>>& pathsToImagesAndImageIndices,
+        getKeypointsDescriptorsOneImage(SiftGPU *detectorSift,
+                                        tbb::concurrent_queue<std::pair<std::string, int>> &pathsToImagesAndImageIndices,
                                         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> &keyPointsAndDescriptorsByIndex,
-                                        std::mutex& output);
+                                        std::mutex &output);
 
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
         getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
-                                         const std::vector<int>& numOfDevicesForDetectors = {0});
+                                         const std::vector<int> &numOfDevicesForDetectors = {0});
 
-        std::vector<std::vector<Match>> findCorrespondences(const std::vector<VertexCG>& verticesToBeMatched);
+        std::vector<tbb::concurrent_vector<Match>> findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
+                                                            const std::vector<int> &matchDevicesNumbers = {0});
+        static void getNumbersOfMatchesOnePair(int& indexFrom,
+                                               int& indexTo,
+                                               const std::vector<VertexCG> &verticesToBeMatched,
+                                               std::mutex& counterMutex,
+                                               std::vector<tbb::concurrent_vector<Match>>& matches,
+                                               SiftMatchGPU* matcher);
     };
 }
 

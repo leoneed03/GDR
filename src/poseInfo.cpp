@@ -60,4 +60,12 @@ namespace gdr {
     Eigen::Vector3d poseInfo::getTranslation() const {
         return coordinated3d;
     }
+
+    Sophus::SE3d poseInfo::getSophusPose() const {
+        Sophus::SE3d poseSE3;
+        poseSE3.setQuaternion(orientationQuat);
+        poseSE3.translation() = coordinated3d;
+
+        return poseSE3;
+    }
 }

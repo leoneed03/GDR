@@ -7,6 +7,7 @@
 #define GDR_SIFTGPU_CG_H
 
 #include <queue>
+#include <atomic>
 
 #include "CloudProjector.h"
 #include "VertexCG.h"
@@ -18,12 +19,14 @@
 #include "errors.h"
 #include "umeyama.h"
 #include "Vectors3d.h"
+#include "ThreadPool.h"
 
 namespace gdr {
 
 
     struct CorrespondenceGraph {
 
+        std::unique_ptr<ThreadPool> threadPool;
         PointMatcher pointMatcher;
         CloudProjector cloudProjector;
         CameraRGBD cameraRgbd;
@@ -43,12 +46,12 @@ namespace gdr {
         std::vector<std::string> imagesD;
         std::string pathToImageDirectoryRGB;
         std::string pathToImageDirectoryD;
-        int totalMeausedRelativePoses = 0;
-        int refinedPoses = 0;
+        std::atomic_int totalMeausedRelativePoses = 0;
+        std::atomic_int refinedPoses = 0;
 
         const CloudProjector& getCloudProjector() const;
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
+        tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
 
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
         findInlierPointCorrespondences(int vertexFrom,
@@ -58,8 +61,9 @@ namespace gdr {
                                        bool isICP);
 
         CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD,
-                            float fx,
-                            float cx, float fy, float cy);
+                            float fx, float cx,
+                            float fy, float cy,
+                            int numOfThreadsCpu = 4);
 
         int refineRelativePose(const VertexCG &vertexToBeTransformed, const VertexCG &vertexDestination,
                                Eigen::Matrix4d &initEstimationRelPos, bool &success);
@@ -73,7 +77,7 @@ namespace gdr {
         // pairs are grouped in one vector if representing same global point
 
         void computePointClasses(
-                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints);
+                const tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints);
 
         void computePointClasses();
 
@@ -95,7 +99,7 @@ namespace gdr {
 
         int printRelativePosesFile(const std::string &outPutFileRelativePoses);
 
-        std::vector<int> bfs(int currentVertex);
+        std::vector<int> bfs(int currentVertex, bool& isConnected);
 
         int computeRelativePoses();
 

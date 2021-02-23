@@ -16,6 +16,7 @@
 #include <fstream>
 #include <string>
 #include <opencv2/opencv.hpp>
+#include <tbb/parallel_for.h>
 #include <translationAveraging.h>
 
 namespace gdr {
@@ -116,52 +117,92 @@ namespace gdr {
 
     int CorrespondenceGraph::findTransformationRtMatrices() {
 
-        for (int i = 0; i < matches.size(); ++i) {
-            for (int j = 0; j < matches[i].size(); ++j) {
+        std::mutex output;
+        tbb::concurrent_vector<tbb::concurrent_vector<transformationRtMatrix>> transformationMatricesConcurrent(
+                verticesOfCorrespondence.size());
+        int matchFromIndex = 0;
+        std::mutex indexFromMutex;
+        tbb::parallel_for(0, static_cast<int>(matches.size()),
+                          [&matchFromIndex, &indexFromMutex, this,
+                                  &transformationMatricesConcurrent, &output](int) {
+                              int i = -1;
+                              {
+                                  std::unique_lock<std::mutex> lockCounterFrom(indexFromMutex);
+                                  i = matchFromIndex;
+                                  assert(matchFromIndex >= 0 && matchFromIndex < verticesOfCorrespondence.size());
+                                  ++matchFromIndex;
+                              }
+                              int matchToIndex = 0;
+                              std::mutex indexToMutex;
 
-                const auto &match = matches[i][j];
-                const auto &frameFromDestination = verticesOfCorrespondence[i];
-                const auto &frameToToBeTransformed = verticesOfCorrespondence[match.frameNumber];
-                PRINT_PROGRESS("check this " << frameFrom.index << " -> " << frameTo.index);
-                assert(frameToToBeTransformed.getIndex() > frameFromDestination.getIndex());
-                bool success = true;
-                bool successICP = true;
-                auto cameraMotion = getTransformationRtMatrixTwoImages(i, j, success);
+                              tbb::parallel_for(0, static_cast<int>(matches[i].size()),
+                                                [&matchToIndex, &indexToMutex, i,
+                                                        &transformationMatricesConcurrent, this,
+                                                        &output](int) {
+
+                                                    int jPos = -1;
+                                                    {
+                                                        std::unique_lock<std::mutex> lockCounterTo(indexToMutex);
+                                                        jPos = matchToIndex;
+                                                        assert(matchToIndex >= 0 && matchToIndex < matches[i].size());
+                                                        ++matchToIndex;
+                                                    }
+                                                    int j = jPos;
+                                                    const auto &match = matches[i][j];
+                                                    const auto &frameFromDestination = verticesOfCorrespondence[i];
+                                                    const auto &frameToToBeTransformed = verticesOfCorrespondence[match.frameNumber];
+                                                    assert(frameToToBeTransformed.getIndex() >
+                                                           frameFromDestination.getIndex());
+                                                    bool success = true;
+                                                    bool successICP = true;
+                                                    auto cameraMotion = getTransformationRtMatrixTwoImages(i, j,
+                                                                                                           success);
+
+                                                    if (success) {
+                                                        int spaceIO = 18;
+                                                        {
+                                                            std::unique_lock<std::mutex> lockOutput(output);
+                                                            std::cout << "success frameFrom -> frameTo"
+                                                                      << frameFromDestination.index
+                                                                      << " -> "
+                                                                      << frameToToBeTransformed.index << std::endl;
+                                                        }
+
+                                                        Eigen::Matrix3d m3d = cameraMotion.block(0, 0, 3, 3);
+                                                        Eigen::Quaterniond qRelatived(m3d);
+                                                        Sophus::SE3d relativeTransformationSE3 = Sophus::SE3d::fitToSE3(
+                                                                cameraMotion);
+
+                                                        // fill info about relative pairwise transformations Rt
+                                                        transformationMatricesConcurrent[i].push_back(
+                                                                transformationRtMatrix(
+                                                                        relativeTransformationSE3.matrix(),
+                                                                        frameFromDestination,
+                                                                        frameToToBeTransformed));
+                                                        transformationMatricesConcurrent[frameToToBeTransformed.index].push_back(
+                                                                transformationRtMatrix(
+                                                                        relativeTransformationSE3.inverse().matrix(),
+                                                                        frameToToBeTransformed,
+                                                                        frameFromDestination));
+
+                                                    } else {
 
 
-                PRINT_PROGRESS(
-                        "out of Transformation calculation" << std::endl
-                                                            << frameFrom.index << " -> " << frameTo.index);
+                                                        std::unique_lock<std::mutex> lockOutput(output);
+                                                        std::cout << "                             NOT ___success____ "
+                                                                  << frameFromDestination.index
+                                                                  << " -> "
+                                                                  << frameToToBeTransformed.index << " \tmatches "
+                                                                  << match.matchNumbers.size()
+                                                                  << std::endl;
+                                                    }
+                                                });
+                          });
 
-                if (success) {
-                    int spaceIO = 18;
-                    std::cout << "success frameFrom -> frameTo" << frameFromDestination.index << " -> "
-                              << frameToToBeTransformed.index << std::endl;
-
-                    Eigen::Matrix3d m3d = cameraMotion.block(0, 0, 3, 3);
-                    Eigen::Quaterniond qRelatived(m3d);
-
-                    PRINT_PROGRESS(std::setw(2 * spaceIO) << qRelatived.x() << std::setw(2 * spaceIO) << qRelatived.y()
-                                                          << std::setw(2 * spaceIO) << qRelatived.z()
-                                                          << std::setw(2 * spaceIO) << qRelatived.w());
-
-                    Sophus::SE3d relativeTransformationSE3 = Sophus::SE3d::fitToSE3(cameraMotion);
-
-                    // fill info about relative pairwise transformations Rt
-                    transformationRtMatrices[i].push_back(
-                            transformationRtMatrix(relativeTransformationSE3.matrix(), frameFromDestination,
-                                                   frameToToBeTransformed));
-                    transformationRtMatrices[frameToToBeTransformed.index].push_back(
-                            transformationRtMatrix(relativeTransformationSE3.inverse().matrix(), frameToToBeTransformed,
-                                                   frameFromDestination));
-
-                } else {
-
-                    std::cout << "                             NOT ___success____ " << frameFromDestination.index
-                              << " -> "
-                              << frameToToBeTransformed.index << " \tmatches " << match.matchNumbers.size()
-                              << std::endl;
-                }
+        assert(transformationMatricesConcurrent.size() == transformationRtMatrices.size());
+        for (int i = 0; i < transformationMatricesConcurrent.size(); ++i) {
+            for (const auto &transformation: transformationMatricesConcurrent[i]) {
+                transformationRtMatrices[i].push_back(transformation);
             }
         }
 
@@ -292,20 +333,11 @@ namespace gdr {
                                                                                                  cR_t_umeyama,
                                                                                                  true);
 
-        Eigen::Matrix4d inverseICP = cR_t_umeyama.inverse();
-        auto inlierMatchesCorrespondingKeypointsAfterRefinementInverse = findInlierPointCorrespondences(
-                vertexFromDestOrigin,
-                vertexInListToBeTransformedCanBeComputed,
-                neighbourhoodRadius,
-                inverseICP,
-                true);
-
         ++totalMeausedRelativePoses;
         int ransacInliers = inlierMatchesCorrespondingKeypointsLoRansac.size();
         int ICPinliers = inlierMatchesCorrespondingKeypointsAfterRefinement.size();
-        int ICPinliersInverse = inlierMatchesCorrespondingKeypointsAfterRefinementInverse.size();
         std::cout << "              " << "ransac got " << ransacInliers << "/" << toBeTransformedPoints.cols()
-                  << " vs " << ICPinliers << " vs [inverse] " << ICPinliersInverse << std::endl;
+                  << " vs " << ICPinliers << std::endl;
 
 
         // Show Rt results
@@ -334,14 +366,19 @@ namespace gdr {
             cR_t_umeyama = RtbeforeRefinement.matrix();
 
         } else {
-            // ICP did refine the relative pose -- return ICP inliers
+            // ICP did refine the relative pose -- return ICP inliers TODO
             std::cout << "REFINED________________________________________________" << std::endl;
             ++refinedPoses;
-            std::swap(inlierMatchesCorrespondingKeypointsAfterRefinement, inlierMatchesCorrespondingKeypointsLoRansac);
+//            std::swap(inlierMatchesCorrespondingKeypointsAfterRefinement, inlierMatchesCorrespondingKeypointsLoRansac);
         }
 
+
         for (const auto &matchPair: inlierMatchesCorrespondingKeypointsLoRansac) {
-            inlierCorrespondencesPoints.push_back(matchPair);
+            tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>> matchesConcurrent;
+            for (const auto &matchEntry: matchPair) {
+                matchesConcurrent.push_back(matchEntry);
+            }
+            inlierCorrespondencesPoints.push_back(matchesConcurrent);
         }
         return cR_t_umeyama;
     }
@@ -449,13 +486,15 @@ namespace gdr {
         std::cout << "start computing descriptors" << std::endl;
 
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
-                keysDescriptorsAll = siftModule.getKeypointsDescriptorsAllImages(readRgbData(pathToImageDirectoryRGB), {0});
+                keysDescriptorsAll = siftModule.getKeypointsDescriptorsAllImages(readRgbData(pathToImageDirectoryRGB),
+                                                                                 {0});
 
         verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
 
         for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
 
-            keyPointsDepthDescriptor keyPointsDepthDescriptor = filterKeypointsByKnownDepth(keysDescriptorsAll[currentImage], imagesD[currentImage]);
+            keyPointsDepthDescriptor keyPointsDepthDescriptor = filterKeypointsByKnownDepth(
+                    keysDescriptorsAll[currentImage], imagesD[currentImage]);
             VertexCG currentVertex(currentImage,
                                    cameraRgbd,
                                    keyPointsDepthDescriptor,
@@ -477,8 +516,13 @@ namespace gdr {
             cloudProjector.setPoses(posesForCloudProjector);
             pointMatcher.setNumberOfPoses(verticesOfCorrespondence.size());
         }
-
-        matches = siftModule.findCorrespondences(verticesOfCorrespondence);
+        auto matchedPairs = siftModule.findCorrespondences(verticesOfCorrespondence);
+        matches = std::vector<std::vector<Match>>(matchedPairs.size());
+        for (int i = 0; i < matchedPairs.size(); ++i) {
+            for (const auto &matchPair: matchedPairs[i]) {
+                matches[i].push_back(matchPair);
+            }
+        }
         decreaseDensity();
         findTransformationRtMatrices();
         computePointClasses();
@@ -490,11 +534,13 @@ namespace gdr {
 
     CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirectoryRGB,
                                              const std::string &newPathToImageDirectoryD,
-                                             float fx, float cx, float fy, float cy) :
+                                             float fx, float cx, float fy, float cy,
+                                             int numOfThreadsCpu) :
             cameraRgbd({fx, cx, fy, cy}),
             pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
             pathToImageDirectoryD(newPathToImageDirectoryD) {
 
+        threadPool = std::make_unique<ThreadPool>(numOfThreadsCpu);
         std::cout << "construct Graph" << std::endl;
         imagesRgb = readRgbData(pathToImageDirectoryRGB);
         imagesD = readRgbData(pathToImageDirectoryD);
@@ -548,15 +594,16 @@ namespace gdr {
 
     }
 
-    std::vector<int> CorrespondenceGraph::bfs(int currentVertex) {
+    std::vector<int> CorrespondenceGraph::bfs(int currentVertex, bool &isConnected) {
         std::vector<bool> visited(verticesOfCorrespondence.size(), false);
         std::vector<int> preds(verticesOfCorrespondence.size(), -1);
         std::queue<int> queueVertices;
         queueVertices.push(currentVertex);
         assert(verticesOfCorrespondence.size() == transformationRtMatrices.size());
+
         while (!queueVertices.empty()) {
             int vertex = queueVertices.front();
-            PRINT_PROGRESS(" entered vertex " << vertex);
+            std::cout << "bfs entered vertex " << vertex << std::endl;
             queueVertices.pop();
             assert(vertex < visited.size() && vertex >= 0);
             visited[vertex] = true;
@@ -570,19 +617,27 @@ namespace gdr {
                     preds[to] = vertex;
 
                     ///// get absolute Rotation (R) and Translation (t) with given predecessor Vertex and Relative R & t
-                    const Eigen::Matrix4d &predAbsoluteRt = verticesOfCorrespondence[vertex].absoluteRotationTranslation;
-                    Eigen::Matrix3d predR = predAbsoluteRt.block(0, 0, 3, 3);
-                    Eigen::Vector3d predT = predAbsoluteRt.block(0, 3, 3, 1);
-
-                    const Eigen::Matrix4d &relativeRt = transformationRtMatrices[vertex][i].innerTranformationRtMatrix;
-                    Eigen::Vector3d relT = relativeRt.block(0, 3, 3, 1);
-
-                    Eigen::Matrix4d &newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
-                    Eigen::Vector3d newAbsoluteT = predR * relT + predT;
-
-                    newAbsoluteRt.block(0, 3, 3, 1) = newAbsoluteT;
+//                    const Eigen::Matrix4d &predAbsoluteRt = verticesOfCorrespondence[vertex].absoluteRotationTranslation;
+//                    Eigen::Matrix3d predR = predAbsoluteRt.block(0, 0, 3, 3);
+//                    Eigen::Vector3d predT = predAbsoluteRt.block(0, 3, 3, 1);
+//
+//                    const Eigen::Matrix4d &relativeRt = transformationRtMatrices[vertex][i].innerTranformationRtMatrix;
+//                    Eigen::Vector3d relT = relativeRt.block(0, 3, 3, 1);
+//
+//                    Eigen::Matrix4d &newAbsoluteRt = verticesOfCorrespondence[to].absoluteRotationTranslation;
+//                    Eigen::Vector3d newAbsoluteT = predR * relT + predT;
+//
+//                    newAbsoluteRt.block(0, 3, 3, 1) = newAbsoluteT;
 
                 }
+            }
+        }
+
+        isConnected = true;
+        for (int i = 0; i < visited.size(); ++i) {
+            if (!visited[i]) {
+                isConnected = false;
+                return preds;
             }
         }
         return preds;
@@ -595,10 +650,10 @@ namespace gdr {
     }
 
     void CorrespondenceGraph::computePointClasses(
-            const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints) {
+            const tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints) {
 
 
-        for (const std::vector<std::pair<std::pair<int, int>, KeyPointInfo>> &vectorOfMatches: matchesBetweenPoints) {
+        for (const tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>> &vectorOfMatches: matchesBetweenPoints) {
 
             std::vector<std::pair<int, int>> poseAndLocalIndices;
             for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
@@ -613,7 +668,7 @@ namespace gdr {
                 pointMatcher.getNumberOfPoses());
 
 
-        for (const std::vector<std::pair<std::pair<int, int>, KeyPointInfo>> &vectorOfMatches: matchesBetweenPoints) {
+        for (const tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>> &vectorOfMatches: matchesBetweenPoints) {
 
             for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
                 const auto &poseNumAndLocalInd = fullPointInfo.first;

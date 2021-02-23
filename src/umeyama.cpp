@@ -4,9 +4,12 @@
 
 #include <algorithm>
 #include <random>
+#include <thread>
 
 #include "umeyama.h"
 #include "printer.h"
+#include <mutex>
+#include <tbb/parallel_for.h>
 
 namespace gdr {
 
@@ -26,15 +29,18 @@ namespace gdr {
 
         for (int pointCounter = 0; pointCounter < pointsAfterTransformation.cols(); ++pointCounter) {
 //            std::cout << cameraIntr3x3Destination << std::endl;
-            Eigen::Vector3d toBeTransformedProjection = cameraIntr3x3Destination * pointsAfterTransformation.col(pointCounter).topLeftCorner<3,1>();
-            Eigen::Vector3d destinationPointProjection = cameraIntr3x3Destination * destinationPoints.col(pointCounter).topLeftCorner<3,1>();
+            Eigen::Vector3d toBeTransformedProjection =
+                    cameraIntr3x3Destination * pointsAfterTransformation.col(pointCounter).topLeftCorner<3, 1>();
+            Eigen::Vector3d destinationPointProjection =
+                    cameraIntr3x3Destination * destinationPoints.col(pointCounter).topLeftCorner<3, 1>();
             for (int i = 0; i < 2; ++i) {
                 toBeTransformedProjection[i] /= toBeTransformedProjection[2];
                 destinationPointProjection[i] /= destinationPointProjection[2];
             }
 
             // depth error can be also checked
-            auto projectionErrorPixels2d = (toBeTransformedProjection.topLeftCorner<2,1>() - destinationPointProjection.topLeftCorner<2,1>());
+            auto projectionErrorPixels2d = (toBeTransformedProjection.topLeftCorner<2, 1>() -
+                                            destinationPointProjection.topLeftCorner<2, 1>());
 
             double maxError = std::max(std::abs(projectionErrorPixels2d[0]), std::abs(projectionErrorPixels2d[1]));
             if (maxError < maxProjectionErrorPixels) {
@@ -145,11 +151,12 @@ namespace gdr {
             std::cout << cR_t_umeyama_3_points * dest3Points << std::endl;
             assert((dest3Points - cR_t_umeyama_3_points * toBeTransformed3Points).norm() < 3 * std::numeric_limits<double>::epsilon());
             */
-            std::vector<std::pair<double, int>> projectionErrorsAndInlierIndices = calculateProjectionErrors(toBeTransormedPoints,
-                                                                                                             destinationPoints,
-                                                                                                             cameraIntr3x3Destination,
-                                                                                                             cR_t_umeyama_3_points,
-                                                                                                             maxProjectionErrorPixels);
+            std::vector<std::pair<double, int>> projectionErrorsAndInlierIndices = calculateProjectionErrors(
+                    toBeTransormedPoints,
+                    destinationPoints,
+                    cameraIntr3x3Destination,
+                    cR_t_umeyama_3_points,
+                    maxProjectionErrorPixels);
 
             int numInliers = projectionErrorsAndInlierIndices.size();
 
@@ -172,11 +179,12 @@ namespace gdr {
         }
 
 
-        std::vector<std::pair<double, int>> totalProjectionErrorsAndInlierIndices = calculateProjectionErrors(toBeTransormedPoints,
-                                                                                             destinationPoints,
-                                                                                             cameraIntr3x3Destination,
-                                                                                             optimal_cR_t_umeyama_transformation,
-                                                                                             maxProjectionErrorPixels);
+        std::vector<std::pair<double, int>> totalProjectionErrorsAndInlierIndices = calculateProjectionErrors(
+                toBeTransormedPoints,
+                destinationPoints,
+                cameraIntr3x3Destination,
+                optimal_cR_t_umeyama_transformation,
+                maxProjectionErrorPixels);
 
         int numberInliersAfterLocalOptimization = totalProjectionErrorsAndInlierIndices.size();
         estimationSuccess = numberInliersAfterLocalOptimization > inlierCoeff * toBeTransormedPoints.cols();
@@ -184,10 +192,14 @@ namespace gdr {
         std::string logs;
         std::cout << "before LO " << totalNumberInliers << std::endl;
         if (estimationSuccess) {
-            std::cout << "success, inliers " << numberInliersAfterLocalOptimization << " of " << toBeTransormedPoints.cols() << " ratio " << (double) numberInliersAfterLocalOptimization / toBeTransormedPoints.cols();
+            std::cout << "success, inliers " << numberInliersAfterLocalOptimization << " of "
+                      << toBeTransormedPoints.cols() << " ratio "
+                      << (double) numberInliersAfterLocalOptimization / toBeTransormedPoints.cols();
         } else {
 
-            std::cout << "not success, inliers ONLY " << numberInliersAfterLocalOptimization << " of " << toBeTransormedPoints.cols() << " ratio " << (double) numberInliersAfterLocalOptimization / toBeTransormedPoints.cols();
+            std::cout << "not success, inliers ONLY " << numberInliersAfterLocalOptimization << " of "
+                      << toBeTransormedPoints.cols() << " ratio "
+                      << (double) numberInliersAfterLocalOptimization / toBeTransormedPoints.cols();
         }
         std::cout << std::endl;
         return optimal_cR_t_umeyama_transformation;
@@ -221,17 +233,19 @@ namespace gdr {
         optimal_cR_t_umeyama_transformation.setIdentity();
 
         double minError = std::numeric_limits<double>::max();
-        int attempt = -1;
         double mError = -1;
         std::vector<int> inlierIndices;
 
+        std::mutex compareWithOptimal;
 
         std::random_device randomDevice;
         std::mt19937 randomNumberGenerator(randomDevice());
         std::uniform_int_distribution<> distrib(0, numOfPoints - 1);
 
 
-        for (int i = 0; i < numIterationsRansac; ++i) {
+        tbb::parallel_for(0, numIterationsRansac, [dim, &distrib, &randomNumberGenerator, &toBeTransormedPoints,
+                &destinationPoints, lastInlierPos, numInliers, &compareWithOptimal,
+                &minError, &mError, &optimal_cR_t_umeyama_transformation](int) {
             std::vector<int> p(dim, 0);
             Eigen::Matrix4Xd toBeTransformed3Points = Eigen::Matrix4Xd(dim + 1, dim);
             Eigen::Matrix4Xd dest3Points = Eigen::Matrix4Xd(dim + 1, dim);
@@ -268,19 +282,21 @@ namespace gdr {
 
             double normError = errorAndLastInlierNumber.first;
 
-            if (normError < minError) {
-                PRINT_PROGRESS("att " << i << " with error " << normError
-                                      << "++++++++++++++++++++++++++++++++++++++\n" << " total inliers " << numInliers);
-                mError = normError;
-                optimal_cR_t_umeyama_transformation = umeyama(
-                        toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
-                        destInlierPoints.block(0, 0, dim, numInliers));
-                attempt = i;
-                minError = normError;
+            {
+                std::unique_lock<std::mutex> lockCompareWithOptimal(compareWithOptimal);
+                if (normError < minError) {
+                    std::cout << "umeyama thread received better results " << std::this_thread::get_id() << std::endl;
+                    mError = normError;
+                    optimal_cR_t_umeyama_transformation = umeyama(
+                            toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
+                            destInlierPoints.block(0, 0, dim, numInliers));
+                    minError = normError;
+                } else {
+
+//                    std::cout << "umeyama thread NOT received better results " << std::this_thread::get_id() << std::endl;
+                }
             }
-        }
-        PRINT_PROGRESS("cand \n" << optimal_cR_t_umeyama_transformation << "RANSAC found on attempt " << attempt
-                                 << " error on last \'inlier\' " << mError);
+        });
 
         std::vector<std::pair<double, int>> totalEuclideanErrors = getPartionedByNthElement(toBeTransormedPoints,
                                                                                             destinationPoints,

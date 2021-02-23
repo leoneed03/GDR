@@ -12,6 +12,8 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
+#include "ThreadPool.h"
+
 namespace gdr {
 
     std::vector<std::pair<double, int>> calculateProjectionErrors(const Eigen::Matrix4Xd &toBeTransormedPoints,

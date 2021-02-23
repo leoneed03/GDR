@@ -60,6 +60,10 @@ namespace gdr {
         // contains intrinsics camera parameters
         std::vector<CameraRGBD> cameraModelByPoseNumber;
 
+
+        // get median errors: reprojection OX and OY and Depth: [OX, OY, Depth]
+        std::vector<double> getMedianErrorsXYDepth();
+
         Sophus::SE3d getSE3TransformationMatrixByPoseNumber(int poseNumber) const;
 
         Eigen::Vector3d getPointVector3dByPointGlobalIndex(int pointGlobalIndex) const;

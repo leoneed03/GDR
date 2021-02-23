@@ -25,6 +25,18 @@ namespace gdr {
 
     }
 
+    VertexCG::VertexCG(int newIndex,
+                       const CameraRGBD &newCameraRgbd,
+                       const std::string &newPathRGB,
+                       const std::string &newPathD,
+                       const Sophus::SE3d &newAbsolutePose) : index(newIndex),
+                                                      cameraRgbd(newCameraRgbd),
+                                                      pathToRGBimage(newPathRGB),
+                                                      pathToDimage(newPathD) {
+        absoluteRotationTranslation = newAbsolutePose.matrix();
+        absolutePose = newAbsolutePose;
+    }
+
     std::string VertexCG::getPathRGBImage() const {
         return pathToRGBimage;
     }
@@ -80,6 +92,11 @@ namespace gdr {
 
     Eigen::Quaterniond VertexCG::getRotationQuat() const {
         return absolutePose.unit_quaternion();
+    }
+
+
+    const Sophus::SE3d &VertexCG::getAbsolutePoseSE3() const {
+        return absolutePose;
     }
 
     VertexCG::VertexCG(int newIndex,

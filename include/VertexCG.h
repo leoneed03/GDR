@@ -56,8 +56,15 @@ namespace gdr {
 
         Eigen::Quaterniond getRotationQuat() const;
 
-
         Eigen::Matrix4d getEigenMatrixAbsolutePose4d() const;
+
+        const Sophus::SE3d& getAbsolutePoseSE3() const;
+
+        VertexCG(int newIndex,
+                 const CameraRGBD& newCameraRgbd,
+                 const std::string &newPathRGB,
+                 const std::string &newPathD,
+                 const Sophus::SE3d &absolutePose);
 
         VertexCG(int newIndex,
                  const CameraRGBD &newCameraRgbd,

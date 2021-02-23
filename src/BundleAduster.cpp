@@ -23,8 +23,8 @@ namespace gdr {
             pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
         }
 
-        for (const auto& mapIntInfo: keyPointinfo) {
-            for (const auto& pairIntInfo: mapIntInfo) {
+        for (const auto &mapIntInfo: keyPointinfo) {
+            for (const auto &pairIntInfo: mapIntInfo) {
                 assert(pairIntInfo.second.getX() < widthAssert && pairIntInfo.second.getX() >= 0);
                 assert(pairIntInfo.second.getY() < heightAssert && pairIntInfo.second.getY() >= 0);
             }
@@ -38,7 +38,8 @@ namespace gdr {
             const auto &cameraIntr = pose.second;
             poseTxTyTzByPoseNumber.push_back({translation[0], translation[1], translation[2]});
             poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.fx, cameraIntr.cx, cameraIntr.fy, cameraIntr.cy});
-            orientationsqxyzwByPoseNumber.push_back({rotationQuat.x(), rotationQuat.y(), rotationQuat.z(), rotationQuat.w()});
+            orientationsqxyzwByPoseNumber.push_back(
+                    {rotationQuat.x(), rotationQuat.y(), rotationQuat.z(), rotationQuat.w()});
 
             cameraModelByPoseNumber.push_back(pose.second);
             assert(poseTxTyTzByPoseNumber[poseTxTyTzByPoseNumber.size() - 1].size() == dimPose);
@@ -68,7 +69,7 @@ namespace gdr {
 
             assert(poseIndex < keyPointInfoByPoseNumberAndPointNumber.size());
 
-            for (const auto& indexAndKeyPointInfo: keyPointInfoByPoseNumberAndPointNumber[poseIndex]) {
+            for (const auto &indexAndKeyPointInfo: keyPointInfoByPoseNumberAndPointNumber[poseIndex]) {
                 int pointIndex = indexAndKeyPointInfo.first;
                 assert(pointIndex >= 0 && pointIndex < pointsXYZbyIndex.size());
 
@@ -76,7 +77,7 @@ namespace gdr {
                 auto &intr = poseFxCxFyCyScaleByPoseNumber[poseIndex];
                 assert(intr.size() == cameraDim);
 //                auto& observedKeyPoints = keyPointInfoByPoseNumberAndPointNumber[poseIndex];
-                const auto& keyPointInfo = indexAndKeyPointInfo.second;
+                const auto &keyPointInfo = indexAndKeyPointInfo.second;
 
                 double widthAssert = 640;
                 double heightAssert = 480;
@@ -128,8 +129,9 @@ namespace gdr {
         assert(cameraModelByPoseNumber.size() == poseTxTyTzByPoseNumber.size());
         for (int i = 0; i < poseTxTyTzByPoseNumber.size(); ++i) {
             Eigen::Quaterniond orientation(orientationsqxyzwByPoseNumber[i].data());
-            const auto& poseTranslationCameraIntr = poseTxTyTzByPoseNumber[i];
-            std::vector<double> t = {poseTranslationCameraIntr[0], poseTranslationCameraIntr[1], poseTranslationCameraIntr[2]};
+            const auto &poseTranslationCameraIntr = poseTxTyTzByPoseNumber[i];
+            std::vector<double> t = {poseTranslationCameraIntr[0], poseTranslationCameraIntr[1],
+                                     poseTranslationCameraIntr[2]};
             Eigen::Vector3d translation(t.data());
 //            std::cout << "orientation " << orientation.norm() << std::endl;
             assert(std::abs(orientation.norm() - 1.0) < 1e-10);
@@ -137,8 +139,8 @@ namespace gdr {
             poseCurrent.setQuaternion(orientation);
             poseCurrent.translation() = translation;
             posesOptimized.push_back(poseCurrent);
-            const auto& camera = cameraModelByPoseNumber[i];
-            const auto& intr = poseFxCxFyCyScaleByPoseNumber[i];
+            const auto &camera = cameraModelByPoseNumber[i];
+            const auto &intr = poseFxCxFyCyScaleByPoseNumber[i];
             double eps = 30 * std::numeric_limits<double>::epsilon();
             double errorFx = std::abs(camera.fx - intr[cameraIntrStartIndex]);
             double errorCx = std::abs(camera.cx - intr[cameraIntrStartIndex + 1]);
@@ -170,7 +172,7 @@ namespace gdr {
         std::vector<Point3d> pointsOtimized;
 
         for (int i = 0; i < pointsXYZbyIndex.size(); ++i) {
-            const auto& point = pointsXYZbyIndex[i];
+            const auto &point = pointsXYZbyIndex[i];
             assert(point.size() == 3);
             pointsOtimized.push_back(Point3d(point[0], point[1], point[2], i));
         }
@@ -178,38 +180,31 @@ namespace gdr {
         return pointsOtimized;
     }
 
-    // each unordered map maps from poseNumber to unordered map
-    // mapping from keyPointGlobalIndex to {errorPixelX, errorPixelY}
-    std::vector<Sophus::SE3d> BundleAdjuster::optimizePointsAndPosesUsingDepthInfo(int indexFixed) {
+    // get median and max errors: reprojection OX and OY and Depth: [{OX, OY, Depth}_median, {OX, OY, Depth}_max, {OX, OY, Depth}_min]
+
+    std::vector<double> BundleAdjuster::getMedianErrorsXYDepth() {
 
         std::vector<double> errorsReprojectionX;
         std::vector<double> errorsReprojectionY;
         std::vector<double> errorsDepth;
 
-        std::cout << "entered BA depth optimization" << std::endl;
-
         double minScale = std::numeric_limits<double>::infinity();
         double maxScale = -1;
 
         for (int currPose = 0; currPose < poseTxTyTzByPoseNumber.size(); ++currPose) {
-            for (const auto& keyPointInfosByPose: keyPointInfoByPoseNumberAndPointNumber[currPose]) {
+            for (const auto &keyPointInfosByPose: keyPointInfoByPoseNumberAndPointNumber[currPose]) {
 
                 int currPoint = keyPointInfosByPose.first;
-                const auto& camera = cameraModelByPoseNumber[currPose];
+                const auto &camera = cameraModelByPoseNumber[currPose];
                 const auto poseTransformation = getSE3TransformationMatrixByPoseNumber(currPose);
                 const auto point3d = getPointVector4dByPointGlobalIndex(currPoint);
-                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation.matrix3x4() * point3d;
+                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation.inverse().matrix3x4() * point3d;
                 Eigen::Vector3d imageCoordinates = camera.getIntrinsicsMatrix3x3() * localCameraCoordinatesOfPoint;
                 double computedX = imageCoordinates[0] / imageCoordinates[2];
                 double computedY = imageCoordinates[1] / imageCoordinates[2];
-//                double width = 640;
-//                double height = 480;
-//                computedX = width - computedX;
-//                computedY = height - computedY;
-
                 double computedDepth = localCameraCoordinatesOfPoint[2];
 
-                const auto& keyPointInfo = keyPointInfoByPoseNumberAndPointNumber[currPose][currPoint];
+                const auto &keyPointInfo = keyPointInfoByPoseNumberAndPointNumber[currPose][currPoint];
 
                 minScale = std::min(minScale, keyPointInfo.getScale());
                 maxScale = std::max(maxScale, keyPointInfo.getScale());
@@ -224,15 +219,51 @@ namespace gdr {
         assert(errorsDepth.size() == errorsReprojectionY.size());
 
         int indexMedianOfMeasurements = errorsReprojectionX.size() / 2;
-        std::nth_element(errorsReprojectionX.begin(), errorsReprojectionX.begin() + indexMedianOfMeasurements, errorsReprojectionX.end());
-        std::nth_element(errorsReprojectionY.begin(), errorsReprojectionY.begin() + indexMedianOfMeasurements, errorsReprojectionY.end());
+
+        std::nth_element(errorsReprojectionX.begin(), errorsReprojectionX.begin() + indexMedianOfMeasurements,
+                         errorsReprojectionX.end());
+        std::nth_element(errorsReprojectionY.begin(), errorsReprojectionY.begin() + indexMedianOfMeasurements,
+                         errorsReprojectionY.end());
         std::nth_element(errorsDepth.begin(), errorsDepth.begin() + indexMedianOfMeasurements, errorsDepth.end());
 
         double medianErrorX = errorsReprojectionX[indexMedianOfMeasurements];
         double medianErrorY = errorsReprojectionY[indexMedianOfMeasurements];
         double medianErrorDepth = errorsDepth[indexMedianOfMeasurements];
 
-        std::cout << "medians (x, y, depth): " << medianErrorX << ", " << medianErrorY << ", " << medianErrorDepth << std::endl;
+
+        int indexQuantile90OfMeasurements = errorsReprojectionX.size() * 0.9;
+
+        std::nth_element(errorsReprojectionX.begin(), errorsReprojectionX.begin() + indexQuantile90OfMeasurements,
+                         errorsReprojectionX.end());
+        std::nth_element(errorsReprojectionY.begin(), errorsReprojectionY.begin() + indexQuantile90OfMeasurements,
+                         errorsReprojectionY.end());
+        std::nth_element(errorsDepth.begin(), errorsDepth.begin() + indexQuantile90OfMeasurements, errorsDepth.end());
+
+        double medianErrorXquant90 = errorsReprojectionX[indexQuantile90OfMeasurements];
+        double medianErrorYquant90 = errorsReprojectionY[indexQuantile90OfMeasurements];
+        double medianErrorDepthquant90 = errorsDepth[indexQuantile90OfMeasurements];
+
+        return {medianErrorX, medianErrorY, medianErrorDepth, medianErrorXquant90, medianErrorYquant90,
+                medianErrorDepthquant90};
+    }
+
+    // each unordered map maps from poseNumber to unordered map
+    // mapping from keyPointGlobalIndex to {errorPixelX, errorPixelY}
+    std::vector<Sophus::SE3d> BundleAdjuster::optimizePointsAndPosesUsingDepthInfo(int indexFixed) {
+
+
+        std::cout << "entered BA depth optimization" << std::endl;
+
+        std::vector<double> medians = getMedianErrorsXYDepth();
+
+        double medianErrorX = medians[0];
+        double medianErrorY = medians[1];
+        double medianErrorDepth = medians[2];
+
+        double quantile90ErrorX = medians[3];
+        double quantile90ErrorY = medians[4];
+        double quantile90ErrorDepth = medians[5];
+
         ceres::Problem problem;
         ceres::LocalParameterization *quaternionLocalParameterization =
                 new ceres::EigenQuaternionParameterization;
@@ -247,13 +278,13 @@ namespace gdr {
 
             assert(poseIndex < keyPointInfoByPoseNumberAndPointNumber.size());
 
-            for (const auto& indexAndKeyPointInfo: keyPointInfoByPoseNumberAndPointNumber[poseIndex]) {
+            for (const auto &indexAndKeyPointInfo: keyPointInfoByPoseNumberAndPointNumber[poseIndex]) {
                 int pointIndex = indexAndKeyPointInfo.first;
                 assert(pointIndex >= 0 && pointIndex < pointsXYZbyIndex.size());
 
                 auto &point = pointsXYZbyIndex[pointIndex];
 //                auto& observedKeyPoints = keyPointInfoByPoseNumberAndPointNumber[poseIndex];
-                const auto& keyPointInfo = indexAndKeyPointInfo.second;
+                const auto &keyPointInfo = indexAndKeyPointInfo.second;
 
                 assert(keyPointInfo.isInitialized());
                 double widthAssert = 640;
@@ -277,9 +308,9 @@ namespace gdr {
                                                            medianErrorX, medianErrorY, medianErrorDepth);
                 // no robustness at the moment
                 problem.AddResidualBlock(cost_function,
-                                         nullptr,
+//                                         nullptr,
 //                                         new ceres::CauchyLoss(0.5),
-//                                         new ceres::HuberLoss(3.0),
+                                         new ceres::HuberLoss(2.0),
                                          point.data(),
                                          pose.data(),
                                          orientation.data());
@@ -308,13 +339,33 @@ namespace gdr {
 
         std::cout << "BA usable" << std::endl;
 
+        std::vector<double> mediansAfter = getMedianErrorsXYDepth();
+
+        double medianErrorXafter = mediansAfter[0];
+        double medianErrorYafter = mediansAfter[1];
+        double medianErrorDepthAfter = mediansAfter[2];
+
+        double quantile90ErrorXafter = mediansAfter[3];
+        double quantile90ErrorYafter = mediansAfter[4];
+        double quantile90ErrorDepthAfter = mediansAfter[5];
+
+        std::cout << "=============================median errors information!============================" << std::endl;
+        std::cout << "medians BEFORE (x, y, depth), quantiles (x, y, depth): "
+                  << medianErrorX << ", " << medianErrorY << ", " << medianErrorDepth << ", "
+                  << quantile90ErrorX << ", " << quantile90ErrorY << ", " << quantile90ErrorDepth
+                  << std::endl;
+        std::cout << "medians AFTER (x, y, depth), quantiles (x, y, depth): "
+                  << medianErrorXafter << ", " << medianErrorYafter << ", " << medianErrorDepthAfter << ", "
+                  << quantile90ErrorXafter << ", " << quantile90ErrorYafter << ", " << quantile90ErrorDepthAfter
+                  << std::endl;
         std::vector<Sophus::SE3d> posesOptimized;
 
         assert(cameraModelByPoseNumber.size() == poseTxTyTzByPoseNumber.size());
         for (int i = 0; i < poseTxTyTzByPoseNumber.size(); ++i) {
             Eigen::Quaterniond orientation(orientationsqxyzwByPoseNumber[i].data());
-            const auto& poseTranslationCameraIntr = poseTxTyTzByPoseNumber[i];
-            std::vector<double> t = {poseTranslationCameraIntr[0], poseTranslationCameraIntr[1], poseTranslationCameraIntr[2]};
+            const auto &poseTranslationCameraIntr = poseTxTyTzByPoseNumber[i];
+            std::vector<double> t = {poseTranslationCameraIntr[0], poseTranslationCameraIntr[1],
+                                     poseTranslationCameraIntr[2]};
             Eigen::Vector3d translation(t.data());
 //            std::cout << "orientation " << orientation.norm() << std::endl;
             assert(std::abs(orientation.norm() - 1.0) < 1e-10);
@@ -322,8 +373,8 @@ namespace gdr {
             poseCurrent.setQuaternion(orientation);
             poseCurrent.translation() = translation;
             posesOptimized.push_back(poseCurrent);
-            const auto& camera = cameraModelByPoseNumber[i];
-            const auto& intr = poseFxCxFyCyScaleByPoseNumber[i];
+            const auto &camera = cameraModelByPoseNumber[i];
+            const auto &intr = poseFxCxFyCyScaleByPoseNumber[i];
             double eps = 30 * std::numeric_limits<double>::epsilon();
             double errorFx = std::abs(camera.fx - intr[cameraIntrStartIndex]);
             double errorCx = std::abs(camera.cx - intr[cameraIntrStartIndex + 1]);

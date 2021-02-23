@@ -75,11 +75,18 @@ void visualizeSimple() {
 
 TEST(testVisualizationGT, SmoothedPointCloudGroundTruthPosesNumber2) {
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_2_3/rgb",
-                                                 "../../data/plantDataset_2_3/depth",
-                                                 517.3,
-                                                 318.6, 516.5, 255.3);
-    correspondenceGraph.computeRelativePoses();
+    std::string pathToImageDirectoryRGB = "../../data/360_dataset_sampled/each5/rgb";
+    std::string pathToImageDirectoryD = "../../data/360_dataset_sampled/each5/depth";
+
+    auto imagesRgb = gdr::readRgbData(pathToImageDirectoryRGB);
+    auto imagesD = gdr::readRgbData(pathToImageDirectoryD);
+//    gdr::CorrespondenceGraph correspondenceGraph("../../data/360_dataset_sampled/each5/rgb",
+//                                                 "../../data/360_dataset_sampled/each5/depth",
+//                                                 517.3,318.6,
+//                                                 516.5, 255.3);
+    gdr::CameraRGBD camera(517.3, 318.6,
+                           516.5, 255.3);
+//    correspondenceGraph.computeRelativePoses();
 //    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
 //    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
 //    std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
@@ -87,32 +94,25 @@ TEST(testVisualizationGT, SmoothedPointCloudGroundTruthPosesNumber2) {
 //    std::vector<Sophus::SE3d> bundleAdjustedPoses = correspondenceGraph.performBundleAdjustmentUsingDepth();
 
 
-    std::string absolutePoses = "../../data/plantDataset_2_3/groundtruth_new.txt";
-    std::vector<gdr::poseInfo> poses = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
-    std::vector<gdr::VertexCG *> vertices;
+    std::string absolutePoses = "../../data/360_dataset_sampled/each5/groundtruth_new.txt";
+//    std::string absolutePoses = "../../data/360_dataset_sampled/each5/BA_19.txt";
+    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
+    std::vector<gdr::VertexCG> vertices;
+    std::vector<gdr::VertexCG*> verticesPointers;
 
-    assert(poses.size() == correspondenceGraph.verticesOfCorrespondence.size());
-    Sophus::SE3d pose0;
-    pose0.setQuaternion(poses[0].getOrientationQuat());
-    pose0.translation() = poses[0].getTranslation();
-    for (int i = 0; i < poses.size(); ++i) {
-        auto *vertex = &correspondenceGraph.verticesOfCorrespondence[i];
-        Sophus::SE3d poseI;
-        poseI.setQuaternion(poses[i].getOrientationQuat());
-        poseI.translation() = poses[i].getTranslation();
+    Sophus::SE3d poseZero = posesInfo[0].getSophusPose();
 
-        vertex->setRotationTranslation(poseI);
+    ASSERT_EQ(posesInfo.size(), imagesRgb.size());
+    ASSERT_EQ(posesInfo.size(), imagesD.size());
+    for (int i = 0; i < posesInfo.size(); ++i) {
+        vertices.push_back(gdr::VertexCG(i, camera, imagesRgb[i], imagesD[i], poseZero.inverse() * posesInfo[i].getSophusPose()));
+    }
 
-        std::cout << "pose " << i << " qx qy qz qw: " << vertex->getRotationQuat().coeffs().transpose() << " tx ty tz: "
-                  << vertex->getEigenMatrixAbsolutePose4d().topRightCorner<3, 1>().transpose() << std::endl;
-
-        auto se3 = vertex->getEigenMatrixAbsolutePose4d();
-        bool isId = (se3.inverse() * poseI.matrix()).isIdentity();
-        assert(isId);
-        vertices.push_back(vertex);
+    for (int i = 0; i < posesInfo.size(); ++i) {
+        verticesPointers.push_back(&vertices[i]);
     }
     gdr::SmoothPointCloud smoothCloud;
-    smoothCloud.registerPointCloudFromImage(vertices);
+    smoothCloud.registerPointCloudFromImage(verticesPointers);
 
 }
 
@@ -165,8 +165,8 @@ TEST(testVisualization, SmoothedPointCloud) {
 
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb",
                                                  "../../data/plantDataset_19_3/depth",
-                                                 517.3,
-                                                 318.6, 516.5, 255.3);
+                                                 517.3,318.6,
+                                                 516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
@@ -211,6 +211,64 @@ TEST(testVisualization, ShonanConverges) {
 }
 
 
+TEST(testVisualization, SmoothedPointCloud360OfficeEach2) {
+
+    std::set<int> sampledIndices;
+    for (int i = 0; i < 755; i += 2) {
+        sampledIndices.insert(i);
+    }
+    gdr::GTT::prepareDataset("/home/leoneed/Desktop/360dataset", "/home/leoneed/testGDR1/GDR/data/360_2", sampledIndices, "");
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/360_2/rgb",
+                                                 "../../data/360_2/depth",
+                                                 517.3,318.6,
+                                                 516.5, 255.3);
+    correspondenceGraph.computeRelativePoses();
+    bool isConnected = true;
+    correspondenceGraph.bfs(0, isConnected);
+    ASSERT_TRUE(isConnected);
+    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
+    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
+    std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
+    std::vector<Sophus::SE3d> bundleAdjustedPoses = correspondenceGraph.performBundleAdjustmentUsingDepth();
+    std::vector<gdr::VertexCG *> vertices;
+    for (auto &vertex: correspondenceGraph.verticesOfCorrespondence) {
+        vertices.push_back(&vertex);
+    }
+
+    std::string absolutePosesGT = "../../data/360_2/groundtruth_new.txt";
+    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesGT);
+    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/360_sampled/BA_378.txt";
+    std::ofstream computedPoses(outputName);
+
+    assert(posesInfo.size() == correspondenceGraph.verticesOfCorrespondence.size());
+    assert(!posesInfo.empty());
+    for (int i = 0; i < correspondenceGraph.verticesOfCorrespondence.size(); ++i) {
+        const auto& poseBA = bundleAdjustedPoses[i];
+        Sophus::SE3d movedPose = posesInfo[0].getSophusPose() * poseBA;
+        const auto to = movedPose.translation();
+        computedPoses.precision(std::numeric_limits<double>::max_digits10);
+        computedPoses << posesInfo[i].getTimestamp() << ' ';
+        for (int j = 0; j < 3; ++j) {
+            computedPoses << to[j] << ' ';
+        }
+        auto quatComputed = movedPose.unit_quaternion();
+
+        computedPoses << quatComputed.x() << ' ' << quatComputed.y() << ' ' << quatComputed.z() << ' '
+                      << quatComputed.w() << std::endl;
+    }
+
+    std::cout << "total Umeyama poses " << correspondenceGraph.totalMeausedRelativePoses << std::endl;
+    std::cout << " ICP refined poses " << correspondenceGraph.refinedPoses << " percentage:  "
+              << 1.0 * correspondenceGraph.refinedPoses / correspondenceGraph.totalMeausedRelativePoses << std::endl;
+
+    gdr::SmoothPointCloud smoothCloud;
+    smoothCloud.registerPointCloudFromImage(vertices);
+
+}
+
+
+
+
 TEST(testVisualization, SmoothedPointCloud360Office) {
 
     std::set<int> sampledIndices;
@@ -220,9 +278,12 @@ TEST(testVisualization, SmoothedPointCloud360Office) {
 //    gdr::GTT::prepareDataset("/home/leoneed/Desktop/360dataset", "/home/leoneed/testGDR1/GDR/data/360_dataset_sampled", sampledIndices, "each5");
     gdr::CorrespondenceGraph correspondenceGraph("../../data/360_dataset_sampled/each5/rgb",
                                                  "../../data/360_dataset_sampled/each5/depth",
-                                                 517.3,
-                                                 318.6, 516.5, 255.3);
+                                                 517.3,318.6,
+                                                 516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
+    bool isConnected = true;
+    correspondenceGraph.bfs(0, isConnected);
+    ASSERT_TRUE(isConnected);
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
     std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
@@ -234,19 +295,21 @@ TEST(testVisualization, SmoothedPointCloud360Office) {
 
     std::string absolutePosesGT = "../../data/360_dataset_sampled/each5/groundtruth_new.txt";
     std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePosesGT);
-    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/360_sampled/absolutePoses_150.txt";
+    std::string outputName = "/home/leoneed/Desktop/evaluate_ate_scale/360_sampled/BA_150.txt";
     std::ofstream computedPoses(outputName);
 
     assert(posesInfo.size() == correspondenceGraph.verticesOfCorrespondence.size());
     assert(!posesInfo.empty());
     for (int i = 0; i < correspondenceGraph.verticesOfCorrespondence.size(); ++i) {
-        const auto to = bundleAdjustedPoses[i].translation();
+        const auto& poseBA = bundleAdjustedPoses[i];
+        Sophus::SE3d movedPose = posesInfo[0].getSophusPose() * poseBA;
+        const auto to = movedPose.translation();
         computedPoses.precision(std::numeric_limits<double>::max_digits10);
         computedPoses << posesInfo[i].getTimestamp() << ' ';
         for (int j = 0; j < 3; ++j) {
             computedPoses << to[j] << ' ';
         }
-        auto quatComputed = bundleAdjustedPoses[i].unit_quaternion();
+        auto quatComputed = movedPose.unit_quaternion();
 
         computedPoses << quatComputed.x() << ' ' << quatComputed.y() << ' ' << quatComputed.z() << ' '
                       << quatComputed.w() << std::endl;

@@ -7,6 +7,8 @@
 #define GDR_POSEINFO_H
 
 #include <Eigen/Eigen>
+#include <sophus/se3.hpp>
+
 #include <iostream>
 
 namespace gdr {
@@ -29,6 +31,8 @@ namespace gdr {
         Eigen::Quaterniond getOrientationQuat() const;
 
         Eigen::Vector3d getTranslation() const;
+
+        Sophus::SE3d getSophusPose() const;
 
         double getTimestamp() const;
 

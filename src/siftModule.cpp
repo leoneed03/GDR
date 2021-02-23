@@ -26,6 +26,7 @@ namespace gdr {
         }
         matcher = std::make_unique<SiftMatchGPU>(SiftMatchGPU(maxSift));
 
+        std::cout << "matcher created by SiftModule Constructor" << std::endl;
         auto contextVerified = matcher->VerifyContextGL();
         if (contextVerified == 0) {
             std::cout << "_____________________________________________________matching context not verified"
@@ -46,9 +47,10 @@ namespace gdr {
         for (int i = 0; i < numOfDevicesForDetection.size(); ++i) {
             std::string siftGpuFarg = std::to_string(SIFTGPU_ARG_V);
             const auto &detector = detectorsSift[i];
+            //TODO: right args
             std::vector<std::string> siftGpuArgsStrings = {"-cuda", std::to_string(numOfDevicesForDetection[i]),
                                                            "-fo", "-1",
-                                                           "-v", siftGpuFarg};
+                                                           "-v", /*siftGpuFarg*/"1"};
             std::vector<char *> siftGpuArgs;
 
             for (auto &stringArg: siftGpuArgsStrings) {
@@ -103,6 +105,7 @@ namespace gdr {
                                                 std::mutex &output) {
 
         std::pair<std::string, int> pathToImageAndIndex;
+
         while (pathsToImagesAndImageIndices.try_pop(pathToImageAndIndex)) {
             const auto &pathToTheImage = pathToImageAndIndex.first;
             output.lock();
@@ -119,10 +122,50 @@ namespace gdr {
         }
     }
 
-    std::vector<std::vector<Match>> SiftModule::findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched) {
+    std::vector<tbb::concurrent_vector<Match>>
+    SiftModule::findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
+                                    const std::vector<int> &matchDevicesNumbers) {
 
-        std::vector<std::vector<Match>> matches(verticesToBeMatched.size());
+        std::vector<std::unique_ptr<SiftMatchGPU>> matchers;
 
+        std::cout << "create matchers" << std::endl;
+        for (int i = 0; i < matchDevicesNumbers.size(); ++i) {
+            matchers.push_back(std::make_unique<SiftMatchGPU>(maxSift));
+            auto contextVerified = matchers[i]->VerifyContextGL();
+            assert(contextVerified != 0);
+        }
+
+        std::vector<tbb::concurrent_vector<Match>> matches(verticesToBeMatched.size());
+        if (verticesToBeMatched.size() == 1 || verticesToBeMatched.empty()) {
+            return matches;
+        }
+
+        int numberPoseFromLess = 0;
+        int numberPoseToBigger = 1;
+        int numberPoses = verticesToBeMatched.size();
+        std::mutex counterMutex;
+
+        std::vector<std::thread> threads(matchDevicesNumbers.size());
+        for (int i = 0; i < threads.size(); ++i) {
+
+            threads[i] = std::thread(getNumbersOfMatchesOnePair,
+                                     std::ref(numberPoseFromLess), std::ref(numberPoseToBigger),
+                                     std::ref(verticesToBeMatched),
+                                     std::ref(counterMutex),
+                                     std::ref(matches),
+                                     matchers[i].get());
+        }
+
+        for (auto &thread: threads) {
+            thread.join();
+        }
+
+        for (int i = 0; i < matches.size(); ++i) {
+            std::cout << "matching from " << i << ": " << matches[i].size() << std::endl;
+            assert(matches[i].size() == (matches.size() - i) - 1);
+        }
+
+        /*
         for (int i = 0; i < verticesToBeMatched.size(); ++i) {
             for (int j = i + 1; j < verticesToBeMatched.size(); ++j) {
 
@@ -134,8 +177,53 @@ namespace gdr {
                 PRINT_PROGRESS("total matches " << matchingNumbers.size() << std::endl);
                 matches[i].push_back({j, matchingNumbers});
             }
-        }
+        }*/
         return matches;
-
     };
+
+    void SiftModule::getNumbersOfMatchesOnePair(int &indexFrom,
+                                                int &indexTo,
+                                                const std::vector<VertexCG> &verticesToBeMatched,
+                                                std::mutex &counterMutex,
+                                                std::vector<tbb::concurrent_vector<Match>> &matches,
+                                                SiftMatchGPU *matcher) {
+        while (true) {
+            int localIndexFrom = -1;
+            int localIndexTo = -1;
+
+            counterMutex.lock();
+
+            std::cout << indexFrom << " -[matching]-> " << indexTo << " of " << matches.size() << std::endl;
+            assert(indexFrom < indexTo);
+
+            if (indexTo >= matches.size()) {
+                ++indexFrom;
+                indexTo = indexFrom + 1;
+            }
+            if (indexFrom >= matches.size() || indexTo >= matches.size()) {
+                counterMutex.unlock();
+                return;
+            }
+            assert(indexFrom < indexTo);
+            std::cout << "local indices are: " << indexFrom << " -[matching]-> " << indexTo << " of " << matches.size() << "                " << matcher << std::endl;
+
+
+
+            localIndexFrom = indexFrom;
+            localIndexTo = indexTo;
+
+            ++indexTo;
+            counterMutex.unlock();
+
+            std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
+                    std::make_pair(verticesToBeMatched[localIndexFrom].keypoints,
+                                   verticesToBeMatched[localIndexFrom].descriptors),
+                    std::make_pair(verticesToBeMatched[localIndexTo].keypoints,
+                                   verticesToBeMatched[localIndexTo].descriptors),
+                    matcher);
+            PRINT_PROGRESS("total matches " << matchingNumbers.size() << std::endl);
+            matches[localIndexFrom].push_back({localIndexTo, matchingNumbers});
+
+        }
+    }
 }
