@@ -278,7 +278,7 @@ TEST(testVisualization, SmoothedPointCloud360Office) {
 //    gdr::GTT::prepareDataset("/home/leoneed/Desktop/360dataset", "/home/leoneed/testGDR1/GDR/data/360_dataset_sampled", sampledIndices, "each5");
     gdr::CorrespondenceGraph correspondenceGraph("../../data/360_dataset_sampled/each5/rgb",
                                                  "../../data/360_dataset_sampled/each5/depth",
-                                                 517.3,318.6,
+                                                 517.3, 318.6,
                                                  516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
     bool isConnected = true;

@@ -18,6 +18,7 @@
 #include <opencv2/opencv.hpp>
 #include <tbb/parallel_for.h>
 #include <translationAveraging.h>
+#include <mutex>
 
 namespace gdr {
 
