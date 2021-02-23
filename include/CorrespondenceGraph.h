@@ -84,9 +84,9 @@ namespace gdr {
         Eigen::Matrix4d
         getTransformationRtMatrixTwoImages(int vertexFromDestOrigin, int vertexInListToBeTransformedCanBeComputed,
                                            bool &success,
-                                           bool useProjection = false,
+                                           bool useProjection = false, //TODO: every time should decide which error to use
                                            double inlierCoeff = 0.6,
-                                           double maxProjectionErrorPixels = 1.0);
+                                           double maxProjectionErrorPixels = 2.0);
 
         void printConnectionsRelative(std::ostream &os, int space = 10);
 

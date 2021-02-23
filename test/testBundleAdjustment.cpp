@@ -520,7 +520,7 @@ TEST(testBundleAdjustment, posesBundleAdjustmentUsingDepthBetterThanIRLS_iterati
 
 TEST(testBundleAdjustment, posesBundleAdjustmentUsingDepthBetterThanIRLS_largeNoLoop) {
     std::set<int> sampledIndices;
-    for (int i = 0; i < 3356 / 2; i += 10) {
+    for (int i = 50; i < 3356 / 3; i += 5) {
         sampledIndices.insert(i);
     }
 
@@ -532,6 +532,7 @@ TEST(testBundleAdjustment, posesBundleAdjustmentUsingDepthBetterThanIRLS_largeNo
                                                  520.9, 325.1,
                                                  521.0, 249.7);
     correspondenceGraph.computeRelativePoses();
+    correspondenceGraph.printConnectionsRelative(std::cout);
     bool isConnected = true;
     correspondenceGraph.bfs(0, isConnected);
     ASSERT_TRUE(isConnected);

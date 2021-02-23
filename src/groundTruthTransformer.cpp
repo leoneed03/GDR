@@ -128,7 +128,7 @@ namespace gdr {
         std::vector<std::string> rgbData = readRgbData(pathToRGB);
         std::vector<std::string> dData = readRgbData(pathToD);
 
-        assert(rgbData.size() == dData.size());
+        assert(!indices.empty() || rgbData.size() == dData.size());
         assert(!rgbData.empty());
 
         std::vector<std::string> onlyTakenRGB;

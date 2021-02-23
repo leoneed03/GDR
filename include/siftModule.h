@@ -10,6 +10,7 @@
 #include <memory>
 #include <tbb/concurrent_queue.h>
 #include <tbb/concurrent_vector.h>
+#include <mutex>
 
 #include "VertexCG.h"
 #include "SiftGPU.h"
