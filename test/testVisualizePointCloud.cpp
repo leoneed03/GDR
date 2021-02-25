@@ -401,11 +401,9 @@ void draw_test() {
     boost::write_graphviz(outf, g);
 }
 
-#include <cuda/runtime>
 TEST(testVisualizationA, __SmoothedPointCloud360OfficeSmallEach5_boost_bfs) {
 
-    cudaRuntimeGetVersion();
-    /*
+
     std::string datasetFolder = "360_3_poses";
 //    gdr::GTT::prepareDataset("/home/leoneed/Desktop/360dataset", "/home/leoneed/testGDR1/GDR/data/" + datasetFolder,
 //                             sampledIndices, "");
@@ -415,7 +413,7 @@ TEST(testVisualizationA, __SmoothedPointCloud360OfficeSmallEach5_boost_bfs) {
                                                  516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
     correspondenceGraph.bfsDrawToFile("../../tools/data/temp/360degreePoses15.gv");
-*/
+
 }
 
 
