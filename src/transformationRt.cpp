@@ -34,8 +34,8 @@ namespace gdr {
     }
 
     Eigen::Vector3d transformationRtMatrix::getRelativeTranslation() const {
-//        return relativePoseSE3d.translation();
-        return innerTranformationRtMatrix.block<3,1>(0,3);
+        return relativePoseSE3d.translation();
+//        return innerTranformationRtMatrix.block<3, 1>(0, 3);
     }
 
     void transformationRtMatrix::setRotation(const Eigen::Quaterniond &newRelativeRotation) {
@@ -43,5 +43,17 @@ namespace gdr {
         R = newRelativeRotation.normalized().toRotationMatrix();
         int dim = 3;
         innerTranformationRtMatrix.block(0, 0, dim, dim) = R;
+    }
+
+    transformationRtMatrix::transformationRtMatrix(const Sophus::SE3d &newRelativePose,
+                                                   const VertexCG &newVertexFrom,
+                                                   const VertexCG &newVertexTo) : vertexFrom(newVertexFrom),
+                                                                                  vertexTo(newVertexTo) {
+        relativePoseSE3d = newRelativePose;
+        innerTranformationRtMatrix = newRelativePose.matrix();
+        auto dim = innerTranformationRtMatrix.cols() - 1;
+        R = innerTranformationRtMatrix.block(0, 0, dim, dim);
+        t = innerTranformationRtMatrix.block(0, dim, dim, 1);
+
     }
 }

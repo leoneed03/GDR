@@ -59,14 +59,17 @@ namespace gdr {
 
                 if (currentKeypointDepth != 0) {
 
-                    points.push_back({globalX, globalY, globalZ, rgbInfo[0], rgbInfo[1], rgbInfo[2]});
+                    points.push_back({globalX, globalY, globalZ, rgbInfo[2], rgbInfo[1], rgbInfo[0]});
                 }
             }
         }
         return points;
     }
 
-    void SmoothPointCloud::registerPointCloudFromImage(const std::vector<VertexCG *> &posesToBeRegistered) {
+    void SmoothPointCloud::registerPointCloudFromImage(const std::vector<VertexCG *> &posesToBeRegistered,
+                                                       double voxelSizeX,
+                                                       double voxelSizeY,
+                                                       double voxelSixeZ) {
 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -95,7 +98,7 @@ namespace gdr {
                 // Filtering input scan to roughly 10% of original size to increase speed of registration.
                 pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
                 pcl::ApproximateVoxelGrid<pcl::PointXYZRGB> approximate_voxel_filter;
-                approximate_voxel_filter.setLeafSize(0.01, 0.01, 0.01);
+                approximate_voxel_filter.setLeafSize(voxelSizeX, voxelSizeY, voxelSixeZ);
                 approximate_voxel_filter.setInputCloud(input_cloud);
                 approximate_voxel_filter.filter(*filtered_cloud);
                 std::cout << "                  Filtered cloud contains " << filtered_cloud->size()

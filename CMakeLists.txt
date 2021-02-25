@@ -26,7 +26,7 @@ find_package(Ceres REQUIRED)
 
 find_package(
   Boost
-  COMPONENTS program_options timer filesystem serialization
+  COMPONENTS program_options timer filesystem serialization graph
   REQUIRED)
 
 set(local_custom_Pangolin_INSTALL_DIR _installed_Pangolin)

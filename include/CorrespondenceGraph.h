@@ -8,6 +8,7 @@
 
 #include <queue>
 #include <atomic>
+#include <tbb/concurrent_unordered_map.h>
 
 #include "CloudProjector.h"
 #include "VertexCG.h"
@@ -36,6 +37,9 @@ namespace gdr {
         int numIterations = 100;
         std::vector<std::vector<Match>> matches;
         std::vector<std::vector<transformationRtMatrix>> transformationRtMatrices;
+        tbb::concurrent_vector<tbb::concurrent_vector<int>> pairsWhereGotBetterResults;
+        tbb::concurrent_vector<tbb::concurrent_unordered_map<int, transformationRtMatrix>> transformationMatricesLoRansac;
+        tbb::concurrent_vector<tbb::concurrent_unordered_map<int, transformationRtMatrix>> transformationMatricesICP;
         double neighbourhoodRadius = 0.05;
         int minNumberOfMatches = 15;
         const std::string redCode = "\033[0;31m";
@@ -58,9 +62,10 @@ namespace gdr {
                                        int vertexInList,
                                        double inlierCoeff,
                                        Eigen::Matrix4d &transformation,
-                                       bool isICP);
+                                       bool useProjection);
 
-        CorrespondenceGraph(const std::string &pathToImageDirectoryRGB, const std::string &pathToImageDirectoryD,
+        CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
+                            const std::string &pathToImageDirectoryD,
                             float fx, float cx,
                             float fy, float cy,
                             int numOfThreadsCpu = 4);
@@ -84,7 +89,7 @@ namespace gdr {
         Eigen::Matrix4d
         getTransformationRtMatrixTwoImages(int vertexFromDestOrigin, int vertexInListToBeTransformedCanBeComputed,
                                            bool &success,
-                                           bool useProjection = false, //TODO: every time should decide which error to use
+                                           bool useProjection = true, //TODO: every time should decide which error to use
                                            double inlierCoeff = 0.6,
                                            double maxProjectionErrorPixels = 2.0);
 
@@ -99,7 +104,12 @@ namespace gdr {
 
         int printRelativePosesFile(const std::string &outPutFileRelativePoses);
 
-        std::vector<int> bfs(int currentVertex, bool& isConnected);
+        std::vector<int> bfs(int currentVertex,
+                             bool& isConnected,
+                             std::vector<std::vector<int>>& connectivityComponents);
+
+        // returns vectors -- each vector represents one connectivity component
+        std::vector<std::vector<int>> bfsDrawToFile(const std::string& outFile) const;
 
         int computeRelativePoses();
 

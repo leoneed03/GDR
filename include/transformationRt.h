@@ -29,6 +29,10 @@ namespace gdr {
                                const VertexCG &newVertexFrom,
                                const VertexCG &newVertexTo);
 
+        transformationRtMatrix(const Sophus::SE3d &newRelativePose,
+                               const VertexCG &newVertexFrom,
+                               const VertexCG &newVertexTo);
+
         int getIndexTo() const;
 
         int getIndexFrom() const;

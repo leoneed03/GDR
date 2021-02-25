@@ -20,6 +20,14 @@
 #include <translationAveraging.h>
 #include <mutex>
 
+#include <boost/graph/graphviz.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/breadth_first_search.hpp>
+#include <boost/pending/indirect_cmp.hpp>
+#include <boost/range/irange.hpp>
+
+#include <boost/graph/connected_components.hpp>
+
 namespace gdr {
 
 
@@ -36,12 +44,13 @@ namespace gdr {
         return 0;
     }
 
+    // TODO: calculate inliers using projection error
     std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
     CorrespondenceGraph::findInlierPointCorrespondences(int vertexFrom,
                                                         int vertexInList,
                                                         double maxErrorL2,
                                                         Eigen::Matrix4d &transformation,
-                                                        bool isICP) {
+                                                        bool useProjectionError) {
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
         const auto &match = matches[vertexFrom][vertexInList];
         int minSize = match.matchNumbers.size();
@@ -121,6 +130,9 @@ namespace gdr {
         std::mutex output;
         tbb::concurrent_vector<tbb::concurrent_vector<transformationRtMatrix>> transformationMatricesConcurrent(
                 verticesOfCorrespondence.size());
+        transformationMatricesICP.resize(verticesOfCorrespondence.size());
+        transformationMatricesLoRansac.resize(verticesOfCorrespondence.size());
+
         int matchFromIndex = 0;
         std::mutex indexFromMutex;
         tbb::parallel_for(0, static_cast<int>(matches.size()),
@@ -317,6 +329,17 @@ namespace gdr {
 
         // look for inliers after umeyama
         Sophus::SE3d RtbeforeRefinement = Sophus::SE3d::fitToSE3(cR_t_umeyama);
+        transformationMatricesLoRansac[vertexFromDestOrigin].insert(std::make_pair(vertexToBeTransformed,
+                                                                                   transformationRtMatrix(
+                                                                                           RtbeforeRefinement,
+                                                                                           verticesOfCorrespondence[vertexFromDestOrigin],
+                                                                                           verticesOfCorrespondence[vertexToBeTransformed])));
+        transformationMatricesLoRansac[vertexToBeTransformed].insert(std::make_pair(vertexFromDestOrigin,
+                                                                                    transformationRtMatrix(
+                                                                                            RtbeforeRefinement.inverse(),
+                                                                                            verticesOfCorrespondence[vertexToBeTransformed],
+                                                                                            verticesOfCorrespondence[vertexFromDestOrigin])));
+
         auto inlierMatchesCorrespondingKeypointsLoRansac = findInlierPointCorrespondences(vertexFromDestOrigin,
                                                                                           vertexInListToBeTransformedCanBeComputed,
                                                                                           neighbourhoodRadius,
@@ -326,6 +349,17 @@ namespace gdr {
         bool successRefine = true;
         refineRelativePose(verticesOfCorrespondence[vertexToBeTransformed],
                            verticesOfCorrespondence[vertexFromDestOrigin], cR_t_umeyama, successRefine);
+
+        Sophus::SE3d RtafterRefinement = Sophus::SE3d::fitToSE3(cR_t_umeyama);
+        transformationMatricesICP[vertexFromDestOrigin].insert(std::make_pair(vertexToBeTransformed,
+                                                                              transformationRtMatrix(RtafterRefinement,
+                                                                                                     verticesOfCorrespondence[vertexFromDestOrigin],
+                                                                                                     verticesOfCorrespondence[vertexToBeTransformed])));
+        transformationMatricesICP[vertexToBeTransformed].insert(std::make_pair(vertexFromDestOrigin,
+                                                                               transformationRtMatrix(
+                                                                                       RtafterRefinement.inverse(),
+                                                                                       verticesOfCorrespondence[vertexToBeTransformed],
+                                                                                       verticesOfCorrespondence[vertexFromDestOrigin])));
 
 
         auto inlierMatchesCorrespondingKeypointsAfterRefinement = findInlierPointCorrespondences(vertexFromDestOrigin,
@@ -370,6 +404,8 @@ namespace gdr {
             // ICP did refine the relative pose -- return ICP inliers TODO
             std::cout << "REFINED________________________________________________" << std::endl;
             ++refinedPoses;
+            pairsWhereGotBetterResults[vertexFromDestOrigin].push_back(vertexToBeTransformed);
+            pairsWhereGotBetterResults[vertexToBeTransformed].push_back(vertexFromDestOrigin);
 //            std::swap(inlierMatchesCorrespondingKeypointsAfterRefinement, inlierMatchesCorrespondingKeypointsLoRansac);
         }
 
@@ -554,6 +590,9 @@ namespace gdr {
         PRINT_PROGRESS("images rgb vs d: " << imagesRgb.size() << " vs " << imagesD.size());
         assert(imagesRgb.size() == imagesD.size());
 
+        int numberOfPoses = std::min(imagesRgb.size(), imagesD.size());
+        pairsWhereGotBetterResults.resize(numberOfPoses);
+
         transformationRtMatrices = std::vector<std::vector<transformationRtMatrix>>(imagesD.size());
 
         PRINT_PROGRESS("Totally read " << imagesRgb.size());
@@ -595,7 +634,9 @@ namespace gdr {
 
     }
 
-    std::vector<int> CorrespondenceGraph::bfs(int currentVertex, bool &isConnected) {
+    std::vector<int> CorrespondenceGraph::bfs(int currentVertex,
+                                              bool &isConnected,
+                                              std::vector<std::vector<int>> &connectivityComponents) {
         std::vector<bool> visited(verticesOfCorrespondence.size(), false);
         std::vector<int> preds(verticesOfCorrespondence.size(), -1);
         std::queue<int> queueVertices;
@@ -872,5 +913,51 @@ namespace gdr {
         // visualize point correspondences:
 //        cloudProjector.showPointsProjection(bundleAdjuster.getPointsGlobalCoordinatesOptimized());
         return posesOptimized;
+    }
+
+    class V {
+    };
+
+    class C {
+    };
+
+    std::vector<std::vector<int>> CorrespondenceGraph::bfsDrawToFile(const std::string &outFile) const {
+     
+        typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, V, C> PoseGraphForBfs;
+        typedef boost::graph_traits<PoseGraphForBfs>::vertex_descriptor VertexDescriptorForBfs;
+        PoseGraphForBfs poseGraphForBfs;
+        std::vector<VertexDescriptorForBfs> verticesBoost;
+
+        for (const auto &pose: verticesOfCorrespondence) {
+            verticesBoost.push_back(boost::add_vertex(poseGraphForBfs));
+        }
+
+        for (int i = 0; i < transformationRtMatrices.size(); ++i) {
+            for (const auto &edge: transformationRtMatrices[i]) {
+                assert(i == edge.getIndexFrom());
+
+                if (edge.getIndexFrom() > edge.getIndexTo()) {
+                    continue;
+                }
+                boost::add_edge(verticesBoost[edge.getIndexFrom()], verticesBoost[edge.getIndexTo()], poseGraphForBfs);
+            }
+        }
+
+        std::vector<int> component(boost::num_vertices(poseGraphForBfs));
+        size_t num_components = boost::connected_components(poseGraphForBfs, component.data());
+
+        std::vector<std::vector<int>> components(num_components);
+        
+        for (int i = 0; i < component.size(); ++i) {
+            components[component[i]].push_back(i);
+        }
+
+
+        if (!outFile.empty()) {
+            std::ofstream outf(outFile);
+            boost::write_graphviz(outf, poseGraphForBfs);
+        }
+        
+        return components;
     }
 }

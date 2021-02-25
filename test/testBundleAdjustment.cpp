@@ -533,8 +533,10 @@ TEST(testBundleAdjustment, posesBundleAdjustmentUsingDepthBetterThanIRLS_largeNo
                                                  521.0, 249.7);
     correspondenceGraph.computeRelativePoses();
     correspondenceGraph.printConnectionsRelative(std::cout);
+
+    std::vector<std::vector<int>> components;
     bool isConnected = true;
-    correspondenceGraph.bfs(0, isConnected);
+    correspondenceGraph.bfs(0, isConnected, components);
     ASSERT_TRUE(isConnected);
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();

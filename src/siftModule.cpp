@@ -221,7 +221,7 @@ namespace gdr {
                     std::make_pair(verticesToBeMatched[localIndexTo].keypoints,
                                    verticesToBeMatched[localIndexTo].descriptors),
                     matcher);
-            PRINT_PROGRESS("total matches " << matchingNumbers.size() << std::endl);
+            std::cout << "matched keypoint pairs " << matchingNumbers.size() << std::endl;
             matches[localIndexFrom].push_back({localIndexTo, matchingNumbers});
 
         }
