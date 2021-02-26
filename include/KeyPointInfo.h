@@ -16,6 +16,7 @@ namespace gdr {
         double x, y, scale, orientation;
         double depth;
         int observingPoseNumber;
+        int initialObservingPoseNumber;
 
         double defValue = -1;
         double epsilonD = 1e-10;
@@ -26,8 +27,10 @@ namespace gdr {
         KeyPointInfo(const SiftGPU::SiftKeypoint &newKeypoint, double newDepth, int newObservingPoseNumber);
 
 
-        KeyPointInfo(const KeyPointInfo &newKeypoint);
+//        KeyPointInfo(const KeyPointInfo &newKeypoint);
 
+        int getInitObservingnumber() const;
+        void setObservingPoseNumber(int newObservingPoseNumber);
 
         double getDefValue() const;
 
@@ -45,7 +48,7 @@ namespace gdr {
 
         bool isInitialized() const;
 
-        KeyPointInfo &operator=(const KeyPointInfo &right);
+//        KeyPointInfo &operator=(const KeyPointInfo &right);
 
         bool operator==(const KeyPointInfo &right);
 

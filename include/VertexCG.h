@@ -30,6 +30,7 @@ namespace gdr {
 
         CameraRGBD cameraRgbd;
         int index;
+        int initialIndex;
         Eigen::Matrix4d absoluteRotationTranslation;
         Sophus::SE3d absolutePose;
         std::vector<SiftGPU::SiftKeypoint> keypoints;
@@ -37,11 +38,13 @@ namespace gdr {
         std::vector<double> depths;
         std::string pathToRGBimage;
         std::string pathToDimage;
-        int heightMirrorParameter = 480;
-        int widthMirrorParameter = 640;
+//        int heightMirrorParameter = 480;
+//        int widthMirrorParameter = 640;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        void setIndex(int newIndex);
 
         void setRotation(const Eigen::Matrix3d &rotation);
 

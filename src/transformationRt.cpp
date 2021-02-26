@@ -56,4 +56,8 @@ namespace gdr {
         t = innerTranformationRtMatrix.block(0, dim, dim, 1);
 
     }
+
+    const Sophus::SE3d &transformationRtMatrix::getRelativePoseSE3() const {
+        return relativePoseSE3d;
+    }
 }

@@ -29,6 +29,7 @@
 #include <tbb/parallel_for.h>
 #include "ThreadPool.h"
 
+/*
 void f(SiftGPU *sift, std::string s) {
     sift->RunSIFT(s.data());
 }
@@ -160,6 +161,7 @@ TEST(testBundleAdjustment, concurrentSiftDetector) {
 //    std::cout << " " << std::endl;
 
 }
+*/
 
 TEST(testBundleAdjustment, justIRLS) {
 
@@ -168,6 +170,12 @@ TEST(testBundleAdjustment, justIRLS) {
                                                  517.3, 318.6,
                                                  516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
+    for (int i = 0; i < correspondenceGraph.verticesOfCorrespondence.size(); ++i) {
+        std::cout << "                    #POSE: " << std::setw(3) << i << " " << correspondenceGraph.verticesOfCorrespondence[i].getPathRGBImage() << std::endl;
+    }
+    correspondenceGraph.bfsDrawToFile("../../tools/data/temp/poseGraph_19_projection_Error.dot");
+
+    correspondenceGraph.printConnectionsRelative(std::cout);
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
     std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
     std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
@@ -287,9 +295,10 @@ TEST(testBundleAdjustment, allPosesAreOptimizedBundleAdjustmentUsingDepth_iterat
     for (int iterations = 0; iterations < 1; ++iterations) {
         gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb",
                                                      "../../data/plantDataset_19_3/depth",
-                                                     517.3,
-                                                     318.6, 516.5, 255.3);
+                                                     517.3,318.6,
+                                                     516.5, 255.3);
         correspondenceGraph.computeRelativePoses();
+        correspondenceGraph.printConnectionsRelative(std::cout);
         std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
         std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
         std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();

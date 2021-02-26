@@ -15,6 +15,7 @@ namespace gdr {
                        const std::vector<double> &newDepths,
                        const std::string &newPathRGB,
                        const std::string &newPathD) : index(newIndex),
+                                                      initialIndex(newIndex),
                                                       cameraRgbd(newCameraRgbd),
                                                       keypoints(newKeypoints),
                                                       descriptors(newDescriptors),
@@ -30,9 +31,10 @@ namespace gdr {
                        const std::string &newPathRGB,
                        const std::string &newPathD,
                        const Sophus::SE3d &newAbsolutePose) : index(newIndex),
-                                                      cameraRgbd(newCameraRgbd),
-                                                      pathToRGBimage(newPathRGB),
-                                                      pathToDimage(newPathD) {
+                                                              initialIndex(newIndex),
+                                                              cameraRgbd(newCameraRgbd),
+                                                              pathToRGBimage(newPathRGB),
+                                                              pathToDimage(newPathD) {
         absoluteRotationTranslation = newAbsolutePose.matrix();
         absolutePose = newAbsolutePose;
     }
@@ -104,6 +106,7 @@ namespace gdr {
                        const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
                        const std::string &newPathRGB,
                        const std::string &newPathD) : index(newIndex),
+                                                      initialIndex(newIndex),
                                                       cameraRgbd(newCameraRgbd),
                                                       keypoints(keyPointsDepthDescriptor.getKeyPointsKnownDepth()),
                                                       descriptors(keyPointsDepthDescriptor.getDescriptorsKnownDepth()),
@@ -112,5 +115,9 @@ namespace gdr {
                                                       pathToDimage(newPathD) {
         absoluteRotationTranslation.setIdentity();
 
+    }
+
+    void VertexCG::setIndex(int newIndex) {
+        index = newIndex;
     }
 }

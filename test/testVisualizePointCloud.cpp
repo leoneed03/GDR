@@ -389,6 +389,8 @@ void draw_test() {
     add_edge(a, d, g);
     add_edge(f1, f2, g);
 
+    std::ofstream outf("../../tools/data/temp/min.dot");
+    boost::write_graphviz(outf, g);
 
     std::vector<int> component(boost::num_vertices(g));
     size_t num_components = boost::connected_components(g, component.data());
@@ -397,12 +399,13 @@ void draw_test() {
         std::cout << " vertex " << i << ": component " << component[i] << std::endl;
     }
 
-    std::ofstream outf("../../tools/data/temp/min.gv");
-    boost::write_graphviz(outf, g);
+}
+
+TEST(testGraphVisualization, gv) {
+    draw_test();
 }
 
 TEST(testVisualizationA, __SmoothedPointCloud360OfficeSmallEach5_boost_bfs) {
-
 
     std::string datasetFolder = "360_3_poses";
 //    gdr::GTT::prepareDataset("/home/leoneed/Desktop/360dataset", "/home/leoneed/testGDR1/GDR/data/" + datasetFolder,
@@ -579,7 +582,7 @@ TEST(testVisualization, SmoothedPointCloud360OfficeSmallEach5_poses_15) {
     std::cout << "refined truly " << refinedTruly << " of " << refinedTotallyCG << " = "
               << 1.0 * refinedTruly / refinedTotallyCG << std::endl;
     ASSERT_EQ(refinedTruly + refinedWithError, refinedTotallyCG);
-//
+
 //    gdr::SmoothPointCloud smoothCloud;
 //    smoothCloud.registerPointCloudFromImage(vertices);
 

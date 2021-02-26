@@ -10,15 +10,15 @@
 #include <cmath>
 
 namespace gdr {
-    KeyPointInfo::KeyPointInfo(const SiftKeypoint &newKeypoint, double newDepth, int newObservingPoseNumber) : x(
-            newKeypoint.x),
-                                                                                                               y(newKeypoint.y),
-                                                                                                               scale(newKeypoint.s),
-                                                                                                               orientation(
-                                                                                                                       newKeypoint.o),
-                                                                                                               depth(newDepth),
-                                                                                                               observingPoseNumber(
-                                                                                                                       newObservingPoseNumber) {}
+    KeyPointInfo::KeyPointInfo(const SiftKeypoint &newKeypoint,
+                               double newDepth,
+                               int newObservingPoseNumber) : x(newKeypoint.x),
+                                                             y(newKeypoint.y),
+                                                             scale(newKeypoint.s),
+                                                             orientation(newKeypoint.o),
+                                                             depth(newDepth),
+                                                             observingPoseNumber(newObservingPoseNumber),
+                                                             initialObservingPoseNumber(newObservingPoseNumber) {}
 
 
     double KeyPointInfo::getX() const {
@@ -44,34 +44,35 @@ namespace gdr {
     int KeyPointInfo::getObservingPoseNumber() const {
         return observingPoseNumber;
     }
-
-    KeyPointInfo::KeyPointInfo(const KeyPointInfo &newKeypoint) : x(newKeypoint.getX()),
-                                                                  y(newKeypoint.getY()),
-                                                                  scale(newKeypoint.getScale()),
-                                                                  orientation(newKeypoint.getOrientation()),
-                                                                  depth(newKeypoint.getDepth()),
-                                                                  observingPoseNumber(
-                                                                          newKeypoint.getObservingPoseNumber()) {}
-
-    KeyPointInfo &KeyPointInfo::operator=(const KeyPointInfo &newKeypoint) {
-
-        std::cout << "DEBUG = " << std::endl;
-        if (this == &newKeypoint) {
-            return *this;
-        }
-
-        x = newKeypoint.getX();
-        y = newKeypoint.getY();
-        scale = newKeypoint.getScale();
-        orientation = newKeypoint.getOrientation();
-        depth = newKeypoint.getDepth();
-        observingPoseNumber = newKeypoint.getObservingPoseNumber();
-
-        return *this;
-    }
+//
+//    KeyPointInfo::KeyPointInfo(const KeyPointInfo &newKeypoint) :
+//            x(newKeypoint.getX()),
+//            y(newKeypoint.getY()),
+//            scale(newKeypoint.getScale()),
+//            orientation(newKeypoint.getOrientation()),
+//            depth(newKeypoint.getDepth()),
+//            observingPoseNumber(newKeypoint.getObservingPoseNumber()),
+//            initialObservingPoseNumber(newKeypoint.getObservingPoseNumber()) {}
+//
+//    KeyPointInfo &KeyPointInfo::operator=(const KeyPointInfo &newKeypoint) {
+//
+//        std::cout << "DEBUG = " << std::endl;
+//        if (this == &newKeypoint) {
+//            return *this;
+//        }
+//
+//        x = newKeypoint.getX();
+//        y = newKeypoint.getY();
+//        scale = newKeypoint.getScale();
+//        orientation = newKeypoint.getOrientation();
+//        depth = newKeypoint.getDepth();
+//        observingPoseNumber = newKeypoint.getObservingPoseNumber();
+//
+//        return *this;
+//    }
 
     bool KeyPointInfo::operator==(const KeyPointInfo &right) {
-        
+
         if (std::abs(x - right.getX()) > epsilonD
             || std::abs(y - right.getY()) > epsilonD
             || std::abs(scale - right.getScale()) > epsilonD
@@ -91,6 +92,7 @@ namespace gdr {
         orientation = getDefValue();
         depth = getDefValue();
         observingPoseNumber = getDefValue();
+        initialObservingPoseNumber = observingPoseNumber;
     }
 
     double KeyPointInfo::getDefValue() const {
@@ -107,5 +109,13 @@ namespace gdr {
         } else {
             return true;
         }
+    }
+
+    void KeyPointInfo::setObservingPoseNumber(int newObservingPoseNumber) {
+        observingPoseNumber = newObservingPoseNumber;
+    }
+
+    int KeyPointInfo::getInitObservingnumber() const {
+        return initialObservingPoseNumber;
     }
 }

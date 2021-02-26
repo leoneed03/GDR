@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.10.0)
 
-project(GDR)
+project(GDR LANGUAGES CUDA CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(GCC_COVERAGE_COMPILE_FLAGS " -Os")
+set(GCC_COVERAGE_COMPILE_FLAGS " -O3")
 
 #set(GCC_COVERAGE_COMPILE_FLAGS " -march=native")
 
@@ -19,6 +19,8 @@ find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
+
+message("CUDA include directory ${CUDA_INCLUDE_DIRS} " )
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 
@@ -127,11 +129,12 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
     ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp
     ${PROJECT_SOURCE_DIR}/src/ThreadPool.cpp
-    src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h src/BundleAduster.cpp include/BundleAduster.h src/SmoothPointCloud.cpp include/SmoothPointCloud.h src/KeyPointsDepthDescriptor.cpp include/KeyPointsDepthDescriptor.h include/ThreadPool.h)
+    src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h src/BundleAduster.cpp include/BundleAduster.h src/SmoothPointCloud.cpp include/SmoothPointCloud.h src/KeyPointsDepthDescriptor.cpp include/KeyPointsDepthDescriptor.h include/ThreadPool.h src/ConnectedComponent.cpp include/ConnectedComponent.h src/RelativePoseSE3.cpp include/RelativePoseSE3.h)
 
 add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
 
 add_dependencies(readerVisionTumICP icpCuda)
+
 target_link_libraries(readerVisionTumICP
     ${ICPCUDA_LIBS}
     ${Pangolin_LIBRARIES}
@@ -142,7 +145,8 @@ target_include_directories(
     ${EIGEN3_INCLUDE_DIRS}
     ${Sophus_INCLUDE_DIRS}
     ${ICPCUDA_INCLUDE_DIRS}
-    ${Pangolin_INCLUDE_DIRS})
+    ${Pangolin_INCLUDE_DIRS}
+    ${CUDA_INCLUDE_DIRS})
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
@@ -165,9 +169,8 @@ target_link_libraries(
   ${TBB_LIBRARIES}
   ${ICPCUDA_LIBS}
   ${Pangolin_LIBRARIES}
-  ${CUDA_LIBRARIES}
     ${CERES_LIBRARIES}
-    ${PCL_LIBRARY_DIRS}
+#    ${PCL_LIBRARY_DIRS}
     ${PCL_LIBRARIES}
 #  ceres
 )
@@ -183,6 +186,7 @@ target_include_directories(
         ${Pangolin_INCLUDE_DIRS}
         ${CERES_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
+        ${CUDA_INCLUDE_DIRS}
   PRIVATE ${OpenGL_INCLUDE_DIR})
 
 

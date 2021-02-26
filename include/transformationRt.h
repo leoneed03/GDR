@@ -43,6 +43,8 @@ namespace gdr {
 
         Eigen::Vector3d getRelativeTranslation() const;
 
+        const Sophus::SE3d& getRelativePoseSE3() const;
+
     };
 }
 #endif

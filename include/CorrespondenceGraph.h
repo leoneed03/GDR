@@ -21,9 +21,10 @@
 #include "umeyama.h"
 #include "Vectors3d.h"
 #include "ThreadPool.h"
+#include "RelativePoseSE3.h"
+#include "ConnectedComponent.h"
 
 namespace gdr {
-
 
     struct CorrespondenceGraph {
 
@@ -33,7 +34,11 @@ namespace gdr {
         CameraRGBD cameraRgbd;
         SiftModule siftModule;
         std::vector<VertexCG> verticesOfCorrespondence;
-        int maxVertexDegree = 20;
+        // TODO: fill info about connected components of graph
+        // for i-th element vector should contain {component number, index}
+        // index is an integer value from 0 to component.size() - 1 incl.
+//        std::vector<std::pair<int, int>> connectedComponentNumberAndInsideIndex;
+        int maxVertexDegree = 80;
         int numIterations = 100;
         std::vector<std::vector<Match>> matches;
         std::vector<std::vector<transformationRtMatrix>> transformationRtMatrices;
@@ -53,7 +58,7 @@ namespace gdr {
         std::atomic_int totalMeausedRelativePoses = 0;
         std::atomic_int refinedPoses = 0;
 
-        const CloudProjector& getCloudProjector() const;
+        const CloudProjector &getCloudProjector() const;
 
         tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
 
@@ -105,11 +110,18 @@ namespace gdr {
         int printRelativePosesFile(const std::string &outPutFileRelativePoses);
 
         std::vector<int> bfs(int currentVertex,
-                             bool& isConnected,
-                             std::vector<std::vector<int>>& connectivityComponents);
+                             bool &isConnected,
+                             std::vector<std::vector<int>> &connectivityComponents);
 
-        // returns vectors -- each vector represents one connectivity component
-        std::vector<std::vector<int>> bfsDrawToFile(const std::string& outFile) const;
+        // return vectors -- each vector represents one connectivity component
+        std::vector<std::vector<int>> bfsDrawToFile(const std::string &outFile) const;
+
+        /*
+         * return vector of vectors -- connected components
+         * arg: vector containing each pose's component number
+         */
+
+        std::vector<std::vector<int>> bfsComputeConnectedComponents(std::vector<int> &componentNumberByPoseIndex) const;
 
         int computeRelativePoses();
 
@@ -120,6 +132,8 @@ namespace gdr {
         std::vector<Sophus::SE3d> performBundleAdjustment(int indexFixedToZero = 0);
 
         std::vector<Sophus::SE3d> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
+
+        std::vector<ConnectedComponentPoseGraph> splitGraphToConnectedComponents() const;
     };
 }
 

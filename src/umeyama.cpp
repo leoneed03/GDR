@@ -39,12 +39,13 @@ namespace gdr {
             }
 
             // depth error can be also checked
-            auto projectionErrorPixels2d = (toBeTransformedProjection.topLeftCorner<2, 1>() -
-                                            destinationPointProjection.topLeftCorner<2, 1>());
+            Eigen::Vector3d projectionErrorPixels2d = (toBeTransformedProjection -
+                                                       destinationPointProjection);
 
             double maxError = std::max(std::abs(projectionErrorPixels2d[0]), std::abs(projectionErrorPixels2d[1]));
+
             if (maxError < maxProjectionErrorPixels) {
-                projectionErrorsInliers.push_back({maxError, pointCounter});
+                projectionErrorsInliers.emplace_back(std::make_pair(maxError, pointCounter));
             }
         }
 
@@ -160,21 +161,42 @@ namespace gdr {
 
             int numInliers = projectionErrorsAndInlierIndices.size();
 
-            Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
-            Eigen::Matrix4Xd destInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
-            for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
-                int index = projectionErrorsAndInlierIndices[currentIndex].second;
-                toBeTransformedInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
-                destInlierPoints.col(currentIndex) = destinationPoints.col(index);
-            }
-
             if (numInliers > totalNumberInliers) {
+
+//                assert(std::abs(maxProjectionErrorPixels - 2.0) < std::numeric_limits<double>::epsilon());
+                std::cout << "projection error got better -- new number of inliers = " << numInliers << std::endl;
+                Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
+                Eigen::Matrix4Xd destInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
+
+                for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
+                    int index = projectionErrorsAndInlierIndices[currentIndex].second;
+                    toBeTransformedInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
+                    destInlierPoints.col(currentIndex) = destinationPoints.col(index);
+                }
+
                 totalNumberInliers = numInliers;
                 optimal_cR_t_umeyama_transformation = umeyama(
                         toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
                         destInlierPoints.block(0, 0, dim, numInliers));
                 attempt = i;
 
+                std::vector<std::pair<double, int>> projectionErrorsAndInlierIndicesAfterLocalOptimization =
+                        calculateProjectionErrors(
+                                toBeTransormedPoints,
+                                destinationPoints,
+                                cameraIntr3x3Destination,
+                                optimal_cR_t_umeyama_transformation,
+                                maxProjectionErrorPixels);
+
+                // TODO: every time estimation after LO gets worse -- why?!
+                std::cout << "after LO number Of Inliers is "
+                          << projectionErrorsAndInlierIndicesAfterLocalOptimization.size()
+                          << " vs " << numInliers;
+
+                if (projectionErrorsAndInlierIndicesAfterLocalOptimization.size() >= numInliers) {
+                    std::cout << "____________________________________________GOT BETTER!!!!";
+                }
+                std::cout << std::endl;
             }
         }
 
