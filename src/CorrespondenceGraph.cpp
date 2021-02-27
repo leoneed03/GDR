@@ -9,6 +9,7 @@
 #include "ICP.h"
 #include "pointCloud.h"
 #include "RotationOptimizationRobust.h"
+#include "ImageDrawer.h"
 
 #include <vector>
 #include <algorithm>
@@ -44,13 +45,45 @@ namespace gdr {
         return 0;
     }
 
+    std::vector<std::pair<double, double>> getReprojectionErrorsXY(const Eigen::Matrix4Xd& destinationPoints,
+                                                     const Eigen::Matrix4Xd& transformedPoints,
+                                                     const CameraRGBD& cameraIntrinsics) {
+        Eigen::Matrix3d intrinsicsMatrix = cameraIntrinsics.getIntrinsicsMatrix3x3();
+
+        std::vector<std::pair<double, double>> errorsReprojection;
+        errorsReprojection.reserve(destinationPoints.cols());
+        assert(destinationPoints.cols() == transformedPoints.cols());
+
+        for (int i = 0; i < destinationPoints.cols(); ++i) {
+            Eigen::Vector3d homCoordDestination = intrinsicsMatrix * destinationPoints.col(i).topLeftCorner<3, 1>();
+            Eigen::Vector3d homCoordTransformed = intrinsicsMatrix * transformedPoints.col(i).topLeftCorner<3, 1>();
+
+            for (int j = 0; j < 2; ++j) {
+                homCoordDestination[j] /= homCoordDestination[2];
+                homCoordTransformed[j] /= homCoordTransformed[2];
+            }
+            double errorX = std::abs(homCoordTransformed[0] - homCoordDestination[0]);
+            double errorY = std::abs(homCoordTransformed[1] - homCoordDestination[1]);
+            errorsReprojection.emplace_back(std::make_pair(errorX, errorY));
+        }
+
+        return errorsReprojection;
+    }
+
+
     // TODO: calculate inliers using projection error
+    /*
+     * return list of vectors
+     * each vector size is 2: for keypoint on the first image and the second
+     * pair is {{obseervingPoseNumber, keyPointLocalIndexOnTheImage}, KeyPointInfo}
+     */
     std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
     CorrespondenceGraph::findInlierPointCorrespondences(int vertexFrom,
                                                         int vertexInList,
                                                         double maxErrorL2,
                                                         Eigen::Matrix4d &transformation,
-                                                        bool useProjectionError) {
+                                                        bool useProjectionError,
+                                                        double maxProjectionErrorPixels) {
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
         const auto &match = matches[vertexFrom][vertexInList];
         int minSize = match.matchNumbers.size();
@@ -99,25 +132,40 @@ namespace gdr {
         assert(toBeTransformedPointsVector.size() == minSize);
         assert(originPointsVector.size() == minSize);
 
+        const auto& poseToDestination = verticesOfCorrespondence[match.frameNumber];
 
         Eigen::Matrix4Xd toBeTransformedPoints = getPointCloudBeforeProjection(toBeTransformedPointsVector,
                                                                                verticesOfCorrespondence[vertexFrom].cameraRgbd);
-        Eigen::Matrix4Xd originPoints = getPointCloudBeforeProjection(originPointsVector,
-                                                                      verticesOfCorrespondence[match.frameNumber].cameraRgbd);
+        Eigen::Matrix4Xd destinationPoints = getPointCloudBeforeProjection(originPointsVector,
+                                                                      poseToDestination.cameraRgbd);
 
-        Eigen::Matrix4Xd residuals = originPoints - transformation * toBeTransformedPoints;
-
-        std::vector<bool> inliersCorrespondencesKeyPoints(correspondencesBetweenTwoImages.size(), true);
-        assert(inliersCorrespondencesKeyPoints.size() == minSize);
-        assert(inliersCorrespondencesKeyPoints.size() == residuals.cols());
-
+        Eigen::Matrix4Xd transformedPoints = transformation * toBeTransformedPoints;
 
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondences;
 
-        for (int i = 0; i < residuals.cols(); ++i) {
-            double normResidual = residuals.col(i).norm();
-            if (normResidual < maxErrorL2) {
-                inlierCorrespondences.push_back(correspondencesBetweenTwoImages[i]);
+        if (useProjectionError) {
+            std::vector<std::pair<double, double>> errorsReprojection =
+                    getReprojectionErrorsXY(destinationPoints,
+                                            transformedPoints,
+                                            poseToDestination.getCamera());
+
+            assert(errorsReprojection.size() == destinationPoints.cols());
+
+            for (int i = 0; i < errorsReprojection.size(); ++i) {
+                if (std::max(errorsReprojection[i].first, errorsReprojection[i].second) < maxProjectionErrorPixels) {
+                    inlierCorrespondences.emplace_back(correspondencesBetweenTwoImages[i]);
+                }
+            }
+
+        } else {
+            Eigen::Matrix4Xd residuals = destinationPoints - transformedPoints;
+            for (int i = 0; i < residuals.cols(); ++i) {
+
+                double normResidual = residuals.col(i).norm();
+                if (normResidual < maxErrorL2) {
+                    inlierCorrespondences.push_back(correspondencesBetweenTwoImages[i]);
+                }
+
             }
         }
 
@@ -243,7 +291,8 @@ namespace gdr {
                                                             bool &success,
                                                             bool useProjection,
                                                             double inlierCoeff,
-                                                            double maxProjectionErrorPixels) {
+                                                            double maxProjectionErrorPixels,
+                                                            bool showMatchesOnImages) {
         Eigen::Matrix4d cR_t_umeyama;
         cR_t_umeyama.setIdentity();
         success = true;
@@ -344,7 +393,8 @@ namespace gdr {
                                                                                           vertexInListToBeTransformedCanBeComputed,
                                                                                           neighbourhoodRadius,
                                                                                           cR_t_umeyama,
-                                                                                          false);
+                                                                                          useProjection,
+                                                                                          maxProjectionErrorPixels);
 
         bool successRefine = true;
         refineRelativePose(verticesOfCorrespondence[vertexToBeTransformed],
@@ -366,7 +416,8 @@ namespace gdr {
                                                                                                  vertexInListToBeTransformedCanBeComputed,
                                                                                                  neighbourhoodRadius,
                                                                                                  cR_t_umeyama,
-                                                                                                 true);
+                                                                                                 useProjection,
+                                                                                                 maxProjectionErrorPixels);
 
         ++totalMeausedRelativePoses;
         int ransacInliers = inlierMatchesCorrespondingKeypointsLoRansac.size();
@@ -410,13 +461,25 @@ namespace gdr {
         }
 
 
+        std::vector<std::pair<int, int>> matchesForVisualization;
         for (const auto &matchPair: inlierMatchesCorrespondingKeypointsLoRansac) {
             tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>> matchesConcurrent;
             for (const auto &matchEntry: matchPair) {
                 matchesConcurrent.push_back(matchEntry);
             }
+            matchesForVisualization.push_back({matchPair[0].first.second, matchPair[1].first.second});
             // TODO: split between connected components
             inlierCorrespondencesPoints.push_back(matchesConcurrent);
+        }
+        const auto& poseFrom = verticesOfCorrespondence[vertexFromDestOrigin];
+        const auto& poseTo = verticesOfCorrespondence[vertexToBeTransformed];
+        // TODO: visualize matches
+
+        if (showMatchesOnImages) {
+            ImageDrawer::showKeyPointMatchesTwoImages(poseFrom.getPathRGBImage(),
+                                                      poseFrom.getKeyPointInfoAllKeyPoints(),
+                                                      poseTo.getPathRGBImage(), poseTo.getKeyPointInfoAllKeyPoints(),
+                                                      matchesForVisualization);
         }
         return cR_t_umeyama;
     }

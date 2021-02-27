@@ -19,6 +19,7 @@
 
 #include <sophus/se3.hpp>
 
+#include "KeyPointInfo.h"
 #include "keyFeatures.h"
 #include "quaternions.h"
 #include "cameraRGBD.h"
@@ -90,6 +91,8 @@ namespace gdr {
         const CameraRGBD &getCamera() const;
 
         int getIndex() const;
+
+        std::vector<KeyPointInfo> getKeyPointInfoAllKeyPoints() const;
     };
 }
 

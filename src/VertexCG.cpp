@@ -120,4 +120,13 @@ namespace gdr {
     void VertexCG::setIndex(int newIndex) {
         index = newIndex;
     }
+
+    std::vector<KeyPointInfo> VertexCG::getKeyPointInfoAllKeyPoints() const {
+        std::vector<KeyPointInfo> keyPointsInfo;
+
+        for (int keyPointsIndex = 0; keyPointsIndex < keypoints.size(); ++keyPointsIndex) {
+            keyPointsInfo.emplace_back(KeyPointInfo(keypoints[keyPointsIndex], depths[keyPointsIndex], getIndex()));
+        }
+        return keyPointsInfo;
+    }
 }

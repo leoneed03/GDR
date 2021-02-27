@@ -32,7 +32,7 @@ namespace gdr {
             std::cout << "_____________________________________________________matching context not verified"
                       << std::endl;
         }
-        assert(contextVerified != 0);
+//        assert(contextVerified != 0);
     }
 
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
@@ -111,6 +111,7 @@ namespace gdr {
             output.lock();
             std::cout << "image: " << pathToTheImage << std::endl;
             output.unlock();
+
             detectorSift->RunSIFT(pathToTheImage.data());
             int num1 = detectorSift->GetFeatureNum();
             std::vector<float> descriptors1(128 * num1);

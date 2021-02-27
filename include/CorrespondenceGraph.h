@@ -67,7 +67,8 @@ namespace gdr {
                                        int vertexInList,
                                        double inlierCoeff,
                                        Eigen::Matrix4d &transformation,
-                                       bool useProjection);
+                                       bool useProjection,
+                                       double maxProjectionErrorPixels);
 
         CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
                             const std::string &pathToImageDirectoryD,
@@ -96,7 +97,8 @@ namespace gdr {
                                            bool &success,
                                            bool useProjection = true, //TODO: every time should decide which error to use
                                            double inlierCoeff = 0.6,
-                                           double maxProjectionErrorPixels = 2.0);
+                                           double maxProjectionErrorPixels = 3.0,
+                                           bool showMatchesOnImages = false);
 
         void printConnectionsRelative(std::ostream &os, int space = 10);
 

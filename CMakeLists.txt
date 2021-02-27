@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10.0)
 
 project(GDR)
-
+#enable_language(CUDA)
 set(CMAKE_CXX_STANDARD 17)
 set(GCC_COVERAGE_COMPILE_FLAGS " -O3")
 
@@ -19,8 +19,6 @@ find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
-
-message("CUDA include directory ${CUDA_INCLUDE_DIRS} " )
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 
@@ -58,12 +56,12 @@ ExternalProject_Add(
     BUILD_COMMAND $(MAKE) -j3
     INSTALL_COMMAND "")
 
-ExternalProject_Add(
-  siftgpu
-  SOURCE_DIR ${PROJECT_SOURCE_DIR}/siftgpu
-  BUILD_IN_SOURCE 1
-  BUILD_COMMAND $(MAKE) -j1
-  INSTALL_COMMAND "")
+#ExternalProject_Add(
+#  siftgpu
+#  SOURCE_DIR ${PROJECT_SOURCE_DIR}/siftgpu
+#  BUILD_IN_SOURCE 1
+#  BUILD_COMMAND $(MAKE) -j1
+#  INSTALL_COMMAND "")
 
  ExternalProject_Add(gtsam SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam"
  BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}" CONFIGURE_COMMAND
@@ -76,7 +74,9 @@ if(${DEBUG_PRINT_PROGRESS})
   list(APPEND GDR_FLAGS "-DDEBUG_PRINT_PROGRESS")
 endif()
 
-set(SIFTGPU_LIBS ${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so)
+#set(SIFTGPU_LIBS ${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so)
+#set(SIFTGPU_LIBS /home/leo/Desktop/projects/linuxSift/SiftGPU_Linux/siftgpu/bin/libsiftgpu.so)
+#set(SIFTGPU_LIBS /home/leo/CLionProjects/colmap/lib/SiftGPU/cmake-build-debug/libsift_gpu.a)
 #set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${custom_Pangolin_BUILD_NAME}/lib/libgtsam.a)
 #set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${custom_Pangolin_BUILD_NAME}/include)
 
@@ -147,6 +147,8 @@ target_include_directories(
     ${ICPCUDA_INCLUDE_DIRS}
     ${Pangolin_INCLUDE_DIRS}
     ${CUDA_INCLUDE_DIRS})
+add_subdirectory(lib)
+
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
@@ -161,7 +163,7 @@ add_definitions(${PCL_DEFINITIONS})
 target_link_libraries(
   GDR_LIB
   ${CUDA_LIBRARIES}
-  ${SIFTGPU_LIBS}
+  siftgpu
   ${OpenCV_LIBS}
   ${GTSAM_LIBS}
   ${Boost_LIBRARIES}
@@ -179,7 +181,7 @@ target_include_directories(
   GDR_LIB
   PUBLIC ${GTSAM_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
+#        ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
         ${EIGEN3_INCLUDE_DIRS}
         ${Sophus_INCLUDE_DIRS}
         ${ICPCUDA_INCLUDE_DIRS}
@@ -192,3 +194,8 @@ target_include_directories(
 
 enable_testing()
 add_subdirectory(test)
+
+
+message("CUDA home directories ${CUDA_BIN_PATH} " )
+message("CUDA library directories ${CUDA_LIBRARIES} " )
+message("CUDA include directory ${CUDA_INCLUDE_DIRS} " )

@@ -28,6 +28,18 @@ namespace gdr {
                                         int maxIndexKeyPointToShow = 100,
                                         std::string pathToSave = "",
                                         std::string nameToSave = "");
+
+        // each pair represents keyPoint's index (global class number) and info about it being a projection
+        // matches: keypoints1[match.first] (on the first image) corresponds to
+        // keypoints2[match.second] (on the second image)
+
+        static int showKeyPointMatchesTwoImages(const std::string &pathToRGBImageFirst,
+                                                const std::vector<KeyPointInfo> &keyPointInfosFirstImage,
+                                                const std::string &pathToRGBImageSecond,
+                                                const std::vector<KeyPointInfo> &keyPointInfosSecondImage,
+                                                const std::vector<std::pair<int, int>> &matchesKeypoints,
+                                                int maxIndexKeyPointToShow = 100,
+                                                std::string pathToSave = "");
     };
 }
 

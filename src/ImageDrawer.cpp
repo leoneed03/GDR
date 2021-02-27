@@ -25,6 +25,7 @@ namespace gdr {
         return 0;
     }
 
+
     // each pair represents keyPoint's index (global class number) and info about it being a projection
     //
 
@@ -92,6 +93,45 @@ namespace gdr {
         }
         std::string pathToSaveWithName = pathToSave + "/" + nameToSave;
         cv::imwrite(pathToSaveWithName, imageWithKeyPoint);
+        return 0;
+    }
+
+    int ImageDrawer::showKeyPointMatchesTwoImages(const std::string &pathToRGBImageFirst,
+                                                  const std::vector<KeyPointInfo> &keyPointInfosFirstImage,
+                                                  const std::string &pathToRGBImageSecond,
+                                                  const std::vector<KeyPointInfo> &keyPointInfosSecondImage,
+                                                  const std::vector<std::pair<int, int>> &matchesKeypoints,
+                                                  int maxIndexKeyPointToShow,
+                                                  std::string pathToSave) {
+
+        // first image with keypoints
+        cv::Mat imageNoKeyPointFirst = cv::imread(pathToRGBImageFirst, cv::IMREAD_COLOR);
+        std::vector<cv::KeyPoint> keyPointsToShowFirst;
+        for (const auto& keyPointInfo: keyPointInfosFirstImage) {
+            cv::KeyPoint keyPointToShow(keyPointInfo.getX(), keyPointInfo.getY(), keyPointInfo.getScale());
+            keyPointsToShowFirst.emplace_back(keyPointToShow);
+        }
+        // second image and keypoints
+        cv::Mat imageNoKeyPointSecond = cv::imread(pathToRGBImageSecond, cv::IMREAD_COLOR);
+        std::vector<cv::KeyPoint> keyPointsToShowSecond;
+        for (const auto& keyPointInfo: keyPointInfosSecondImage) {
+            cv::KeyPoint keyPointToShow(keyPointInfo.getX(), keyPointInfo.getY(), keyPointInfo.getScale());
+            keyPointsToShowSecond.emplace_back(keyPointToShow);
+        }
+        std::vector<cv::DMatch> matches1to2;
+        for (const auto& match: matchesKeypoints) {
+            matches1to2.push_back(cv::DMatch(match.first, match.second, 0.01));
+        }
+
+        cv::Mat outputImage;
+        cv::drawMatches(imageNoKeyPointFirst, keyPointsToShowFirst,
+                        imageNoKeyPointSecond, keyPointsToShowSecond,
+                        matches1to2,
+                        outputImage);
+
+
+        cv::imshow( "Showing matches", outputImage);
+        cv::waitKey(0);
         return 0;
     }
 }
