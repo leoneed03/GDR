@@ -98,7 +98,7 @@ namespace gdr {
                                            bool useProjection = true, //TODO: every time should decide which error to use
                                            double inlierCoeff = 0.5,
                                            double maxProjectionErrorPixels = 2.0,
-                                           bool showMatchesOnImages = false);
+                                           bool showMatchesOnImages = true);
 
         void printConnectionsRelative(std::ostream &os, int space = 10);
 

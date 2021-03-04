@@ -141,17 +141,6 @@ namespace gdr {
             Eigen::Matrix4d cR_t_umeyama_3_points = umeyama(toBeTransformed3Points.block(0, 0, dim, dim),
                                                             dest3Points.block(0, 0, dim, dim));
 
-            /*
-            std::cout << dest3Points << std::endl;
-            std::cout << "toBeTransformed" << std::endl;
-            std::cout << toBeTransformed3Points << std::endl;
-            std::cout << "________________________" << std::endl;
-            std::cout << "after cR_t * toBeTransformed" << std::endl;
-            std::cout << cR_t_umeyama_3_points * toBeTransformed3Points << std::endl;
-            std::cout << "after cR_t * dest" << std::endl;
-            std::cout << cR_t_umeyama_3_points * dest3Points << std::endl;
-            assert((dest3Points - cR_t_umeyama_3_points * toBeTransformed3Points).norm() < 3 * std::numeric_limits<double>::epsilon());
-            */
             std::vector<std::pair<double, int>> projectionErrorsAndInlierIndices = calculateProjectionErrors(
                     toBeTransormedPoints,
                     destinationPoints,
@@ -163,10 +152,12 @@ namespace gdr {
 
             if (numInliers > totalNumberInliers) {
 
-                totalNumberInliers = numInliers;
                 optimal_cR_t_umeyama_transformation = cR_t_umeyama_3_points;
 //                assert(std::abs(maxProjectionErrorPixels - 2.0) < std::numeric_limits<double>::epsilon());
-                std::cout << "projection error got better -- new number of inliers = " << numInliers << std::endl;
+                std::cout << "projection error got better -- new number of inliers = "
+                          << numInliers << " vs old " << totalNumberInliers << std::endl;
+
+                totalNumberInliers = numInliers;
                 Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
                 Eigen::Matrix4Xd destInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
 
@@ -175,8 +166,6 @@ namespace gdr {
                     toBeTransformedInlierPoints.col(currentIndex) = toBeTransormedPoints.col(index);
                     destInlierPoints.col(currentIndex) = destinationPoints.col(index);
                 }
-
-                totalNumberInliers = numInliers;
                 auto inlier_optimal_cR_t_umeyama_transformation = umeyama(
                         toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
                         destInlierPoints.block(0, 0, dim, numInliers));
@@ -193,8 +182,9 @@ namespace gdr {
                 // TODO: often estimation after Local Optimization gets worse -- why?!
                 std::cout << "after LO number Of Inliers is "
                           << projectionErrorsAndInlierIndicesAfterLocalOptimization.size()
-                          << " vs " << numInliers;
+                          << " vs " << totalNumberInliers;
 
+                // TODO: in "success.." number of inliers is not optimal
                 if (projectionErrorsAndInlierIndicesAfterLocalOptimization.size() >= totalNumberInliers) {
                     std::cout << "____________________________________________GOT BETTER!!!!";
                     optimal_cR_t_umeyama_transformation = inlier_optimal_cR_t_umeyama_transformation;
@@ -213,20 +203,20 @@ namespace gdr {
                 optimal_cR_t_umeyama_transformation,
                 maxProjectionErrorPixels);
 
-        int numberInliersAfterLocalOptimization = totalProjectionErrorsAndInlierIndices.size();
-        estimationSuccess = numberInliersAfterLocalOptimization > inlierCoeff * toBeTransormedPoints.cols();
+        int numberInliersOptimal = totalProjectionErrorsAndInlierIndices.size();
+        estimationSuccess = numberInliersOptimal > inlierCoeff * toBeTransormedPoints.cols();
 
         std::string logs;
         std::cout << "before LO " << totalNumberInliers << std::endl;
         if (estimationSuccess) {
-            std::cout << "success, inliers " << numberInliersAfterLocalOptimization << " of "
+            std::cout << "success [CHECK], inliers " << numberInliersOptimal << " of "
                       << toBeTransormedPoints.cols() << " ratio "
-                      << (double) numberInliersAfterLocalOptimization / toBeTransormedPoints.cols();
+                      << 1.0 * numberInliersOptimal / toBeTransormedPoints.cols();
         } else {
 
-            std::cout << "not success, inliers ONLY " << numberInliersAfterLocalOptimization << " of "
+            std::cout << "not success, inliers ONLY " << numberInliersOptimal << " of "
                       << toBeTransormedPoints.cols() << " ratio "
-                      << (double) numberInliersAfterLocalOptimization / toBeTransormedPoints.cols();
+                      << (double) numberInliersOptimal / toBeTransormedPoints.cols();
         }
         std::cout << std::endl;
         return optimal_cR_t_umeyama_transformation;
