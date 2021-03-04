@@ -103,7 +103,22 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/poseInfo.h
     ${PROJECT_SOURCE_DIR}/include/rotationMeasurement.h
     ${PROJECT_SOURCE_DIR}/include/relativePose.h
-    ${PROJECT_SOURCE_DIR}/include/Vectors3d.h)
+    ${PROJECT_SOURCE_DIR}/include/Vectors3d.h
+    ${PROJECT_SOURCE_DIR}/include/Rotation3d.h
+    ${PROJECT_SOURCE_DIR}/include/Point3d.h
+    ${PROJECT_SOURCE_DIR}/include/RotationOptimizationRobust.h
+    ${PROJECT_SOURCE_DIR}/include/CloudProjector.h
+    ${PROJECT_SOURCE_DIR}/include/KeyPointInfo.h
+    ${PROJECT_SOURCE_DIR}/include/PointMatcher.h
+    ${PROJECT_SOURCE_DIR}/include/ImageDrawer.h
+    ${PROJECT_SOURCE_DIR}/include/AbsolutePose.h
+    ${PROJECT_SOURCE_DIR}/include/BundleAduster.h
+    ${PROJECT_SOURCE_DIR}/include/SmoothPointCloud.h
+    ${PROJECT_SOURCE_DIR}/include/ThreadPool.h
+    ${PROJECT_SOURCE_DIR}/include/KeyPointsDepthDescriptor.h
+    ${PROJECT_SOURCE_DIR}/include/ConnectedComponent.h
+    ${PROJECT_SOURCE_DIR}/include/RelativePoseSE3.h
+    ${PROJECT_SOURCE_DIR}/include/ImagesAssociator.h)
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/keyFeatures.cpp
@@ -127,7 +142,20 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
     ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp
     ${PROJECT_SOURCE_DIR}/src/ThreadPool.cpp
-    src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h src/BundleAduster.cpp include/BundleAduster.h src/SmoothPointCloud.cpp include/SmoothPointCloud.h src/KeyPointsDepthDescriptor.cpp include/KeyPointsDepthDescriptor.h include/ThreadPool.h src/ConnectedComponent.cpp include/ConnectedComponent.h src/RelativePoseSE3.cpp include/RelativePoseSE3.h include/ImagesAssociator.cpp include/ImagesAssociator.h)
+    ${PROJECT_SOURCE_DIR}/src/Rotation3d.cpp
+    ${PROJECT_SOURCE_DIR}/src/RotationOptimizationRobust.cpp
+    ${PROJECT_SOURCE_DIR}/src/Point3d.cpp
+    ${PROJECT_SOURCE_DIR}/src/CloudProjector.cpp
+    ${PROJECT_SOURCE_DIR}/src/KeyPointInfo.cpp
+    ${PROJECT_SOURCE_DIR}/src/PointMatcher.cpp
+    ${PROJECT_SOURCE_DIR}/src/ImageDrawer.cpp
+    ${PROJECT_SOURCE_DIR}/src/AbsolutePose.cpp
+    ${PROJECT_SOURCE_DIR}/src/BundleAduster.cpp
+    ${PROJECT_SOURCE_DIR}/src/SmoothPointCloud.cpp
+    ${PROJECT_SOURCE_DIR}/src/KeyPointsDepthDescriptor.cpp
+    ${PROJECT_SOURCE_DIR}/src/ConnectedComponent.cpp
+    ${PROJECT_SOURCE_DIR}/src/RelativePoseSE3.cpp
+    ${PROJECT_SOURCE_DIR}/src/ImagesAssociator.cpp)
 
 add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
 
@@ -196,4 +224,4 @@ add_subdirectory(test)
 
 message("CUDA home directories ${CUDA_BIN_PATH} " )
 message("CUDA library directories ${CUDA_LIBRARIES} " )
-message("CUDA include directory ${CUDA_INCLUDE_DIRS} " )
+message("CUDA incl directory ${CUDA_INCLUDE_DIRS} " )
