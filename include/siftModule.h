@@ -35,24 +35,41 @@ namespace gdr {
 
         void siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs);
 
+
+        /* L1-Root-normalize feature descriptors
+         * @param descriptors -- matrix of N descriptors
+         * each row of matrix represents one feature.
+         */
+        static
+        Eigen::MatrixXf normalizeDescriptorsL1Root(const Eigen::MatrixXf &descriptors);
+
+        static
+        std::vector<float> normalizeDescriptorsL1Root(const std::vector<float> &descriptors);
+
+
+
+
         static void
         getKeypointsDescriptorsOneImage(SiftGPU *detectorSift,
                                         tbb::concurrent_queue<std::pair<std::string, int>> &pathsToImagesAndImageIndices,
                                         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> &keyPointsAndDescriptorsByIndex,
-                                        std::mutex &output);
+                                        std::mutex &output,
+                                        bool normalizeRootL1 = true);
 
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
         getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                          const std::vector<int> &numOfDevicesForDetectors = {0});
 
         std::vector<tbb::concurrent_vector<Match>> findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
-                                                            const std::vector<int> &matchDevicesNumbers = {0});
-        static void getNumbersOfMatchesOnePair(int& indexFrom,
-                                               int& indexTo,
+                                                                       const std::vector<int> &matchDevicesNumbers = {
+                                                                               0});
+
+        static void getNumbersOfMatchesOnePair(int &indexFrom,
+                                               int &indexTo,
                                                const std::vector<VertexCG> &verticesToBeMatched,
-                                               std::mutex& counterMutex,
-                                               std::vector<tbb::concurrent_vector<Match>>& matches,
-                                               SiftMatchGPU* matcher);
+                                               std::mutex &counterMutex,
+                                               std::vector<tbb::concurrent_vector<Match>> &matches,
+                                               SiftMatchGPU *matcher);
     };
 }
 

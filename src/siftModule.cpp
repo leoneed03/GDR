@@ -11,6 +11,18 @@
 
 namespace gdr {
 
+    Eigen::MatrixXf SiftModule::normalizeDescriptorsL1Root(const Eigen::MatrixXf &descriptors) {
+        Eigen::MatrixXf descriptors_normalized(descriptors.rows(),
+                                               descriptors.cols());
+        for (Eigen::MatrixXf::Index r = 0; r < descriptors.rows(); ++r) {
+            const float norm = descriptors.row(r).lpNorm<1>();
+            descriptors_normalized.row(r) = descriptors.row(r) / norm;
+            descriptors_normalized.row(r) =
+                    descriptors_normalized.row(r).array().sqrt();
+        }
+        return descriptors_normalized;
+    }
+
     void SiftModule::siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs) {
         sift->ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
     }
@@ -88,7 +100,8 @@ namespace gdr {
                                      detectorsSift[i].get(),
                                      std::ref(pathsToImagesAndImageIndices),
                                      std::ref(keypointsAndDescriptorsAllImages),
-                                     std::ref(output));
+                                     std::ref(output),
+                                     true);
         }
 
         for (auto &thread: threads) {
@@ -102,7 +115,8 @@ namespace gdr {
     SiftModule::getKeypointsDescriptorsOneImage(SiftGPU *detectorSift,
                                                 tbb::concurrent_queue<std::pair<std::string, int>> &pathsToImagesAndImageIndices,
                                                 std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> &keyPointsAndDescriptorsByIndex,
-                                                std::mutex &output) {
+                                                std::mutex &output,
+                                                bool normalizeRootL1) {
 
         std::pair<std::string, int> pathToImageAndIndex;
 
@@ -117,6 +131,12 @@ namespace gdr {
             std::vector<float> descriptors1(128 * num1);
             std::vector<SiftGPU::SiftKeypoint> keys1(num1);
             detectorSift->GetFeatureVector(keys1.data(), descriptors1.data());
+
+            // L1 Root normalization of secriptors:
+            if (normalizeRootL1) {
+                descriptors1 = normalizeDescriptorsL1Root(descriptors1);
+            }
+
             assert(pathToImageAndIndex.second >= 0 &&
                    pathToImageAndIndex.second < keyPointsAndDescriptorsByIndex.size());
             keyPointsAndDescriptorsByIndex[pathToImageAndIndex.second] = {keys1, descriptors1};
@@ -206,8 +226,8 @@ namespace gdr {
                 return;
             }
             assert(indexFrom < indexTo);
-            std::cout << "local indices are: " << indexFrom << " -[matching]-> " << indexTo << " of " << matches.size() << "                " << matcher << std::endl;
-
+            std::cout << "local indices are: " << indexFrom << " -[matching]-> " << indexTo << " of " << matches.size()
+                      << "                " << matcher << std::endl;
 
 
             localIndexFrom = indexFrom;
@@ -226,5 +246,25 @@ namespace gdr {
             matches[localIndexFrom].push_back({localIndexTo, matchingNumbers});
 
         }
+    }
+
+    std::vector<float> SiftModule::normalizeDescriptorsL1Root(const std::vector<float> &descriptorsToNormalize) {
+        int descriptorLength = 128;
+
+        std::vector<float> descriptors = descriptorsToNormalize;
+
+        assert(descriptors.size() % descriptorLength == 0);
+        int numberDescriptors = static_cast<int>(descriptors.size()) / 128;
+
+        for (int descriptorNumber; descriptorNumber < numberDescriptors; ++descriptorNumber) {
+            Eigen::Map<Eigen::VectorXf> descriptor(
+                    descriptors.data() + descriptorNumber * descriptorLength,
+                    descriptorLength);
+            const float norm = descriptor.lpNorm<1>();
+            descriptor = descriptor / norm;
+            descriptor = descriptor.array().sqrt();
+        }
+
+        return descriptors;
     }
 }

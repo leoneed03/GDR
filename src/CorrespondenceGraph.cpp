@@ -223,8 +223,8 @@ namespace gdr {
                                                         int spaceIO = 18;
                                                         {
                                                             std::unique_lock<std::mutex> lockOutput(output);
-                                                            std::cout << "success frameFrom -> frameTo"
-                                                                      << frameFromDestination.index
+                                                            std::cout << "success frameFrom -> frameTo: " << std::endl
+                                                                      << "             " << frameFromDestination.index
                                                                       << " -> "
                                                                       << frameToToBeTransformed.index << std::endl;
                                                         }

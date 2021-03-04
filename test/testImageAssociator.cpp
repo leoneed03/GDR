@@ -18,14 +18,14 @@
 TEST(testImageAssosiator, associateFilesDefaultTreshold) {
 
     std::set<int> indices;
-    for (int i = 0; i <= 1000; i += 10) {
+    for (int i = 0; i < 1000; i += 10) {
         indices.insert(i);
     }
-    std::string pathToDataset = "/home/leo/Desktop/datasets/rgbd_dataset_freiburg3_large_cabinet";
+    std::string pathToDataset = "/home/leo/Desktop/datasets/rgbd_dataset_freiburg1_plant";
     gdr::ImageAssociator imageAssociator(pathToDataset);
 
     imageAssociator.AssociateImagePairs();
-    imageAssociator.exportAllInfoToDirectory("../../data/newDataset",
+    imageAssociator.exportAllInfoToDirectory("../../data/plant_sampled_101_10",
                                              indices);
 
 }

@@ -19,9 +19,11 @@ packages:
   - cmake
 
 before_install:
-  - sudo apt -y install libpcl-dev
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 10
   - git submodule update --init --recursive
+  -
+# Toolkit [NVCC]
+  - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
 # GTest
   - sudo apt-get install libgtest-dev
   - sudo apt-get install cmake
@@ -29,89 +31,51 @@ before_install:
   - sudo cmake CMakeLists.txt
   - sudo make
   - sudo cp *.a /usr/lib
-
-#  - sudo add-apt-repository -y ppa:borglab/gtsam-develop
-#  - sudo apt update
-#  - sudo apt install -y libgtsam-dev libgtsam-unstable-dev
-
-
-  - sudo apt-get -y install libgoogle-glog-dev libgflags-dev
-  - sudo apt-get -y install libceres-dev
-  # BLAS & LAPACK
-  - sudo apt-get -y install libatlas-base-dev
-  - sudo apt-get -y install libmetis-dev
-  - sudo apt-get -y install python3.7-dev
-  - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
-
-  - sudo apt-get install libopencv-dev
+# Dependencies
+  - sudo apt -y install libpcl-dev
   - sudo apt-get -y install libdevil-dev
-  - sudo apt -y install libglew-dev
-  - sudo apt-get install -y glew-utils
-  - sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
-  - sudo apt install python3-opencv
-  - sudo apt-get -y install cmake
   - sudo apt-get -y install libboost-all-dev
-
-  - sudo apt-get -y install libstdc++6
-  - sudo apt-get install g++
-  - sudo apt install libpcl-dev
-  - sudo apt-get -y install libeigen3-dev
-  - sudo apt-get -y install libboost-dev
-  - sudo apt-get -y install libboost-test-dev
-  - sudo apt-get -y install libboost-system-dev
-  - sudo apt-get -y install libboost-filesystem-dev
-  - sudo apt-get -y install libboost-thread-dev
-  - sudo apt-get -y install libboost-program-options-dev
+  - sudo apt-get -y install libceres-dev
   - sudo apt-get -y install libtbb-dev
+  - sudo apt-get install -y libeigen3-dev
+  - sudo apt-get -y install libopencv-dev
+  - sudo apt-get -y install libmetis-dev
+  - sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+  - sudo apt -y install libglew-dev
+#  - sudo apt-get -y install libgoogle-glog-dev libgflags-dev
+  # BLAS & LAPACK
+#  - sudo apt-get -y install libatlas-base-dev
+#  - sudo apt-get -y install libmetis-dev
+#  - sudo apt-get -y install python3.7-dev
+#
+#  - sudo apt-get install libopencv-dev
+#  - sudo apt-get -y install libdevil-dev
+#  - sudo apt -y install libglew-dev
+#  - sudo apt-get install -y glew-utils
+#  - sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+#  - sudo apt install python3-opencv
+#  - sudo apt-get -y install cmake
+#  - sudo apt-get -y install libboost-all-dev
+#
+#  - sudo apt-get -y install libstdc++6
+#  - sudo apt-get install g++
+#  - sudo apt install libpcl-dev
+#  - sudo apt-get -y install libeigen3-dev
+#  - sudo apt-get -y install libboost-dev
+#  - sudo apt-get -y install libboost-test-dev
+#  - sudo apt-get -y install libboost-system-dev
+#  - sudo apt-get -y install libboost-filesystem-dev
+#  - sudo apt-get -y install libboost-thread-dev
+#  - sudo apt-get -y install libboost-program-options-dev
+#  - sudo apt-get -y install libtbb-dev
 
 
 
 script:
-  #  - cd externals
-  #  - cd ICPCUDA
-  #  - git submodule update --init
-  #
-  ##  Pangolin
-  #  - cd third-party/Pangolin/
-  #  - mkdir build
-  #  - cd build
-  #  - EigenAbsolutePath=$(readlink -f ../../Eigen)
-  #  - echo $EigenAbsolutePath
-  #  - cmake ../ -DEIGEN_INCLUDE_DIR=${EigenAbsolutePath}
-  #  - make -j12
-  #
-  ## ICPCUDA
-  #  - cd ../../../
-  #  - mkdir build
-  #  - cd build/
-  #  - export CC=/usr/bin/gcc-6
-  #  - export CXX=/usr/bin/g++-6
-  #  - cmake ..
-  #  - make -j12
-  #  - cd
-
-  #  - cd build/leoneed03/GDR
-
-  # SiftGPU
-  #  - cd siftgpu
-  #  - sudo make
-  #  - cd ..
-  #  - ls
-
-  # GTSAM
-  #  - cd externals/gtsam
-  #  - sudo mkdir build
-  #  - cd build
-  #  - sudo cmake ..
-  #  - sudo make install
-  #  - cd ..
-  #  - cd ..
-  #  - cd ..
-
   - cd
   - cd build/leoneed03/GDR
   - ls
   - mkdir build
   - cd build
-  - cmake ../
-  - make
+  - cmake ..
+  - make -j6
