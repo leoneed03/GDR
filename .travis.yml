@@ -21,7 +21,7 @@ packages:
 before_install:
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 10
   - git submodule update --init --recursive
-  -
+
 # Toolkit [NVCC]
   - sudo apt install -y nvidia-cuda-dev nvidia-cuda-toolkit
 # GTest
@@ -46,7 +46,7 @@ before_install:
   # BLAS & LAPACK
 #  - sudo apt-get -y install libatlas-base-dev
 #  - sudo apt-get -y install libmetis-dev
-#  - sudo apt-get -y install python3.7-dev
+  - sudo apt-get -y install python3.7-dev
 #
 #  - sudo apt-get install libopencv-dev
 #  - sudo apt-get -y install libdevil-dev
