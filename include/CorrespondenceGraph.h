@@ -96,8 +96,8 @@ namespace gdr {
         getTransformationRtMatrixTwoImages(int vertexFromDestOrigin, int vertexInListToBeTransformedCanBeComputed,
                                            bool &success,
                                            bool useProjection = true, //TODO: every time should decide which error to use
-                                           double inlierCoeff = 0.6,
-                                           double maxProjectionErrorPixels = 3.0,
+                                           double inlierCoeff = 0.5,
+                                           double maxProjectionErrorPixels = 2.0,
                                            bool showMatchesOnImages = false);
 
         void printConnectionsRelative(std::ostream &os, int space = 10);

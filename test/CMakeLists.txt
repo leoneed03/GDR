@@ -1,5 +1,6 @@
 set(TESTS testVisualizePointCloud
     #testICP
+        testImageAssociator
     testConnectedComponent
     testBundleAdjustment testAbsolutePoseStructure testAbsoluteTranslationsComputation testAbsoluteRotationsComputation testPointCloudCorrespondences testPoint3dRepresentation testRotationRepresentation testRelativePoseExtraction testUmeyamaRansac testPoseFileCreation testRelativePosesComputation testRotationAveraging testTranslationAveraging testVectors3dRepresentation testRobustRotationOptimization)
 

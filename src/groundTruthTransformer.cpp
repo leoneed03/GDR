@@ -104,8 +104,10 @@ namespace gdr {
     }
 
     std::pair<std::vector<std::string>, std::vector<std::string>>
-    GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth, const std::string &pathToRGB,
-                                               const std::string &pathToD, const std::string &pathOutDirectory,
+    GTT::makeRotationsRelativeAndExtractImages(const std::string &pathToGroundTruth,
+                                               const std::string &pathToRGB,
+                                               const std::string &pathToD,
+                                               const std::string &pathOutDirectory,
                                                const std::string &timeInfo,
                                                const std::set<int> &indices) {
 
@@ -332,9 +334,9 @@ namespace gdr {
     GTT::prepareDataset(const std::string &pathToDataset,
                         const std::string &pathOut,
                         const std::set<int> &indicesSet,
-                        const std::string &NewName = "subset") {
+                        const std::string &NewName) {
 
-        std::string pathNewOut = pathOut + "/" + NewName;
+        std::string pathNewOut = (!NewName.empty()) ? (pathOut + "/" + NewName) : (pathOut);
         std::string groundtruth = pathToDataset + "/groundtruth.txt";
         std::string rgb = pathToDataset + "/rgb";
         std::string depth = pathToDataset + "/depth";

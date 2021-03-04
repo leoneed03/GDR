@@ -63,7 +63,7 @@ namespace gdr {
         prepareDataset(const std::string &pathToDataset,
                        const std::string &pathOut,
                        const std::set<int> &chosenIndices,
-                       const std::string &NewName);
+                       const std::string &NewName = "");
 
         static int writeGroundTruthRelativeToZeroPose(const std::string &pathOut,
                                                       const std::vector<std::vector<double>> &timeCoordinates);

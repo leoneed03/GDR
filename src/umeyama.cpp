@@ -163,6 +163,8 @@ namespace gdr {
 
             if (numInliers > totalNumberInliers) {
 
+                totalNumberInliers = numInliers;
+                optimal_cR_t_umeyama_transformation = cR_t_umeyama_3_points;
 //                assert(std::abs(maxProjectionErrorPixels - 2.0) < std::numeric_limits<double>::epsilon());
                 std::cout << "projection error got better -- new number of inliers = " << numInliers << std::endl;
                 Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
@@ -175,7 +177,7 @@ namespace gdr {
                 }
 
                 totalNumberInliers = numInliers;
-                optimal_cR_t_umeyama_transformation = umeyama(
+                auto inlier_optimal_cR_t_umeyama_transformation = umeyama(
                         toBeTransformedInlierPoints.block(0, 0, dim, numInliers),
                         destInlierPoints.block(0, 0, dim, numInliers));
                 attempt = i;
@@ -185,16 +187,19 @@ namespace gdr {
                                 toBeTransormedPoints,
                                 destinationPoints,
                                 cameraIntr3x3Destination,
-                                optimal_cR_t_umeyama_transformation,
+                                inlier_optimal_cR_t_umeyama_transformation,
                                 maxProjectionErrorPixels);
 
-                // TODO: every time estimation after LO gets worse -- why?!
+                // TODO: often estimation after Local Optimization gets worse -- why?!
                 std::cout << "after LO number Of Inliers is "
                           << projectionErrorsAndInlierIndicesAfterLocalOptimization.size()
                           << " vs " << numInliers;
 
-                if (projectionErrorsAndInlierIndicesAfterLocalOptimization.size() >= numInliers) {
+                if (projectionErrorsAndInlierIndicesAfterLocalOptimization.size() >= totalNumberInliers) {
                     std::cout << "____________________________________________GOT BETTER!!!!";
+                    optimal_cR_t_umeyama_transformation = inlier_optimal_cR_t_umeyama_transformation;
+                    totalNumberInliers = projectionErrorsAndInlierIndicesAfterLocalOptimization.size();
+
                 }
                 std::cout << std::endl;
             }

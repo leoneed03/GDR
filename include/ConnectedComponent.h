@@ -70,6 +70,8 @@ namespace gdr {
         int printRelativeRotationsToFile(const std::string& pathToFileRelativeRotations) const;
 
         std::vector<VertexCG*> getVerticesPointers();
+
+        int size() const;
     };
 
 }

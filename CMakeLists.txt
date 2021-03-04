@@ -129,7 +129,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
     ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp
     ${PROJECT_SOURCE_DIR}/src/ThreadPool.cpp
-    src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h src/BundleAduster.cpp include/BundleAduster.h src/SmoothPointCloud.cpp include/SmoothPointCloud.h src/KeyPointsDepthDescriptor.cpp include/KeyPointsDepthDescriptor.h include/ThreadPool.h src/ConnectedComponent.cpp include/ConnectedComponent.h src/RelativePoseSE3.cpp include/RelativePoseSE3.h)
+    src/Rotation3d.cpp include/Rotation3d.h src/RotationOptimizationRobust.cpp include/RotationOptimizationRobust.h src/Point3d.cpp include/Point3d.h src/CloudProjector.cpp include/CloudProjector.h src/KeyPointInfo.cpp include/KeyPointInfo.h src/PointMatcher.cpp include/PointMatcher.h src/ImageDrawer.cpp include/ImageDrawer.h src/AbsolutePose.cpp include/AbsolutePose.h src/BundleAduster.cpp include/BundleAduster.h src/SmoothPointCloud.cpp include/SmoothPointCloud.h src/KeyPointsDepthDescriptor.cpp include/KeyPointsDepthDescriptor.h include/ThreadPool.h src/ConnectedComponent.cpp include/ConnectedComponent.h src/RelativePoseSE3.cpp include/RelativePoseSE3.h include/ImagesAssociator.cpp include/ImagesAssociator.h)
 
 add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
 

@@ -23,7 +23,8 @@ namespace gdr {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        poseInfo(double newTimestamp, const Eigen::Quaterniond &newOrientationQuat,
+        poseInfo(double newTimestamp,
+                 const Eigen::Quaterniond &newOrientationQuat,
                  const Eigen::Vector3d &newCoordinates);
 
         poseInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation);

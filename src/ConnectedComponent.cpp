@@ -301,4 +301,8 @@ namespace gdr {
 
         return verticesPointers;
     }
+
+    int ConnectedComponentPoseGraph::size() const {
+        return absolutePoses.size();
+    }
 }

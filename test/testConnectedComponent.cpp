@@ -21,16 +21,23 @@
 // sometimes BA results are worse than IRLS so max error is multiplied by coefficient = 1.8
 TEST(testConnectedComponent, posesVisualization) {
 
+    // TODO: dataset timestamps are not synchronized: RGB camera runs faster!!!
     for (int iterations = 0; iterations < 1; ++iterations) {
-        int numberOfPosesInDataset = 19;
+        int numberOfPosesInDataset = 98;
         double minCoefficientOfBiggestComponent = 0.4;
         std::string numberOfPosesString = std::to_string(numberOfPosesInDataset);
         double coefficientR = 1.8;
         double coefficientT = 1.8;
-        gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_" + numberOfPosesString + "_3/rgb",
-                                                     "../../data/plantDataset_"  + numberOfPosesString + "_3/depth",
-                                                     517.3, 318.6,
-                                                     516.5, 255.3);
+
+        std::string datasetName = "large_cabinet_sampled_" + numberOfPosesString + "_10";
+        gdr::CorrespondenceGraph correspondenceGraph("../../data/" + datasetName + "/rgb",
+                                                     "../../data/" + datasetName + "/depth",
+                                                     535.4, 320.1,
+                                                     539.2, 247.6);
+//        gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_" + numberOfPosesString + "_3/rgb",
+//                                                     "../../data/plantDataset_"  + numberOfPosesString + "_3/depth",
+//                                                     517.3, 318.6,
+//                                                     516.5, 255.3);
         correspondenceGraph.computeRelativePoses();
         correspondenceGraph.bfsDrawToFile("../../tools/data/temp/connectedComponents_" + numberOfPosesString + ".dot");
         std::vector<gdr::ConnectedComponentPoseGraph> connectedComponentsPoseGraph =
@@ -46,8 +53,12 @@ TEST(testConnectedComponent, posesVisualization) {
         std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent.optimizeAbsoluteTranslations();
         std::vector<Sophus::SE3d> bundleAdjustedPoses = biggestComponent.performBundleAdjustmentUsingDepth();
 
-        std::string absolutePoses = "../../data/files/absolutePoses_" + numberOfPosesString + ".txt";
+        std::string absolutePoses = "../../data/" + datasetName + "/" + "groundtruth.txt";//"groundtruth_new.txt";
         std::vector<gdr::poseInfo> posesInfoFull = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
+
+        std::cout << "read poses GT: " << posesInfoFull.size() << std::endl;
+        assert(posesInfoFull.size() == numberOfPosesInDataset);
+        // #index output:
         std::set<int> indicesOfBiggestComponent = biggestComponent.initialIndices();
         std::vector<gdr::poseInfo> posesInfo;
 
@@ -56,6 +67,8 @@ TEST(testConnectedComponent, posesVisualization) {
                 posesInfo.emplace_back(posesInfoFull[poseIndex]);
             }
         }
+        std::cout << "sampled GT poses size: " << posesInfo.size() << std::endl;
+        assert(posesInfo.size() == biggestComponent.size());
 
         // compute absolute poses IRLS
         std::vector<Sophus::SE3d> posesIRLS;
@@ -208,6 +221,8 @@ TEST(testConnectedComponent, posesVisualization) {
         std::cout << "mean error translation: " << meanErrorT_BA_L2 << std::endl;
         std::cout << "mean error rotation: " << meanErrorR_BA_angDist << std::endl;
 
+        gdr::SmoothPointCloud smoothCloud;
+        smoothCloud.registerPointCloudFromImage(biggestComponent.getVerticesPointers());
         assert(posesGT.size() == bundleAdjustedPoses.size());
         assert(posesGT.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);
 
@@ -220,8 +235,6 @@ TEST(testConnectedComponent, posesVisualization) {
         ASSERT_LE(meanErrorT_BA_L2, meanErrorT_IRLS_L2 * coefficientT);
 
 
-        gdr::SmoothPointCloud smoothCloud;
-        smoothCloud.registerPointCloudFromImage(biggestComponent.getVerticesPointers());
     }
 
 }
