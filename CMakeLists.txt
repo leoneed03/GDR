@@ -55,14 +55,7 @@ ExternalProject_Add(
     -DPangolin_BUILD_NAME=${custom_Pangolin_BUILD_NAME}
     INSTALL_COMMAND "")
 
-#ExternalProject_Add(
-#  siftgpu
-#  SOURCE_DIR ${PROJECT_SOURCE_DIR}/siftgpu
-#  BUILD_IN_SOURCE 1
-#  BUILD_COMMAND $(MAKE) -j1
-#  INSTALL_COMMAND "")
-
- ExternalProject_Add(gtsam SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam"
+ExternalProject_Add(gtsam SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam"
  BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}" CONFIGURE_COMMAND
  cmake .. -DBUILD_SHARED_LIBS=0 -DGTSAM_USE_SYSTEM_EIGEN=1 -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF
      -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}

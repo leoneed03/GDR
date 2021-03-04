@@ -53,7 +53,7 @@ before_install:
 #  - sudo apt -y install libglew-dev
 #  - sudo apt-get install -y glew-utils
 #  - sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
-#  - sudo apt install python3-opencv
+  - sudo apt install python3-opencv
 #  - sudo apt-get -y install cmake
 #  - sudo apt-get -y install libboost-all-dev
 #
@@ -78,4 +78,4 @@ script:
   - mkdir build
   - cd build
   - cmake ..
-  - make -j6
+  - make
