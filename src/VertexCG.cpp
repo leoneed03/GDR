@@ -10,7 +10,7 @@ namespace gdr {
 
     VertexCG::VertexCG(int newIndex,
                        const CameraRGBD &newCameraRgbd,
-                       const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
+                       const std::vector<KeyPoint2D> &newKeypoints,
                        const std::vector<float> &newDescriptors,
                        const std::vector<double> &newDepths,
                        const std::string &newPathRGB,

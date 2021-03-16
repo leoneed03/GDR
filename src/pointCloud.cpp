@@ -106,7 +106,8 @@ namespace gdr {
      */
 
     Eigen::Matrix4Xd getPointCloudBeforeProjection(const std::vector<std::vector<double>> &pointsFromImageXYZ1,
-                                                   const CameraRGBD &cameraRgbd, bool isICP) {
+                                                   const CameraRGBD &cameraRgbd,
+                                                   bool isICP) {
 
         Eigen::Matrix4Xd points3D(4, pointsFromImageXYZ1.size());
 
@@ -115,7 +116,6 @@ namespace gdr {
             int dimXYZ1 = 4;
             assert(pointsFromImageXYZ1[i].size() == dimXYZ1);
             Eigen::Vector4d point(pointsFromImageXYZ1[i].data());
-
 
             double oldX = point[0];
             double oldY = point[1];

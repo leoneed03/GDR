@@ -10,7 +10,7 @@
 namespace gdr {
 
 
-    keyPointsDepthDescriptor::keyPointsDepthDescriptor(const std::vector<SiftGPU::SiftKeypoint> &newKeypointsKnownDepth,
+    keyPointsDepthDescriptor::keyPointsDepthDescriptor(const std::vector<KeyPoint2D> &newKeypointsKnownDepth,
                                                        const std::vector<float> &newDescriptorsKnownDepth,
                                                        const std::vector<double> &newDepths) :
             keypointsKnownDepth(newKeypointsKnownDepth),
@@ -21,7 +21,7 @@ namespace gdr {
         assert(depths.size() * 128 == descriptorsKnownDepth.size());
     }
 
-    const std::vector<SiftGPU::SiftKeypoint> &keyPointsDepthDescriptor::getKeyPointsKnownDepth() const {
+    const std::vector<KeyPoint2D> &keyPointsDepthDescriptor::getKeyPointsKnownDepth() const {
         return keypointsKnownDepth;
     }
 

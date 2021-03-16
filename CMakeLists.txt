@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.12.0)
 
 project(GDR)
 #enable_language(CUDA)
@@ -11,17 +11,19 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(GDR_FLAGS "")
+set(OpenGL_GL_PREFERENCE "LEGACY")
 
 find_package(TBB REQUIRED)
 find_package(METIS REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
-find_package(GLEW REQUIRED)
+#find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 
+#find_package(Python3 REQUIRED COMPONENTS Development Interpreter NumPy)
 find_package(Ceres REQUIRED)
 
 find_package(
@@ -80,8 +82,8 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/VertexCG.h
     ${PROJECT_SOURCE_DIR}/include/CorrespondenceGraph.h
     ${PROJECT_SOURCE_DIR}/include/transformationRt.h
-    ${PROJECT_SOURCE_DIR}/include/cameraRGBD.h
-    ${PROJECT_SOURCE_DIR}/include/siftModule.h
+        include/parametrization/cameraRGBD.h
+        ${PROJECT_SOURCE_DIR}/include/SiftModuleGPU.h
     ${PROJECT_SOURCE_DIR}/include/groundTruthTransformer.h
     ${PROJECT_SOURCE_DIR}/include/rotationAveraging.h
     ${PROJECT_SOURCE_DIR}/include/quaternions.h
@@ -111,7 +113,10 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/KeyPointsDepthDescriptor.h
     ${PROJECT_SOURCE_DIR}/include/ConnectedComponent.h
     ${PROJECT_SOURCE_DIR}/include/RelativePoseSE3.h
-    ${PROJECT_SOURCE_DIR}/include/ImagesAssociator.h)
+    ${PROJECT_SOURCE_DIR}/include/ImagesAssociator.h
+        include/LossHuber.h
+        ${PROJECT_SOURCE_DIR}/include/gnuplot_interface.h
+        ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/Estimator3Points.h include/relativePoseEstimators/InlierCounter.h include/relativePoseEstimators/IEstimatorRelativePoseRobust.h include/relativePoseEstimators/ParamsRANSAC.h)
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/keyFeatures.cpp
@@ -119,8 +124,8 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/VertexCG.cpp
     ${PROJECT_SOURCE_DIR}/src/CorrespondenceGraph.cpp
     ${PROJECT_SOURCE_DIR}/src/transformationRt.cpp
-    ${PROJECT_SOURCE_DIR}/src/cameraRGBD.cpp
-    ${PROJECT_SOURCE_DIR}/src/siftModule.cpp
+        src/parametrization/cameraRGBD.cpp
+        ${PROJECT_SOURCE_DIR}/src/SiftModuleGPU.cpp
     ${PROJECT_SOURCE_DIR}/src/groundTruthTransformer.cpp
     ${PROJECT_SOURCE_DIR}/src/rotationAveraging.cpp
     ${PROJECT_SOURCE_DIR}/src/quaternions.cpp
@@ -148,7 +153,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/KeyPointsDepthDescriptor.cpp
     ${PROJECT_SOURCE_DIR}/src/ConnectedComponent.cpp
     ${PROJECT_SOURCE_DIR}/src/RelativePoseSE3.cpp
-    ${PROJECT_SOURCE_DIR}/src/ImagesAssociator.cpp)
+    ${PROJECT_SOURCE_DIR}/src/ImagesAssociator.cpp src/KeyPoint2D.cpp include/KeyPoint2D.h src/LossHuber.cpp include/LossFunctions.h include/ISiftModule.h src/relativePoseEstimators/Estimator3Points.cpp src/relativePoseEstimators/EstimatorNPoints.cpp include/relativePoseEstimators/EstimatorNPoints.h src/relativePoseEstimators/EstimatorRobustLoRANSAC.cpp include/relativePoseEstimators/EstimatorRobustLoRANSAC.h include/parametrization/SE3.h src/parametrization/SE3.cpp src/relativePoseEstimators/InlierCounter.cpp src/relativePoseEstimators/ParamsRANSAC.cpp)
 
 add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
 
@@ -193,8 +198,11 @@ target_link_libraries(
     ${CERES_LIBRARIES}
 #    ${PCL_LIBRARY_DIRS}
     ${PCL_LIBRARIES}
+#        Python3::Python
+#        Python3::NumPy
 #  ceres
 )
+
 
 target_include_directories(
   GDR_LIB

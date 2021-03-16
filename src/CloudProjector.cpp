@@ -7,6 +7,10 @@
 #include "pointCloud.h"
 #include "BundleAduster.h"
 
+#include "KeyPoint2D.h"
+
+#include "boost/filesystem.hpp"
+
 namespace gdr {
 
     void CloudProjector::setPoses(const std::vector<VertexCG *> &cameraPoses) {
@@ -214,7 +218,8 @@ namespace gdr {
 //            if (numbersOfPosesObservingSpecificPoint[i][0] != 16 || numbersOfPosesObservingSpecificPoint[i].size() <= 1) //|| keyPointInfoByPose[numbersOfPosesObservingSpecificPoint[i][0]].find(i)->second.getDepth() < 2.0) {
 //            {   continue;
 //            }
-            if (numbersOfPosesObservingSpecificPoint[i][0] < 10 || numbersOfPosesObservingSpecificPoint[i].size() <= 3) {
+            if (numbersOfPosesObservingSpecificPoint[i][0] < 10 ||
+                numbersOfPosesObservingSpecificPoint[i].size() <= 3) {
                 continue;
             }
             shown = true;
@@ -241,7 +246,8 @@ namespace gdr {
 
                 // without inverse better.....
                 // PositionMatrix * Global_ie_LocalZeroFrameCoordinates = LocalCurrentFrameCoordinates TODO
-                Eigen::Vector3d projected = cameraIntr * poses[poseIndex]->getEigenMatrixAbsolutePose4d().inverse() * pointGlobal;
+                Eigen::Vector3d projected =
+                        cameraIntr * poses[poseIndex]->getEigenMatrixAbsolutePose4d().inverse() * pointGlobal;
                 double projectedX = projected[0] / projected[2];
                 double projectedY = projected[1] / projected[2];
 //                projectedX = 640 - projectedX;
@@ -288,9 +294,175 @@ namespace gdr {
         }
 
 
+    }
 
-    };
 
+    std::vector<cv::Mat> CloudProjector::showPointsReprojectionError(
+            const std::vector<Point3d> &pointsGlobalCoordinates,
+            const std::string &pathToRGBDirectoryToSave,
+            std::vector<double>& totalL2Errors,
+            const CameraRGBD& camerasFromTo,
+            int maxPointsToShow,
+            bool drawCirclesKeyPoints,
+            double quantil) const {
+
+        double tresholdReprojInlier = 2.0;
+        std::vector<cv::Mat> resultImages;
+        assert(numbersOfPosesObservingSpecificPoint.size() == pointsGlobalCoordinates.size());
+
+        std::vector<cv::Mat> imagesToShowKeyPoints;
+
+        std::vector<double> sumL2Errors(poses.size(), 0);
+        std::vector<std::vector<std::pair<KeyPoint2D, KeyPoint2D>>>
+                keyPointsRealAndComputedByImageIndex(poses.size());
+
+        for (int poseIndexComponent = 0; poseIndexComponent < poses.size(); ++poseIndexComponent) {
+            cv::Mat imageNoKeyPoints = cv::imread(poses[poseIndexComponent]->getPathRGBImage(), cv::IMREAD_COLOR);
+            imagesToShowKeyPoints.emplace_back(imageNoKeyPoints);
+        }
+
+        assert(imagesToShowKeyPoints.size() == poses.size());
+
+        for (int i = 0; i < numbersOfPosesObservingSpecificPoint.size(); ++i) {
+
+            assert(!numbersOfPosesObservingSpecificPoint[i].empty());
+
+            for (const auto &poseIndex: numbersOfPosesObservingSpecificPoint[i]) {
+
+                KeyPointInfo p = keyPointInfoByPose[poseIndex].find(i)->second;
+                KeyPoint2D keyPointToShow(p.getX(), p.getY(), p.getScale(), p.getOrientation());
+                keyPointToShow.setDepth(p.getDepth());
+
+                const auto &camera = poses[poseIndex]->getCamera();
+                auto cameraIntr = BundleAdjuster::getCameraIntr<double>(camera.fx, camera.cx, camera.fy, camera.cy);
+                Eigen::Vector4d pointGlobal = pointsGlobalCoordinates[i].getEigenVector4dPointXYZ1();
+
+                // without inverse better.....
+                // PositionMatrix * Global_ie_LocalZeroFrameCoordinates = LocalCurrentFrameCoordinates TODO
+                Eigen::Vector4d globalCoordinatesMoved = poses[poseIndex]->getEigenMatrixAbsolutePose4d().inverse() * pointGlobal;
+                Eigen::Vector3d projected = cameraIntr * globalCoordinatesMoved;
+                double projectedX = projected[0] / projected[2];
+                double projectedY = projected[1] / projected[2];
+                KeyPoint2D keyPointComputed(projectedX, projectedY, p.getScale(), p.getOrientation());
+                keyPointComputed.setDepth(globalCoordinatesMoved[2]);
+                assert(std::abs(projectedX - keyPointComputed.getX()) < std::numeric_limits<double>::epsilon());
+//                double res = (keyPointComputed.pt. - keyPointToShow.pt);
+                keyPointsRealAndComputedByImageIndex[poseIndex].emplace_back(
+                        std::make_pair(keyPointToShow, keyPointComputed));
+
+            }
+        }
+
+        for (int imageIndex = 0; imageIndex < imagesToShowKeyPoints.size(); ++imageIndex) {
+            auto &pairsOfKeyPoints = keyPointsRealAndComputedByImageIndex[imageIndex];
+
+            std::vector<double> errorsL2;
+            for (const auto& lhs: pairsOfKeyPoints) {
+                auto &leftKeyPointReal = lhs.first;
+                auto &leftKeyPointComputed = lhs.second;
+                Eigen::Vector3d computedCoordinates3DXYZ = poses[imageIndex]->getCamera()
+                        .getCoordinates3D(leftKeyPointComputed.getX(),
+                                          leftKeyPointComputed.getY(),
+                                          leftKeyPointComputed.getDepth());
+                assert(leftKeyPointComputed.isDepthUsable());
+
+
+                Eigen::Vector3d observedCoordinates3DXYZ = poses[imageIndex]->getCamera()
+                        .getCoordinates3D(leftKeyPointReal.getX(),
+                                          leftKeyPointReal.getY(),
+                                          leftKeyPointReal.getDepth());
+                assert(leftKeyPointReal.isDepthUsable());
+                double xError = leftKeyPointReal.getX() - leftKeyPointComputed.getX();
+                double yError = leftKeyPointReal.getY() - leftKeyPointComputed.getY();
+                double errorL2 = (observedCoordinates3DXYZ - computedCoordinates3DXYZ).norm();
+//                double errorL2 = std::sqrt(std::pow(xError, 2) + std::pow(yError, 2));
+                errorsL2.emplace_back(errorL2);
+            }
+            std::sort(errorsL2.begin(), errorsL2.end());
+            sumL2Errors[imageIndex] = errorsL2[errorsL2.size() * quantil];
+
+            std::sort(pairsOfKeyPoints.begin(), pairsOfKeyPoints.end(),
+                      [](const std::pair<KeyPoint2D, KeyPoint2D> &lhs,
+                         const std::pair<KeyPoint2D, KeyPoint2D> &rhs) {
+                          auto &leftKeyPointReal = lhs.first;
+                          auto &leftKeyPointComputed = lhs.second;
+
+                          auto &rightKeyPointReal = rhs.first;
+                          auto &rightKeyPointComputed = rhs.second;
+
+
+                          return std::pow(leftKeyPointReal.getX() - leftKeyPointComputed.getX(), 2) +
+                                 std::pow(leftKeyPointReal.getY() - leftKeyPointComputed.getY(), 2)
+                                 >
+                                 std::pow(rightKeyPointReal.getX() - rightKeyPointComputed.getX(), 2) +
+                                 std::pow(rightKeyPointReal.getY() - rightKeyPointComputed.getY(), 2);
+                      });
+
+            if (maxPointsToShow >= 0 && maxPointsToShow < pairsOfKeyPoints.size()) {
+                pairsOfKeyPoints.resize(maxPointsToShow);
+            }
+            auto &imageNoKeyPoints = imagesToShowKeyPoints[imageIndex];
+            auto imageKeyPoints = imageNoKeyPoints;
+
+
+            std::vector<KeyPoint2D> keyPointsToShow;
+            std::vector<KeyPoint2D> keyPointsExactToShow;
+            for (int keyPointPairIndex = 0;
+                 keyPointPairIndex < keyPointsRealAndComputedByImageIndex[imageIndex].size(); ++keyPointPairIndex) {
+                const auto &keyPointsPair = keyPointsRealAndComputedByImageIndex[imageIndex][keyPointPairIndex];
+                const auto &keyPointReal = keyPointsPair.first;
+                const auto &keyPointComputed = keyPointsPair.second;
+                keyPointsToShow.emplace_back(keyPointsPair.first);
+                keyPointsToShow.emplace_back(keyPointsPair.second);
+                double errorReproj = std::sqrt(std::pow(keyPointReal.getX() - keyPointComputed.getX(), 2) +
+                                                       std::pow(keyPointReal.getY() - keyPointComputed.getY(), 2));
+                if (errorReproj < tresholdReprojInlier) {
+                    keyPointsExactToShow.emplace_back(keyPointsPair.first);
+                    keyPointsExactToShow.emplace_back(keyPointsPair.second);
+                }
+            }
+
+            int linesToDrawDoubled = (maxPointsToShow < 0) ? (keyPointsToShow.size()) : (std::min(maxPointsToShow * 2, static_cast<int> (keyPointsToShow.size())));
+
+            std::vector<cv::KeyPoint> keyPointsToShowCV;
+
+            for (const auto& keyPoint: keyPointsToShow) {
+                keyPointsToShowCV.emplace_back(cv::KeyPoint(cv::Point2f(keyPoint.getX(), keyPoint.getY()), keyPoint.getScale()));
+            }
+            if (drawCirclesKeyPoints) {
+                cv::drawKeypoints(imageNoKeyPoints, keyPointsToShowCV, imageKeyPoints);
+            } else {
+                std::vector<cv::KeyPoint> keyPointsExactToShowCV;
+
+                for (const auto& keyPoint: keyPointsExactToShow) {
+                    keyPointsExactToShowCV.emplace_back(cv::KeyPoint(cv::Point2f(keyPoint.getX(), keyPoint.getY()), keyPoint.getScale()));
+                }
+                cv::drawKeypoints(imageNoKeyPoints, keyPointsExactToShowCV, imageKeyPoints);
+            }
+
+
+            for (int i = 0; i < linesToDrawDoubled; i += 2) {
+                int indexReal = i;
+                int indexComuted = i + 1;
+                cv::line(imageKeyPoints, keyPointsToShowCV[indexReal].pt, keyPointsToShowCV[indexComuted].pt,
+                         cv::Scalar(0, 255, 0), 1, CV_AA);
+            }
+
+            std::string shortNameImage = std::to_string(imageIndex) + ".png";
+//            boost::filesystem::path pathToSaveImage = pathToRemove;
+//            pathToSaveImage.append(shortNameImage);
+//
+            resultImages.emplace_back(imageKeyPoints);
+//            cv::imwrite(pathToSaveImage.string(), imageKeyPoints);
+
+//            cv::imshow(nameToSave, imageKeyPoints);
+//            cv::waitKey(0);
+        }
+
+        totalL2Errors = sumL2Errors;
+        return resultImages;
+
+    }
 
     const std::vector<std::unordered_map<int, KeyPointInfo>>
     CloudProjector::getKeyPointInfoByPoseNumberAndPointClass() const {

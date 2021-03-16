@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "cameraRGBD.h"
+#include "parametrization/cameraRGBD.h"
 
 namespace gdr {
 
@@ -33,6 +33,19 @@ namespace gdr {
         intrinsicsMatrix.col(2)[2] = 1;
 
         return intrinsicsMatrix;
+    }
+
+    Eigen::Vector3d CameraRGBD::getCoordinates3D(double xHorizontal, double yVertical, double depth) const {
+
+        double X = 1.0 * (xHorizontal - cx) * depth / fx;
+        double Y = 1.0 * (yVertical - cy) * depth / fy;
+
+        Eigen::Vector3d coordinates3D;
+        coordinates3D[0] = X;
+        coordinates3D[1] = Y;
+        coordinates3D[2] = depth;
+
+        return coordinates3D;
     }
 
 }

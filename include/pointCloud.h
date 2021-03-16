@@ -9,7 +9,7 @@
 #include <Eigen/Eigen>
 #include <opencv2/opencv.hpp>
 
-#include "cameraRGBD.h"
+#include "parametrization/cameraRGBD.h"
 
 namespace gdr {
 //    Eigen::Vector3d mirrorPoint(const Eigen::Vector3d &point, double mirrorParamH = 480, double mirrorParamW = 640);

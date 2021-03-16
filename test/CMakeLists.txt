@@ -1,7 +1,8 @@
 set(TESTS testVisualizePointCloud
     #testICP
-        testImageAssociator
+    testImageAssociator
     testConnectedComponent
+    testAccuracyBA
     testBundleAdjustment testAbsolutePoseStructure testAbsoluteTranslationsComputation testAbsoluteRotationsComputation testPointCloudCorrespondences testPoint3dRepresentation testRotationRepresentation testRelativePoseExtraction testUmeyamaRansac testPoseFileCreation testRelativePosesComputation testRotationAveraging testTranslationAveraging testVectors3dRepresentation testRobustRotationOptimization)
 
 foreach(TEST ${TESTS})

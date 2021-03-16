@@ -13,19 +13,34 @@
 #include "ImagesAssociator.h"
 
 
-
 // sometimes BA results are worse than IRLS so max error is multiplied by coefficient = 1.8
-TEST(testImageAssosiator, associateFilesDefaultTreshold) {
+TEST(testImageAssosiator, associateSmallDataset) {
 
     std::set<int> indices;
-    for (int i = 0; i < 1000; i += 10) {
+    for (int i = 0; i < 30; i += 10) {
         indices.insert(i);
     }
     std::string pathToDataset = "/home/leo/Desktop/datasets/rgbd_dataset_freiburg1_plant";
     gdr::ImageAssociator imageAssociator(pathToDataset);
 
     imageAssociator.AssociateImagePairs();
-    imageAssociator.exportAllInfoToDirectory("../../data/plant_sampled_101_10",
+    imageAssociator.exportAllInfoToDirectory("../../data/plant_sampled_3_10",
+                                             indices);
+
+}
+
+// sometimes BA results are worse than IRLS so max error is multiplied by coefficient = 1.8
+TEST(testImageAssosiator, associateFilesDefaultTreshold) {
+
+    std::set<int> indices;
+    for (int i = 0; i < 3000; i += 30) {
+        indices.insert(i);
+    }
+    std::string pathToDataset = "/home/leo/Desktop/datasets/rgbd_dataset_freiburg2_desk";
+    gdr::ImageAssociator imageAssociator(pathToDataset);
+
+    imageAssociator.AssociateImagePairs();
+    imageAssociator.exportAllInfoToDirectory("../../data/desk2_sampled_100_30",
                                              indices);
 
 }

@@ -17,14 +17,15 @@ namespace gdr {
         float cx = 319.5;
         float cy = 239.5;
 
+        CameraRGBD() = default;
+
         CameraRGBD(float fx, float cx, float fy, float cy);
 
         Eigen::Matrix3Xd getIntrinsicsMatrix3x4() const;
 
         Eigen::Matrix3d getIntrinsicsMatrix3x3() const;
 
-
-
+        Eigen::Vector3d getCoordinates3D(double xHorizontal, double yVertical, double depth) const;
     };
 }
 

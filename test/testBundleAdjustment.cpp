@@ -21,6 +21,7 @@
 #include "poseEstimation.h"
 #include "CorrespondenceGraph.h"
 #include "groundTruthTransformer.h"
+#include "SmoothPointCloud.h"
 
 #include <tbb/task.h>
 #include <tbb/task_group.h>
@@ -290,15 +291,39 @@ TEST(testBundleAdjustment, allPosesAreOptimizedBundleAdjustmentNoDepth) {
     ASSERT_LE(meanErrorT_L2, 0.05);
 }
 
+#include "ceres/ceres.h"
+
 TEST(testBundleAdjustment, allPosesAreOptimizedBundleAdjustmentUsingDepth_iterations) {
 
+
+//    std::function<double(double)> square = [](double x){return x * x;};
+//
+//    for (double d = 0.0; d < 2; d += 0.2) {
+//        double valueSquared = square(d) - d * d;
+//        std::cout << d << " vs " << valueSquared << std::endl;
+//        assert(std::abs(square(d) - d * d) < std::numeric_limits<double>::epsilon());
+//    }
+//    double a = 2.0;
+//    ceres::LossFunctionWrapper lossFunctionWrapper(new ceres::SoftLOneLoss(a), ceres::TAKE_OWNERSHIP);
+////    ceres::SoftLOneLoss softL1(1.0);
+//    for (double x = 0; x < 3; x += 0.1) {
+//        std::vector<double> out(3, -1);
+//        lossFunctionWrapper.Evaluate(x, out.data());
+//        double manual = 2 * (std::sqrt(1 + x) - 1);
+//        double manualA = a * a * (2 * (std::sqrt(1 + x / a / a) - 1));
+//        std::cout << x << " -> h(x) = " << out[0] << " vs " << manualA << " diff: " << std::abs(manualA - out[0]) << std::endl;
+//        assert(std::abs(manualA - out[0]) < std::numeric_limits<double>::epsilon());
+//    }
+//    exit(1);
     for (int iterations = 0; iterations < 1; ++iterations) {
-        gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb",
+        gdr::CorrespondenceGraph correspondenceGraphAll("../../data/plantDataset_19_3/rgb",
                                                      "../../data/plantDataset_19_3/depth",
                                                      517.3,318.6,
                                                      516.5, 255.3);
-        correspondenceGraph.computeRelativePoses();
-        correspondenceGraph.printConnectionsRelative(std::cout);
+        correspondenceGraphAll.computeRelativePoses();
+        auto components = correspondenceGraphAll.splitGraphToConnectedComponents();
+        auto& correspondenceGraph = components[0];
+//        correspondenceGraph.printConnectionsRelative(std::cout);
         std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
         std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
         std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = correspondenceGraph.optimizeAbsoluteTranslations();
@@ -353,6 +378,10 @@ TEST(testBundleAdjustment, allPosesAreOptimizedBundleAdjustmentUsingDepth_iterat
         std::cout << "mean error rotation: " << meanErrorR_angDist << std::endl;
         std::cout << "max error translation: " << maxErrorT << std::endl;
         std::cout << "mean error rotation: " << maxErrorR << std::endl;
+
+
+        gdr::SmoothPointCloud smoothCloud;
+        smoothCloud.registerPointCloudFromImage(correspondenceGraph.getVerticesPointers());
         ASSERT_LE(meanErrorR_angDist, 0.02);
         ASSERT_LE(meanErrorT_L2, 0.02);
         ASSERT_LE(maxErrorR, 0.05);

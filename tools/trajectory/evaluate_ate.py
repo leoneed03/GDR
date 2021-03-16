@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2013, Juergen Sturm, TUM
@@ -38,11 +39,14 @@
 This script computes the absolute trajectory error from the ground truth
 trajectory and the estimated trajectory.
 """
+from __future__ import with_statement  # Not required in Python 2.6 any more
 
-import sys
-import numpy
 import argparse
+import numpy
+import sys
+
 import associate
+
 
 def align(model,data):
     """Align two trajectories using the method of Horn (closed-form).
@@ -175,20 +179,19 @@ if __name__=="__main__":
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-        import matplotlib.pylab as pylab
-        from matplotlib.patches import Ellipse
+
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        plot_traj(ax,first_stamps,first_xyz_full.transpose().A,'-',"black","ground truth")
-        plot_traj(ax,second_stamps,second_xyz_full_aligned.transpose().A,'-',"blue","estimated")
+        plot_traj(ax,first_stamps,first_xyz_full.transpose().A,'-',"black",u'Точная траектория')
+        plot_traj(ax,second_stamps,second_xyz_full_aligned.transpose().A,'-',"blue",u'Оцененная траектория')
 
-        label="difference"
+        label=u'Разница'
         for (a,b),(x1,y1,z1),(x2,y2,z2) in zip(matches,first_xyz.transpose().A,second_xyz_aligned.transpose().A):
             ax.plot([x1,x2],[y1,y2],'-',color="red",label=label)
             label=""
 
         ax.legend()
 
-        ax.set_xlabel('x [m]')
-        ax.set_ylabel('y [m]')
+        ax.set_xlabel(u'x [м]')
+        ax.set_ylabel(u'y [м]')
         plt.savefig(args.plot,dpi=90)

@@ -13,11 +13,17 @@ namespace gdr {
     BundleAdjuster::BundleAdjuster(const std::vector<Point3d> &points,
                                    const std::vector<std::pair<Sophus::SE3d, CameraRGBD>> &absolutePoses,
                                    const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo) {
+
+        lossFunctionWrapperReprojectionError = std::make_shared<ceres::LossFunctionWrapper>(new ceres::HuberLoss(1.0),
+                                                                                            ceres::TAKE_OWNERSHIP);
+        lossFunctionWrapperDepthError = std::make_shared<ceres::LossFunctionWrapper>(new ceres::HuberLoss(1.0),
+                                                                                     ceres::TAKE_OWNERSHIP);
+
         assert(keyPointinfo.size() == absolutePoses.size());
         assert(!absolutePoses.empty());
         assert(absolutePoses.size() > 0);
-        double widthAssert = 640;
-        double heightAssert = 480;
+//        double widthAssert = 640;
+//        double heightAssert = 480;
         std::cout << "poses: " << absolutePoses.size() << std::endl;
         for (const auto &point: points) {
             pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
@@ -25,12 +31,11 @@ namespace gdr {
 
         for (const auto &mapIntInfo: keyPointinfo) {
             for (const auto &pairIntInfo: mapIntInfo) {
-                assert(pairIntInfo.second.getX() < widthAssert && pairIntInfo.second.getX() >= 0);
-                assert(pairIntInfo.second.getY() < heightAssert && pairIntInfo.second.getY() >= 0);
+                assert(pairIntInfo.second.getX() >= 0);
+                assert(pairIntInfo.second.getY() >= 0);
             }
         }
         keyPointInfoByPoseNumberAndPointNumber = keyPointinfo;
-
 
         for (const auto &pose: absolutePoses) {
             const auto &translation = pose.first.translation();
@@ -49,6 +54,66 @@ namespace gdr {
         assert(keyPointinfo.size() == keyPointInfoByPoseNumberAndPointNumber.size());
         assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
 
+    }
+
+    std::pair<std::vector<double>, std::vector<double>>
+    BundleAdjuster::getNormalizedErrorsReprojectionAndDepth(bool performNormalizing) {
+
+        std::vector<double> errorsReprojectionXY;
+        std::vector<double> errorsDepth;
+
+        double minScale = std::numeric_limits<double>::infinity();
+        double maxScale = -1;
+
+        for (int currPose = 0; currPose < poseTxTyTzByPoseNumber.size(); ++currPose) {
+            for (const auto &keyPointInfosByPose: keyPointInfoByPoseNumberAndPointNumber[currPose]) {
+
+                int currPoint = keyPointInfosByPose.first;
+                const auto &camera = cameraModelByPoseNumber[currPose];
+                const auto poseTransformation = getSE3TransformationMatrixByPoseNumber(currPose);
+                const auto point3d = getPointVector4dByPointGlobalIndex(currPoint);
+                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation.inverse().matrix3x4() * point3d;
+                Eigen::Vector3d imageCoordinates = camera.getIntrinsicsMatrix3x3() * localCameraCoordinatesOfPoint;
+                double computedX = imageCoordinates[0] / imageCoordinates[2];
+                double computedY = imageCoordinates[1] / imageCoordinates[2];
+                double computedDepth = localCameraCoordinatesOfPoint[2];
+
+                const auto &keyPointInfo = keyPointInfoByPoseNumberAndPointNumber[currPose][currPoint];
+
+                minScale = std::min(minScale, keyPointInfo.getScale());
+                maxScale = std::max(maxScale, keyPointInfo.getScale());
+                assert(keyPointInfo.isInitialized());
+
+                double errorX = std::abs(computedX - keyPointInfo.getX());
+                double errorY = std::abs(computedY - keyPointInfo.getY());
+
+                Sophus::Vector2d errorReproj(errorX, errorY);
+                double normalizedReprojError =
+                        reprojectionErrorNormalizer(errorReproj.lpNorm<2>(),
+                                                    keyPointInfo.getScale(),
+                                                    defaultLinearParameterNoiseModelReprojectionBA);
+                double rawReprojError = errorReproj.lpNorm<2>();
+                double reprojErrorToUse = performNormalizing ? normalizedReprojError : rawReprojError;
+                errorsReprojectionXY.emplace_back(reprojErrorToUse);
+
+                double depthError = std::abs(computedDepth - keyPointInfo.getDepth());
+                double normalizedErrorDepth = depthErrorNormalizer(depthError,
+                                                                   keyPointInfo.getDepth(),
+                                                                   defaultQuadraticParameterNoiseModelDepth);
+                double depthErrorToUse = performNormalizing ? normalizedErrorDepth : depthError;
+                std::cout << "keyPoint Depth " << keyPointInfo.getDepth() << " error is " << depthError
+                          << " & normalized: " << normalizedErrorDepth << std::endl;
+                assert(std::abs(normalizedErrorDepth -
+                                depthError / (0.003331 * (keyPointInfo.getDepth() * keyPointInfo.getDepth()))) <
+                       10 * std::numeric_limits<double>::epsilon());
+                errorsDepth.emplace_back(depthErrorToUse);
+            }
+        }
+
+        assert(errorsReprojectionXY.size() == errorsDepth.size());
+        assert(!errorsReprojectionXY.empty());
+
+        return {errorsReprojectionXY, errorsDepth};
     }
 
     std::vector<Sophus::SE3d> BundleAdjuster::optimizePointsAndPoses(int indexFixed) {
@@ -180,8 +245,38 @@ namespace gdr {
         return pointsOtimized;
     }
 
-    // get median and max errors: reprojection OX and OY and Depth: [{OX, OY, Depth}_median, {OX, OY, Depth}_max, {OX, OY, Depth}_min]
+    double RobustEtimators::getMedian(const std::vector<double> &values, double quantile) {
+        std::vector<double> valuesToSort = values;
 
+        assert(quantile >= 0.0 && quantile <= 1.0);
+        int indexMedianOfMeasurements = valuesToSort.size() * quantile;
+
+        std::nth_element(valuesToSort.begin(),
+                         valuesToSort.begin() + indexMedianOfMeasurements,
+                         valuesToSort.end());
+        return valuesToSort[indexMedianOfMeasurements];
+    }
+
+    double RobustEtimators::getMedianAbsoluteDeviationMultiplied(const std::vector<double> &values,
+                                                                 double multiplier) {
+
+        double medianValue = getMedian(values);
+
+        std::vector<double> residuesMedian;
+        residuesMedian.reserve(values.size());
+
+        for (const auto &value: values) {
+            residuesMedian.emplace_back(std::abs(value - medianValue));
+        }
+
+        assert(residuesMedian.size() == values.size());
+
+        double medianAbsoluteDeviation = getMedian(residuesMedian);
+
+        return medianAbsoluteDeviation * multiplier;
+    }
+
+// get median and max errors: reprojection OX and OY and Depth: [{OX, OY, Depth}_median, {OX, OY, Depth}_max, {OX, OY, Depth}_min]
     std::vector<double> BundleAdjuster::getMedianErrorsXYDepth() {
 
         std::vector<double> errorsReprojectionX;
@@ -247,8 +342,8 @@ namespace gdr {
                 medianErrorDepthquant90};
     }
 
-    // each unordered map maps from poseNumber to unordered map
-    // mapping from keyPointGlobalIndex to {errorPixelX, errorPixelY}
+// each unordered map maps from poseNumber to unordered map
+// mapping from keyPointGlobalIndex to {errorPixelX, errorPixelY}
     std::vector<Sophus::SE3d> BundleAdjuster::optimizePointsAndPosesUsingDepthInfo(int indexFixed) {
 
 
@@ -270,6 +365,30 @@ namespace gdr {
         std::cout << "started BA [depth using] ! " << std::endl;
         assert(orientationsqxyzwByPoseNumber.size() == poseTxTyTzByPoseNumber.size());
         assert(!orientationsqxyzwByPoseNumber.empty());
+
+        std::pair<double, double> deviationEstimatorsSigmaReprojAndDepth = getSigmaReprojectionAndDepth();
+        double sigmaReproj = deviationEstimatorsSigmaReprojAndDepth.first;
+        double sigmaDepth = deviationEstimatorsSigmaReprojAndDepth.second;
+
+        //errors without "normalizing" i.e. dividing by deviation estimation sigma_ij
+        std::pair<std::vector<double>, std::vector<double>> errorsReprojDepthRaw =
+                getNormalizedErrorsReprojectionAndDepth(false);
+
+        double medianErrorReprojRaw = RobustEtimators::getMedian(errorsReprojDepthRaw.first);
+        double medianErrorDepthRaw = RobustEtimators::getMedian(errorsReprojDepthRaw.second);
+        auto errors3DL2Raw = getL2Errors();
+        double medianErrorL2Raw = RobustEtimators::getMedian(errors3DL2Raw);
+
+        assert(errors3DL2Raw.size() == errorsReprojDepthRaw.first.size());
+
+        std::cout << "deviation estimation sigmas are (pixels) " << sigmaReproj << " && (meters) " << sigmaDepth
+                  << std::endl;
+//
+//        lossFunctionWrapperReprojectionError->Reset(new ceres::HuberLoss(sigmaReproj * sigmaReproj),
+//                                                    ceres::TAKE_OWNERSHIP);
+//        lossFunctionWrapperDepthError->Reset(new ceres::HuberLoss(sigmaDepth * sigmaDepth),
+//                                             ceres::TAKE_OWNERSHIP);
+
         for (int poseIndex = 0; poseIndex < poseTxTyTzByPoseNumber.size(); ++poseIndex) {
 
 //            std::cout << "init pose " << poseIndex << std::endl;
@@ -301,16 +420,23 @@ namespace gdr {
                 assert(observedX > 0 && observedX < widthAssert);
                 assert(observedY > 0 && observedY < heightAssert);
 
+                double deviationEstReprojByScale = dividerReprojectionError(keyPointInfo.getScale(),
+                                                                            defaultLinearParameterNoiseModelReprojectionBA);
+                double deviationEstDepthByDepth = dividerDepthError(keyPointInfo.getDepth(),
+                                                                    defaultQuadraticParameterNoiseModelDepth);
+
                 ceres::CostFunction *cost_function =
                         ReprojectionWithDepthError::Create(observedX, observedY, keyPointInfo.getDepth(),
                                                            keyPointInfo.getScale(),
                                                            cameraModelByPoseNumber[poseIndex],
-                                                           medianErrorX, medianErrorY, medianErrorDepth);
+                                                           sigmaReproj, sigmaDepth,
+                                                           deviationEstReprojByScale, deviationEstDepthByDepth,
+                                                           medianErrorReprojRaw, medianErrorDepthRaw);
                 // no robustness at the moment
                 problem.AddResidualBlock(cost_function,
-//                                         nullptr,
+                                         nullptr,
 //                                         new ceres::CauchyLoss(0.5),
-                                         new ceres::HuberLoss(2.0),
+//                                         new ceres::HuberLoss(2.0),
                                          point.data(),
                                          pose.data(),
                                          orientation.data());
@@ -325,7 +451,7 @@ namespace gdr {
 //        options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
         options.linear_solver_type = ceres::SPARSE_SCHUR;
         options.minimizer_progress_to_stdout = true;
-        options.max_num_iterations = 100;
+        options.max_num_iterations = 200;
         options.num_threads = 6;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
@@ -338,6 +464,27 @@ namespace gdr {
         std::cout << "Threads used " << summary.num_threads_used << std::endl;
 
         std::cout << "BA usable" << std::endl;
+
+
+        std::pair<std::vector<double>, std::vector<double>> errorsReprojDepthRawAfter =
+                getNormalizedErrorsReprojectionAndDepth(false);
+
+        double medianErrorReprojRawAfter = RobustEtimators::getMedian(errorsReprojDepthRawAfter.first);
+        double medianErrorDepthRawAfter = RobustEtimators::getMedian(errorsReprojDepthRawAfter.second);
+        double medianErrorL2RawAfter = RobustEtimators::getMedian(getL2Errors());
+
+        std::cout << "-----------------------------------------------------" << std::endl;
+
+        std::cout << "medians [m] L2 3D errors before: " << medianErrorL2Raw
+                  << " & \tafter: " << medianErrorL2RawAfter << '\n';
+
+        std::cout << "-----------------------------------------------------" << std::endl;
+
+        std::cout << "medians [pixels] L2 reproj before: " << medianErrorReprojRaw
+                  << " & \tafter: " << medianErrorReprojRawAfter << '\n';
+
+        std::cout << "medians [m] depth before: " << medianErrorDepthRaw
+                  << " & \tafter : " << medianErrorDepthRawAfter << std::endl;
 
         std::vector<double> mediansAfter = getMedianErrorsXYDepth();
 
@@ -373,18 +520,6 @@ namespace gdr {
             poseCurrent.setQuaternion(orientation);
             poseCurrent.translation() = translation;
             posesOptimized.push_back(poseCurrent);
-            const auto &camera = cameraModelByPoseNumber[i];
-            const auto &intr = poseFxCxFyCyScaleByPoseNumber[i];
-            double eps = 30 * std::numeric_limits<double>::epsilon();
-            double errorFx = std::abs(camera.fx - intr[cameraIntrStartIndex]);
-            double errorCx = std::abs(camera.cx - intr[cameraIntrStartIndex + 1]);
-            double errorFy = std::abs(camera.fy - intr[cameraIntrStartIndex + 2]);
-            double errorCy = std::abs(camera.cy - intr[cameraIntrStartIndex + 3]);
-            assert(errorFx < eps);
-            assert(errorCx < eps);
-            assert(errorCy < eps);
-            assert(errorFy < eps);
-
         }
 
         return posesOptimized;
@@ -411,4 +546,141 @@ namespace gdr {
         }
         return point4d;
     }
+
+    std::vector<double> BundleAdjuster::getInlierErrors(const std::vector<double> &r_n,
+                                                        double s_0,
+                                                        double thresholdInlier) {
+        std::vector<double> inliers;
+
+        assert(!r_n.empty());
+        assert(s_0 > 0);
+        assert(thresholdInlier > 0);
+
+        for (const auto &r_i: r_n) {
+            if (std::abs(1.0 * r_i / s_0) < thresholdInlier) {
+                inliers.emplace_back(r_i);
+            }
+        }
+        assert(!inliers.empty());
+
+        return inliers;
+    }
+
+    std::pair<std::vector<double>, std::vector<double>>
+    BundleAdjuster::getInlierNormalizedErrorsReprojectionAndDepth(double thresholdInlier) {
+
+        std::vector<double> inlierErrorsReprojection;
+        std::vector<double> inlierErrorsDepth;
+
+        std::pair<std::vector<double>, std::vector<double>> normalizedErrorsReprojAndDepth =
+                getNormalizedErrorsReprojectionAndDepth();
+
+        const auto &errorsNormalizedReproj = normalizedErrorsReprojAndDepth.first;
+        const auto &errorsNormalizedDepth = normalizedErrorsReprojAndDepth.second;
+
+        std::cout << "total number of points " << errorsNormalizedReproj.size() << std::endl;
+        assert(!errorsNormalizedReproj.empty());
+        assert(errorsNormalizedReproj.size() == errorsNormalizedDepth.size());
+
+        double medianNormalizedReprojection = RobustEtimators::getMedian(errorsNormalizedReproj);
+        double medianNormalizedDepth = RobustEtimators::getMedian(errorsNormalizedDepth);
+
+
+        std::cout << "Medians of normalized errors are (pixels) " << medianNormalizedReprojection
+                  << " && (m) " << medianNormalizedDepth << std::endl;
+        double initScaleReproj = computeInitialScaleByMedian(medianNormalizedReprojection);
+        double initScaleDepth = computeInitialScaleByMedian(medianNormalizedDepth);
+        std::cout << "init Scales of normalized errors are (pixels) " << initScaleReproj
+                  << " && (m) " << initScaleDepth << std::endl;
+
+        inlierErrorsReprojection = getInlierErrors(errorsNormalizedReproj, initScaleReproj, thresholdInlier);
+        inlierErrorsDepth = getInlierErrors(errorsNormalizedDepth, initScaleDepth, thresholdInlier);
+
+        {
+            auto copyReproj = inlierErrorsReprojection;
+            auto copyDepth = inlierErrorsDepth;
+            std::sort(copyReproj.begin(), copyReproj.end());
+            std::sort(copyDepth.begin(), copyDepth.end());
+            std::cout << "normalized INFO about inliers (pixels):  [0, median, biggest] "
+                      << copyReproj[0] << " " << copyReproj[copyReproj.size() / 2] << " "
+                      << copyReproj[copyReproj.size() - 1]
+                      << std::endl;
+            std::cout << "INFO about inliers (m):  [0, median, biggest] "
+                      << copyDepth[0] << " " << copyDepth[copyDepth.size() / 2] << " "
+                      << copyDepth[copyDepth.size() - 1]
+                      << std::endl;
+        }
+        assert(!inlierErrorsReprojection.empty());
+        assert(!inlierErrorsDepth.empty());
+
+        return {inlierErrorsReprojection, inlierErrorsDepth};
+
+    }
+
+    double getFinalScaleEstimate(const std::vector<double> &inlierErrors,
+                                 int p) {
+
+        // TODO learn what parameter p is used for?
+        assert(p == 0);
+        double sumErrorSquared = 0.0;
+        for (const auto &error: inlierErrors) {
+            sumErrorSquared += std::pow(error, 2.0);
+        }
+        sumErrorSquared /= static_cast<double>(inlierErrors.size() - p);
+
+        return std::sqrt(sumErrorSquared);
+    }
+
+    std::pair<double, double> BundleAdjuster::getSigmaReprojectionAndDepth(double threshold) {
+        int pToSubstract = (p > 0) ? (p) : (0);
+
+        std::pair<std::vector<double>, std::vector<double>> inlierErrorsReprojAndDepth =
+                getInlierNormalizedErrorsReprojectionAndDepth(threshold);
+
+        std::cout << "Number of inlier errors for pixels is (pixels) " << inlierErrorsReprojAndDepth.first.size()
+                  << " almost " << std::endl;
+
+        std::cout << "Number of inlier errors for pixels is (m) " << inlierErrorsReprojAndDepth.second.size()
+                  << " almost " << std::endl;
+
+        const auto &errorsReproj = inlierErrorsReprojAndDepth.first;
+        const auto &errorsDepth = inlierErrorsReprojAndDepth.second;
+
+        double sigmaReproj = getFinalScaleEstimate(errorsReproj, pToSubstract);
+        double sigmaDepth = getFinalScaleEstimate(errorsDepth, pToSubstract);
+
+        return {sigmaReproj, sigmaDepth};
+    }
+
+    std::vector<double> BundleAdjuster::getL2Errors() {
+        std::vector<double> errorsL2;
+
+        double minScale = std::numeric_limits<double>::infinity();
+        double maxScale = -1;
+
+        for (int currPose = 0; currPose < poseTxTyTzByPoseNumber.size(); ++currPose) {
+            for (const auto &keyPointInfosByPose: keyPointInfoByPoseNumberAndPointNumber[currPose]) {
+
+                int currPoint = keyPointInfosByPose.first;
+                const auto &keyPointInfo = keyPointInfoByPoseNumberAndPointNumber[currPose][currPoint];
+
+                const auto &camera = cameraModelByPoseNumber[currPose];
+                const auto poseTransformation = getSE3TransformationMatrixByPoseNumber(currPose);
+                const auto point3d = getPointVector4dByPointGlobalIndex(currPoint);
+                const auto observedPoint3d = camera.getCoordinates3D(keyPointInfo.getX(),
+                                                                     keyPointInfo.getY(),
+                                                                     keyPointInfo.getDepth());
+
+                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation.inverse().matrix3x4() * point3d;
+                auto difference3D = localCameraCoordinatesOfPoint - observedPoint3d;
+
+                errorsL2.emplace_back(difference3D.norm());
+            }
+        }
+
+        assert(!errorsL2.empty());
+
+        return errorsL2;
+    }
+
 }

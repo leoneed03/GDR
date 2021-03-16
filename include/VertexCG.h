@@ -8,7 +8,7 @@
 
 #include <vector>
 #include <iostream>
-#include "SiftGPU.h"
+//#include "SiftGPU.h"
 
 #include <Eigen/Eigen>
 #include <Eigen/Core>
@@ -22,8 +22,9 @@
 #include "KeyPointInfo.h"
 #include "keyFeatures.h"
 #include "quaternions.h"
-#include "cameraRGBD.h"
+#include "parametrization/cameraRGBD.h"
 #include "KeyPointsDepthDescriptor.h"
+
 
 namespace gdr {
 
@@ -34,7 +35,7 @@ namespace gdr {
         int initialIndex;
         Eigen::Matrix4d absoluteRotationTranslation;
         Sophus::SE3d absolutePose;
-        std::vector<SiftGPU::SiftKeypoint> keypoints;
+        std::vector<KeyPoint2D> keypoints;
         std::vector<float> descriptors;
         std::vector<double> depths;
         std::string pathToRGBimage;
@@ -72,7 +73,7 @@ namespace gdr {
 
         VertexCG(int newIndex,
                  const CameraRGBD &newCameraRgbd,
-                 const std::vector<SiftGPU::SiftKeypoint> &newKeypoints,
+                 const std::vector<KeyPoint2D> &newKeypoints,
                  const std::vector<float> &newDescriptors,
                  const std::vector<double> &newDepths,
                  const std::string &newPathRGB,

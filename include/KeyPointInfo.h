@@ -6,11 +6,15 @@
 #ifndef GDR_KEYPOINTINFO_H
 #define GDR_KEYPOINTINFO_H
 
-#include "SiftGPU.h"
+#include "KeyPoint2D.h"
+//#include "SiftGPU.h"
 
 #include <climits>
 
 namespace gdr {
+
+//    class KeyPoint2D {};
+
     struct KeyPointInfo {
 //        SiftGPU::SiftKeypoint keypoint;
         double x, y, scale, orientation;
@@ -24,7 +28,7 @@ namespace gdr {
 
         KeyPointInfo();
 
-        KeyPointInfo(const SiftGPU::SiftKeypoint &newKeypoint, double newDepth, int newObservingPoseNumber);
+        KeyPointInfo(const KeyPoint2D &newKeypoint, double newDepth, int newObservingPoseNumber);
 
 
 //        KeyPointInfo(const KeyPointInfo &newKeypoint);

@@ -12,6 +12,7 @@
 #include "translationAveraging.h"
 
 #include <fstream>
+#include <boost/filesystem.hpp>
 
 namespace gdr {
 
@@ -204,6 +205,7 @@ namespace gdr {
     }
 
     std::vector<Sophus::SE3d> ConnectedComponentPoseGraph::performBundleAdjustmentUsingDepth(int indexFixedToZero) {
+        int maxNumberOfPointsToShow = -1;
         computePointClasses();
         std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
         std::cout << "ready " << std::endl;
@@ -213,6 +215,10 @@ namespace gdr {
         }
         std::cout << "BA depth create BundleAdjuster" << std::endl;
 
+        std::vector<double> errorsBefore;
+        auto shownResidualsBefore = cloudProjector.showPointsReprojectionError(observedPoints, "before", errorsBefore,
+                                                                               absolutePoses[0].getCamera(),
+                                                                               maxNumberOfPointsToShow);
         //vizualize points and matches
 //        cloudProjector.showPointsProjection(observedPoints);
 
@@ -229,6 +235,62 @@ namespace gdr {
             vertexPose.setRotationTranslation(posesOptimized[i]);
         }
 
+        std::vector<double> errorsAfter;
+
+        auto shownResidualsAfter = cloudProjector.showPointsReprojectionError(observedPoints, "after", errorsAfter,
+                                                                              absolutePoses[0].getCamera(),
+                                                                              maxNumberOfPointsToShow);
+
+        assert(shownResidualsAfter.size() == shownResidualsBefore.size());
+
+        std::string pathToRGBDirectoryToSave = "shownResiduals";
+        boost::filesystem::path pathToRemove(pathToRGBDirectoryToSave);
+
+        std::cout << "path [" << pathToRemove.string() << "]" << " exists? Answer: "
+                  << boost::filesystem::exists(pathToRemove) << std::endl;
+        boost::filesystem::remove_all(pathToRemove);
+        std::cout << "removed from " << pathToRemove.string() << std::endl;
+        boost::filesystem::create_directories(pathToRemove);
+
+        int counterMedianErrorGotWorse = 0;
+        int counterMedianErrorGotBetter = 0;
+        int counterSumMedianError = 0;
+
+        for (int i = 0; i < shownResidualsAfter.size(); ++i) {
+
+            boost::filesystem::path pathToSave = pathToRemove;
+            bool medianErrorGotLessAfterBA = (errorsBefore[i] > errorsAfter[i]);
+
+            if (medianErrorGotLessAfterBA) {
+                ++counterMedianErrorGotBetter;
+            } else {
+                ++counterMedianErrorGotWorse;
+            }
+            ++counterSumMedianError;
+
+            std::string betterOrWorseResults = medianErrorGotLessAfterBA ? " " : " [WORSE] ";
+            std::string nameImageReprojErrors =
+                    std::to_string(i) + betterOrWorseResults + " quantils: " + std::to_string(errorsBefore[i]) +
+                    " -> " + std::to_string(errorsAfter[i]) + ".png";
+            pathToSave.append(nameImageReprojErrors);
+            cv::Mat stitchedImageResiduals;
+            std::vector<cv::DMatch> matches1to2;
+            std::vector<cv::KeyPoint> keyPointsToShowFirst;
+            std::vector<cv::KeyPoint> keyPointsToShowSecond;
+            cv::Mat stitchedImage;
+            cv::drawMatches(shownResidualsBefore[i], {},
+                            shownResidualsAfter[i], {},
+                            matches1to2,
+                            stitchedImage);
+            cv::imwrite(pathToSave.string(), stitchedImage);
+        }
+
+        std::cout << "BETTER #median error: " << counterMedianErrorGotBetter
+                  << " vs WORSE: " << counterMedianErrorGotWorse << " of total " << counterSumMedianError << std::endl;
+        std::cout << "percentage better median error is "
+                  << 1.0 * counterMedianErrorGotBetter / counterSumMedianError << std::endl;
+
+        assert(counterMedianErrorGotWorse + counterMedianErrorGotBetter == counterSumMedianError);
 
         // visualize point correspondences:
 //        cloudProjector.showPointsProjection(bundleAdjuster.getPointsGlobalCoordinatesOptimized());
@@ -295,7 +357,7 @@ namespace gdr {
         std::vector<VertexCG *> verticesPointers;
 
         for (int i = 0; i < absolutePoses.size(); ++i) {
-            VertexCG* vertex = &absolutePoses[i];
+            VertexCG *vertex = &absolutePoses[i];
             verticesPointers.push_back(vertex);
         }
 

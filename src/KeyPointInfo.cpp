@@ -5,17 +5,18 @@
 
 
 #include "KeyPointInfo.h"
+#include "KeyPoint2D.h"
 
 #include <iostream>
 #include <cmath>
 
 namespace gdr {
-    KeyPointInfo::KeyPointInfo(const SiftKeypoint &newKeypoint,
+    KeyPointInfo::KeyPointInfo(const KeyPoint2D &newKeypoint,
                                double newDepth,
-                               int newObservingPoseNumber) : x(newKeypoint.x),
-                                                             y(newKeypoint.y),
-                                                             scale(newKeypoint.s),
-                                                             orientation(newKeypoint.o),
+                               int newObservingPoseNumber) : x(newKeypoint.getX()),
+                                                             y(newKeypoint.getY()),
+                                                             scale(newKeypoint.getScale()),
+                                                             orientation(newKeypoint.getOrientation()),
                                                              depth(newDepth),
                                                              observingPoseNumber(newObservingPoseNumber),
                                                              initialObservingPoseNumber(newObservingPoseNumber) {}

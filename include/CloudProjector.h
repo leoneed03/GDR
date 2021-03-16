@@ -11,14 +11,17 @@
 #include "VertexCG.h"
 #include "KeyPointInfo.h"
 #include "PointMatcher.h"
+#include "parametrization/cameraRGBD.h"
 
 #include <unordered_map>
 #include <vector>
+#include <opencv2/opencv.hpp>
 
 namespace gdr {
 
 
     struct CloudProjector {
+
         int maxPointIndex = -1;
 //        std::unordered_map<int, Point3d> indexedPoints;
         std::vector<Point3d> indexedPoints;
@@ -59,6 +62,14 @@ namespace gdr {
         const std::vector<std::unordered_map<int, KeyPointInfo>> getKeyPointInfoByPoseNumberAndPointClass() const;
 
         void showPointsProjection(const std::vector<Point3d> &pointsGlobalCoordinates) const;
+
+        std::vector<cv::Mat> showPointsReprojectionError(const std::vector<Point3d> &pointsGlobalCoordinates,
+                                                         const std::string &pathToRGBDirectoryToSave,
+                                                         std::vector<double>& totalL2Errors,
+                                                         const CameraRGBD& camerasFromTo,
+                                                         int maxPointsToShow = -1,
+                                                         bool drawCirclesKeyPoints = false,
+                                                         double quantil = 0.5) const;
     };
 }
 

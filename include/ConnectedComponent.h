@@ -8,7 +8,7 @@
 
 #include "VertexCG.h"
 #include "RelativePoseSE3.h"
-#include "cameraRGBD.h"
+#include "parametrization/cameraRGBD.h"
 #include "KeyPointInfo.h"
 #include "PointMatcher.h"
 #include "CloudProjector.h"

@@ -13,8 +13,8 @@
 #include "CloudProjector.h"
 #include "VertexCG.h"
 #include "transformationRt.h"
-#include "cameraRGBD.h"
-#include "siftModule.h"
+#include "parametrization/cameraRGBD.h"
+#include "ISiftModule.h"
 #include "rotationAveraging.h"
 #include "quaternions.h"
 #include "errors.h"
@@ -23,6 +23,7 @@
 #include "ThreadPool.h"
 #include "RelativePoseSE3.h"
 #include "ConnectedComponent.h"
+#include "relativePoseEstimators/IEstimatorRelativePoseRobust.h"
 
 namespace gdr {
 
@@ -32,8 +33,10 @@ namespace gdr {
         PointMatcher pointMatcher;
         CloudProjector cloudProjector;
         CameraRGBD cameraRgbd;
-        SiftModule siftModule;
+        std::unique_ptr<ISiftModule> siftModule;
         std::vector<VertexCG> verticesOfCorrespondence;
+        std::unique_ptr<IEstimatorRelativePoseRobust> relativePoseEstimatorRobust;
+
         // TODO: fill info about connected components of graph
         // for i-th element vector should contain {component number, index}
         // index is an integer value from 0 to component.size() - 1 incl.

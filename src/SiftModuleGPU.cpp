@@ -5,13 +5,13 @@
 
 #include <thread>
 #include <mutex>
-#include "siftModule.h"
+#include "SiftModuleGPU.h"
 #include "printer.h"
 
 
 namespace gdr {
 
-    Eigen::MatrixXf SiftModule::normalizeDescriptorsL1Root(const Eigen::MatrixXf &descriptors) {
+    Eigen::MatrixXf SiftModuleGPU::normalizeDescriptorsL1Root(const Eigen::MatrixXf &descriptors) {
         Eigen::MatrixXf descriptors_normalized(descriptors.rows(),
                                                descriptors.cols());
         for (Eigen::MatrixXf::Index r = 0; r < descriptors.rows(); ++r) {
@@ -23,11 +23,11 @@ namespace gdr {
         return descriptors_normalized;
     }
 
-    void SiftModule::siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs) {
+    void SiftModuleGPU::siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs) {
         sift->ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
     }
 
-    SiftModule::SiftModule() {
+    SiftModuleGPU::SiftModuleGPU() {
 
         std::string siftGpuFarg = std::to_string(SIFTGPU_ARG_V);
         std::vector<std::string> siftGpuArgsStrings = {"-cuda", "0", "-fo", "-1", "-v", siftGpuFarg};
@@ -38,7 +38,7 @@ namespace gdr {
         }
         matcher = std::make_unique<SiftMatchGPU>(SiftMatchGPU(maxSift));
 
-        std::cout << "matcher created by SiftModule Constructor" << std::endl;
+        std::cout << "matcher created by SiftModuleGPU Constructor" << std::endl;
         auto contextVerified = matcher->VerifyContextGL();
         if (contextVerified == 0) {
             std::cout << "_____________________________________________________matching context not verified"
@@ -48,8 +48,8 @@ namespace gdr {
     }
 
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
-    SiftModule::getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
-                                                 const std::vector<int> &numOfDevicesForDetection) {
+    SiftModuleGPU::getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
+                                                    const std::vector<int> &numOfDevicesForDetection) {
 
         std::vector<std::unique_ptr<SiftGPU>> detectorsSift;
         for (const auto &device: numOfDevicesForDetection) {
@@ -96,7 +96,7 @@ namespace gdr {
 
         std::mutex output;
         for (int i = 0; i < numOfDevicesForDetection.size(); ++i) {
-            threads[i] = std::thread(SiftModule::getKeypointsDescriptorsOneImage,
+            threads[i] = std::thread(SiftModuleGPU::getKeypointsDescriptorsOneImage,
                                      detectorsSift[i].get(),
                                      std::ref(pathsToImagesAndImageIndices),
                                      std::ref(keypointsAndDescriptorsAllImages),
@@ -112,11 +112,11 @@ namespace gdr {
     }
 
     void
-    SiftModule::getKeypointsDescriptorsOneImage(SiftGPU *detectorSift,
-                                                tbb::concurrent_queue<std::pair<std::string, int>> &pathsToImagesAndImageIndices,
-                                                std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> &keyPointsAndDescriptorsByIndex,
-                                                std::mutex &output,
-                                                bool normalizeRootL1) {
+    SiftModuleGPU::getKeypointsDescriptorsOneImage(SiftGPU *detectorSift,
+                                                   tbb::concurrent_queue<std::pair<std::string, int>> &pathsToImagesAndImageIndices,
+                                                   std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>> &keyPointsAndDescriptorsByIndex,
+                                                   std::mutex &output,
+                                                   bool normalizeRootL1) {
 
         std::pair<std::string, int> pathToImageAndIndex;
 
@@ -143,9 +143,47 @@ namespace gdr {
         }
     }
 
+
+    std::vector<std::pair<int, int>>
+    SiftModuleGPU::getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
+                                                const imageDescriptor &keysDescriptors2,
+                                                SiftMatchGPU *matcher) {
+
+        auto descriptors1 = keysDescriptors1.second;
+        auto descriptors2 = keysDescriptors2.second;
+
+        auto keys1 = keysDescriptors1.first;
+        auto keys2 = keysDescriptors2.first;
+
+        auto num1 = keys1.size();
+        auto num2 = keys2.size();
+
+        assert(num1 * 128 == descriptors1.size());
+        assert(num2 * 128 == descriptors2.size());
+
+
+        std::cout << "set descriptors" << std::endl;
+        matcher->SetDescriptors(0, num1, descriptors1.data()); //image 1
+        matcher->SetDescriptors(1, num2, descriptors2.data()); //image 2
+
+
+        std::vector<std::pair<int, int>> matchingKeypoints;
+        int (*match_buf)[2] = new int[num1][2];
+
+        std::cout << "get sift match" << std::endl;
+        int num_match = matcher->GetSiftMatch(num1, match_buf);
+        matchingKeypoints.reserve(num_match);
+
+        for (int i = 0; i < num_match; ++i) {
+            matchingKeypoints.emplace_back(match_buf[i][0], match_buf[i][1]);
+        }
+        delete[] match_buf;
+        return matchingKeypoints;
+    }
+
     std::vector<tbb::concurrent_vector<Match>>
-    SiftModule::findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
-                                    const std::vector<int> &matchDevicesNumbers) {
+    SiftModuleGPU::findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
+                                       const std::vector<int> &matchDevicesNumbers) {
 
         std::vector<std::unique_ptr<SiftMatchGPU>> matchers;
 
@@ -202,12 +240,12 @@ namespace gdr {
         return matches;
     };
 
-    void SiftModule::getNumbersOfMatchesOnePair(int &indexFrom,
-                                                int &indexTo,
-                                                const std::vector<VertexCG> &verticesToBeMatched,
-                                                std::mutex &counterMutex,
-                                                std::vector<tbb::concurrent_vector<Match>> &matches,
-                                                SiftMatchGPU *matcher) {
+    void SiftModuleGPU::getNumbersOfMatchesOnePair(int &indexFrom,
+                                                   int &indexTo,
+                                                   const std::vector<VertexCG> &verticesToBeMatched,
+                                                   std::mutex &counterMutex,
+                                                   std::vector<tbb::concurrent_vector<Match>> &matches,
+                                                   SiftMatchGPU *matcher) {
         while (true) {
             int localIndexFrom = -1;
             int localIndexTo = -1;
@@ -248,7 +286,7 @@ namespace gdr {
         }
     }
 
-    std::vector<float> SiftModule::normalizeDescriptorsL1Root(const std::vector<float> &descriptorsToNormalize) {
+    std::vector<float> SiftModuleGPU::normalizeDescriptorsL1Root(const std::vector<float> &descriptorsToNormalize) {
         int descriptorLength = 128;
 
         std::vector<float> descriptors = descriptorsToNormalize;
@@ -266,5 +304,39 @@ namespace gdr {
         }
 
         return descriptors;
+    }
+
+    std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
+    SiftModuleGPU::getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
+                                                      const std::vector<int> &numOfDevicesForDetectors) {
+
+        int descriptorLength = 128;
+        auto keyPointsDescriptorsSiftGPU = getKeypointsDescriptorsAllImages(pathsToImages, numOfDevicesForDetectors);
+        std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
+                keyPointsAndDescriptorsAllImages(keyPointsDescriptorsSiftGPU.size());
+
+
+        for (int imageNumber = 0; imageNumber < keyPointsDescriptorsSiftGPU.size(); ++imageNumber) {
+            const auto &keyPointsAndDescriptorsOneImage = keyPointsDescriptorsSiftGPU[imageNumber];
+            assert(keyPointsAndDescriptorsOneImage.second.size() ==
+                   descriptorLength * keyPointsAndDescriptorsOneImage.first.size());
+
+            for (int keyPointNumber = 0;
+                 keyPointNumber < keyPointsAndDescriptorsOneImage.first.size(); ++keyPointNumber) {
+                const auto &siftKeyPoint = keyPointsAndDescriptorsOneImage.first[keyPointNumber];
+                keyPointsAndDescriptorsAllImages[imageNumber]
+                        .first.emplace_back(KeyPoint2D(siftKeyPoint.x, siftKeyPoint.y,
+                                                       siftKeyPoint.s, siftKeyPoint.o));
+
+//                keyPointsAndDescriptorsAllImages[imageNumber]
+//                        .second.emplace_back(keyPointsAndDescriptorsOneImage.second[keyPointNumber]);
+            }
+
+            keyPointsAndDescriptorsAllImages[imageNumber].second = keyPointsDescriptorsSiftGPU[imageNumber].second;
+
+            assert(keyPointsAndDescriptorsAllImages[imageNumber].second.size() ==
+                   keyPointsAndDescriptorsAllImages[imageNumber].first.size() * descriptorLength);
+        }
+        return keyPointsAndDescriptorsAllImages;
     }
 }
