@@ -9,10 +9,11 @@
 
 namespace gdr {
     class KeyPoint2D {
+        static constexpr double defValue = -1.0;
         double x, y;
-        double scale = -1.0;
-        double orientation = -1.0;
-        double depth = -1.0;
+        double scale = defValue;
+        double orientation = defValue;
+        double depth = defValue;
 
     public:
 
@@ -41,6 +42,9 @@ namespace gdr {
         bool scaleOrientationAreUsable() const;
 
         bool isUsable() const;
+
+        static double getDefValue();
+
     };
 }
 

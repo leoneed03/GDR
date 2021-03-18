@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "Rotation3d.h"
+#include "parametrization/Rotation3d.h"
 #include <iomanip>
 
 namespace gdr {

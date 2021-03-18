@@ -13,7 +13,7 @@ namespace gdr {
                                          int pointIndex, std::string pathToSave, std::string nameToSave) {
 
         cv::Mat imageNoKeyPoint = cv::imread(pathToRGBImage, cv::IMREAD_COLOR);
-        cv::KeyPoint keyPointToShow(keyPointInfo.getX(), keyPointInfo.getY(), keyPointInfo.scale);
+        cv::KeyPoint keyPointToShow(keyPointInfo.getX(), keyPointInfo.getY(), keyPointInfo.getScale());
 
         cv::Mat imageWithKeyPoint = cv::imread(pathToRGBImage, cv::IMREAD_COLOR);
         cv::drawKeypoints(imageNoKeyPoint, {keyPointToShow}, imageWithKeyPoint);
@@ -45,7 +45,7 @@ namespace gdr {
             const auto &keyPointInfo = pairedIndexAndInfo.second;
             double x = keyPointInfo.getX();
             double y = keyPointInfo.getY();
-            cv::KeyPoint keyPointToShow(x, y, keyPointInfo.scale);
+            cv::KeyPoint keyPointToShow(x, y, keyPointInfo.getScale());
 
 
             int currentIndexKeyPoint = pairedIndexAndInfo.first;

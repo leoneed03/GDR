@@ -4,13 +4,13 @@
 //
 
 #include "CorrespondenceGraph.h"
-#include "BundleAduster.h"
+#include "bundleAdjustment/BundleAdjuster.h"
 #include "printer.h"
-#include "ICP.h"
+#include "relativePoseRefinement/ICP.h"
 #include "pointCloud.h"
 #include "RotationOptimizationRobust.h"
 #include "ImageDrawer.h"
-#include "SiftModuleGPU.h"
+#include "keyPointDetectionAndMatching/SiftModuleGPU.h"
 #include "relativePoseEstimators/EstimatorRobustLoRANSAC.h"
 
 #include <vector>
@@ -37,12 +37,21 @@ namespace gdr {
     int
     CorrespondenceGraph::refineRelativePose(const VertexCG &vertexToBeTransformed,
                                             const VertexCG &vertexDestination,
-                                            Eigen::Matrix4d &initEstimationRelPos,
-                                            bool &success) {
-//        VertexCG vertexToBeTransformed = verticesOfCorrespondence[vertexFrom];
-        ///wrong vertexNumber -- see struct "Match"
-//        VertexCG vertexDestination = verticesOfCorrespondence[vertexTo];
-        ProcessorICP::refineRelativePoseICP(vertexToBeTransformed, vertexDestination, initEstimationRelPos);
+                                            SE3 &initEstimationRelPos,
+                                            bool &refinementSuccess) {
+
+        MatchableInfo poseToBeTransformed(vertexToBeTransformed.getPathRGBImage(),
+                                          vertexToBeTransformed.getPathDImage(),
+                                          vertexToBeTransformed.getKeyPoints2D(),
+                                          vertexToBeTransformed.getCamera());
+
+        MatchableInfo poseDestination(vertexDestination.getPathRGBImage(),
+                                      vertexDestination.getPathDImage(),
+                                      vertexDestination.getKeyPoints2D(),
+                                      vertexDestination.getCamera());
+        refinementSuccess = relativePoseRefiner->refineRelativePose(poseToBeTransformed, poseDestination,
+                                                                    initEstimationRelPos);
+        assert(refinementSuccess);
 
         return 0;
     }
@@ -83,7 +92,7 @@ namespace gdr {
     CorrespondenceGraph::findInlierPointCorrespondences(int vertexFrom,
                                                         int vertexInList,
                                                         double maxErrorL2,
-                                                        Eigen::Matrix4d &transformation,
+                                                        const SE3 &transformation,
                                                         bool useProjectionError,
                                                         double maxProjectionErrorPixels) {
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
@@ -141,7 +150,7 @@ namespace gdr {
         Eigen::Matrix4Xd destinationPoints = getPointCloudBeforeProjection(originPointsVector,
                                                                            poseToDestination.cameraRgbd);
 
-        Eigen::Matrix4Xd transformedPoints = transformation * toBeTransformedPoints;
+        Eigen::Matrix4Xd transformedPoints = transformation.getSE3().matrix() * toBeTransformedPoints;
 
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondences;
 
@@ -471,7 +480,7 @@ namespace gdr {
         auto inlierMatchesCorrespondingKeypointsLoRansac = findInlierPointCorrespondences(vertexFromDestOrigin,
                                                                                           vertexInListToBeTransformedCanBeComputed,
                                                                                           neighbourhoodRadius,
-                                                                                          ransacPose,
+                                                                                          relativePoseLoRANSAC,
                                                                                           useProjection,
                                                                                           maxProjectionErrorPixels);
         std::cout << "NEW INLIERS " << inliersAgain.size() << std::endl;
@@ -479,32 +488,30 @@ namespace gdr {
         assert(inliersAgain.size() >= inlierCoeff * toBeTransformedPoints.cols());
 
         bool successRefine = true;
-        Eigen::Matrix4d refinedByICPPose = relativePoseLoRANSAC.getSE3().matrix();
+        SE3 refinedByICPRelativePose = relativePoseLoRANSAC;
         refineRelativePose(verticesOfCorrespondence[vertexToBeTransformed],
                            verticesOfCorrespondence[vertexFromDestOrigin],
-                           refinedByICPPose,
+                           refinedByICPRelativePose,
                            successRefine);
 
-        Sophus::SE3d RtafterRefinement = Sophus::SE3d::fitToSE3(refinedByICPPose);
         transformationMatricesICP[vertexFromDestOrigin].insert(
                 std::make_pair(vertexToBeTransformed,
-                               transformationRtMatrix(RtafterRefinement,
+                               transformationRtMatrix(refinedByICPRelativePose,
                                                       verticesOfCorrespondence[vertexFromDestOrigin],
                                                       verticesOfCorrespondence[vertexToBeTransformed])));
         transformationMatricesICP[vertexToBeTransformed].insert(
                 std::make_pair(vertexFromDestOrigin,
                                transformationRtMatrix(
-                                       RtafterRefinement.inverse(),
+                                       refinedByICPRelativePose.inverse(),
                                        verticesOfCorrespondence[vertexToBeTransformed],
                                        verticesOfCorrespondence[vertexFromDestOrigin])));
 
 
-        Eigen::Matrix4d refinedICP = RtafterRefinement.matrix();
         auto inlierMatchesCorrespondingKeypointsAfterRefinement =
                 findInlierPointCorrespondences(vertexFromDestOrigin,
                                                vertexInListToBeTransformedCanBeComputed,
                                                neighbourhoodRadius,
-                                               refinedICP,
+                                               refinedByICPRelativePose,
                                                useProjection,
                                                maxProjectionErrorPixels);
 
@@ -519,7 +526,7 @@ namespace gdr {
             cR_t_umeyama = relativePoseLoRANSAC.getSE3().matrix();
 
         } else {
-            cR_t_umeyama = RtafterRefinement.matrix();
+            cR_t_umeyama = refinedByICPRelativePose.getSE3().matrix();
             // ICP did refine the relative pose -- return ICP inliers TODO
             std::cout << "REFINED________________________________________________" << std::endl;
             ++refinedPoses;
@@ -572,23 +579,21 @@ namespace gdr {
             }
             for (int i = 0; i < transformationRtMatrices.size(); ++i) {
                 for (int j = 0; j < transformationRtMatrices[i].size(); ++j) {
-                    if (i >= transformationRtMatrices[i][j].vertexTo.index) {
+                    if (i >= transformationRtMatrices[i][j].getIndexTo()) {
                         continue;
                     }
                     std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
 
-                    int indexTo = transformationRtMatrices[i][j].vertexTo.index;
+                    int indexTo = transformationRtMatrices[i][j].getIndexTo();
                     int indexFrom = i;
                     //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format) TODO: actually seems like NOT
                     file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
-                    auto translationVector = transformationRtMatrices[i][j].t;
+                    auto translationVector = transformationRtMatrices[i][j].getRelativeTranslation();
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
                          << std::to_string(translationVector.col(0)[1]) << ' '
                          << std::to_string(translationVector.col(0)[2]) << ' ';
-                    const auto &R = transformationRtMatrices[i][j].R;
+                    const auto &qR = transformationRtMatrices[i][j].getRelativeRotation();
 
-                    Eigen::Quaterniond qR(R);
-                    std::vector<double> vectorDataRotations = {qR.x(), qR.y(), qR.z(), qR.w()};
                     file << std::to_string(qR.x()) << ' ' << std::to_string(qR.y()) << ' ' <<
                          std::to_string(qR.z()) << ' '
                          << std::to_string(qR.w()) << noise << '\n';
@@ -600,22 +605,22 @@ namespace gdr {
 
         return 0;
     }
-
-    std::vector<Eigen::Quaterniond> CorrespondenceGraph::performRotationAveraging() {
-        PRINT_PROGRESS("first print successfull");
-
-        std::vector<Eigen::Quaterniond> absoluteRotationsQuats = rotationAverager::shanonAveraging(relativePose,
-                                                                                                   absolutePose);
-
-        PRINT_PROGRESS("read quaternions successfull");
-
-        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            verticesOfCorrespondence[i].setRotation(absoluteRotationsQuats[i]);
-        }
-
-        PRINT_PROGRESS("setting Rotations in vertices successfull");
-        return absoluteRotationsQuats;
-    }
+//
+//    std::vector<Eigen::Quaterniond> CorrespondenceGraph::performRotationAveraging() {
+//        PRINT_PROGRESS("first print successfull");
+//
+//        std::vector<Eigen::Quaterniond> absoluteRotationsQuats = rotationAverager::shanonAveraging(relativePose,
+//                                                                                                   absolutePose);
+//
+//        PRINT_PROGRESS("read quaternions successfull");
+//
+//        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+//            verticesOfCorrespondence[i].setRotation(absoluteRotationsQuats[i]);
+//        }
+//
+//        PRINT_PROGRESS("setting Rotations in vertices successfull");
+//        return absoluteRotationsQuats;
+//    }
 
     keyPointsDepthDescriptor filterKeypointsByKnownDepth(
             const std::pair<std::vector<KeyPoint2D>, std::vector<float>> &keypointAndDescriptor,
@@ -683,28 +688,22 @@ namespace gdr {
                    verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
         }
 
-        {
-            std::vector<VertexCG *> posesForCloudProjector;
-            posesForCloudProjector.reserve(verticesOfCorrespondence.size());
+//        {
+//            std::vector<VertexCG *> posesForCloudProjector;
+//            posesForCloudProjector.reserve(verticesOfCorrespondence.size());
+//
+//            for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+//                posesForCloudProjector.push_back(&verticesOfCorrespondence[i]);
+//            }
+//            assert(posesForCloudProjector.size() == verticesOfCorrespondence.size());
+////            cloudProjector.setPoses(posesForCloudProjector);
+////            pointMatcher.setNumberOfPoses(verticesOfCorrespondence.size());
+//        }
+        matches = siftModule->findCorrespondences(verticesOfCorrespondence);
 
-            for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-                posesForCloudProjector.push_back(&verticesOfCorrespondence[i]);
-            }
-            assert(posesForCloudProjector.size() == verticesOfCorrespondence.size());
-            cloudProjector.setPoses(posesForCloudProjector);
-            pointMatcher.setNumberOfPoses(verticesOfCorrespondence.size());
-        }
-        auto matchedPairs = siftModule->findCorrespondences(verticesOfCorrespondence);
-        matches = std::vector<std::vector<Match>>(matchedPairs.size());
-        for (int i = 0; i < matchedPairs.size(); ++i) {
-            for (const auto &matchPair: matchedPairs[i]) {
-                matches[i].push_back(matchPair);
-            }
-        }
         decreaseDensity();
         findTransformationRtMatrices();
-        // TODO: split to disjoint connected components
-        computePointClasses();
+//        computePointClasses();
         std::string poseFile = relativePose;
         printRelativePosesFile(poseFile);
 
@@ -721,6 +720,7 @@ namespace gdr {
 
         siftModule = std::make_unique<SiftModuleGPU>();
         relativePoseEstimatorRobust = std::make_unique<EstimatorRobustLoRANSAC>();
+        relativePoseRefiner = std::make_unique<ProcessorICP>();
         threadPool = std::make_unique<ThreadPool>(numOfThreadsCpu);
         std::cout << "construct Graph" << std::endl;
         imagesRgb = readRgbData(pathToImageDirectoryRGB);
@@ -742,17 +742,17 @@ namespace gdr {
         PRINT_PROGRESS("Totally read " << imagesRgb.size());
     }
 
-    int CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
-        os << "======================NOW 4*4 Matrices of absolute positions=======================\n" << std::endl;
-
-        os << "======================++++++++++++++++=======================\n" << std::endl;
-        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            os << "Pose number: " << i << std::endl;
-            os << verticesOfCorrespondence[i].absoluteRotationTranslation;
-            os << "\n_________________________________________________________________\n";
-        }
-        return 0;
-    }
+//    int CorrespondenceGraph::printAbsolutePoses(std::ostream &os, int space) {
+//        os << "======================NOW 4*4 Matrices of absolute positions=======================\n" << std::endl;
+//
+//        os << "======================++++++++++++++++=======================\n" << std::endl;
+//        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+//            os << "Pose number: " << i << std::endl;
+//            os << verticesOfCorrespondence[i].absoluteRotationTranslation;
+//            os << "\n_________________________________________________________________\n";
+//        }
+//        return 0;
+//    }
 
 
     void CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) {
@@ -833,101 +833,101 @@ namespace gdr {
      * {[pose number, local point index], keyPointInfo}
      */
 
-    void CorrespondenceGraph::computePointClasses() {
-        computePointClasses(inlierCorrespondencesPoints);
-    }
+//    void CorrespondenceGraph::computePointClasses() {
+//        computePointClasses(inlierCorrespondencesPoints);
+//    }
 
-    void CorrespondenceGraph::computePointClasses(
-            const tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
-            &matchesBetweenPoints) {
+//    void CorrespondenceGraph::computePointClasses(
+//            const tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
+//            &matchesBetweenPoints) {
+//
+//
+//        for (const tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>
+//                    &vectorOfMatches: matchesBetweenPoints) {
+//
+//            std::vector<std::pair<int, int>> poseAndLocalIndices;
+//            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
+//                poseAndLocalIndices.push_back(fullPointInfo.first);
+//            }
+////            pointMatcher.insertPointsWithNewClasses(poseAndLocalIndices);
+//        }
+//
+//
+//        // unordered map's Key is local index
+//        std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPoseNumAndLocalInd(
+//                pointMatcher.getNumberOfPoses());
+//
+//
+//        for (const tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>> &vectorOfMatches: matchesBetweenPoints) {
+//
+//            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
+//                const auto &poseNumAndLocalInd = fullPointInfo.first;
+//                const auto &foundIt = keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].find(
+//                        poseNumAndLocalInd.second);
+//                if (foundIt != keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].end()) {
+//                    assert(foundIt->second == fullPointInfo.second);
+//                } else {
+//                    keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].insert(
+//                            std::make_pair(poseNumAndLocalInd.second, fullPointInfo.second));
+//                }
+//            }
+//        }
+//
+//        auto pointClasses = pointMatcher.assignPointClasses();
+//
+//        for (int pointIncrementor = 0; pointIncrementor < pointClasses.size(); ++pointIncrementor) {
+//            int pointClassNumber = pointClasses[pointIncrementor];
+//            std::pair<int, int> poseNumberAndLocalIndex = pointMatcher.getPoseNumberAndLocalIndex(pointIncrementor);
+//            std::vector<KeyPointInfo> keyPointInfo;
+//            keyPointInfo.push_back(
+//                    keyPointInfoByPoseNumAndLocalInd[poseNumberAndLocalIndex.first][poseNumberAndLocalIndex.second]);
+//            cloudProjector.addPoint(pointClassNumber, keyPointInfo);
+//        }
+//
+//
+//    }
 
-
-        for (const tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>
-                    &vectorOfMatches: matchesBetweenPoints) {
-
-            std::vector<std::pair<int, int>> poseAndLocalIndices;
-            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
-                poseAndLocalIndices.push_back(fullPointInfo.first);
-            }
-            pointMatcher.insertPointsWithNewClasses(poseAndLocalIndices);
-        }
-
-
-        // unordered map's Key is local index
-        std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPoseNumAndLocalInd(
-                pointMatcher.getNumberOfPoses());
-
-
-        for (const tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>> &vectorOfMatches: matchesBetweenPoints) {
-
-            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
-                const auto &poseNumAndLocalInd = fullPointInfo.first;
-                const auto &foundIt = keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].find(
-                        poseNumAndLocalInd.second);
-                if (foundIt != keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].end()) {
-                    assert(foundIt->second == fullPointInfo.second);
-                } else {
-                    keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].insert(
-                            std::make_pair(poseNumAndLocalInd.second, fullPointInfo.second));
-                }
-            }
-        }
-
-        auto pointClasses = pointMatcher.assignPointClasses();
-
-        for (int pointIncrementor = 0; pointIncrementor < pointClasses.size(); ++pointIncrementor) {
-            int pointClassNumber = pointClasses[pointIncrementor];
-            std::pair<int, int> poseNumberAndLocalIndex = pointMatcher.getPoseNumberAndLocalIndex(pointIncrementor);
-            std::vector<KeyPointInfo> keyPointInfo;
-            keyPointInfo.push_back(
-                    keyPointInfoByPoseNumAndLocalInd[poseNumberAndLocalIndex.first][poseNumberAndLocalIndex.second]);
-            cloudProjector.addPoint(pointClassNumber, keyPointInfo);
-        }
-
-
-    }
-
-    const CloudProjector &CorrespondenceGraph::getCloudProjector() const {
-        return cloudProjector;
-    }
-
-    std::vector<Eigen::Quaterniond> CorrespondenceGraph::optimizeRotationsRobust() {
-
-        std::vector<Rotation3d> shonanOptimizedAbsolutePoses;
-
-        for (const auto &vertexPose: verticesOfCorrespondence) {
-            shonanOptimizedAbsolutePoses.push_back(Rotation3d(vertexPose.getRotationQuat()));
-        }
-
-        assert(shonanOptimizedAbsolutePoses.size() == verticesOfCorrespondence.size());
-
-
-        std::vector<rotationMeasurement> relativeRotationsAfterICP;
-
-        assert(verticesOfCorrespondence.size() == transformationRtMatrices.size());
-        for (int indexFrom = 0; indexFrom < verticesOfCorrespondence.size(); ++indexFrom) {
-            for (const auto &knownRelativePose: transformationRtMatrices[indexFrom]) {
-                assert(indexFrom == knownRelativePose.getIndexFrom());
-                if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
-
-                    relativeRotationsAfterICP.push_back(
-                            rotationMeasurement(knownRelativePose.getRelativeRotation(),
-                                                knownRelativePose.getIndexFrom(),
-                                                knownRelativePose.getIndexTo()));
-                }
-            }
-        }
-
-        RotationOptimizer rotationOptimizer(shonanOptimizedAbsolutePoses, relativeRotationsAfterICP);
-        std::vector<Eigen::Quaterniond> optimizedPosesRobust = rotationOptimizer.getOptimizedOrientation();
-
-        assert(verticesOfCorrespondence.size() == optimizedPosesRobust.size());
-        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            verticesOfCorrespondence[i].setRotation(optimizedPosesRobust[i]);
-        }
-
-        return optimizedPosesRobust;
-    }
+//    const CloudProjector &CorrespondenceGraph::getCloudProjector() const {
+//        return cloudProjector;
+//    }
+//
+//    std::vector<Eigen::Quaterniond> CorrespondenceGraph::optimizeRotationsRobust() {
+//
+//        std::vector<Rotation3d> shonanOptimizedAbsolutePoses;
+//
+//        for (const auto &vertexPose: verticesOfCorrespondence) {
+//            shonanOptimizedAbsolutePoses.push_back(Rotation3d(vertexPose.getRotationQuat()));
+//        }
+//
+//        assert(shonanOptimizedAbsolutePoses.size() == verticesOfCorrespondence.size());
+//
+//
+//        std::vector<rotationMeasurement> relativeRotationsAfterICP;
+//
+//        assert(verticesOfCorrespondence.size() == transformationRtMatrices.size());
+//        for (int indexFrom = 0; indexFrom < verticesOfCorrespondence.size(); ++indexFrom) {
+//            for (const auto &knownRelativePose: transformationRtMatrices[indexFrom]) {
+//                assert(indexFrom == knownRelativePose.getIndexFrom());
+//                if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
+//
+//                    relativeRotationsAfterICP.push_back(
+//                            rotationMeasurement(knownRelativePose.getRelativeRotation(),
+//                                                knownRelativePose.getIndexFrom(),
+//                                                knownRelativePose.getIndexTo()));
+//                }
+//            }
+//        }
+//
+//        RotationOptimizer rotationOptimizer(shonanOptimizedAbsolutePoses, relativeRotationsAfterICP);
+//        std::vector<Eigen::Quaterniond> optimizedPosesRobust = rotationOptimizer.getOptimizedOrientation();
+//
+//        assert(verticesOfCorrespondence.size() == optimizedPosesRobust.size());
+//        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+//            verticesOfCorrespondence[i].setRotation(optimizedPosesRobust[i]);
+//        }
+//
+//        return optimizedPosesRobust;
+//    }
 
     std::vector<Eigen::Matrix4d> CorrespondenceGraph::getAbsolutePosesEigenMatrix4d() const {
         std::vector<Eigen::Matrix4d> poses;
@@ -939,119 +939,81 @@ namespace gdr {
         return poses;
     }
 
-    std::vector<Eigen::Vector3d> CorrespondenceGraph::optimizeAbsoluteTranslations(int indexFixedToZero) {
+//    std::vector<Eigen::Vector3d> CorrespondenceGraph::optimizeAbsoluteTranslations(int indexFixedToZero) {
+//
+//        std::vector<translationMeasurement> relativeTranslations;
+//        std::vector<Eigen::Matrix4d> absolutePoses = getAbsolutePosesEigenMatrix4d();
+//
+//        for (int indexFrom = 0; indexFrom < verticesOfCorrespondence.size(); ++indexFrom) {
+//            for (const auto &knownRelativePose: transformationRtMatrices[indexFrom]) {
+//                assert(indexFrom == knownRelativePose.getIndexFrom());
+//
+//                if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
+//                    relativeTranslations.push_back(
+//                            translationMeasurement(knownRelativePose.getRelativeTranslation(),
+//                                                   knownRelativePose.getIndexFrom(),
+//                                                   knownRelativePose.getIndexTo()));
+//                }
+//            }
+//        }
+//
+//        std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = gdr::translationAverager::recoverTranslations(
+//                relativeTranslations,
+//                absolutePoses).toVectorOfVectors();
+//
+//
+//        bool successIRLS = true;
+//
+//
+//        // Now run IRLS with PCG answer as init solution
+//
+//        optimizedAbsoluteTranslationsIRLS = gdr::translationAverager::recoverTranslationsIRLS(
+//                relativeTranslations,
+//                absolutePoses,
+//                optimizedAbsoluteTranslationsIRLS,
+//                successIRLS).toVectorOfVectors();
+//
+//
+//        Eigen::Vector3d zeroTranslation = optimizedAbsoluteTranslationsIRLS[indexFixedToZero];
+//        for (auto &translation: optimizedAbsoluteTranslationsIRLS) {
+//            translation -= zeroTranslation;
+//        }
+//
+//
+//        assert(verticesOfCorrespondence.size() == optimizedAbsoluteTranslationsIRLS.size());
+//        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+//            verticesOfCorrespondence[i].setTranslation(optimizedAbsoluteTranslationsIRLS[i]);
+//        }
+//        return optimizedAbsoluteTranslationsIRLS;
+//    }
 
-        std::vector<translationMeasurement> relativeTranslations;
-        std::vector<Eigen::Matrix4d> absolutePoses = getAbsolutePosesEigenMatrix4d();
-
-        for (int indexFrom = 0; indexFrom < verticesOfCorrespondence.size(); ++indexFrom) {
-            for (const auto &knownRelativePose: transformationRtMatrices[indexFrom]) {
-                assert(indexFrom == knownRelativePose.getIndexFrom());
-
-                if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
-                    relativeTranslations.push_back(
-                            translationMeasurement(knownRelativePose.getRelativeTranslation(),
-                                                   knownRelativePose.getIndexFrom(),
-                                                   knownRelativePose.getIndexTo()));
-                }
-            }
-        }
-
-        std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = gdr::translationAverager::recoverTranslations(
-                relativeTranslations,
-                absolutePoses).toVectorOfVectors();
-
-
-        bool successIRLS = true;
-
-
-        // Now run IRLS with PCG answer as init solution
-
-        optimizedAbsoluteTranslationsIRLS = gdr::translationAverager::recoverTranslationsIRLS(
-                relativeTranslations,
-                absolutePoses,
-                optimizedAbsoluteTranslationsIRLS,
-                successIRLS).toVectorOfVectors();
-
-
-        Eigen::Vector3d zeroTranslation = optimizedAbsoluteTranslationsIRLS[indexFixedToZero];
-        for (auto &translation: optimizedAbsoluteTranslationsIRLS) {
-            translation -= zeroTranslation;
-        }
-
-
-        assert(verticesOfCorrespondence.size() == optimizedAbsoluteTranslationsIRLS.size());
-        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            verticesOfCorrespondence[i].setTranslation(optimizedAbsoluteTranslationsIRLS[i]);
-        }
-        return optimizedAbsoluteTranslationsIRLS;
-    }
-
-
-    std::vector<Sophus::SE3d> CorrespondenceGraph::performBundleAdjustment(int indexFixedToZero) {
-        std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
-        std::cout << "ready " << std::endl;
-        std::vector<std::pair<Sophus::SE3d, CameraRGBD>> posesAndCameraParams;
-        for (const auto &vertexPose: verticesOfCorrespondence) {
-            posesAndCameraParams.push_back({vertexPose.absolutePose, cameraRgbd});
-        }
-        std::cout << "BA" << std::endl;
-
-        //visualize points and matches
-//        cloudProjector.showPointsProjection(observedPoints);
-
-
-
-        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams,
-                                      cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
-
-        std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPoses(indexFixedToZero);
-
-        assert(posesOptimized.size() == verticesOfCorrespondence.size());
-
-        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            auto &vertexPose = verticesOfCorrespondence[i];
-            vertexPose.setRotationTranslation(posesOptimized[i]);
-        }
-
-
-        // visualize point correspondences:
-//        cloudProjector.showPointsProjection(bundleAdjuster.getPointsGlobalCoordinatesOptimized());
-        return posesOptimized;
-    }
-
-    std::vector<Sophus::SE3d> CorrespondenceGraph::performBundleAdjustmentUsingDepth(int indexFixedToZero) {
-        std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
-        std::cout << "ready " << std::endl;
-        std::vector<std::pair<Sophus::SE3d, CameraRGBD>> posesAndCameraParams;
-        for (const auto &vertexPose: verticesOfCorrespondence) {
-            posesAndCameraParams.push_back({vertexPose.absolutePose, cameraRgbd});
-        }
-        std::cout << "BA depth create BundleAdjuster" << std::endl;
-
-        //vizualize points and matches
-//        cloudProjector.showPointsProjection(observedPoints);
-
-
-
-        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams,
-                                      cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
-
-        std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPosesUsingDepthInfo(
-                indexFixedToZero);
-
-        assert(posesOptimized.size() == verticesOfCorrespondence.size());
-
-        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
-            auto &vertexPose = verticesOfCorrespondence[i];
-            vertexPose.setRotationTranslation(posesOptimized[i]);
-        }
-
-
-        // visualize point correspondences:
-//        cloudProjector.showPointsProjection(bundleAdjuster.getPointsGlobalCoordinatesOptimized());
-        return posesOptimized;
-    }
+//    std::vector<Sophus::SE3d> CorrespondenceGraph::performBundleAdjustmentUsingDepth(int indexFixedToZero) {
+//        std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
+//        std::cout << "ready " << std::endl;
+//        std::vector<std::pair<SE3, CameraRGBD>> posesAndCameraParams;
+//        for (const auto &vertexPose: verticesOfCorrespondence) {
+//            posesAndCameraParams.push_back({vertexPose.getAbsolutePoseSE3(), cameraRgbd});
+//        }
+//        std::cout << "BA depth create BundleAdjuster" << std::endl;
+//
+//
+//        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams,
+//                                      cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
+//
+//        std::vector<SE3> posesOptimized = bundleAdjuster.optimizePointsAndPosesUsingDepthInfo(indexFixedToZero);
+//
+//        assert(posesOptimized.size() == verticesOfCorrespondence.size());
+//
+//        for (int i = 0; i < verticesOfCorrespondence.size(); ++i) {
+//            auto &vertexPose = verticesOfCorrespondence[i];
+//            vertexPose.setAbsolutePoseSE3(posesOptimized[i]);
+//        }
+//        std::vector<Sophus::SE3d> posesToReturn;
+//        for (const auto& pose: posesOptimized) {
+//            posesToReturn.emplace_back(pose.getSE3());
+//        }
+//        return posesToReturn;
+//    }
 
     class V {
     };
@@ -1216,7 +1178,7 @@ namespace gdr {
                 const Sophus::SE3d &relativePoseSE3 = transformation.getRelativePoseSE3();
                 RelativePoseSE3 localRelativePoseSE3(localIndexFrom,
                                                      localIndexTo,
-                                                     relativePoseSE3);
+                                                     transformation.getRelativePose());
                 assert(componentNumberByPose[indexFrom] == componentNumberByPose[indexTo]);
                 assert(componentNumberByPose[indexFrom] == componentNumberIndexTo);
 

@@ -10,34 +10,35 @@
 #include <atomic>
 #include <tbb/concurrent_unordered_map.h>
 
-#include "CloudProjector.h"
+#include "sparsePointCloud/CloudProjector.h"
 #include "VertexCG.h"
-#include "transformationRt.h"
+#include "parametrization/transformationRt.h"
 #include "parametrization/cameraRGBD.h"
-#include "ISiftModule.h"
+#include "keyPointDetectionAndMatching/ISiftModule.h"
 #include "rotationAveraging.h"
 #include "quaternions.h"
 #include "errors.h"
 #include "umeyama.h"
 #include "Vectors3d.h"
 #include "ThreadPool.h"
-#include "RelativePoseSE3.h"
+#include "parametrization/RelativePoseSE3.h"
 #include "ConnectedComponent.h"
 #include "relativePoseEstimators/IEstimatorRelativePoseRobust.h"
+#include "relativePoseRefinement/IRefinerRelativePose.h"
 
 namespace gdr {
 
     struct CorrespondenceGraph {
 
         std::unique_ptr<ThreadPool> threadPool;
-        PointMatcher pointMatcher;
-        CloudProjector cloudProjector;
+//        PointMatcher pointMatcher;
+//        CloudProjector cloudProjector;
         CameraRGBD cameraRgbd;
         std::unique_ptr<ISiftModule> siftModule;
         std::vector<VertexCG> verticesOfCorrespondence;
         std::unique_ptr<IEstimatorRelativePoseRobust> relativePoseEstimatorRobust;
+        std::unique_ptr<IRefinerRelativePose> relativePoseRefiner;
 
-        // TODO: fill info about connected components of graph
         // for i-th element vector should contain {component number, index}
         // index is an integer value from 0 to component.size() - 1 incl.
 //        std::vector<std::pair<int, int>> connectedComponentNumberAndInsideIndex;
@@ -49,6 +50,7 @@ namespace gdr {
         tbb::concurrent_vector<tbb::concurrent_unordered_map<int, transformationRtMatrix>> transformationMatricesLoRansac;
         tbb::concurrent_vector<tbb::concurrent_unordered_map<int, transformationRtMatrix>> transformationMatricesICP;
         double neighbourhoodRadius = 0.05;
+        // TODO: check parameters again -- we need approx. 15 [inlier!] matches
         int minNumberOfMatches = 15;
         const std::string redCode = "\033[0;31m";
         const std::string resetCode = "\033[0m";
@@ -61,7 +63,7 @@ namespace gdr {
         std::atomic_int totalMeausedRelativePoses = 0;
         std::atomic_int refinedPoses = 0;
 
-        const CloudProjector &getCloudProjector() const;
+//        const CloudProjector &getCloudProjector() const;
 
         tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
 
@@ -69,7 +71,7 @@ namespace gdr {
         findInlierPointCorrespondences(int vertexFrom,
                                        int vertexInList,
                                        double inlierCoeff,
-                                       Eigen::Matrix4d &transformation,
+                                       const SE3 &transformation,
                                        bool useProjection,
                                        double maxProjectionErrorPixels);
 
@@ -80,7 +82,8 @@ namespace gdr {
                             int numOfThreadsCpu = 4);
 
         int refineRelativePose(const VertexCG &vertexToBeTransformed, const VertexCG &vertexDestination,
-                               Eigen::Matrix4d &initEstimationRelPos, bool &success);
+                               SE3 &initEstimationRelPos,
+                               bool &refinementSuccess);
 
         int findTransformationRtMatrices();
 
@@ -90,27 +93,24 @@ namespace gdr {
         // paired with its KeyPointInfo
         // pairs are grouped in one vector if representing same global point
 
-        void computePointClasses(
-                const tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints);
-
-        void computePointClasses();
+//        void computePointClasses(
+//                const tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &matchesBetweenPoints);
+//
+//        void computePointClasses();
 
         Eigen::Matrix4d
         getTransformationRtMatrixTwoImages(int vertexFromDestOrigin, int vertexInListToBeTransformedCanBeComputed,
                                            bool &success,
-                                           bool useProjection = true, //TODO: every time should decide which error to use
+                                           bool useProjection = true,
                                            double inlierCoeff = 0.5,
                                            double maxProjectionErrorPixels = 2.0,
                                            bool showMatchesOnImages = false);
 
         void printConnectionsRelative(std::ostream &os, int space = 10);
+//
+//        int printAbsolutePoses(std::ostream &os, int space = 10);
 
-        int printAbsolutePoses(std::ostream &os, int space = 10);
-
-        std::vector<Eigen::Quaterniond> performRotationAveraging();
-
-
-        std::vector<Eigen::Quaterniond> optimizeRotationsRobust();
+//        std::vector<Eigen::Quaterniond> performRotationAveraging();
 
         int printRelativePosesFile(const std::string &outPutFileRelativePoses);
 
@@ -118,12 +118,12 @@ namespace gdr {
                              bool &isConnected,
                              std::vector<std::vector<int>> &connectivityComponents);
 
-        // return vectors -- each vector represents one connectivity component
+        // return vectors -- each vector represents one connected component
         std::vector<std::vector<int>> bfsDrawToFile(const std::string &outFile) const;
 
-        /*
-         * return vector of vectors -- connected components
-         * arg: vector containing each pose's component number
+        /**
+         * @param[out] componentNumberByPoseIndex -- vector containing each pose's component number
+         * @returns vector of vectors -- connected components
          */
 
         std::vector<std::vector<int>> bfsComputeConnectedComponents(std::vector<int> &componentNumberByPoseIndex) const;
@@ -132,11 +132,9 @@ namespace gdr {
 
         std::vector<Eigen::Matrix4d> getAbsolutePosesEigenMatrix4d() const;
 
-        std::vector<Eigen::Vector3d> optimizeAbsoluteTranslations(int indexFixedToZero = 0);
+//        std::vector<Eigen::Vector3d> optimizeAbsoluteTranslations(int indexFixedToZero = 0);
 
-        std::vector<Sophus::SE3d> performBundleAdjustment(int indexFixedToZero = 0);
-
-        std::vector<Sophus::SE3d> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
+//        std::vector<Sophus::SE3d> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
 
         std::vector<ConnectedComponentPoseGraph> splitGraphToConnectedComponents() const;
     };

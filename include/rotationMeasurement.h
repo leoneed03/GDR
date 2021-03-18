@@ -8,7 +8,7 @@
 
 #include <Eigen/Eigen>
 
-#include "Rotation3d.h"
+#include "parametrization/Rotation3d.h"
 
 namespace gdr {
     struct rotationMeasurement {

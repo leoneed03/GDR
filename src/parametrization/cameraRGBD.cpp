@@ -48,4 +48,20 @@ namespace gdr {
         return coordinates3D;
     }
 
+    float CameraRGBD::getFx() const {
+        return fx;
+    }
+
+    float CameraRGBD::getFy() const {
+        return fy;
+    }
+
+    float CameraRGBD::getCx() const {
+        return cx;
+    }
+
+    float CameraRGBD::getCy() const {
+        return cy;
+    }
+
 }

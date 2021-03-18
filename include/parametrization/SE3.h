@@ -11,25 +11,35 @@
 #include "sophus/se3.hpp"
 
 namespace gdr {
+
+
     class SE3 {
     private:
         Sophus::SE3d se3;
     public:
         SE3() = default;
 
-        SE3(const Sophus::SE3d &newRelativePoseSE3);
+        SE3(const Sophus::SE3d &relativePoseSE3);
 
         SE3(const Eigen::Matrix4d &poseMatrix4);
+
+        void setRotation(const Sophus::SO3d& translationToSet);
+
+        void setTranslation(const Eigen::Vector3d& translationToSet);
 
         Sophus::SE3d getSE3Constructed() const;
 
         const Sophus::SE3d &getSE3() const;
 
-        Eigen::Vector3d getRelativeTranslationV3() const;
+        Eigen::Vector3d getTranslation() const;
 
-        Eigen::Quaterniond getRelativeRotationSO3Quatd() const;
+        Eigen::Quaterniond getRotationQuatd() const;
 
         Sophus::SO3d getSO3() const;
+
+        SE3 inverse() const;
+
+        friend SE3 operator *(const SE3 &lhs, const SE3 &rhs);
     };
 }
 

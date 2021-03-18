@@ -7,11 +7,11 @@
 #define GDR_CONNECTEDCOMPONENT_H
 
 #include "VertexCG.h"
-#include "RelativePoseSE3.h"
+#include "parametrization/RelativePoseSE3.h"
 #include "parametrization/cameraRGBD.h"
 #include "KeyPointInfo.h"
-#include "PointMatcher.h"
-#include "CloudProjector.h"
+#include "sparsePointCloud/IPointMatcher.h"
+#include "sparsePointCloud/ICloudProjector.h"
 
 #include <tbb/concurrent_vector.h>
 #include <vector>
@@ -28,8 +28,8 @@ namespace gdr {
 
         // indexing for absolute poses is from 0 to component.size() - 1 incl.
         std::vector<std::vector<RelativePoseSE3>> relativePoses;
-        PointMatcher pointMatcher;
-        CloudProjector cloudProjector;
+        std::unique_ptr<IPointMatcher> pointMatcher;
+        std::unique_ptr<ICloudProjector> cloudProjector;
         CameraRGBD cameraRgbd;
         std::string relativeRotationsFile;
         std::string absoluteRotationsFile;
@@ -45,10 +45,10 @@ namespace gdr {
         ConnectedComponentPoseGraph(
                 const std::vector<VertexCG> &absolutePoses,
                 const std::vector<std::vector<RelativePoseSE3>> &edgesLocalIndicesRelativePoses,
-                const CameraRGBD &newDefaultCamera,
-                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &newInlierPointCorrespondences,
-                const std::string& newRelativeRotationsFile,
-                const std::string& newAbsoluteRotationsFile,
+                const CameraRGBD &defaultCamera,
+                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointCorrespondences,
+                const std::string& RelativeRotationsFile,
+                const std::string& absoluteRotationsFile,
                 int componentNumber = -1);
 
         int getNumberOfPoses() const;
@@ -61,7 +61,7 @@ namespace gdr {
 
         std::vector<Eigen::Vector3d> optimizeAbsoluteTranslations(int indexFixedToZero = 0);
 
-        std::vector<Sophus::SE3d> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
+        std::vector<SE3> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
 
         std::vector<Eigen::Matrix4d> getAbsolutePosesEigenMatrix4d() const;
 

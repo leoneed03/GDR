@@ -28,7 +28,7 @@ namespace gdr {
         getKeypoints2DDescriptorsAllImages(const std::vector <std::string> &pathsToImages,
                                          const std::vector<int> &numOfDevicesForDetectors = {0}) = 0;
 
-        virtual std::vector<tbb::concurrent_vector<Match>>
+        virtual std::vector<std::vector<Match>>
         findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
                             const std::vector<int> &matchDevicesNumbers = {0}) = 0;
         virtual ~ISiftModule() = default;

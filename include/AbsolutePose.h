@@ -6,7 +6,7 @@
 #ifndef GDR_ABSOLUTEPOSE_H
 #define GDR_ABSOLUTEPOSE_H
 
-#include "Rotation3d.h"
+#include "parametrization/Rotation3d.h"
 
 #include <sophus/se3.hpp>
 

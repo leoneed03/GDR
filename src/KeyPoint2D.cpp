@@ -40,8 +40,8 @@ namespace gdr {
     }
 
     KeyPoint2D::KeyPoint2D() :
-            x(-1.0),
-            y(-1.0) {}
+            x(getDefValue()),
+            y(getDefValue()) {}
 
     bool KeyPoint2D::isUsable() const {
         return (x > 0) && (y > 0);
@@ -58,5 +58,9 @@ namespace gdr {
 
     bool KeyPoint2D::isDepthUsable() const {
         return (depth > 0);
+    }
+
+    double KeyPoint2D::getDefValue() {
+        return defValue;
     }
 }

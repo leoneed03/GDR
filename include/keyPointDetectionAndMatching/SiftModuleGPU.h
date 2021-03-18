@@ -22,7 +22,7 @@ namespace gdr {
 
     using imageDescriptor = std::pair<std::vector<KeyPoint2D>, std::vector<float>>;
 
-    class SiftModuleGPU: public ISiftModule {
+    class SiftModuleGPU : public ISiftModule {
 
         std::unique_ptr<SiftMatchGPU> matcher;
         int maxSift = 4096;
@@ -32,17 +32,22 @@ namespace gdr {
 
         std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
         getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
-                                         const std::vector<int> &numOfDevicesForDetectors = {0}) override;
+                                           const std::vector<int> &numOfDevicesForDetectors = {0}) override;
 
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
         getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                          const std::vector<int> &numOfDevicesForDetectors = {0});
 
-        std::vector<tbb::concurrent_vector<Match>> findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
-                                                                       const std::vector<int> &matchDevicesNumbers = {
-                                                                               0}) override;
+        std::vector<std::vector<Match>> findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
+                                                            const std::vector<int> &matchDevicesNumbers = {
+                                                                    0}) override;
 
     private:
+
+
+        std::vector<tbb::concurrent_vector<Match>> findCorrespondencesConcurrent(const std::vector<VertexCG> &verticesToBeMatched,
+                                                                       const std::vector<int> &matchDevicesNumbers = {
+                                                                               0});
 
         static std::vector<std::pair<int, int>>
         getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,

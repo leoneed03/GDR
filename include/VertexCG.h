@@ -22,6 +22,7 @@
 #include "KeyPointInfo.h"
 #include "keyFeatures.h"
 #include "quaternions.h"
+#include "parametrization/SE3.h"
 #include "parametrization/cameraRGBD.h"
 #include "KeyPointsDepthDescriptor.h"
 
@@ -33,8 +34,8 @@ namespace gdr {
         CameraRGBD cameraRgbd;
         int index;
         int initialIndex;
-        Eigen::Matrix4d absoluteRotationTranslation;
-        Sophus::SE3d absolutePose;
+//        Eigen::Matrix4d absoluteRotationTranslation;
+        SE3 absolutePose;
         std::vector<KeyPoint2D> keypoints;
         std::vector<float> descriptors;
         std::vector<double> depths;
@@ -48,9 +49,11 @@ namespace gdr {
 
         void setIndex(int newIndex);
 
-        void setRotation(const Eigen::Matrix3d &rotation);
+        void setRotation(const Sophus::SO3d &orientation);
 
-        void setRotation(const Eigen::Quaterniond &rotationQuatd);
+        void setRotation(const Eigen::Matrix3d &orientation);
+
+        void setRotation(const Eigen::Quaterniond &orientationQuatd);
 
         void setTranslation(const Eigen::Vector3d &translation);
 
@@ -58,12 +61,17 @@ namespace gdr {
 
         void setRotationTranslation(const Sophus::SE3d &sophusRt);
 
+        void setAbsolutePoseSE3(const SE3 &absolutePose);
+
+        const std::vector<KeyPoint2D>& getKeyPoints2D() const;
 
         Eigen::Quaterniond getRotationQuat() const;
 
         Eigen::Matrix4d getEigenMatrixAbsolutePose4d() const;
 
-        const Sophus::SE3d& getAbsolutePoseSE3() const;
+        Sophus::SE3d getAbsolutePoseSophus() const;
+
+        const SE3& getAbsolutePoseSE3() const;
 
         VertexCG(int newIndex,
                  const CameraRGBD& newCameraRgbd,

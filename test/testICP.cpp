@@ -12,7 +12,7 @@
 #include "poseInfo.h"
 #include "poseEstimation.h"
 #include "CorrespondenceGraph.h"
-#include "ICP.h"
+#include "relativePoseRefinement/ICP.h"
 
 
 

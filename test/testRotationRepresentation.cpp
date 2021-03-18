@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "Rotation3d.h"
+#include "parametrization/Rotation3d.h"
 
 #define epsilonD3 (10 * std::numeric_limits<double>::epsilon())
 

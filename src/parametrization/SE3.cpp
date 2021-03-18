@@ -13,6 +13,14 @@ namespace gdr {
         se3 = Sophus::SE3d::fitToSE3(poseMatrix4d);
     }
 
+    void SE3::setRotation(const Sophus::SO3d &rotationToSet) {
+        se3.setQuaternion(rotationToSet.unit_quaternion());
+    }
+
+    void SE3::setTranslation(const Eigen::Vector3d &translationToSet) {
+        se3.translation() = translationToSet;
+    }
+
     Sophus::SE3d SE3::getSE3Constructed() const {
         return se3;
     }
@@ -21,16 +29,26 @@ namespace gdr {
         return se3;
     }
 
-    Eigen::Vector3d SE3::getRelativeTranslationV3() const {
+    Eigen::Vector3d SE3::getTranslation() const {
         return se3.translation();
     }
 
-    Eigen::Quaterniond SE3::getRelativeRotationSO3Quatd() const {
+    Eigen::Quaterniond SE3::getRotationQuatd() const {
         return se3.unit_quaternion();
     }
 
     Sophus::SO3d SE3::getSO3() const {
         return se3.so3();
+    }
+
+    SE3 SE3::inverse() const {
+        return SE3(se3.inverse());
+    }
+
+
+
+    SE3 operator *(const SE3 &lhs, const SE3 &rhs) {
+        return SE3(lhs.getSE3() * rhs.getSE3());
     }
 }
 

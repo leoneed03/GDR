@@ -2,7 +2,7 @@
 // Created by leoneed on 2/1/21.
 //
 
-#include "PointMatcher.h"
+#include "sparsePointCloud/PointMatcher.h"
 
 #include <queue>
 #include <iostream>
@@ -10,11 +10,10 @@
 
 namespace gdr {
 
-    void PointMatcher::setNumberOfPoses(int numPoses) {
-        pointClassesByPose = std::vector<std::unordered_map<int, int>>(numPoses);
-        pointGlobalIndexByPose = std::vector<std::unordered_map<int, int>>(numPoses);
-//        matchesGlobalIndicesByPose = std::vector<std::vector<int>>(numPoses);
-    }
+//    void PointMatcher::setNumberOfPoses(int numPoses) {
+//        pointClassesByPose = std::vector<std::unordered_map<int, int>>(numPoses);
+//        pointGlobalIndexByPose = std::vector<std::unordered_map<int, int>>(numPoses);
+//    }
 
     int PointMatcher::getPointClass(int poseNumber, int keypointIndexLocal) const {
         assert(poseNumber < pointClassesByPose.size());
@@ -166,6 +165,11 @@ namespace gdr {
 
         assert(foundIt != pointGlobalIndexByPose[poseNumber].end());
         return foundIt->second;
+    }
+
+    PointMatcher::PointMatcher(int numPoses) {
+        pointClassesByPose = std::vector<std::unordered_map<int, int>>(numPoses);
+        pointGlobalIndexByPose = std::vector<std::unordered_map<int, int>>(numPoses);
     }
 
 }

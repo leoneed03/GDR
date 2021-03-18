@@ -16,12 +16,17 @@
 
 TEST(testAbsoluteRotationsComputation, onlyShonanNoBA) {
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-                                                 517.3,
-                                                 318.6, 516.5, 255.3);
-    correspondenceGraph.computeRelativePoses();
-    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
-//    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
+    std::vector<gdr::ConnectedComponentPoseGraph> components;
+    {
+        gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb",
+                                                     "../../data/plantDataset_19_3/depth",
+                                                     517.3,
+                                                     318.6, 516.5, 255.3);
+        correspondenceGraph.computeRelativePoses();
+        components = correspondenceGraph.splitGraphToConnectedComponents();
+    }
+    auto& biggestComponent = components[0];
+    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = biggestComponent.performRotationAveraging();
 
     std::string absolutePoses = "../../data/files/absolutePoses_19.txt";
     std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
@@ -58,12 +63,18 @@ TEST(testAbsoluteRotationsComputation, onlyShonanNoBA) {
 
 TEST(testAbsoluteRotationsComputation, robustNoBA) {
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-                                                 517.3,318.6,
-                                                 516.5, 255.3);
-    correspondenceGraph.computeRelativePoses();
-    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = correspondenceGraph.performRotationAveraging();
-    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = correspondenceGraph.optimizeRotationsRobust();
+    std::vector<gdr::ConnectedComponentPoseGraph> components;
+    {
+        gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb",
+                                                     "../../data/plantDataset_19_3/depth",
+                                                     517.3,
+                                                     318.6, 516.5, 255.3);
+        correspondenceGraph.computeRelativePoses();
+        components = correspondenceGraph.splitGraphToConnectedComponents();
+    }
+    auto& biggestComponent = components[0];
+    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = biggestComponent.performRotationAveraging();
+    std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = biggestComponent.optimizeRotationsRobust();
 
     std::string absolutePoses = "../../data/files/absolutePoses_19.txt";
     std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);

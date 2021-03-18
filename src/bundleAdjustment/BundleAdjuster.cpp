@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "BundleAduster.h"
+#include "bundleAdjustment/BundleAdjuster.h"
 
 #include <opencv2/opencv.hpp>
 #include <ceres/ceres.h>
@@ -11,7 +11,7 @@
 namespace gdr {
 
     BundleAdjuster::BundleAdjuster(const std::vector<Point3d> &points,
-                                   const std::vector<std::pair<Sophus::SE3d, CameraRGBD>> &absolutePoses,
+                                   const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
                                    const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo) {
 
         lossFunctionWrapperReprojectionError = std::make_shared<ceres::LossFunctionWrapper>(new ceres::HuberLoss(1.0),
@@ -22,8 +22,6 @@ namespace gdr {
         assert(keyPointinfo.size() == absolutePoses.size());
         assert(!absolutePoses.empty());
         assert(absolutePoses.size() > 0);
-//        double widthAssert = 640;
-//        double heightAssert = 480;
         std::cout << "poses: " << absolutePoses.size() << std::endl;
         for (const auto &point: points) {
             pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
@@ -38,8 +36,8 @@ namespace gdr {
         keyPointInfoByPoseNumberAndPointNumber = keyPointinfo;
 
         for (const auto &pose: absolutePoses) {
-            const auto &translation = pose.first.translation();
-            const auto &rotationQuat = pose.first.unit_quaternion();
+            const auto &translation = pose.first.getTranslation();
+            const auto &rotationQuat = pose.first.getRotationQuatd();
             const auto &cameraIntr = pose.second;
             poseTxTyTzByPoseNumber.push_back({translation[0], translation[1], translation[2]});
             poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.fx, cameraIntr.cx, cameraIntr.fy, cameraIntr.cy});
@@ -101,8 +99,8 @@ namespace gdr {
                                                                    keyPointInfo.getDepth(),
                                                                    defaultQuadraticParameterNoiseModelDepth);
                 double depthErrorToUse = performNormalizing ? normalizedErrorDepth : depthError;
-                std::cout << "keyPoint Depth " << keyPointInfo.getDepth() << " error is " << depthError
-                          << " & normalized: " << normalizedErrorDepth << std::endl;
+//                std::cout << "keyPoint Depth " << keyPointInfo.getDepth() << " error is " << depthError
+//                          << " & normalized: " << normalizedErrorDepth << std::endl;
                 assert(std::abs(normalizedErrorDepth -
                                 depthError / (0.003331 * (keyPointInfo.getDepth() * keyPointInfo.getDepth()))) <
                        10 * std::numeric_limits<double>::epsilon());
@@ -116,123 +114,6 @@ namespace gdr {
         return {errorsReprojectionXY, errorsDepth};
     }
 
-    std::vector<Sophus::SE3d> BundleAdjuster::optimizePointsAndPoses(int indexFixed) {
-
-
-        ceres::Problem problem;
-        ceres::LocalParameterization *quaternionLocalParameterization =
-                new ceres::EigenQuaternionParameterization;
-        std::cout << "started BA" << std::endl;
-
-        assert(orientationsqxyzwByPoseNumber.size() == poseTxTyTzByPoseNumber.size());
-        assert(!orientationsqxyzwByPoseNumber.empty());
-        for (int poseIndex = 0; poseIndex < poseTxTyTzByPoseNumber.size(); ++poseIndex) {
-
-            std::cout << "init pose " << poseIndex << std::endl;
-            auto &pose = poseTxTyTzByPoseNumber[poseIndex];
-            auto &orientation = orientationsqxyzwByPoseNumber[poseIndex];
-
-            assert(poseIndex < keyPointInfoByPoseNumberAndPointNumber.size());
-
-            for (const auto &indexAndKeyPointInfo: keyPointInfoByPoseNumberAndPointNumber[poseIndex]) {
-                int pointIndex = indexAndKeyPointInfo.first;
-                assert(pointIndex >= 0 && pointIndex < pointsXYZbyIndex.size());
-
-                auto &point = pointsXYZbyIndex[pointIndex];
-                auto &intr = poseFxCxFyCyScaleByPoseNumber[poseIndex];
-                assert(intr.size() == cameraDim);
-//                auto& observedKeyPoints = keyPointInfoByPoseNumberAndPointNumber[poseIndex];
-                const auto &keyPointInfo = indexAndKeyPointInfo.second;
-
-                double widthAssert = 640;
-                double heightAssert = 480;
-                double observedX = keyPointInfo.getX();
-                double observedY = keyPointInfo.getY();
-//                double observedX = width - keyPointInfo.getX();
-//                double observedY = height - keyPointInfo.getY();
-
-                assert(observedX > 0 && observedX < widthAssert);
-                assert(observedY > 0 && observedY < heightAssert);
-
-                ceres::CostFunction *cost_function =
-                        ReprojectionError::Create(observedX, observedY, keyPointInfo.getDepth());
-                problem.AddResidualBlock(cost_function,
-                                         nullptr,
-//                                         new ceres::CauchyLoss(0.5),
-//                                         new ceres::HuberLoss(1.0),
-                                         point.data(),
-                                         pose.data(),
-                                         orientation.data(),
-                                         intr.data());
-                problem.SetParameterization(orientation.data(), quaternionLocalParameterization);
-                problem.SetParameterBlockConstant(intr.data());
-            }
-        }
-        problem.SetParameterBlockConstant(poseTxTyTzByPoseNumber[indexFixed].data());
-        problem.SetParameterBlockConstant(orientationsqxyzwByPoseNumber[indexFixed].data());
-
-
-        ceres::Solver::Options options;
-//        options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-        options.linear_solver_type = ceres::SPARSE_SCHUR;
-        options.minimizer_progress_to_stdout = true;
-        options.max_num_iterations = 500;
-        ceres::Solver::Summary summary;
-        ceres::Solve(options, &problem, &summary);
-        std::cout << "done ceres BA" << std::endl;
-        std::cout << summary.FullReport() << std::endl;
-
-        // check if solution can be used
-        std::cout << "Is BA USABLE?" << std::endl;
-        assert(summary.IsSolutionUsable());
-        std::cout << "Threads used " << summary.num_threads_used << std::endl;
-
-        std::cout << "BA usable" << std::endl;
-
-        std::vector<Sophus::SE3d> posesOptimized;
-
-        assert(cameraModelByPoseNumber.size() == poseTxTyTzByPoseNumber.size());
-        for (int i = 0; i < poseTxTyTzByPoseNumber.size(); ++i) {
-            Eigen::Quaterniond orientation(orientationsqxyzwByPoseNumber[i].data());
-            const auto &poseTranslationCameraIntr = poseTxTyTzByPoseNumber[i];
-            std::vector<double> t = {poseTranslationCameraIntr[0], poseTranslationCameraIntr[1],
-                                     poseTranslationCameraIntr[2]};
-            Eigen::Vector3d translation(t.data());
-//            std::cout << "orientation " << orientation.norm() << std::endl;
-            assert(std::abs(orientation.norm() - 1.0) < 1e-10);
-            Sophus::SE3d poseCurrent;
-            poseCurrent.setQuaternion(orientation);
-            poseCurrent.translation() = translation;
-            posesOptimized.push_back(poseCurrent);
-            const auto &camera = cameraModelByPoseNumber[i];
-            const auto &intr = poseFxCxFyCyScaleByPoseNumber[i];
-            double eps = 30 * std::numeric_limits<double>::epsilon();
-            double errorFx = std::abs(camera.fx - intr[cameraIntrStartIndex]);
-            double errorCx = std::abs(camera.cx - intr[cameraIntrStartIndex + 1]);
-            double errorFy = std::abs(camera.fy - intr[cameraIntrStartIndex + 2]);
-            double errorCy = std::abs(camera.cy - intr[cameraIntrStartIndex + 3]);
-            assert(errorFx < eps);
-            assert(errorCx < eps);
-            assert(errorCy < eps);
-            assert(errorFy < eps);
-
-
-        }
-//        for (const auto& pose: poseTxTyTzByPoseNumber) {
-//            Eigen::Quaterniond orientation(&pose[quatStartIndex]);
-//            Eigen::Vector3d translation(&pose[0]);
-//            std::cout << "orientation " << orientation.norm() << std::endl;
-////            assert(std::abs(orientation.norm() - 1.0) < 1e-10);
-//            Sophus::SE3d poseCurrent;
-//            poseCurrent.setQuaternion(orientation);
-//            poseCurrent.translation() = translation;
-//            posesOptimized.push_back(poseCurrent);
-//
-//        }
-
-        return posesOptimized;
-    }
-
     std::vector<Point3d> BundleAdjuster::getPointsGlobalCoordinatesOptimized() const {
         std::vector<Point3d> pointsOtimized;
 
@@ -243,37 +124,6 @@ namespace gdr {
         }
         assert(pointsOtimized.size() == pointsXYZbyIndex.size());
         return pointsOtimized;
-    }
-
-    double RobustEtimators::getMedian(const std::vector<double> &values, double quantile) {
-        std::vector<double> valuesToSort = values;
-
-        assert(quantile >= 0.0 && quantile <= 1.0);
-        int indexMedianOfMeasurements = valuesToSort.size() * quantile;
-
-        std::nth_element(valuesToSort.begin(),
-                         valuesToSort.begin() + indexMedianOfMeasurements,
-                         valuesToSort.end());
-        return valuesToSort[indexMedianOfMeasurements];
-    }
-
-    double RobustEtimators::getMedianAbsoluteDeviationMultiplied(const std::vector<double> &values,
-                                                                 double multiplier) {
-
-        double medianValue = getMedian(values);
-
-        std::vector<double> residuesMedian;
-        residuesMedian.reserve(values.size());
-
-        for (const auto &value: values) {
-            residuesMedian.emplace_back(std::abs(value - medianValue));
-        }
-
-        assert(residuesMedian.size() == values.size());
-
-        double medianAbsoluteDeviation = getMedian(residuesMedian);
-
-        return medianAbsoluteDeviation * multiplier;
     }
 
 // get median and max errors: reprojection OX and OY and Depth: [{OX, OY, Depth}_median, {OX, OY, Depth}_max, {OX, OY, Depth}_min]
@@ -344,7 +194,7 @@ namespace gdr {
 
 // each unordered map maps from poseNumber to unordered map
 // mapping from keyPointGlobalIndex to {errorPixelX, errorPixelY}
-    std::vector<Sophus::SE3d> BundleAdjuster::optimizePointsAndPosesUsingDepthInfo(int indexFixed) {
+    std::vector<SE3> BundleAdjuster::optimizePointsAndPosesUsingDepthInfo(int indexFixed) {
 
 
         std::cout << "entered BA depth optimization" << std::endl;
@@ -374,24 +224,18 @@ namespace gdr {
         std::pair<std::vector<double>, std::vector<double>> errorsReprojDepthRaw =
                 getNormalizedErrorsReprojectionAndDepth(false);
 
-        double medianErrorReprojRaw = RobustEtimators::getMedian(errorsReprojDepthRaw.first);
-        double medianErrorDepthRaw = RobustEtimators::getMedian(errorsReprojDepthRaw.second);
+        double medianErrorReprojRaw = RobustEstimators::getMedian(errorsReprojDepthRaw.first);
+        double medianErrorDepthRaw = RobustEstimators::getMedian(errorsReprojDepthRaw.second);
         auto errors3DL2Raw = getL2Errors();
-        double medianErrorL2Raw = RobustEtimators::getMedian(errors3DL2Raw);
+        double medianErrorL2Raw = RobustEstimators::getMedian(errors3DL2Raw);
 
         assert(errors3DL2Raw.size() == errorsReprojDepthRaw.first.size());
 
         std::cout << "deviation estimation sigmas are (pixels) " << sigmaReproj << " && (meters) " << sigmaDepth
                   << std::endl;
-//
-//        lossFunctionWrapperReprojectionError->Reset(new ceres::HuberLoss(sigmaReproj * sigmaReproj),
-//                                                    ceres::TAKE_OWNERSHIP);
-//        lossFunctionWrapperDepthError->Reset(new ceres::HuberLoss(sigmaDepth * sigmaDepth),
-//                                             ceres::TAKE_OWNERSHIP);
 
         for (int poseIndex = 0; poseIndex < poseTxTyTzByPoseNumber.size(); ++poseIndex) {
 
-//            std::cout << "init pose " << poseIndex << std::endl;
             auto &pose = poseTxTyTzByPoseNumber[poseIndex];
             auto &orientation = orientationsqxyzwByPoseNumber[poseIndex];
 
@@ -402,7 +246,6 @@ namespace gdr {
                 assert(pointIndex >= 0 && pointIndex < pointsXYZbyIndex.size());
 
                 auto &point = pointsXYZbyIndex[pointIndex];
-//                auto& observedKeyPoints = keyPointInfoByPoseNumberAndPointNumber[poseIndex];
                 const auto &keyPointInfo = indexAndKeyPointInfo.second;
 
                 assert(keyPointInfo.isInitialized());
@@ -432,11 +275,8 @@ namespace gdr {
                                                            sigmaReproj, sigmaDepth,
                                                            deviationEstReprojByScale, deviationEstDepthByDepth,
                                                            medianErrorReprojRaw, medianErrorDepthRaw);
-                // no robustness at the moment
                 problem.AddResidualBlock(cost_function,
                                          nullptr,
-//                                         new ceres::CauchyLoss(0.5),
-//                                         new ceres::HuberLoss(2.0),
                                          point.data(),
                                          pose.data(),
                                          orientation.data());
@@ -448,7 +288,6 @@ namespace gdr {
 
 
         ceres::Solver::Options options;
-//        options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
         options.linear_solver_type = ceres::SPARSE_SCHUR;
         options.minimizer_progress_to_stdout = true;
         options.max_num_iterations = 200;
@@ -457,21 +296,16 @@ namespace gdr {
         ceres::Solve(options, &problem, &summary);
         std::cout << "done ceres BA" << std::endl;
         std::cout << summary.FullReport() << std::endl;
-
-        // check if solution can be used
         std::cout << "Is BA USABLE?" << std::endl;
         assert(summary.IsSolutionUsable());
         std::cout << "Threads used " << summary.num_threads_used << std::endl;
 
-        std::cout << "BA usable" << std::endl;
-
-
         std::pair<std::vector<double>, std::vector<double>> errorsReprojDepthRawAfter =
                 getNormalizedErrorsReprojectionAndDepth(false);
 
-        double medianErrorReprojRawAfter = RobustEtimators::getMedian(errorsReprojDepthRawAfter.first);
-        double medianErrorDepthRawAfter = RobustEtimators::getMedian(errorsReprojDepthRawAfter.second);
-        double medianErrorL2RawAfter = RobustEtimators::getMedian(getL2Errors());
+        double medianErrorReprojRawAfter = RobustEstimators::getMedian(errorsReprojDepthRawAfter.first);
+        double medianErrorDepthRawAfter = RobustEstimators::getMedian(errorsReprojDepthRawAfter.second);
+        double medianErrorL2RawAfter = RobustEstimators::getMedian(getL2Errors());
 
         std::cout << "-----------------------------------------------------" << std::endl;
 
@@ -505,7 +339,7 @@ namespace gdr {
                   << medianErrorXafter << ", " << medianErrorYafter << ", " << medianErrorDepthAfter << ", "
                   << quantile90ErrorXafter << ", " << quantile90ErrorYafter << ", " << quantile90ErrorDepthAfter
                   << std::endl;
-        std::vector<Sophus::SE3d> posesOptimized;
+        std::vector<SE3> posesOptimized;
 
         assert(cameraModelByPoseNumber.size() == poseTxTyTzByPoseNumber.size());
         for (int i = 0; i < poseTxTyTzByPoseNumber.size(); ++i) {
@@ -514,12 +348,11 @@ namespace gdr {
             std::vector<double> t = {poseTranslationCameraIntr[0], poseTranslationCameraIntr[1],
                                      poseTranslationCameraIntr[2]};
             Eigen::Vector3d translation(t.data());
-//            std::cout << "orientation " << orientation.norm() << std::endl;
             assert(std::abs(orientation.norm() - 1.0) < 1e-10);
             Sophus::SE3d poseCurrent;
             poseCurrent.setQuaternion(orientation);
             poseCurrent.translation() = translation;
-            posesOptimized.push_back(poseCurrent);
+            posesOptimized.emplace_back(SE3(poseCurrent));
         }
 
         return posesOptimized;
@@ -582,8 +415,8 @@ namespace gdr {
         assert(!errorsNormalizedReproj.empty());
         assert(errorsNormalizedReproj.size() == errorsNormalizedDepth.size());
 
-        double medianNormalizedReprojection = RobustEtimators::getMedian(errorsNormalizedReproj);
-        double medianNormalizedDepth = RobustEtimators::getMedian(errorsNormalizedDepth);
+        double medianNormalizedReprojection = RobustEstimators::getMedian(errorsNormalizedReproj);
+        double medianNormalizedDepth = RobustEstimators::getMedian(errorsNormalizedDepth);
 
 
         std::cout << "Medians of normalized errors are (pixels) " << medianNormalizedReprojection
@@ -620,7 +453,6 @@ namespace gdr {
     double getFinalScaleEstimate(const std::vector<double> &inlierErrors,
                                  int p) {
 
-        // TODO learn what parameter p is used for?
         assert(p == 0);
         double sumErrorSquared = 0.0;
         for (const auto &error: inlierErrors) {
@@ -654,9 +486,6 @@ namespace gdr {
 
     std::vector<double> BundleAdjuster::getL2Errors() {
         std::vector<double> errorsL2;
-
-        double minScale = std::numeric_limits<double>::infinity();
-        double maxScale = -1;
 
         for (int currPose = 0; currPose < poseTxTyTzByPoseNumber.size(); ++currPose) {
             for (const auto &keyPointInfosByPose: keyPointInfoByPoseNumberAndPointNumber[currPose]) {

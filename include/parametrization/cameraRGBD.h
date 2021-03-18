@@ -26,6 +26,11 @@ namespace gdr {
         Eigen::Matrix3d getIntrinsicsMatrix3x3() const;
 
         Eigen::Vector3d getCoordinates3D(double xHorizontal, double yVertical, double depth) const;
+
+        float getFx() const;
+        float getFy() const;
+        float getCx() const;
+        float getCy() const;
     };
 }
 

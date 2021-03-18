@@ -10,7 +10,7 @@
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
-#include "Rotation3d.h"
+#include "parametrization/Rotation3d.h"
 #include "rotationMeasurement.h"
 
 namespace gdr {

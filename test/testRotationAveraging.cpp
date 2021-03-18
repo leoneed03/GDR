@@ -14,11 +14,17 @@
 
 TEST(testRotationAveraging, computeAbsoluteRotationsDatasetPlant_19) {
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-                                                 517.3,318.6,
-                                                 516.5, 255.3);
-    correspondenceGraph.computeRelativePoses();
-    std::vector<Eigen::Quaterniond> computedAbsoluteOrientations = correspondenceGraph.performRotationAveraging();
+    std::vector<gdr::ConnectedComponentPoseGraph> components;
+    {
+        gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb",
+                                                     "../../data/plantDataset_19_3/depth",
+                                                     517.3,
+                                                     318.6, 516.5, 255.3);
+        correspondenceGraph.computeRelativePoses();
+        components = correspondenceGraph.splitGraphToConnectedComponents();
+    }
+    auto& biggestComponent = components[0];
+    std::vector<Eigen::Quaterniond> computedAbsoluteOrientations = biggestComponent.performRotationAveraging();
 
     std::string absolutePoses = "../../data/files/absolutePoses_19.txt";
     std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);

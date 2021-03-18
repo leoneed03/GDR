@@ -51,7 +51,7 @@ TEST(testRelativePosesComputation, PlantPASSED) {
 
             if (indexFrom < indexTo) {
                 ++numberOfObservations;
-                Sophus::SE3d Rt = Sophus::SE3d::fitToSE3(relativeTransformation.innerTranformationRtMatrix);
+                Sophus::SE3d Rt = relativeTransformation.getRelativePoseSE3();
                 Sophus::SE3d relativeGT =
                         absolutePosesFromGroundTruth[indexFrom].inverse() * absolutePosesFromGroundTruth[indexTo];
                 double rotError = Rt.unit_quaternion().angularDistance(relativeGT.unit_quaternion());

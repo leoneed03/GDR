@@ -7,22 +7,23 @@
 #ifndef GDR_LOSSHUBER_H
 #define GDR_LOSSHUBER_H
 
+#include "LossFunctions.h"
 
 namespace gdr {
-//    template<typename T>
-//    class LossHuber {
-//    public:
-//        template<class T>
-//        static T evaluate(T value, T scaleParam) {
-//            T valueNorm = value > T(0) ? value : -value;
-//
-//            if (valueNorm < scaleParam) {
-//                return valueNorm * valueNorm * T(0.5);
-//            } else {
-//                return scaleParam * (valueNorm - scaleParam * T(0.5));
-//            }
-//        }
-//    };
+    template<class T>
+    class LossHuber : public LossFunction<T> {
+    public:
+        virtual T evaluate(T value, T threshold) override {
+            T valueNorm(value);
+            assert(valueNorm >= T(0.0));
+
+            if (valueNorm < threshold) {
+                return valueNorm * valueNorm * T(0.5);
+            } else {
+                return threshold * (valueNorm - threshold * T(0.5));
+            }
+        }
+    };
 }
 
 

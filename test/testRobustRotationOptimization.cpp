@@ -7,11 +7,11 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "Rotation3d.h"
+#include "parametrization/Rotation3d.h"
 
 #include "groundTruthTransformer.h"
 #include "rotationAveraging.h"
-#include "Rotation3d.h"
+#include "parametrization/Rotation3d.h"
 #include "quaternions.h"
 
 #include "RotationOptimizationRobust.h"

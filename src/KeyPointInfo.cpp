@@ -11,35 +11,33 @@
 #include <cmath>
 
 namespace gdr {
-    KeyPointInfo::KeyPointInfo(const KeyPoint2D &newKeypoint,
-                               double newDepth,
-                               int newObservingPoseNumber) : x(newKeypoint.getX()),
-                                                             y(newKeypoint.getY()),
-                                                             scale(newKeypoint.getScale()),
-                                                             orientation(newKeypoint.getOrientation()),
-                                                             depth(newDepth),
-                                                             observingPoseNumber(newObservingPoseNumber),
-                                                             initialObservingPoseNumber(newObservingPoseNumber) {}
+    KeyPointInfo::KeyPointInfo(const KeyPoint2D &keyPointToSet,
+                               double depthToSet,
+                               int observingPoseNumberToSet) : keyPoint2D(keyPointToSet),
+                                                               observingPoseNumber(observingPoseNumberToSet),
+                                                               initialObservingPoseNumber(observingPoseNumberToSet) {
+        keyPoint2D.setDepth(depthToSet);
+    }
 
 
     double KeyPointInfo::getX() const {
-        return x;
+        return keyPoint2D.getX();
     }
 
     double KeyPointInfo::getY() const {
-        return y;
+        return keyPoint2D.getY();
     }
 
     double KeyPointInfo::getScale() const {
-        return scale;
+        return keyPoint2D.getScale();
     }
 
     double KeyPointInfo::getOrientation() const {
-        return orientation;
+        return keyPoint2D.getOrientation();
     }
 
     double KeyPointInfo::getDepth() const {
-        return depth;
+        return keyPoint2D.getDepth();
     }
 
     int KeyPointInfo::getObservingPoseNumber() const {
@@ -74,12 +72,12 @@ namespace gdr {
 
     bool KeyPointInfo::operator==(const KeyPointInfo &right) {
 
-        if (std::abs(x - right.getX()) > epsilonD
-            || std::abs(y - right.getY()) > epsilonD
-            || std::abs(scale - right.getScale()) > epsilonD
-            || std::abs(orientation - right.getOrientation()) > epsilonD
-            || std::abs(depth - right.getDepth()) > epsilonD
-            || observingPoseNumber != right.getObservingPoseNumber()) {
+        if (std::abs(getX() - right.getX()) > epsilonD
+            || std::abs(getY() - right.getY()) > epsilonD
+            || std::abs(getScale() - right.getScale()) > epsilonD
+            || std::abs(getOrientation() - right.getOrientation()) > epsilonD
+            || std::abs(getDepth() - right.getDepth()) > epsilonD
+            || getObservingPoseNumber() != right.getObservingPoseNumber()) {
             return false;
         } else {
             return true;
@@ -87,25 +85,20 @@ namespace gdr {
     }
 
     KeyPointInfo::KeyPointInfo() {
-        x = getDefValue();
-        y = getDefValue();
-        scale = getDefValue();
-        orientation = getDefValue();
-        depth = getDefValue();
         observingPoseNumber = getDefValue();
         initialObservingPoseNumber = observingPoseNumber;
     }
 
     double KeyPointInfo::getDefValue() const {
-        return defValue;
+        return keyPoint2D.getDefValue();
     }
 
     bool KeyPointInfo::isInitialized() const {
-        if (std::abs(x - getDefValue()) < epsilonD
-            || std::abs(y - getDefValue()) < epsilonD
-            || std::abs(scale - getDefValue()) < epsilonD
-            || std::abs(orientation - getDefValue()) < epsilonD
-            || std::abs(depth - getDefValue()) < epsilonD) {
+        if (std::abs(getX() - getDefValue()) < epsilonD
+            || std::abs(getY() - getDefValue()) < epsilonD
+            || std::abs(getScale() - getDefValue()) < epsilonD
+            || std::abs(getOrientation() - getDefValue()) < epsilonD
+            || std::abs(getDepth() - getDefValue()) < epsilonD) {
             return false;
         } else {
             return true;
@@ -116,7 +109,7 @@ namespace gdr {
         observingPoseNumber = newObservingPoseNumber;
     }
 
-    int KeyPointInfo::getInitObservingnumber() const {
+    int KeyPointInfo::getInitObservingPoseNumber() const {
         return initialObservingPoseNumber;
     }
 }

@@ -6,29 +6,32 @@
 #ifndef GDR_RELATIVEPOSESE3_H
 #define GDR_RELATIVEPOSESE3_H
 
-#include "sophus/se3.hpp"
+//#include "sophus/se3.hpp"
+
+#include "parametrization/SE3.h"
 
 namespace gdr {
     struct RelativePoseSE3 {
         int indexFrom;
         int indexTo;
-        Sophus::SE3d relativePoseSE3;
+        SE3 relativePoseSE3;
 
-        RelativePoseSE3(int newIndexFrom, int newIndexTo, const Sophus::SE3d &newRelativePoseSE3);
+        RelativePoseSE3(int indexFrom, int indexTo, const SE3 &relativePose);
 
-        Sophus::SE3d getRelativePoseSE3Constructed() const;
+        SE3 getRelativePoseSE3Constructed() const;
 
         int getIndexFrom() const;
 
         int getIndexTo() const;
 
-        const Sophus::SE3d& getRelativePoseSE3() const;
+        const SE3 &getRelativePoseSE3() const;
 
-        Eigen::Vector3d getRelativeTranslationV3() const;
+        Eigen::Vector3d getTranslation() const;
 
         Eigen::Quaterniond getRelativeRotationSO3Quatd() const;
 
-        Eigen::Vector3d getRelativeTranslationR3() const;
+        Sophus::SO3d getRotation() const;
+
     };
 }
 

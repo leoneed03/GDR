@@ -6,13 +6,16 @@
 #include "rotationAveraging.h"
 #include "ConnectedComponent.h"
 #include "Point3d.h"
-#include "BundleAduster.h"
+#include "bundleAdjustment/IBundleAdjuster.h"
+#include "bundleAdjustment/BundleAdjuster.h"
 #include "RotationOptimizationRobust.h"
 #include "translationMeasurement.h"
 #include "translationAveraging.h"
 
 #include <fstream>
 #include <boost/filesystem.hpp>
+
+#include "sparsePointCloud/CloudProjector.h"
 
 namespace gdr {
 
@@ -32,7 +35,6 @@ namespace gdr {
         absoluteRotationsFile(newAbsoluteRotationsFile),
         componentGlobalNumberOptional(componentNumber) {
 
-
         std::vector<VertexCG *> posesForCloudProjector;
         assert(getNumberOfPoses() > 0);
         posesForCloudProjector.reserve(getNumberOfPoses());
@@ -42,8 +44,10 @@ namespace gdr {
         }
         assert(getNumberOfPoses() == absolutePoses.size());
         assert(posesForCloudProjector.size() == getNumberOfPoses());
-        cloudProjector.setPoses(posesForCloudProjector);
-        pointMatcher.setNumberOfPoses(getNumberOfPoses());
+        cloudProjector = std::make_unique<CloudProjector>(posesForCloudProjector);
+
+        pointMatcher = std::make_unique<PointMatcher>(getNumberOfPoses());
+//        pointMatcher.setNumberOfPoses(getNumberOfPoses());
     }
 
     void ConnectedComponentPoseGraph::computePointClasses() {
@@ -55,13 +59,13 @@ namespace gdr {
             for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
                 poseAndLocalIndices.push_back(fullPointInfo.first);
             }
-            pointMatcher.insertPointsWithNewClasses(poseAndLocalIndices);
+            pointMatcher->insertPointsWithNewClasses(poseAndLocalIndices);
         }
 
 
         // unordered map's Key is local index
-        std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPoseNumAndLocalInd(
-                pointMatcher.getNumberOfPoses());
+        std::vector<std::unordered_map<int, KeyPointInfo>>
+        keyPointInfoByPoseNumAndLocalInd(pointMatcher->getNumberOfPoses());
 
 
         for (const auto &vectorOfMatches: matchesBetweenPoints) {
@@ -79,15 +83,15 @@ namespace gdr {
             }
         }
 
-        auto pointClasses = pointMatcher.assignPointClasses();
+        auto pointClasses = pointMatcher->assignPointClasses();
 
         for (int pointIncrementor = 0; pointIncrementor < pointClasses.size(); ++pointIncrementor) {
             int pointClassNumber = pointClasses[pointIncrementor];
-            std::pair<int, int> poseNumberAndLocalIndex = pointMatcher.getPoseNumberAndLocalIndex(pointIncrementor);
+            std::pair<int, int> poseNumberAndLocalIndex = pointMatcher->getPoseNumberAndLocalIndex(pointIncrementor);
             std::vector<KeyPointInfo> keyPointInfo;
             keyPointInfo.push_back(
                     keyPointInfoByPoseNumAndLocalInd[poseNumberAndLocalIndex.first][poseNumberAndLocalIndex.second]);
-            cloudProjector.addPoint(pointClassNumber, keyPointInfo);
+            cloudProjector->addPoint(pointClassNumber, keyPointInfo);
         }
     }
 
@@ -167,7 +171,7 @@ namespace gdr {
 
                 if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
                     relativeTranslations.push_back(
-                            translationMeasurement(knownRelativePose.getRelativeTranslationV3(),
+                            translationMeasurement(knownRelativePose.getTranslation(),
                                                    knownRelativePose.getIndexFrom(),
                                                    knownRelativePose.getIndexTo()));
                 }
@@ -204,40 +208,43 @@ namespace gdr {
         return optimizedAbsoluteTranslationsIRLS;
     }
 
-    std::vector<Sophus::SE3d> ConnectedComponentPoseGraph::performBundleAdjustmentUsingDepth(int indexFixedToZero) {
+    std::vector<SE3> ConnectedComponentPoseGraph::performBundleAdjustmentUsingDepth(int indexFixedToZero) {
         int maxNumberOfPointsToShow = -1;
         computePointClasses();
-        std::vector<Point3d> observedPoints = cloudProjector.setComputedPointsGlobalCoordinates();
+        std::vector<Point3d> observedPoints = cloudProjector->setComputedPointsGlobalCoordinates();
         std::cout << "ready " << std::endl;
-        std::vector<std::pair<Sophus::SE3d, CameraRGBD>> posesAndCameraParams;
+        std::vector<std::pair<SE3, CameraRGBD>> posesAndCameraParams;
         for (const auto &vertexPose: absolutePoses) {
-            posesAndCameraParams.push_back({vertexPose.absolutePose, cameraRgbd});
+            posesAndCameraParams.emplace_back(std::make_pair(vertexPose.getAbsolutePoseSE3(), cameraRgbd));
         }
         std::cout << "BA depth create BundleAdjuster" << std::endl;
 
         std::vector<double> errorsBefore;
-        auto shownResidualsBefore = cloudProjector.showPointsReprojectionError(observedPoints, "before", errorsBefore,
+        auto shownResidualsBefore = cloudProjector->showPointsReprojectionError(observedPoints,
+                                                                               "before",
+                                                                               errorsBefore,
                                                                                absolutePoses[0].getCamera(),
                                                                                maxNumberOfPointsToShow);
-        //vizualize points and matches
-//        cloudProjector.showPointsProjection(observedPoints);
 
-        BundleAdjuster bundleAdjuster(observedPoints, posesAndCameraParams,
-                                      cloudProjector.getKeyPointInfoByPoseNumberAndPointClass());
+        std::unique_ptr<IBundleAdjuster> bundleAdjuster =
+                std::make_unique<BundleAdjuster>(observedPoints,
+                                                 posesAndCameraParams,
+                                                 cloudProjector->getKeyPointInfoByPoseNumberAndPointClass());
 
-        std::vector<Sophus::SE3d> posesOptimized = bundleAdjuster.optimizePointsAndPosesUsingDepthInfo(
-                indexFixedToZero);
+        std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPosesUsingDepthInfo(indexFixedToZero);
 
         assert(posesOptimized.size() == getNumberOfPoses());
 
         for (int i = 0; i < getNumberOfPoses(); ++i) {
             auto &vertexPose = absolutePoses[i];
-            vertexPose.setRotationTranslation(posesOptimized[i]);
+            vertexPose.setAbsolutePoseSE3(posesOptimized[i]);
         }
 
         std::vector<double> errorsAfter;
 
-        auto shownResidualsAfter = cloudProjector.showPointsReprojectionError(observedPoints, "after", errorsAfter,
+        auto shownResidualsAfter = cloudProjector->showPointsReprojectionError(observedPoints,
+                                                                              "after",
+                                                                              errorsAfter,
                                                                               absolutePoses[0].getCamera(),
                                                                               maxNumberOfPointsToShow);
 
@@ -292,8 +299,6 @@ namespace gdr {
 
         assert(counterMedianErrorGotWorse + counterMedianErrorGotBetter == counterSumMedianError);
 
-        // visualize point correspondences:
-//        cloudProjector.showPointsProjection(bundleAdjuster.getPointsGlobalCoordinatesOptimized());
         return posesOptimized;
     }
 
@@ -336,7 +341,7 @@ namespace gdr {
                     int indexFrom = i;
                     //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format) TODO: actually seems like NOT
                     file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
-                    auto translationVector = transformation.getRelativeTranslationR3();
+                    auto translationVector = transformation.getTranslation();
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
                          << std::to_string(translationVector.col(0)[1]) << ' '
                          << std::to_string(translationVector.col(0)[2]) << ' ';

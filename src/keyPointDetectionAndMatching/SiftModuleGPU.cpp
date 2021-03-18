@@ -5,7 +5,7 @@
 
 #include <thread>
 #include <mutex>
-#include "SiftModuleGPU.h"
+#include "keyPointDetectionAndMatching/SiftModuleGPU.h"
 #include "printer.h"
 
 
@@ -181,9 +181,23 @@ namespace gdr {
         return matchingKeypoints;
     }
 
-    std::vector<tbb::concurrent_vector<Match>>
+    std::vector<std::vector<Match>>
     SiftModuleGPU::findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
                                        const std::vector<int> &matchDevicesNumbers) {
+        auto matches = findCorrespondencesConcurrent(verticesToBeMatched, matchDevicesNumbers);
+        std::vector<std::vector<Match>> resultMatches(matches.size());
+
+        for (int i = 0; i < matches.size(); ++i) {
+            for (const auto &match: matches[i]) {
+                resultMatches[i].emplace_back(match);
+            }
+        }
+        return resultMatches;
+    }
+
+    std::vector<tbb::concurrent_vector<Match>>
+    SiftModuleGPU::findCorrespondencesConcurrent(const std::vector<VertexCG> &verticesToBeMatched,
+                                                 const std::vector<int> &matchDevicesNumbers) {
 
         std::vector<std::unique_ptr<SiftMatchGPU>> matchers;
 

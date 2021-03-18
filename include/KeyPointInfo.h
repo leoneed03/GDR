@@ -17,23 +17,24 @@ namespace gdr {
 
     struct KeyPointInfo {
 //        SiftGPU::SiftKeypoint keypoint;
-        double x, y, scale, orientation;
-        double depth;
+//        double x, y, scale, orientation;
+        KeyPoint2D keyPoint2D;
+//        double depth;
         int observingPoseNumber;
         int initialObservingPoseNumber;
 
-        double defValue = -1;
         double epsilonD = 1e-10;
 //        double epsilonD = 3 * std::numeric_limits<double>::epsilon();
 
         KeyPointInfo();
 
-        KeyPointInfo(const KeyPoint2D &newKeypoint, double newDepth, int newObservingPoseNumber);
+        KeyPointInfo(const KeyPoint2D &keyPointToSet, double depthToSet, int observingPoseNumberToSet);
 
 
 //        KeyPointInfo(const KeyPointInfo &newKeypoint);
 
-        int getInitObservingnumber() const;
+        int getInitObservingPoseNumber() const;
+
         void setObservingPoseNumber(int newObservingPoseNumber);
 
         double getDefValue() const;

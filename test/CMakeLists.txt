@@ -1,9 +1,7 @@
-set(TESTS testVisualizePointCloud
+set(TESTS
     #testICP
     testImageAssociator
-    testConnectedComponent
-    testAccuracyBA
-    testBundleAdjustment testAbsolutePoseStructure testAbsoluteTranslationsComputation testAbsoluteRotationsComputation testPointCloudCorrespondences testPoint3dRepresentation testRotationRepresentation testRelativePoseExtraction testUmeyamaRansac testPoseFileCreation testRelativePosesComputation testRotationAveraging testTranslationAveraging testVectors3dRepresentation testRobustRotationOptimization)
+    testAccuracyBA testAbsolutePoseStructure testAbsoluteRotationsComputation testPointCloudCorrespondences testPoint3dRepresentation testRotationRepresentation testRelativePoseExtraction testUmeyamaRansac testPoseFileCreation testRelativePosesComputation testRotationAveraging testTranslationAveraging testVectors3dRepresentation testRobustRotationOptimization)
 
 foreach(TEST ${TESTS})
   add_executable(${TEST} ${TEST}.cpp)

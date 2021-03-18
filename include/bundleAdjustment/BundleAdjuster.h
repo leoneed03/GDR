@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_BUNDLEADUSTER_H
-#define GDR_BUNDLEADUSTER_H
+#ifndef GDR_BUNDLEADJUSTER_H
+#define GDR_BUNDLEADJUSTER_H
 
 #include <vector>
 #include <Eigen/Eigen>
@@ -12,26 +12,28 @@
 #include <unordered_map>
 #include <ceres/ceres.h>
 
+#include "IBundleAdjuster.h"
 #include "KeyPointInfo.h"
 #include "parametrization/cameraRGBD.h"
+#include "parametrization/SE3.h"
 #include "Point3d.h"
 #include "poseInfo.h"
-#include "LossFunctions.h"
-//#include "LossHuber.h"
+#include "LossHuber.h"
+#include "statistics/RobustEstimators.h"
 
 namespace gdr {
 
+    class BundleAdjuster : public IBundleAdjuster {
 
-    struct RobustEtimators {
-        static double getMedian(const std::vector<double> &values, double quantile = 0.5);
+    public:
 
-        static double getMedianAbsoluteDeviationMultiplied(const std::vector<double> &values,
-                                                           double multiplier = 1.4826);
-    };
+        BundleAdjuster(const std::vector<Point3d> &points,
+                       const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                       const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo);
 
-    struct BundleAdjuster {
+        std::vector<SE3> optimizePointsAndPosesUsingDepthInfo(int indexFixed = 0) override;
 
-
+    private:
         template<class T>
         static Eigen::Matrix<T, 3, 4> getCameraIntr(T fx, T cx, T fy, T cy) {
             Eigen::Matrix<T, 3, 4> cameraIntr;
@@ -59,11 +61,9 @@ namespace gdr {
         constexpr static const double factor = 1.4826;
         constexpr static const double parameterScaleMultiplier = 1.0;
 
-//        std::function<double(double, double)> lossFunction = LossHuber::evaluate;
-
         std::function<double(double, double)> dividerReprojectionError =
                 [](double scale, double linearParameterNoiseModelReprojection) {
-                    return (scale * linearParameterNoiseModelReprojection);
+                    return linearParameterNoiseModelReprojection * scale;
                 };
         std::function<double(double, double)> dividerDepthError =
                 [](double depth, double quadraticParameterNoiseModelDepth) {
@@ -128,7 +128,8 @@ namespace gdr {
         // get two vector of errors:
         // first is N-element vector of normalized (divided by expected standard deviation) reprojection errors in pixels
         // second is N-element vector of normalized depth errors
-        std::pair<std::vector<double>, std::vector<double>> getNormalizedErrorsReprojectionAndDepth(bool performNormalizing = true);
+        std::pair<std::vector<double>, std::vector<double>>
+        getNormalizedErrorsReprojectionAndDepth(bool performNormalizing = true);
 
         // filter all errors and leave only those which satisfy |r_i/s_0| <= thresholdInlier
 
@@ -158,13 +159,6 @@ namespace gdr {
 
         std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPoseNumberAndPointNumber;
 
-        BundleAdjuster(const std::vector<Point3d> &points,
-                       const std::vector<std::pair<Sophus::SE3d, CameraRGBD>> &absolutePoses,
-                       const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo);
-
-        std::vector<Sophus::SE3d> optimizePointsAndPoses(int indexFixed = 0);
-
-        std::vector<Sophus::SE3d> optimizePointsAndPosesUsingDepthInfo(int indexFixed = 0);
 
         std::vector<Point3d> getPointsGlobalCoordinatesOptimized() const;
 
@@ -175,18 +169,12 @@ namespace gdr {
                             const T *const pose,
                             const T *const orientation,
                             T *residuals) const {
-
-//                std::vector<T> qRaw = {pose[quatStartIndex], pose[quatStartIndex + 1], pose[quatStartIndex + 2],
-//                                       pose[quatStartIndex + 3]};
-
-
                 T fx = T(camera.fx);
                 T cx = T(camera.cx);
                 T fy = T(camera.fy);
                 T cy = T(camera.cy);
 
                 Eigen::Map<const Eigen::Quaternion<T>> qQuat(orientation);
-//                Eigen::Quaternion<T> qQuat(orientation);
                 Eigen::Map<const Sophus::Vector<T, 3>> poseT(pose);
 
                 Eigen::Matrix<T, 3, 4> cameraIntr = getCameraIntr<T>(fx, cx, fy, cy);
@@ -198,7 +186,6 @@ namespace gdr {
                 std::vector<T> pointRaw = {point[0], point[1], point[2], T(1.0)};
                 Sophus::Vector<T, 4> point4d(pointRaw.data());
 
-
                 Sophus::Vector<T, 4> pointCameraCoordinates = poseSE3.inverse().matrix() * point4d;
                 Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
 
@@ -208,21 +195,21 @@ namespace gdr {
 
                 T resX = T(observedX) - computedX;
                 T resY = T(observedY) - computedY;
+
+//                LossHuber<T> lossFunctionRobust;
                 // reprojection error computation (noise modeled as sigma = k * scale)
                 {
                     T normResidual = ceres::sqrt(resX * resX + resY * resY);
-//                    normResidual = LossFunction::evaluate(normResidual / T(medianResidualReproj), T(factor));
-                    normResidual = LossFunction::evaluate(normResidual / T(deviationDividerReproj), T(deviationEstimationNormalizedReproj));
+                    normResidual = ILossFunction::evaluate<T>(normResidual / T(deviationDividerReproj),
+                                                          T(deviationEstimationNormalizedReproj));
                     residuals[0] = ceres::sqrt(normResidual);
                 }
 
-
-                // TODO: smth is wrong: BA gets worse results than IRLS
-                // depth error computation (noise modeled as sigma = a * depth^2)
+                // depth error computation (noise modeled as sigma = a * depth^2 [meters])
                 {
                     T normResidual = ceres::abs(T(observedDepth) - computedDepth);
-//                    normResidual = LossFunction::evaluate(normResidual / T(medianResidualDepth), T(factor));
-                    normResidual = LossFunction::evaluate(normResidual / T(deviationDividerDepth), T(deviationEstimationNormalizedDepth));
+                    normResidual = ILossFunction::evaluate<T>(normResidual / T(deviationDividerDepth),
+                                                          T(deviationEstimationNormalizedDepth));
                     residuals[1] = ceres::sqrt(normResidual);
                 }
 
@@ -250,7 +237,6 @@ namespace gdr {
             double linearParameterNoiseModelReprojection = 0.987;
 
             CameraRGBD camera;
-
 
             static ceres::CostFunction *Create(double newObservedX, double newObservedY, double newObservedDepth,
                                                double scale,
@@ -286,70 +272,6 @@ namespace gdr {
 
 
         };
-
-
-        struct ReprojectionError {
-
-            template<typename T>
-            bool operator()(const T *const point,
-                            const T *const pose,
-                            const T *const orientation,
-                            const T *const intrinsics,
-                            T *residuals) const {
-
-//                std::vector<T> qRaw = {pose[quatStartIndex], pose[quatStartIndex + 1], pose[quatStartIndex + 2],
-//                                       pose[quatStartIndex + 3]};
-
-
-                std::vector<T> qRaw = {orientation[0], orientation[1], orientation[2], orientation[3]};
-
-                const T &fx = intrinsics[cameraIntrStartIndex];
-                const T &cx = intrinsics[cameraIntrStartIndex + 1];
-                const T &fy = intrinsics[cameraIntrStartIndex + 2];
-                const T &cy = intrinsics[cameraIntrStartIndex + 3];
-
-                Eigen::Quaternion<T> qQuat(qRaw.data());
-                Sophus::Vector<T, 3> poseT(pose);
-
-                Eigen::Matrix<T, 3, 4> cameraIntr = getCameraIntr<T>(fx, cx, fy, cy);
-
-                Sophus::SE3<T> poseSE3;
-                poseSE3.setQuaternion(qQuat);
-                poseSE3.translation() = poseT;
-
-                std::vector<T> pointRaw = {point[0], point[1], point[2], T(1.0)};
-                Sophus::Vector<T, 4> point4d(pointRaw.data());
-
-                Sophus::Vector<T, 4> pointCameraCoordinates = poseSE3.inverse().matrix() * point4d;
-                Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
-
-                T computedX = imageCoordinates[0] / imageCoordinates[2];
-                T computedY = imageCoordinates[1] / imageCoordinates[2];
-
-                residuals[0] = T(observedX) - computedX;
-                residuals[1] = T(observedY) - computedY;
-
-                // here is depth diff (for is not used)
-//                residuals[2] = T(0);
-
-                return true;
-            }
-
-            double observedX;
-            double observedY;
-            double observedDepth;
-
-            static ceres::CostFunction *Create(double newObservedX, double newObservedY, double newObservedDepth) {
-                return (new ceres::AutoDiffCostFunction<ReprojectionError, 2, dimPoint, dimPose, dimOrientation, cameraDim>(
-                        new ReprojectionError(newObservedX, newObservedY, newObservedDepth)));
-            }
-
-            ReprojectionError(double newObservedX, double newObservedY, double newObservedDepth)
-                    : observedX(newObservedX), observedY(newObservedY), observedDepth(newObservedDepth) {}
-
-
-        };
-
 
     };
 }

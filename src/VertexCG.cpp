@@ -21,10 +21,7 @@ namespace gdr {
                                                       descriptors(newDescriptors),
                                                       depths(newDepths),
                                                       pathToRGBimage(newPathRGB),
-                                                      pathToDimage(newPathD) {
-        absoluteRotationTranslation.setIdentity();
-
-    }
+                                                      pathToDimage(newPathD) {}
 
     VertexCG::VertexCG(int newIndex,
                        const CameraRGBD &newCameraRgbd,
@@ -34,10 +31,8 @@ namespace gdr {
                                                               initialIndex(newIndex),
                                                               cameraRgbd(newCameraRgbd),
                                                               pathToRGBimage(newPathRGB),
-                                                              pathToDimage(newPathD) {
-        absoluteRotationTranslation = newAbsolutePose.matrix();
-        absolutePose = newAbsolutePose;
-    }
+                                                              pathToDimage(newPathD),
+                                                              absolutePose(newAbsolutePose) {}
 
     std::string VertexCG::getPathRGBImage() const {
         return pathToRGBimage;
@@ -56,49 +51,54 @@ namespace gdr {
     }
 
 
+    void VertexCG::setRotation(const Sophus::SO3d &rotation) {
+        absolutePose.setRotation(rotation);
+    }
+
     void VertexCG::setRotation(const Eigen::Matrix3d &rotation) {
         Eigen::Quaterniond quatRotation(rotation);
-        quatRotation.normalize();
-        absolutePose.setQuaternion(quatRotation);
-        absoluteRotationTranslation.block<3, 3>(0, 0) = rotation;
+        absolutePose.setRotation(Sophus::SO3d(quatRotation.normalized()));
     }
 
     void VertexCG::setRotation(const Eigen::Quaterniond &rotationQuatd) {
-
-        absolutePose.setQuaternion(rotationQuatd.normalized());
-        absoluteRotationTranslation.block<3, 3>(0, 0) = rotationQuatd.normalized().toRotationMatrix();
+        absolutePose.setRotation(Sophus::SO3d(rotationQuatd.normalized()));
     }
 
-    void VertexCG::setTranslation(const Eigen::Vector3d &newTranslation) {
-        absolutePose.translation() = newTranslation;
-        double error = (absolutePose.translation() - newTranslation).norm();
+    void VertexCG::setTranslation(const Eigen::Vector3d &translationToSet) {
+        absolutePose.setTranslation(translationToSet);
+        double error = (absolutePose.getTranslation() - translationToSet).norm();
         int coeffForEps = 100;
         assert(error < coeffForEps * std::numeric_limits<double>::epsilon());
-        absoluteRotationTranslation.block<3, 1>(0, 3) = newTranslation;
     }
 
     void VertexCG::setRotationTranslation(const Eigen::Matrix4d &eigenRt) {
-        absolutePose = Sophus::SE3d::fitToSE3(eigenRt);
-        absoluteRotationTranslation = eigenRt;
-//        absoluteRotationTranslation = absolutePose.matrix();
+        absolutePose = SE3(Sophus::SE3d::fitToSE3(eigenRt));
     }
 
     void VertexCG::setRotationTranslation(const Sophus::SE3d &sophusRt) {
-        absolutePose = sophusRt;
-        absoluteRotationTranslation = sophusRt.matrix();
+        absolutePose = SE3(sophusRt);
     }
 
     Eigen::Matrix4d VertexCG::getEigenMatrixAbsolutePose4d() const {
-        return absolutePose.matrix();
+        return absolutePose.getSE3().matrix();
+    }
+
+    const SE3 &VertexCG::getAbsolutePoseSE3() const {
+        return absolutePose;
+    }
+
+
+    const std::vector<KeyPoint2D>& VertexCG::getKeyPoints2D() const {
+        return keypoints;
     }
 
     Eigen::Quaterniond VertexCG::getRotationQuat() const {
-        return absolutePose.unit_quaternion();
+        return absolutePose.getSE3().unit_quaternion();
     }
 
 
-    const Sophus::SE3d &VertexCG::getAbsolutePoseSE3() const {
-        return absolutePose;
+    Sophus::SE3d VertexCG::getAbsolutePoseSophus() const {
+        return absolutePose.getSE3();
     }
 
     VertexCG::VertexCG(int newIndex,
@@ -113,7 +113,7 @@ namespace gdr {
                                                       depths(keyPointsDepthDescriptor.getDepths()),
                                                       pathToRGBimage(newPathRGB),
                                                       pathToDimage(newPathD) {
-        absoluteRotationTranslation.setIdentity();
+        //absoluteRotationTranslation.setIdentity();
 
     }
 
@@ -125,8 +125,14 @@ namespace gdr {
         std::vector<KeyPointInfo> keyPointsInfo;
 
         for (int keyPointsIndex = 0; keyPointsIndex < keypoints.size(); ++keyPointsIndex) {
-            keyPointsInfo.emplace_back(KeyPointInfo(keypoints[keyPointsIndex], depths[keyPointsIndex], getIndex()));
+            keyPointsInfo.emplace_back(KeyPointInfo(keypoints[keyPointsIndex],
+                                                    depths[keyPointsIndex],
+                                                    getIndex()));
         }
         return keyPointsInfo;
+    }
+
+    void VertexCG::setAbsolutePoseSE3(const SE3 &absolutePoseToSet) {
+        absolutePose = absolutePoseToSet;
     }
 }

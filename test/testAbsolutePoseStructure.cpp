@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 #include <ostream>
 
-#include "Rotation3d.h"
+#include "parametrization/Rotation3d.h"
 
 struct p {
 private:

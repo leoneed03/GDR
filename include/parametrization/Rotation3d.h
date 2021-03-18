@@ -20,7 +20,9 @@ namespace gdr {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         const static int spaceIOiomanip = 15;
+
         int getSpaceIO() const;
+
         Rotation3d() = default;
 
         Rotation3d(const Sophus::SO3d &rotationSophus);
@@ -41,7 +43,7 @@ namespace gdr {
 
         static Eigen::Quaterniond getRandomUnitQuaternion();
 
-        friend std::ostream& operator<<(std::ostream& os, const Rotation3d& rotation3D);
+        friend std::ostream &operator<<(std::ostream &os, const Rotation3d &rotation3D);
 
 
     };

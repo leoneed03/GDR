@@ -3,20 +3,20 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include <RelativePoseSE3.h>
+#include <parametrization/RelativePoseSE3.h>
 
-#include "RelativePoseSE3.h"
+#include "parametrization/RelativePoseSE3.h"
 
 namespace gdr {
 
     RelativePoseSE3::RelativePoseSE3(int newIndexFrom,
                                      int newIndexTo,
-                                     const Sophus::SE3d &newRelativePoseSE3):
+                                     const SE3 &newRelativePoseSE3):
                                      indexFrom(newIndexFrom),
                                      indexTo(newIndexTo),
                                      relativePoseSE3(newRelativePoseSE3) {}
 
-    Sophus::SE3d RelativePoseSE3::getRelativePoseSE3Constructed() const {
+    SE3 RelativePoseSE3::getRelativePoseSE3Constructed() const {
         return relativePoseSE3;
     }
 
@@ -28,21 +28,21 @@ namespace gdr {
         return indexTo;
     }
 
-    const Sophus::SE3d &RelativePoseSE3::getRelativePoseSE3() const {
+    const SE3 &RelativePoseSE3::getRelativePoseSE3() const {
         return relativePoseSE3;
     }
 
-    Eigen::Vector3d RelativePoseSE3::getRelativeTranslationV3() const {
-        return relativePoseSE3.translation();
+    Eigen::Vector3d RelativePoseSE3::getTranslation() const {
+        return relativePoseSE3.getTranslation();
     }
 
 
     Eigen::Quaterniond RelativePoseSE3::getRelativeRotationSO3Quatd() const {
-        return relativePoseSE3.unit_quaternion();
+        return relativePoseSE3.getRotationQuatd();
     }
 
-
-    Eigen::Vector3d RelativePoseSE3::getRelativeTranslationR3() const {
-        return relativePoseSE3.translation();
+    Sophus::SO3d RelativePoseSE3::getRotation() const {
+        return relativePoseSE3.getSO3();
     }
+
 }
