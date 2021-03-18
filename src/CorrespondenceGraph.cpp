@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
+#include "filesystem/fileProc.h"
 #include "CorrespondenceGraph.h"
 #include "bundleAdjustment/BundleAdjuster.h"
 #include "printer.h"
@@ -669,7 +670,7 @@ namespace gdr {
 
         std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
                 keysDescriptorsAll = siftModule->getKeypoints2DDescriptorsAllImages(
-                readRgbData(pathToImageDirectoryRGB),
+                imagesRgb,
                 {0});
 
         verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
@@ -723,8 +724,8 @@ namespace gdr {
         relativePoseRefiner = std::make_unique<ProcessorICP>();
         threadPool = std::make_unique<ThreadPool>(numOfThreadsCpu);
         std::cout << "construct Graph" << std::endl;
-        imagesRgb = readRgbData(pathToImageDirectoryRGB);
-        imagesD = readRgbData(pathToImageDirectoryD);
+        imagesRgb = DirectoryReader::extractPathsToImagesFromDirectory(pathToImageDirectoryRGB);
+        imagesD = DirectoryReader::extractPathsToImagesFromDirectory(pathToImageDirectoryD);
         std::cout << "data have been read" << std::endl;
 
         std::sort(imagesRgb.begin(), imagesRgb.end());

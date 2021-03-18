@@ -77,8 +77,7 @@ set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}/lib/l
 set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}/include)
 
 set(GDR_HEADER_FILES
-    ${PROJECT_SOURCE_DIR}/include/keyFeatures.h
-    ${PROJECT_SOURCE_DIR}/include/fileProc.h
+        include/filesystem/fileProc.h
     ${PROJECT_SOURCE_DIR}/include/VertexCG.h
     ${PROJECT_SOURCE_DIR}/include/CorrespondenceGraph.h
         include/parametrization/transformationRt.h
@@ -114,7 +113,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/ConnectedComponent.h
         include/parametrization/RelativePoseSE3.h
     ${PROJECT_SOURCE_DIR}/include/ImagesAssociator.h
-        ${PROJECT_SOURCE_DIR}/include/LossHuber.h
+        include/optimization/lossFunctions/LossHuber.h
         ${PROJECT_SOURCE_DIR}/include/gnuplot_interface.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/Estimator3Points.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/InlierCounter.h
@@ -123,8 +122,7 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/IRefinerRelativePose.h include/parametrization/MatchableInfo.h include/bundleAdjustment/IBundleAdjuster.h include/sparsePointCloud/IPointMatcher.h include/sparsePointCloud/ICloudProjector.h)
 
 set(GDR_SOURCE_FILES
-    ${PROJECT_SOURCE_DIR}/src/keyFeatures.cpp
-    ${PROJECT_SOURCE_DIR}/src/fileProc.cpp
+        src/filesystem/fileProc.cpp
     ${PROJECT_SOURCE_DIR}/src/VertexCG.cpp
     ${PROJECT_SOURCE_DIR}/src/CorrespondenceGraph.cpp
         src/parametrization/transformationRt.cpp
@@ -160,7 +158,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/ImagesAssociator.cpp
         ${PROJECT_SOURCE_DIR}/src/KeyPoint2D.cpp
         ${PROJECT_SOURCE_DIR}/include/KeyPoint2D.h
-        ${PROJECT_SOURCE_DIR}/include/LossFunctions.h
+        include/optimization/lossFunctions/LossFunctions.h
         include/keyPointDetectionAndMatching/ISiftModule.h
         ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/Estimator3Points.cpp
         ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/EstimatorNPoints.cpp

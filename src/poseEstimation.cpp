@@ -48,26 +48,26 @@ namespace gdr {
         return {errorT, errorR};
     }
 
-
-    std::pair<errorStats, errorStats>
-    getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
-            const std::string &pathToGroundTruth, const std::string &estimatedPairWise) {
-
-        std::string groundTruthPairWiseTransformations = "pairwiseTransformations.txt";
-
-        GTT::extractAllRelativeTransformationPairwise(pathToGroundTruth, groundTruthPairWiseTransformations);
-
-        std::vector<std::vector<std::vector<double>>> groundTruthMeasurements = getMeasurements(
-                groundTruthPairWiseTransformations);
-        std::vector<std::vector<std::vector<double>>> estimatedMeasurements = getMeasurements(estimatedPairWise);
-
-        std::vector<std::map<int, std::pair<double, double>>> tableErrorsTranslationRotation = getErrorsTranslationRotation(
-                groundTruthMeasurements, estimatedMeasurements);
-        std::pair<errorStats, errorStats> errorsStatsTR = getErrorStatsTranslationRotation(
-                tableErrorsTranslationRotation);
-
-        return errorsStatsTR;
-    }
+//
+//    std::pair<errorStats, errorStats>
+//    getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
+//            const std::string &pathToGroundTruth, const std::string &estimatedPairWise) {
+//
+//        std::string groundTruthPairWiseTransformations = "pairwiseTransformations.txt";
+//
+//        GTT::extractAllRelativeTransformationPairwise(pathToGroundTruth, groundTruthPairWiseTransformations);
+//
+//        std::vector<std::vector<std::vector<double>>> groundTruthMeasurements = getMeasurements(
+//                groundTruthPairWiseTransformations);
+//        std::vector<std::vector<std::vector<double>>> estimatedMeasurements = getMeasurements(estimatedPairWise);
+//
+//        std::vector<std::map<int, std::pair<double, double>>> tableErrorsTranslationRotation = getErrorsTranslationRotation(
+//                groundTruthMeasurements, estimatedMeasurements);
+//        std::pair<errorStats, errorStats> errorsStatsTR = getErrorStatsTranslationRotation(
+//                tableErrorsTranslationRotation);
+//
+//        return errorsStatsTR;
+//    }
 
 
     std::vector<std::map<int, std::pair<double, double>>>

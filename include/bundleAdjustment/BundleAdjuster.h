@@ -18,7 +18,7 @@
 #include "parametrization/SE3.h"
 #include "Point3d.h"
 #include "poseInfo.h"
-#include "LossHuber.h"
+#include "optimization/lossFunctions/LossHuber.h"
 #include "statistics/RobustEstimators.h"
 
 namespace gdr {

@@ -20,7 +20,6 @@
 #include <sophus/se3.hpp>
 
 #include "KeyPointInfo.h"
-#include "keyFeatures.h"
 #include "quaternions.h"
 #include "parametrization/SE3.h"
 #include "parametrization/cameraRGBD.h"

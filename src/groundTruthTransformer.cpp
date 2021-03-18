@@ -127,8 +127,8 @@ namespace gdr {
         std::vector<double> prevCoordinates = {0, 0, 0};
         std::vector<std::string> rgbDataR = readData(pathToRGB);
         std::vector<std::string> dDataR = readData(pathToD);
-        std::vector<std::string> rgbData = readRgbData(pathToRGB);
-        std::vector<std::string> dData = readRgbData(pathToD);
+        std::vector<std::string> rgbData = DirectoryReader::extractPathsToImagesFromDirectory(pathToRGB);
+        std::vector<std::string> dData = DirectoryReader::extractPathsToImagesFromDirectory(pathToD);
 
         assert(!indices.empty() || rgbData.size() == dData.size());
         assert(!rgbData.empty());

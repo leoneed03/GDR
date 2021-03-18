@@ -22,8 +22,8 @@ namespace gdr {
     std::pair<errorStats, errorStats> getErrorStatsTranslationRotation(
             const std::vector<std::map<int, std::pair<double, double>>> &errorRelativePosesTranslationRotation);
 
-    std::pair<errorStats, errorStats> getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
-            const std::string &pathToGroundTruth, const std::string &estimatedPairWise);
+//    std::pair<errorStats, errorStats> getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
+//            const std::string &pathToGroundTruth, const std::string &estimatedPairWise);
 
     std::vector<std::map<int, std::pair<double, double>>>
     getErrorsTranslationRotation(const std::vector<std::vector<std::vector<double>>> &truePairWiseTransformations,
