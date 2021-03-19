@@ -4,9 +4,7 @@
 //
 
 #include "poseEstimation.h"
-#include "groundTruthTransformer.h"
 
-#include <unordered_map>
 #include <Eigen/Eigen>
 #include <cassert>
 #include <cmath>

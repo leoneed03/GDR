@@ -7,10 +7,10 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
-#include <fstream>
 #include <thread>
 #include <chrono>
-#include "ImagesAssociator.h"
+
+#include "readerTUM/ImagesAssociator.h"
 
 
 // sometimes BA results are worse than IRLS so max error is multiplied by coefficient = 1.8

@@ -1,7 +1,7 @@
 set(TESTS
     #testICP
     testImageAssociator
-    testAccuracyBA testAbsolutePoseStructure testAbsoluteRotationsComputation testPointCloudCorrespondences testPoint3dRepresentation testRotationRepresentation testRelativePoseExtraction testUmeyamaRansac testPoseFileCreation testRelativePosesComputation testRotationAveraging testTranslationAveraging testVectors3dRepresentation testRobustRotationOptimization)
+    testAccuracyBA testAbsolutePoseStructure testPoint3dRepresentation testRotationRepresentation testPoseFileCreation testRelativePosesComputation testTranslationAveraging testVectors3dRepresentation)
 
 foreach(TEST ${TESTS})
   add_executable(${TEST} ${TEST}.cpp)

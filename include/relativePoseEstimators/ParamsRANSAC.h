@@ -14,17 +14,18 @@ namespace gdr {
         // min proportion of inliers between matches
         double minInlierCoefficient = 0.5;
         // min number of inliers between matches
-        int minInliersNumber = 10;
+        int minInliersNumber = 15;
 
         int numIterations = 100;
 
         // max L_{pMetric} error between keypoints on the image to be counted as an inlier
         double maxProjectionErrorPixels = 2.0;
-        int pMetric = 1;
+        int pMetric = 2;
+
         // max L2 error in meters to be counted as an inlier
         double max3DError = 0.05;
 
-        // which error model to choose
+        // use reprojection L_p error for inlier detection
         bool useProjectionError = true;
 
         // max number of threads to use (automatic detection by default)

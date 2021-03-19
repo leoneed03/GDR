@@ -12,6 +12,7 @@ namespace gdr {
     RelativePoseSE3::RelativePoseSE3(int newIndexFrom,
                                      int newIndexTo,
                                      const SE3 &newRelativePoseSE3):
+
                                      indexFrom(newIndexFrom),
                                      indexTo(newIndexTo),
                                      relativePoseSE3(newRelativePoseSE3) {}

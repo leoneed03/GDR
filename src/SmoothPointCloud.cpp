@@ -4,7 +4,6 @@
 //
 
 #include "SmoothPointCloud.h"
-#include "pointCloud.h"
 
 
 #include <pcl/visualization/cloud_viewer.h>
@@ -43,10 +42,10 @@ namespace gdr {
                                                                      (y + 0.5),
                                                                      localZ,
                                                                      1.0};
-                auto localCoordinatesXYZ1 = getPointBeforeProjection(coordinatesPixelCenteredImage,
-                                                                     poseToBeRegistered.getCamera());
-
-                // ground truth
+                Eigen::Vector4d localCoordinatesXYZ1 = poseToBeRegistered.getCamera()
+                        .getCoordinatesBeforeProjectionXYZ1(coordinatesPixelCenteredImage[0],
+                                                            coordinatesPixelCenteredImage[1],
+                                                            coordinatesPixelCenteredImage[2]);
                 Eigen::Vector4d globalCoordinates = poseMatrix.inverse() * localCoordinatesXYZ1;
 
                 double globalX = -globalCoordinates[0];
@@ -58,7 +57,6 @@ namespace gdr {
 
 
                 if (currentKeypointDepth != 0) {
-
                     points.push_back({globalX, globalY, globalZ, rgbInfo[2], rgbInfo[1], rgbInfo[0]});
                 }
             }

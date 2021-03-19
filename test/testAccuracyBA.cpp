@@ -7,19 +7,15 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
-#include <fstream>
 #include <thread>
 #include <chrono>
 #include "poseEstimation.h"
-#include "CorrespondenceGraph.h"
-#include "groundTruthTransformer.h"
-#include "ConnectedComponent.h"
+#include "poseGraph/CorrespondenceGraph.h"
+#include "readerTUM/ReaderTum.h"
+#include "poseGraph/ConnectedComponent.h"
 #include "SmoothPointCloud.h"
 
 #include "gnuplot_interface.h"
-#include "relativePoseEstimators/Estimator3Points.h"
-#include "relativePoseEstimators/EstimatorRobustLoRANSAC.h"
-#include "relativePoseEstimators/IEstimatorRelativePoseRobust.h"
 
 void plot(const std::string &func,
           double rangeFrom,
@@ -60,17 +56,16 @@ TEST(testBAOptimized, visualizationDesk98) {
         }
         auto &biggestComponent = connectedComponentsPoseGraph[0];
 
-        std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsNoRobust = biggestComponent.performRotationAveraging();
-        std::vector<Eigen::Quaterniond> computedAbsoluteOrientationsRobust = biggestComponent.optimizeRotationsRobust();
+        std::vector<gdr::SO3> computedAbsoluteOrientationsNoRobust = biggestComponent.performRotationAveraging();
+        std::vector<gdr::SO3> computedAbsoluteOrientationsRobust = biggestComponent.optimizeRotationsRobust();
         std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent.optimizeAbsoluteTranslations();
         std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent.performBundleAdjustmentUsingDepth();
 
-        std::string absolutePoses = "../../data/" + datasetName + "/" + "groundtruth.txt";//"groundtruth_new.txt";
-        std::vector<gdr::poseInfo> posesInfoFull = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
+        std::string absolutePoses = "../../data/" + datasetName + "/" + "groundtruth.txt";
+        std::vector<gdr::poseInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(absolutePoses);
 
         std::cout << "read poses GT: " << posesInfoFull.size() << std::endl;
         assert(posesInfoFull.size() == numberOfPosesInDataset);
-        // #index output:
         std::set<int> indicesOfBiggestComponent = biggestComponent.initialIndices();
         std::vector<gdr::poseInfo> posesInfo;
 
@@ -87,7 +82,7 @@ TEST(testBAOptimized, visualizationDesk98) {
         {
             for (int i = 0; i < computedAbsoluteTranslationsIRLS.size(); ++i) {
                 Sophus::SE3d poseIRLS;
-                poseIRLS.setQuaternion(computedAbsoluteOrientationsRobust[i]);
+                poseIRLS.setQuaternion(computedAbsoluteOrientationsRobust[i].getUnitQuaternion());
                 poseIRLS.translation() = computedAbsoluteTranslationsIRLS[i];
                 posesIRLS.push_back(poseIRLS);
             }

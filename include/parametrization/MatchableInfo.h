@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "KeyPoint2D.h"
+#include "keyPoints/KeyPoint2D.h"
 #include "cameraRGBD.h"
 
 
@@ -46,9 +46,7 @@ namespace gdr {
 
         int getImagePixelWidth() const;
 
-        void setImagePixelHeight(int pixelHeight);
-
-        void setImagePixelWidth(int pixelWidth);
+        void setImagePixelHeightWidth(int pixelsHeight, int pixelsWidth);
 
     };
 }

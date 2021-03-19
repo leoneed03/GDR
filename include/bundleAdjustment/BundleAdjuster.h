@@ -13,10 +13,10 @@
 #include <ceres/ceres.h>
 
 #include "IBundleAdjuster.h"
-#include "KeyPointInfo.h"
+#include "keyPoints/KeyPointInfo.h"
 #include "parametrization/cameraRGBD.h"
 #include "parametrization/SE3.h"
-#include "Point3d.h"
+#include "parametrization/Point3d.h"
 #include "poseInfo.h"
 #include "optimization/lossFunctions/LossHuber.h"
 #include "statistics/RobustEstimators.h"

@@ -7,13 +7,13 @@
 #include <vector>
 #include <random>
 
-#include "groundTruthTransformer.h"
-#include "translationAveraging.h"
+#include "readerTUM/ReaderTum.h"
+#include "absolutePoseEstimation/translationAveraging/translationAveraging.h"
 
 
 TEST(testTranslationAveraging, translationRecovery19PosesFromFileUsingSE3) {
     std::string absolutePoses = "../../data/files/absolutePoses_19.txt";
-    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
+    std::vector<gdr::poseInfo> posesInfo = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(absolutePoses);
 
     std::vector<Sophus::SE3d> absolutePosesFromGroundTruth;
     Sophus::SE3d poseZeroGT;
@@ -64,7 +64,7 @@ TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex2NoOut
     int numPoses = 19;
     std::string absolutePosesFile = "../../data/files/absolutePoses_" + std::to_string(numPoses) + ".txt";
 
-    std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(
+    std::vector<gdr::poseInfo> absolutePosesInfo = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
             absolutePosesFile);
     std::vector<Sophus::SE3d> posesGT;
 
@@ -141,7 +141,7 @@ TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex4NoOut
     int numPoses = 19;
     std::string absolutePosesFile = "../../data/files/absolutePoses_" + std::to_string(numPoses) + ".txt";
 
-    std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(
+    std::vector<gdr::poseInfo> absolutePosesInfo = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
             absolutePosesFile);
     std::vector<Sophus::SE3d> posesGT;
 
@@ -223,7 +223,7 @@ TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex4SomeO
         int numPoses = 19;
         std::string absolutePosesFile = "../../data/files/absolutePoses_" + std::to_string(numPoses) + ".txt";
 
-        std::vector<gdr::poseInfo> absolutePosesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(
+        std::vector<gdr::poseInfo> absolutePosesInfo = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
                 absolutePosesFile);
         std::vector<Sophus::SE3d> posesGT;
 

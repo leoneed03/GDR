@@ -4,8 +4,7 @@
 //
 
 #include "sparsePointCloud/CloudProjector.h"
-#include "pointCloud.h"
-#include "KeyPoint2D.h"
+#include "keyPoints/KeyPoint2D.h"
 
 #include "boost/filesystem.hpp"
 
@@ -106,8 +105,7 @@ namespace gdr {
                 assert(i == currentInfoBeforeProjection.getObservingPoseNumber());
 
                 Eigen::Vector4d localCoordinatesBeforeProjection =
-                        getPointBeforeProjection(infoBeforeProjection,
-                                                 poses[i]->getCamera());
+                        poses[i]->getCamera().getCoordinatesBeforeProjectionXYZ1(newX, newY, newZ);
                 Eigen::Vector4d globalCoordinates =
                         poses[i]->getEigenMatrixAbsolutePose4d() * localCoordinatesBeforeProjection;
                 assert(currentPointIndex < computedCoordinatesByPointIndex.size());
@@ -137,7 +135,6 @@ namespace gdr {
                 }
                 assert(okX);
                 assert(okY);
-
             }
         }
 

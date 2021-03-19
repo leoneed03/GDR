@@ -14,7 +14,7 @@
 
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include "VertexCG.h"
+#include "poseGraph/VertexCG.h"
 
 namespace gdr {
 

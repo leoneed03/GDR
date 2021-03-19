@@ -12,9 +12,9 @@
 #include <tbb/concurrent_vector.h>
 #include <mutex>
 
-#include "VertexCG.h"
+#include "poseGraph/VertexCG.h"
 #include "SiftGPU.h"
-#include "KeyPoint2D.h"
+#include "keyPoints/KeyPoint2D.h"
 
 #include "ISiftModule.h"
 

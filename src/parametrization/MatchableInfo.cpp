@@ -41,11 +41,9 @@ namespace gdr {
         return imagePixelWidght;
     }
 
-    void MatchableInfo::setImagePixelHeight(int pixelHeight) {
-        imagePixelHeight = pixelHeight;
-    }
-
-    void MatchableInfo::setImagePixelWidth(int pixelWidth) {
-        imagePixelWidght = pixelWidth;
+    void MatchableInfo::setImagePixelHeightWidth(int pixelsHeight, int pixelsWidth) {
+        assert(pixelsWidth > 0 && pixelsHeight > 0);
+        imagePixelHeight = pixelsHeight;
+        imagePixelWidght = pixelsWidth;
     }
 }

@@ -8,10 +8,9 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "groundTruthTransformer.h"
 #include "poseInfo.h"
 #include "poseEstimation.h"
-#include "CorrespondenceGraph.h"
+#include "poseGraph/CorrespondenceGraph.h"
 #include "relativePoseRefinement/ICP.h"
 
 
@@ -44,8 +43,8 @@ TEST(testRelativePosesComputation, getPairwiseTransformationsICP) {
 
 
     gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
-                                                 517.3,
-                                                 318.6, 516.5, 255.3);
+                                                 517.3,318.6,
+                                                 516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
     std::string pathToGroundTruth = "../../data/plantDataset_19_3/groundtruth_new.txt";
     std::string estimatedPairWise = correspondenceGraph.relativePose;

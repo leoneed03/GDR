@@ -9,8 +9,8 @@
 #include <unordered_map>
 #include <opencv2/opencv.hpp>
 
-#include "KeyPointInfo.h"
-#include "Point3d.h"
+#include "keyPoints/KeyPointInfo.h"
+#include "parametrization/Point3d.h"
 
 namespace gdr {
 

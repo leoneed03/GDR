@@ -6,7 +6,11 @@
 #ifndef GDR_CAMERARGBD_H
 #define GDR_CAMERARGBD_H
 
+
 #include <Eigen/Eigen>
+
+#include "Point3d.h"
+
 
 namespace gdr {
 
@@ -27,9 +31,18 @@ namespace gdr {
 
         Eigen::Vector3d getCoordinates3D(double xHorizontal, double yVertical, double depth) const;
 
+        Eigen::Vector4d getCoordinatesBeforeProjectionXYZ1(double xHorizontal, double yVertical, double depth) const;
+
+        Eigen::Vector4d getCoordinatesXYZ1BeforeProjectionXYZ1(const Eigen::Vector4d& pointXYZ1) const;
+
+        Eigen::Matrix4Xd getPointCloudXYZ1BeforeProjection(const std::vector<Point3d> &pointsFromImageXYZ) const;
+
         float getFx() const;
+
         float getFy() const;
+
         float getCx() const;
+
         float getCy() const;
     };
 }

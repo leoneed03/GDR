@@ -17,6 +17,10 @@ namespace gdr {
         se3.setQuaternion(rotationToSet.unit_quaternion());
     }
 
+    void SE3::setRotation(const SO3 &rotationToSet) {
+        se3.setQuaternion(rotationToSet.getUnitQuaternion());
+    }
+
     void SE3::setTranslation(const Eigen::Vector3d &translationToSet) {
         se3.translation() = translationToSet;
     }
@@ -44,8 +48,6 @@ namespace gdr {
     SE3 SE3::inverse() const {
         return SE3(se3.inverse());
     }
-
-
 
     SE3 operator *(const SE3 &lhs, const SE3 &rhs) {
         return SE3(lhs.getSE3() * rhs.getSE3());

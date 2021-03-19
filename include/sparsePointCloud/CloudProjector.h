@@ -7,9 +7,9 @@
 #ifndef GDR_CLOUDPROJECTOR_H
 #define GDR_CLOUDPROJECTOR_H
 
-#include "Point3d.h"
-#include "VertexCG.h"
-#include "KeyPointInfo.h"
+#include "parametrization/Point3d.h"
+#include "poseGraph/VertexCG.h"
+#include "keyPoints/KeyPointInfo.h"
 #include "sparsePointCloud/PointMatcher.h"
 #include "parametrization/cameraRGBD.h"
 

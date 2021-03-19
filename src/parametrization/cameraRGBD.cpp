@@ -64,4 +64,29 @@ namespace gdr {
         return cy;
     }
 
+    Eigen::Vector4d
+    CameraRGBD::getCoordinatesBeforeProjectionXYZ1(double xHorizontal, double yVertical, double depth) const {
+        Eigen::Vector4d coordinates4;
+        coordinates4.setOnes();
+        coordinates4.topLeftCorner<3,1>() = getCoordinates3D(xHorizontal, yVertical, depth);
+
+        return coordinates4;
+    }
+
+    Eigen::Matrix4Xd
+    CameraRGBD::getPointCloudXYZ1BeforeProjection(const std::vector<Point3d> &pointsFromImageXYZ) const {
+        Eigen::Matrix4Xd points3D(4, pointsFromImageXYZ.size());
+
+        for (int i = 0; i < pointsFromImageXYZ.size(); ++i) {
+            const auto& point = pointsFromImageXYZ[i];
+            points3D.col(i) = getCoordinatesXYZ1BeforeProjectionXYZ1(point.getEigenVector4dPointXYZ1());
+        }
+
+        return points3D;
+    }
+
+    Eigen::Vector4d CameraRGBD::getCoordinatesXYZ1BeforeProjectionXYZ1(const Eigen::Vector4d &pointXYZ1) const {
+        return getCoordinatesBeforeProjectionXYZ1(pointXYZ1[0], pointXYZ1[1], pointXYZ1[2]);
+    }
+
 }

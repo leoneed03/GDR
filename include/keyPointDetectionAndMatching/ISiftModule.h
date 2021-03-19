@@ -7,7 +7,7 @@
 #define GDR_ISIFTMODULE_H
 
 #include <tbb/concurrent_vector.h>
-#include "KeyPoint2D.h"
+#include "keyPoints/KeyPoint2D.h"
 
 namespace gdr {
 

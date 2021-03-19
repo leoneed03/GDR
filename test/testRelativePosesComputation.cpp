@@ -9,9 +9,9 @@
 #include <vector>
 
 #include "poseEstimation.h"
-#include "CorrespondenceGraph.h"
+#include "poseGraph/CorrespondenceGraph.h"
 #include "poseInfo.h"
-#include "groundTruthTransformer.h"
+#include "readerTUM/ReaderTum.h"
 
 TEST(testRelativePosesComputation, PlantPASSED) {
 
@@ -21,7 +21,7 @@ TEST(testRelativePosesComputation, PlantPASSED) {
     correspondenceGraph.computeRelativePoses();
 
     std::string absolutePoses = "../../data/files/absolutePoses_19.txt";
-    std::vector<gdr::poseInfo> posesInfo = gdr::GTT::getPoseInfoTimeTranslationOrientation(absolutePoses);
+    std::vector<gdr::poseInfo> posesInfo = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(absolutePoses);
 
     std::vector<Sophus::SE3d> absolutePosesFromGroundTruth;
     Sophus::SE3d poseZeroGT;

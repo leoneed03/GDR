@@ -6,10 +6,8 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
-#include <fstream>
 
-#include "CorrespondenceGraph.h"
-#include "groundTruthTransformer.h"
+#include "poseGraph/CorrespondenceGraph.h"
 
 int countNumberOfLines(const std::string &relPosesFile) {
     int numberOfLines = 0;

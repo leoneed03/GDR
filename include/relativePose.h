@@ -6,8 +6,8 @@
 #ifndef GDR_RELATIVEPOSE_H
 #define GDR_RELATIVEPOSE_H
 
-#include "rotationMeasurement.h"
-#include "translationMeasurement.h"
+#include "absolutePoseEstimation/rotationAveraging/rotationMeasurement.h"
+#include "absolutePoseEstimation/translationAveraging/translationMeasurement.h"
 
 namespace gdr {
     struct relativePose {

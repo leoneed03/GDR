@@ -10,6 +10,8 @@
 #include "sophus/so3.hpp"
 #include "sophus/se3.hpp"
 
+#include "parametrization/SO3.h"
+
 namespace gdr {
 
 
@@ -23,7 +25,9 @@ namespace gdr {
 
         SE3(const Eigen::Matrix4d &poseMatrix4);
 
-        void setRotation(const Sophus::SO3d& translationToSet);
+        void setRotation(const SO3 &orientationToSet);
+
+        void setRotation(const Sophus::SO3d& orientationToSet);
 
         void setTranslation(const Eigen::Vector3d& translationToSet);
 

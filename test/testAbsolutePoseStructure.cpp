@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 #include <ostream>
 
-#include "parametrization/Rotation3d.h"
+#include "parametrization/SO3.h"
 
 struct p {
 private:
@@ -43,22 +43,22 @@ void print(const Eigen::Quaterniond& q) {
 }
 
 TEST(testRotation3d, constructor) {
-    gdr::Rotation3d rot;
+    gdr::SO3 rot;
     std::cout << rot << std::endl;
     double epsilon3 = 3 * std::numeric_limits<double>::epsilon();
 
     Eigen::Quaterniond quat(1,2,3,4);
     quat.normalize();
     print(quat);
-    gdr::Rotation3d rot3d(quat);
-    std::cout << gdr::Rotation3d(quat) << std::endl;
+    gdr::SO3 rot3d(quat);
+    std::cout << gdr::SO3(quat) << std::endl;
 
     ASSERT_LE(rot3d.getUnitQuaternion().angularDistance(quat), epsilon3);
     auto rot3dOperatorEq = rot3d;
     ASSERT_LE(rot3dOperatorEq.getUnitQuaternion().angularDistance(quat), epsilon3);
     auto rot3dCopyConstructor(rot3d);
     ASSERT_LE(rot3dCopyConstructor.getUnitQuaternion().angularDistance(quat), epsilon3);
-    gdr::Rotation3d rot3dFromSO3d(rot3d.getRotationSophus());
+    gdr::SO3 rot3dFromSO3d(rot3d.getRotationSophus());
     ASSERT_LE(rot3dFromSO3d.getUnitQuaternion().angularDistance(quat), epsilon3);
 }
 

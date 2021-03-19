@@ -7,14 +7,14 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "parametrization/Rotation3d.h"
+#include "parametrization/SO3.h"
 
 #define epsilonD3 (10 * std::numeric_limits<double>::epsilon())
 
 TEST(testRotationRepresentation, fromQuaternion) {
 
-    Eigen::Quaterniond randomQuaternion = gdr::Rotation3d::getRandomUnitQuaternion();
-    gdr::Rotation3d rotationRandomGDR(randomQuaternion);
+    Eigen::Quaterniond randomQuaternion = gdr::SO3::getRandomUnitQuaternion();
+    gdr::SO3 rotationRandomGDR(randomQuaternion);
 
     Eigen::Quaterniond quaternionFromRotationGDR = rotationRandomGDR.getUnitQuaternion();
 

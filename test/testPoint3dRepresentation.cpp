@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "Point3d.h"
+#include "parametrization/Point3d.h"
 
 #define epsilonD (std::numeric_limits<double>::epsilon())
 

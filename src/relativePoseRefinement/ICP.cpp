@@ -4,7 +4,6 @@
 
 #include "relativePoseRefinement/ICP.h"
 #include "ICPOdometry.h"
-#include "pointCloud.h"
 
 #include <pangolin/image/image_io.h>
 
@@ -44,7 +43,6 @@ namespace gdr {
         cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, 0);
         std::string dev(prop.name);
-        //std::cout << "CUDA device used is " << dev << std::endl;
 
         int threads = 224;
         int blocks = 96;

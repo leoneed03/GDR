@@ -42,11 +42,6 @@ namespace gdr {
 
         SE3 optimal_cR_t_umeyama_transformation;
 
-        double minError = std::numeric_limits<double>::max();
-        int attempt = -1;
-        double mError = -1;
-
-
         std::random_device randomDevice;
         std::mt19937 randomNumberGenerator(randomDevice());
         int numOfPoints = toBeTransformedPoints.cols();
@@ -79,7 +74,6 @@ namespace gdr {
                                                           cameraIntrToBeTransformed,
                                                           cameraIntrDestination);
 
-//            std::cout << "first SE3 solution is \n" << cR_t_umeyama_3_points.getSE3().matrix() << std::endl;
             std::vector<std::pair<double, int>> projectionErrorsAndInlierIndices =
                     inlierCounter.calculateProjectionErrors(
                             toBeTransformedPoints,
@@ -109,8 +103,6 @@ namespace gdr {
                         destInlierPoints,
                         cameraIntrToBeTransformed,
                         cameraIntrDestination);
-
-                attempt = i;
 
                 std::vector<std::pair<double, int>> projectionErrorsAndInlierIndicesAfterLocalOptimization =
                         inlierCounter.calculateProjectionErrors(
