@@ -6,32 +6,39 @@
 #ifndef GDR_ISIFTMODULE_H
 #define GDR_ISIFTMODULE_H
 
+#include <vector>
 #include <tbb/concurrent_vector.h>
+
+#include "keyPointDetectionAndMatching/KeyPointsAndDescriptors.h"
+#include "keyPointDetectionAndMatching/Match.h"
 #include "keyPoints/KeyPoint2D.h"
 
 namespace gdr {
 
-    struct Match {
-        int frameNumber;
-        std::vector<std::pair<int, int>> matchNumbers;
-
-        Match(int newFrameNumber, const std::vector<std::pair<int, int>> &newMatchNumbers) :
-                frameNumber(newFrameNumber),
-                matchNumbers(newMatchNumbers) {};
-    };
-
-
+    /** KeyPoint SIFT detector and matcher */
     class ISiftModule {
     public:
 
+        /** Process directory of images and return detected keypoints
+         * @param pathsToImages contains paths as strings to image files
+         * @param numOfDevicesForDetectors device indices used for multiple GPU instances
+         * @returns vector where i-th element represents keypoint collection for the i-th image
+         */
         virtual std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
-        getKeypoints2DDescriptorsAllImages(const std::vector <std::string> &pathsToImages,
-                                         const std::vector<int> &numOfDevicesForDetectors = {0}) = 0;
+        getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
+                                           const std::vector<int> &numOfDevicesForDetectors = {0}) = 0;
 
+        /** Find matches between all images (pairwise)
+         * @param verticesToBeMatched contains list of vertices with information about detected keypoints
+         * @param matchDevicesNumbers device indices used for multiple GPU instances
+         * @returns vector where i-th element contains information about matched keypoints of the i-th image
+         */
         virtual std::vector<std::vector<Match>>
-        findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
+        findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                             const std::vector<int> &matchDevicesNumbers = {0}) = 0;
+
         virtual ~ISiftModule() = default;
     };
 }
+
 #endif

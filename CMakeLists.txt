@@ -91,7 +91,7 @@ set(GDR_HEADER_FILES
         include/absolutePoseEstimation/translationAveraging/translationAveraging.h
     ${PROJECT_SOURCE_DIR}/include/poseInfo.h
         include/absolutePoseEstimation/rotationAveraging/rotationMeasurement.h
-    ${PROJECT_SOURCE_DIR}/include/relativePose.h
+        include/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.h
     ${PROJECT_SOURCE_DIR}/include/Vectors3d.h
         include/parametrization/SO3.h
         include/parametrization/Point3d.h
@@ -129,7 +129,7 @@ set(GDR_SOURCE_FILES
         src/absolutePoseEstimation/translationAveraging/translationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
         src/absolutePoseEstimation/rotationAveraging/rotationMeasurement.cpp
-    ${PROJECT_SOURCE_DIR}/src/relativePose.cpp
+        src/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp
     ${PROJECT_SOURCE_DIR}/src/ThreadPool.cpp
         src/parametrization/SO3.cpp
@@ -157,7 +157,7 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/include/parametrization/SE3.h
         ${PROJECT_SOURCE_DIR}/src/parametrization/SE3.cpp
         ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/InlierCounter.cpp
-        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/ParamsRANSAC.cpp src/parametrization/MatchableInfo.cpp src/statistics/RobustEstimators.cpp include/statistics/RobustEstimators.h src/readerTUM/ReaderTum.cpp include/readerTUM/ReaderTum.h)
+        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/ParamsRANSAC.cpp src/parametrization/MatchableInfo.cpp src/statistics/RobustEstimators.cpp include/statistics/RobustEstimators.h src/readerTUM/ReaderTum.cpp include/readerTUM/ReaderTum.h src/keyPointDetectionAndMatching/FeatureDetector.cpp include/keyPointDetectionAndMatching/FeatureDetector.h src/keyPointDetectionAndMatching/KeyPointsAndDescriptors.cpp include/keyPointDetectionAndMatching/KeyPointsAndDescriptors.h src/keyPointDetectionAndMatching/Match.cpp include/keyPointDetectionAndMatching/Match.h)
 
 add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
 

@@ -6,11 +6,10 @@
 #ifndef GDR_RELATIVEPOSESE3_H
 #define GDR_RELATIVEPOSESE3_H
 
-//#include "sophus/se3.hpp"
-
 #include "parametrization/SE3.h"
 
 namespace gdr {
+
     struct RelativePoseSE3 {
         int indexFrom;
         int indexTo;

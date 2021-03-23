@@ -34,6 +34,18 @@ namespace gdr {
                                                               pathToDimage(newPathD),
                                                               absolutePose(newAbsolutePose) {}
 
+    const std::vector<KeyPoint2D> &VertexCG::getKeyPoints() const {
+        return keypoints;
+    }
+
+    const std::vector<float> &VertexCG::getDescriptors() const {
+        return descriptors;
+    }
+
+    const std::vector<double> &VertexCG::getDepths() const {
+        return depths;
+    }
+
     std::string VertexCG::getPathRGBImage() const {
         return pathToRGBimage;
     }

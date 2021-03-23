@@ -3,34 +3,30 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "relativePose.h"
+#include "absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.h"
 
 namespace gdr {
-    relativePose::relativePose(const gdr::rotationMeasurement &newRotationMeasurement,
-                               const gdr::translationMeasurement &newTranslationMeasurement) :
+
+    RelativePoseMeasurement::RelativePoseMeasurement(const gdr::rotationMeasurement &newRotationMeasurement,
+                                                     const gdr::translationMeasurement &newTranslationMeasurement) :
             relativeRotation(newRotationMeasurement),
             relativeTranslation(newTranslationMeasurement) {}
 
-    Eigen::Quaterniond relativePose::getRotationRelative() const {
+    Eigen::Quaterniond RelativePoseMeasurement::getRotationRelative() const {
         return relativeRotation.getRotationQuat();
     }
-    Eigen::Vector3d relativePose::getTranslationRelative() const {
+
+    Eigen::Vector3d RelativePoseMeasurement::getTranslationRelative() const {
         return relativeTranslation.getTranslation();
     }
-    int relativePose::getIndexFromToBeTransformed() const {
+
+    int RelativePoseMeasurement::getIndexFromToBeTransformed() const {
         assert(relativeRotation.getIndexFromToBeTransformed() == relativeTranslation.getIndexFromToBeTransformed());
         return relativeRotation.getIndexFromToBeTransformed();
     }
-    int relativePose::getIndexToDestination() const {
+
+    int RelativePoseMeasurement::getIndexToDestination() const {
         assert(relativeRotation.getIndexToDestination() == relativeTranslation.getIndexToDestination());
         return relativeRotation.getIndexToDestination();
-    }
-
-    rotationMeasurement relativePose::getRelativeRotation() const {
-        return relativeRotation;
-    }
-
-    translationMeasurement relativePose::getRelativeTranslation() const {
-        return relativeTranslation;
     }
 }

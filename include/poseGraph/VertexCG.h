@@ -60,6 +60,12 @@ namespace gdr {
 
         void setAbsolutePoseSE3(const SE3 &absolutePose);
 
+        const std::vector<KeyPoint2D>& getKeyPoints() const;
+
+        const std::vector<float>& getDescriptors() const;
+
+        const std::vector<double>& getDepths() const;
+
         const std::vector<KeyPoint2D>& getKeyPoints2D() const;
 
         Eigen::Quaterniond getRotationQuat() const;

@@ -5,6 +5,7 @@
 
 #include <thread>
 #include <mutex>
+#include "keyPointDetectionAndMatching/KeyPointsAndDescriptors.h"
 #include "keyPointDetectionAndMatching/SiftModuleGPU.h"
 #include "printer.h"
 
@@ -182,7 +183,7 @@ namespace gdr {
     }
 
     std::vector<std::vector<Match>>
-    SiftModuleGPU::findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
+    SiftModuleGPU::findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                        const std::vector<int> &matchDevicesNumbers) {
         auto matches = findCorrespondencesConcurrent(verticesToBeMatched, matchDevicesNumbers);
         std::vector<std::vector<Match>> resultMatches(matches.size());
@@ -196,7 +197,7 @@ namespace gdr {
     }
 
     std::vector<tbb::concurrent_vector<Match>>
-    SiftModuleGPU::findCorrespondencesConcurrent(const std::vector<VertexCG> &verticesToBeMatched,
+    SiftModuleGPU::findCorrespondencesConcurrent(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                  const std::vector<int> &matchDevicesNumbers) {
 
         std::vector<std::unique_ptr<SiftMatchGPU>> matchers;
@@ -222,7 +223,8 @@ namespace gdr {
         for (int i = 0; i < threads.size(); ++i) {
 
             threads[i] = std::thread(getNumbersOfMatchesOnePair,
-                                     std::ref(numberPoseFromLess), std::ref(numberPoseToBigger),
+                                     std::ref(numberPoseFromLess),
+                                     std::ref(numberPoseToBigger),
                                      std::ref(verticesToBeMatched),
                                      std::ref(counterMutex),
                                      std::ref(matches),
@@ -238,25 +240,12 @@ namespace gdr {
             assert(matches[i].size() == (matches.size() - i) - 1);
         }
 
-        /*
-        for (int i = 0; i < verticesToBeMatched.size(); ++i) {
-            for (int j = i + 1; j < verticesToBeMatched.size(); ++j) {
-
-                std::cout << "matching images " << i << " and " << j << std::endl;
-                std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
-                        std::make_pair(verticesToBeMatched[i].keypoints, verticesToBeMatched[i].descriptors),
-                        std::make_pair(verticesToBeMatched[j].keypoints, verticesToBeMatched[j].descriptors),
-                        matcher.get());
-                PRINT_PROGRESS("total matches " << matchingNumbers.size() << std::endl);
-                matches[i].push_back({j, matchingNumbers});
-            }
-        }*/
         return matches;
     };
 
     void SiftModuleGPU::getNumbersOfMatchesOnePair(int &indexFrom,
                                                    int &indexTo,
-                                                   const std::vector<VertexCG> &verticesToBeMatched,
+                                                   const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                    std::mutex &counterMutex,
                                                    std::vector<tbb::concurrent_vector<Match>> &matches,
                                                    SiftMatchGPU *matcher) {
@@ -289,10 +278,10 @@ namespace gdr {
             counterMutex.unlock();
 
             std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
-                    std::make_pair(verticesToBeMatched[localIndexFrom].keypoints,
-                                   verticesToBeMatched[localIndexFrom].descriptors),
-                    std::make_pair(verticesToBeMatched[localIndexTo].keypoints,
-                                   verticesToBeMatched[localIndexTo].descriptors),
+                    std::make_pair(verticesToBeMatched[localIndexFrom].getKeyPoints(),
+                                   verticesToBeMatched[localIndexFrom].getDescriptors()),
+                    std::make_pair(verticesToBeMatched[localIndexTo].getKeyPoints(),
+                                   verticesToBeMatched[localIndexTo].getDescriptors()),
                     matcher);
             std::cout << "matched keypoint pairs " << matchingNumbers.size() << std::endl;
             matches[localIndexFrom].push_back({localIndexTo, matchingNumbers});

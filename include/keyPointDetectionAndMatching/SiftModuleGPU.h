@@ -12,7 +12,7 @@
 #include <tbb/concurrent_vector.h>
 #include <mutex>
 
-#include "poseGraph/VertexCG.h"
+#include <Eigen/Eigen>
 #include "SiftGPU.h"
 #include "keyPoints/KeyPoint2D.h"
 
@@ -38,14 +38,14 @@ namespace gdr {
         getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                          const std::vector<int> &numOfDevicesForDetectors = {0});
 
-        std::vector<std::vector<Match>> findCorrespondences(const std::vector<VertexCG> &verticesToBeMatched,
+        std::vector<std::vector<Match>> findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                             const std::vector<int> &matchDevicesNumbers = {
                                                                     0}) override;
 
     private:
 
 
-        std::vector<tbb::concurrent_vector<Match>> findCorrespondencesConcurrent(const std::vector<VertexCG> &verticesToBeMatched,
+        std::vector<tbb::concurrent_vector<Match>> findCorrespondencesConcurrent(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                                        const std::vector<int> &matchDevicesNumbers = {
                                                                                0});
 
@@ -78,7 +78,7 @@ namespace gdr {
 
         static void getNumbersOfMatchesOnePair(int &indexFrom,
                                                int &indexTo,
-                                               const std::vector<VertexCG> &verticesToBeMatched,
+                                               const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                std::mutex &counterMutex,
                                                std::vector<tbb::concurrent_vector<Match>> &matches,
                                                SiftMatchGPU *matcher);
