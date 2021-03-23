@@ -16,13 +16,8 @@ namespace gdr {
 
     public:
         bool refineRelativePose(const MatchableInfo &poseToBeTransformed,
-                               const MatchableInfo &poseDestination,
-                               SE3 &initTransformationSE3) override;
-
-    private:
-        static int refineRelativePoseICP(const VertexCG &poseToBeTransformed,
-                                         const VertexCG &poseDestination,
-                                         Eigen::Matrix4d &initRelPosEstimation);
+                                const MatchableInfo &poseDestination,
+                                SE3 &initTransformationSE3) override;
     };
 }
 

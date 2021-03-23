@@ -33,6 +33,8 @@ namespace gdr {
 
         std::vector<SE3> optimizePointsAndPosesUsingDepthInfo(int indexFixed = 0) override;
 
+        std::vector<Point3d> getOptimizedPoints() const override;
+
     private:
         template<class T>
         static Eigen::Matrix<T, 3, 4> getCameraIntr(T fx, T cx, T fy, T cy) {
@@ -47,15 +49,13 @@ namespace gdr {
             return cameraIntr;
         }
 
-        std::shared_ptr<ceres::LossFunctionWrapper> lossFunctionWrapperReprojectionError;
-        std::shared_ptr<ceres::LossFunctionWrapper> lossFunctionWrapperDepthError;
         static const int dimPoint = 3;
         static const int dimPose = 3;
         static const int dimOrientation = 4;
-        static const int quatStartIndex = 0;
-        static const int cameraIntrStartIndex = 0;
-        static const int cameraDim = 4;
-        static const int scaleStartIndex = 4;
+//        static const int quatStartIndex = 0;
+//        static const int cameraIntrStartIndex = 0;
+//        static const int cameraDim = 4;
+//        static const int scaleStartIndex = 4;
         int n = -1;
         int p = -1;
         constexpr static const double factor = 1.4826;
@@ -159,8 +159,6 @@ namespace gdr {
 
         std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPoseNumberAndPointNumber;
 
-
-        std::vector<Point3d> getPointsGlobalCoordinatesOptimized() const;
 
         struct ReprojectionWithDepthError {
 

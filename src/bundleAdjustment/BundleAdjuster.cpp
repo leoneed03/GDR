@@ -14,11 +14,6 @@ namespace gdr {
                                    const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
                                    const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo) {
 
-        lossFunctionWrapperReprojectionError = std::make_shared<ceres::LossFunctionWrapper>(new ceres::HuberLoss(1.0),
-                                                                                            ceres::TAKE_OWNERSHIP);
-        lossFunctionWrapperDepthError = std::make_shared<ceres::LossFunctionWrapper>(new ceres::HuberLoss(1.0),
-                                                                                     ceres::TAKE_OWNERSHIP);
-
         assert(keyPointinfo.size() == absolutePoses.size());
         assert(!absolutePoses.empty());
         assert(absolutePoses.size() > 0);
@@ -114,16 +109,17 @@ namespace gdr {
         return {errorsReprojectionXY, errorsDepth};
     }
 
-    std::vector<Point3d> BundleAdjuster::getPointsGlobalCoordinatesOptimized() const {
-        std::vector<Point3d> pointsOtimized;
+    std::vector<Point3d> BundleAdjuster::getOptimizedPoints() const {
+        std::vector<Point3d> pointsOptimized;
 
         for (int i = 0; i < pointsXYZbyIndex.size(); ++i) {
             const auto &point = pointsXYZbyIndex[i];
             assert(point.size() == 3);
-            pointsOtimized.push_back(Point3d(point[0], point[1], point[2], i));
+            pointsOptimized.emplace_back(Point3d(point[0], point[1], point[2], i));
         }
-        assert(pointsOtimized.size() == pointsXYZbyIndex.size());
-        return pointsOtimized;
+
+        assert(pointsOptimized.size() == pointsXYZbyIndex.size());
+        return pointsOptimized;
     }
 
 // get median and max errors: reprojection OX and OY and Depth: [{OX, OY, Depth}_median, {OX, OY, Depth}_max, {OX, OY, Depth}_min]

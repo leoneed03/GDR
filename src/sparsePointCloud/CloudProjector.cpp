@@ -10,15 +10,10 @@
 
 namespace gdr {
 
-    void CloudProjector::setPoses(const std::vector<VertexCG *> &cameraPoses) {
-        poses = cameraPoses;
-        keyPointInfoByPose = std::vector<std::unordered_map<int, KeyPointInfo>>(cameraPoses.size());
-    }
-
     int CloudProjector::addPoint(int pointIndex,
                                  const std::vector<KeyPointInfo> &poseNumbersAndProjectedKeyPointInfo) {
 
-        assert(!poses.empty());
+        assert(getPoseNumber() > 0);
         maxPointIndex = std::max(pointIndex, maxPointIndex);
 
         for (const auto &poseAndInfo: poseNumbersAndProjectedKeyPointInfo) {
@@ -26,7 +21,7 @@ namespace gdr {
             assert(poseNumber >= 0);
             const KeyPointInfo &info = poseAndInfo;
 
-            assert(poses.size() == keyPointInfoByPose.size());
+            assert(getPoseNumber() == keyPointInfoByPose.size());
             assert(poseNumber < keyPointInfoByPose.size() && poseNumber >= 0);
             keyPointInfoByPose[poseNumber].insert(std::make_pair(pointIndex, info));
 
@@ -40,14 +35,9 @@ namespace gdr {
         return indexedPoints[pointNumber3d];
     }
 
-    const VertexCG &CloudProjector::getPoseByPoseNumber(int poseNumber) const {
-        assert(poseNumber >= 0 && poseNumber < poses.size());
-        return *poses[poseNumber];
-    }
-
     std::vector<std::pair<int, KeyPointInfo>> CloudProjector::getKeyPointsIndicesAndInfoByPose(int poseNumber) const {
 
-        assert(poseNumber >= 0 && poseNumber < poses.size());
+        assert(poseNumber >= 0 && poseNumber < getPoseNumber());
 
         assert(poseNumber < keyPointInfoByPose.size());
 
@@ -83,7 +73,7 @@ namespace gdr {
 
         numbersOfPosesObservingSpecificPoint = std::vector<std::vector<int>>(pointsSize);
 
-        int posesSize = poses.size();
+        int posesSize = getPoseNumber();
         for (int i = 0; i < posesSize; ++i) {
             for (const auto &observedPoints: keyPointInfoByPose[i]) {
 
@@ -101,13 +91,13 @@ namespace gdr {
 
                 std::vector<double> infoBeforeProjection = {newX, newY, newZ, 1.0};
 
-                assert(i == poses[i]->getIndex());
+                assert(i == poses[i].getIndex());
                 assert(i == currentInfoBeforeProjection.getObservingPoseNumber());
 
                 Eigen::Vector4d localCoordinatesBeforeProjection =
-                        poses[i]->getCamera().getCoordinatesBeforeProjectionXYZ1(newX, newY, newZ);
+                        poses[i].getCamera().getCoordinatesBeforeProjectionXYZ1(newX, newY, newZ);
                 Eigen::Vector4d globalCoordinates =
-                        poses[i]->getEigenMatrixAbsolutePose4d() * localCoordinatesBeforeProjection;
+                        poses[i].getPoseSE3().getSE3().matrix() * localCoordinatesBeforeProjection;
                 assert(currentPointIndex < computedCoordinatesByPointIndex.size());
                 assert(currentPointIndex >= 0);
                 assert(computedCoordinatesByPointIndex.size() == pointsSize);
@@ -118,7 +108,7 @@ namespace gdr {
                 }
                 computedCoordinatesByPointIndex[currentPointIndex].push_back(coordinates3d);
 
-                const auto &camera = poses[i]->getCamera();
+                const auto &camera = poses[i].getCamera();
                 auto cameraIntr = camera.getIntrinsicsMatrix3x4();
                 Eigen::Vector3d projected = cameraIntr * localCoordinatesBeforeProjection;
                 double projectedX = projected[0] / projected[2];
@@ -180,84 +170,6 @@ namespace gdr {
         return indexedPoints;
     }
 
-    void CloudProjector::showPointsProjection(const std::vector<Point3d> &pointsGlobalCoordinates) const {
-
-        bool showOnce = true;
-        bool shown = false;
-
-        assert(numbersOfPosesObservingSpecificPoint.size() == pointsGlobalCoordinates.size());
-        for (int i = 0; i < numbersOfPosesObservingSpecificPoint.size(); ++i) {
-            assert(!numbersOfPosesObservingSpecificPoint[i].empty());
-            if (numbersOfPosesObservingSpecificPoint[i][0] < 10 ||
-                numbersOfPosesObservingSpecificPoint[i].size() <= 3) {
-                continue;
-            }
-            shown = true;
-
-            std::vector<cv::Mat> imagesObservingCurrentPoint;
-
-            for (const auto &poseIndex: numbersOfPosesObservingSpecificPoint[i]) {
-
-                KeyPointInfo p = keyPointInfoByPose[poseIndex].find(i)->second;
-                cv::KeyPoint keyPointToShow(cv::Point(p.getX(), p.getY()), 50);
-                cv::Mat imageNoKeyPoints = cv::imread(poses.at(poseIndex)->getPathDImage(), cv::IMREAD_COLOR);
-
-
-                const auto &camera = poses[poseIndex]->getCamera();
-                auto cameraIntr = camera.getIntrinsicsMatrix3x4();
-                Eigen::Vector4d pointGlobal = pointsGlobalCoordinates[i].getEigenVector4dPointXYZ1();
-                if (poseIndex == 0) {
-                    std::cout << poses[poseIndex]->getEigenMatrixAbsolutePose4d() << std::endl;
-                }
-
-                Eigen::Vector3d projected =
-                        cameraIntr * poses[poseIndex]->getEigenMatrixAbsolutePose4d().inverse() * pointGlobal;
-                double projectedX = projected[0] / projected[2];
-                double projectedY = projected[1] / projected[2];
-
-                cv::KeyPoint keyPointComputed(cv::Point(projectedX, projectedY), 50);
-                std::vector<cv::KeyPoint> keyPointsToShow = {keyPointToShow, keyPointComputed};
-
-                cv::Mat imageKeyPoints = cv::imread(poses.at(poseIndex)->getPathDImage(), cv::IMREAD_COLOR);
-                cv::drawKeypoints(imageNoKeyPoints, keyPointsToShow, imageKeyPoints);
-                cv::putText(imageKeyPoints, //target image
-                            "from sift(" + std::to_string((int) p.getX()) + ", " + std::to_string((int) p.getY())
-                            + "), computed should be x,y: " + std::to_string((int) projectedX) + ", " +
-                            std::to_string((int) projectedY), //text
-                            cv::Point(p.getX(), p.getY()), //top-left position
-                            cv::FONT_HERSHEY_DUPLEX,
-                            0.4,
-                            CV_RGB(118, 185, 0), //font color
-                            1);
-                cv::putText(imageKeyPoints, //target image
-                            "computed point no " + std::to_string(i) + ". pose no " + std::to_string(poseIndex), //text
-                            cv::Point(projectedX, projectedY), //top-left position
-                            cv::FONT_HERSHEY_DUPLEX,
-                            0.4,
-                            CV_RGB(118, 185, 0), //font color
-                            1);
-
-                imagesObservingCurrentPoint.push_back(imageKeyPoints);
-            }
-            if (shown) {
-                int cc = 0;
-                for (const auto &image: imagesObservingCurrentPoint) {
-                    cv::imshow("pose " + std::to_string(cc), image);
-                    ++cc;
-                }
-                cv::waitKey(0);
-                cv::destroyAllWindows();
-            }
-            if (showOnce) {
-                break;
-            }
-
-        }
-
-
-    }
-
-
     std::vector<cv::Mat> CloudProjector::showPointsReprojectionError(
             const std::vector<Point3d> &pointsGlobalCoordinates,
             const std::string &pathToRGBDirectoryToSave,
@@ -273,16 +185,16 @@ namespace gdr {
 
         std::vector<cv::Mat> imagesToShowKeyPoints;
 
-        std::vector<double> sumL2Errors(poses.size(), 0);
+        std::vector<double> sumL2Errors(getPoseNumber(), 0);
         std::vector<std::vector<std::pair<KeyPoint2D, KeyPoint2D>>>
-                keyPointsRealAndComputedByImageIndex(poses.size());
+                keyPointsRealAndComputedByImageIndex(getPoseNumber());
 
-        for (int poseIndexComponent = 0; poseIndexComponent < poses.size(); ++poseIndexComponent) {
-            cv::Mat imageNoKeyPoints = cv::imread(poses[poseIndexComponent]->getPathRGBImage(), cv::IMREAD_COLOR);
+        for (int poseIndexComponent = 0; poseIndexComponent < getPoseNumber(); ++poseIndexComponent) {
+            cv::Mat imageNoKeyPoints = cv::imread(poses[poseIndexComponent].getPathRGB(), cv::IMREAD_COLOR);
             imagesToShowKeyPoints.emplace_back(imageNoKeyPoints);
         }
 
-        assert(imagesToShowKeyPoints.size() == poses.size());
+        assert(imagesToShowKeyPoints.size() == getPoseNumber());
 
         for (int i = 0; i < numbersOfPosesObservingSpecificPoint.size(); ++i) {
 
@@ -294,12 +206,12 @@ namespace gdr {
                 KeyPoint2D keyPointToShow(p.getX(), p.getY(), p.getScale(), p.getOrientation());
                 keyPointToShow.setDepth(p.getDepth());
 
-                const auto &camera = poses[poseIndex]->getCamera();
+                const auto &camera = poses[poseIndex].getCamera();
                 auto cameraIntr = camera.getIntrinsicsMatrix3x4();
                 Eigen::Vector4d pointGlobal = pointsGlobalCoordinates[i].getEigenVector4dPointXYZ1();
 
                 Eigen::Vector4d globalCoordinatesMoved =
-                        poses[poseIndex]->getEigenMatrixAbsolutePose4d().inverse() * pointGlobal;
+                        poses[poseIndex].getPoseSE3().getSE3().inverse().matrix() * pointGlobal;
                 Eigen::Vector3d projected = cameraIntr * globalCoordinatesMoved;
                 double projectedX = projected[0] / projected[2];
                 double projectedY = projected[1] / projected[2];
@@ -319,14 +231,14 @@ namespace gdr {
             for (const auto &lhs: pairsOfKeyPoints) {
                 auto &leftKeyPointReal = lhs.first;
                 auto &leftKeyPointComputed = lhs.second;
-                Eigen::Vector3d computedCoordinates3DXYZ = poses[imageIndex]->getCamera()
+                Eigen::Vector3d computedCoordinates3DXYZ = poses[imageIndex].getCamera()
                         .getCoordinates3D(leftKeyPointComputed.getX(),
                                           leftKeyPointComputed.getY(),
                                           leftKeyPointComputed.getDepth());
                 assert(leftKeyPointComputed.isDepthUsable());
 
 
-                Eigen::Vector3d observedCoordinates3DXYZ = poses[imageIndex]->getCamera()
+                Eigen::Vector3d observedCoordinates3DXYZ = poses[imageIndex].getCamera()
                         .getCoordinates3D(leftKeyPointReal.getX(),
                                           leftKeyPointReal.getY(),
                                           leftKeyPointReal.getDepth());
@@ -421,8 +333,22 @@ namespace gdr {
         return keyPointInfoByPose;
     }
 
-    CloudProjector::CloudProjector(const std::vector<VertexCG *> &cameraPoses) :
+
+    CloudProjector::CloudProjector(const std::vector<ProjectableInfo> &cameraPoses) :
             poses(cameraPoses),
             keyPointInfoByPose(cameraPoses.size()) {}
+
+    void CloudProjector::setPoses(const std::vector<SE3> &posesSE3Refined) {
+        assert(poses.size() == posesSE3Refined.size());
+
+        for (int i = 0; i < posesSE3Refined.size(); ++i) {
+            poses[i].setPoseSE3(posesSE3Refined[i]);
+        }
+    }
+
+    void CloudProjector::setPoints(const std::vector<Point3d> &pointsRefined) {
+        assert(pointsRefined.size() == indexedPoints.size());
+        indexedPoints = pointsRefined;
+    }
 
 }

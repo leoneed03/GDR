@@ -35,22 +35,30 @@ namespace gdr {
         absoluteRotationsFile(newAbsoluteRotationsFile),
         componentGlobalNumberOptional(componentNumber) {
 
-        std::vector<VertexCG *> posesForCloudProjector;
         assert(getNumberOfPoses() > 0);
-        posesForCloudProjector.reserve(getNumberOfPoses());
-
-        for (int i = 0; i < getNumberOfPoses(); ++i) {
-            posesForCloudProjector.push_back(&absolutePoses[i]);
-        }
         assert(getNumberOfPoses() == absolutePoses.size());
-        assert(posesForCloudProjector.size() == getNumberOfPoses());
-        cloudProjector = std::make_unique<CloudProjector>(posesForCloudProjector);
 
         pointMatcher = std::make_unique<PointMatcher>(getNumberOfPoses());
-//        pointMatcher.setNumberOfPoses(getNumberOfPoses());
     }
 
     void ConnectedComponentPoseGraph::computePointClasses() {
+
+        std::vector<ProjectableInfo> posesForCloudProjector;
+        posesForCloudProjector.reserve(getNumberOfPoses());
+
+        for (int i = 0; i < getNumberOfPoses(); ++i) {
+            const auto &pose = absolutePoses[i];
+            posesForCloudProjector.emplace_back(
+                    ProjectableInfo(
+                            pose.getAbsolutePoseSE3(),
+                            pose.getCamera(),
+                            pose.getIndex(),
+                            pose.getPathRGBImage(),
+                            pose.getPathDImage()
+                    ));
+        }
+
+        cloudProjector = std::make_unique<CloudProjector>(posesForCloudProjector);
 
         const auto &matchesBetweenPoints = inlierPointCorrespondences;
         for (const auto &vectorOfMatches: matchesBetweenPoints) {
@@ -65,7 +73,7 @@ namespace gdr {
 
         // unordered map's Key is local index
         std::vector<std::unordered_map<int, KeyPointInfo>>
-        keyPointInfoByPoseNumAndLocalInd(pointMatcher->getNumberOfPoses());
+                keyPointInfoByPoseNumAndLocalInd(pointMatcher->getNumberOfPoses());
 
 
         for (const auto &vectorOfMatches: matchesBetweenPoints) {
@@ -101,7 +109,7 @@ namespace gdr {
         printRelativeRotationsToFile(relativeRotationsFile);
 
         std::vector<SO3> absoluteRotationsQuats = rotationAverager::shanonAveraging(relativeRotationsFile,
-                                                  absoluteRotationsFile);
+                                                                                    absoluteRotationsFile);
 
         for (int i = 0; i < getNumberOfPoses(); ++i) {
             absolutePoses[i].setRotation(absoluteRotationsQuats[i].getRotationSophus());
@@ -220,10 +228,10 @@ namespace gdr {
 
         std::vector<double> errorsBefore;
         auto shownResidualsBefore = cloudProjector->showPointsReprojectionError(observedPoints,
-                                                                               "before",
-                                                                               errorsBefore,
-                                                                               absolutePoses[0].getCamera(),
-                                                                               maxNumberOfPointsToShow);
+                                                                                "before",
+                                                                                errorsBefore,
+                                                                                absolutePoses[0].getCamera(),
+                                                                                maxNumberOfPointsToShow);
 
         std::unique_ptr<IBundleAdjuster> bundleAdjuster =
                 std::make_unique<BundleAdjuster>(observedPoints,
@@ -231,6 +239,7 @@ namespace gdr {
                                                  cloudProjector->getKeyPointInfoByPoseNumberAndPointClass());
 
         std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPosesUsingDepthInfo(indexFixedToZero);
+
 
         assert(posesOptimized.size() == getNumberOfPoses());
 
@@ -241,13 +250,17 @@ namespace gdr {
 
         std::vector<double> errorsAfter;
 
+        cloudProjector->setPoses(getPoses());
+        cloudProjector->setPoints(bundleAdjuster->getOptimizedPoints());
+
         auto shownResidualsAfter = cloudProjector->showPointsReprojectionError(observedPoints,
-                                                                              "after",
-                                                                              errorsAfter,
-                                                                              absolutePoses[0].getCamera(),
-                                                                              maxNumberOfPointsToShow);
+                                                                               "after",
+                                                                               errorsAfter,
+                                                                               absolutePoses[0].getCamera(),
+                                                                               maxNumberOfPointsToShow);
 
         assert(shownResidualsAfter.size() == shownResidualsBefore.size());
+
 
         std::string pathToRGBDirectoryToSave = "shownResiduals";
         boost::filesystem::path pathToRemove(pathToRGBDirectoryToSave);
@@ -370,5 +383,20 @@ namespace gdr {
 
     int ConnectedComponentPoseGraph::size() const {
         return absolutePoses.size();
+    }
+
+    std::vector<SE3> ConnectedComponentPoseGraph::getPoses() const {
+        std::vector<SE3> poses;
+        poses.reserve(getNumberOfPoses());
+
+        assert(getNumberOfPoses() == absolutePoses.size());
+        assert(getNumberOfPoses() == size());
+
+        for (const auto &pose: absolutePoses) {
+            poses.emplace_back(pose.getAbsolutePoseSE3());
+        }
+
+        assert(poses.size() == getNumberOfPoses());
+        return poses;
     }
 }

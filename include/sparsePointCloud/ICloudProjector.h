@@ -39,6 +39,8 @@ namespace gdr {
         virtual const std::vector<std::unordered_map<int, KeyPointInfo>> &
         getKeyPointInfoByPoseNumberAndPointClass() const = 0;
 
+
+        // TODO: this part should be in a separate class
         /**
          * Shows where observed point are projected on images (for debug purposes)
          */
@@ -49,6 +51,17 @@ namespace gdr {
                                                                  int maxPointsToShow = -1,
                                                                  bool drawCirclesKeyPoints = false,
                                                                  double quantil = 0.5) const = 0;
+
+        /**
+         * Set new computed camera coordinates
+         */
+        virtual void setPoses(const std::vector<SE3> &poses) = 0;
+
+        /**
+        * Set new computed points coordinates
+        */
+        virtual void setPoints(const std::vector<Point3d> &points) = 0;
+
         virtual ~ICloudProjector() = default;
     };
 

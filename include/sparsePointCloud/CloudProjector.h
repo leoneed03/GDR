@@ -8,10 +8,10 @@
 #define GDR_CLOUDPROJECTOR_H
 
 #include "parametrization/Point3d.h"
-#include "poseGraph/VertexCG.h"
 #include "keyPoints/KeyPointInfo.h"
 #include "sparsePointCloud/PointMatcher.h"
 #include "parametrization/cameraRGBD.h"
+#include "ProjectableInfo.h"
 
 #include <unordered_map>
 #include <vector>
@@ -28,7 +28,7 @@ namespace gdr {
         /**
          * @param cameraPoses contains information about observing poses
          */
-        explicit CloudProjector(const std::vector<VertexCG *> &cameraPoses);
+        explicit CloudProjector(const std::vector<ProjectableInfo> &cameraPoses);
 
         /**
          * @param indexedPoint is observed point number
@@ -61,32 +61,27 @@ namespace gdr {
                                                          bool drawCirclesKeyPoints = false,
                                                          double quantil = 0.5) const override;
 
+        void setPoses(const std::vector<SE3>& poses) override;
+
+        void setPoints(const std::vector<Point3d> &points) override;
+
     private:
         int maxPointIndex = -1;
         std::vector<Point3d> indexedPoints;
-        std::vector<VertexCG *> poses;
+        std::vector<ProjectableInfo> poses;
 
         // i-th unordered map maps from point's index (int) to struct containing information
         // about keypoint (KeyPointInfo) -- point's observation by i-th camera
         std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPose;
 
-
         // j-th vector contains pose numbers observing j-keypoint
         std::vector<std::vector<int>> numbersOfPosesObservingSpecificPoint;
 
-//        CloudProjector() = delete;
-
-        void setPoses(const std::vector<VertexCG *> &cameraPoses);
-
         const Point3d &getPointByIndex3d(int pointNumber3d) const;
-
-        const VertexCG &getPoseByPoseNumber(int poseNumber) const;
 
         int getPoseNumber() const;
 
         std::vector<std::pair<int, KeyPointInfo>> getKeyPointsIndicesAndInfoByPose(int poseNumber) const;
-
-        void showPointsProjection(const std::vector<Point3d> &pointsGlobalCoordinates) const;
 
     };
 }

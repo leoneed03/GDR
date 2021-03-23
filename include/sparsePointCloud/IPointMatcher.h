@@ -10,8 +10,6 @@ namespace gdr {
     class IPointMatcher {
 
     public:
-//        virtual void setNumberOfPoses(int numPoses) = 0;
-
         /** Compute unique class for each observed point
          *      (some keypoints are observed by multiple cameras but represent same 3D point)
          * @returns vector of unique classes for each point

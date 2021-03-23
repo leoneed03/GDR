@@ -72,6 +72,8 @@ namespace gdr {
         std::vector<VertexCG*> getVerticesPointers();
 
         int size() const;
+
+        std::vector<SE3> getPoses() const;
     };
 
 }

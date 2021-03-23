@@ -21,20 +21,21 @@ namespace gdr {
 
         /** Process directory of images and return detected keypoints
          * @param pathsToImages contains paths as strings to image files
-         * @param numOfDevicesForDetectors device indices used for multiple GPU instances
-         * @returns vector where i-th element represents keypoint collection for the i-th image
+         * @param numOfDevicesForDetectors device indices used for multiple GPU instances, should be different
+         * @returns vector where i-th element represents keypoint collection of the i-th image
          */
         virtual std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
         getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                            const std::vector<int> &numOfDevicesForDetectors = {0}) = 0;
 
-        /** Find matches between all images (pairwise)
-         * @param verticesToBeMatched contains list of vertices with information about detected keypoints
-         * @param matchDevicesNumbers device indices used for multiple GPU instances
+        /** Find matches between all image keypoints (pairwise)
+         * @param keyPointsDescriptorsByImageIndex contains list of image descriptors
+         *      with information about detected keypoints
+         * @param matchDevicesNumbers device indices used for multiple GPU instances, should be different
          * @returns vector where i-th element contains information about matched keypoints of the i-th image
          */
         virtual std::vector<std::vector<Match>>
-        findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
+        findCorrespondences(const std::vector<KeyPointsDescriptors> &keyPointsDescriptorsByImageIndex,
                             const std::vector<int> &matchDevicesNumbers = {0}) = 0;
 
         virtual ~ISiftModule() = default;
