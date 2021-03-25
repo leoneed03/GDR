@@ -98,7 +98,7 @@ set(GDR_HEADER_FILES
         include/absolutePoseEstimation/rotationAveraging/RotationOptimizationRobust.h
     ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjector.h
         include/keyPoints/KeyPointInfo.h
-        include/sparsePointCloud/PointMatcher.h
+        include/sparsePointCloud/PointClassifier.h
         include/visualization/2D/ImageDrawer.h
         include/bundleAdjustment/BundleAdjuster.h
     ${PROJECT_SOURCE_DIR}/include/SmoothPointCloud.h
@@ -137,7 +137,7 @@ set(GDR_SOURCE_FILES
         src/parametrization/Point3d.cpp
         src/sparsePointCloud/CloudProjector.cpp
         src/keyPoints/KeyPointInfo.cpp
-        src/sparsePointCloud/PointMatcher.cpp
+        src/sparsePointCloud/PointClassifier.cpp
         src/visualization/2D/ImageDrawer.cpp
         src/bundleAdjustment/BundleAdjuster.cpp
     ${PROJECT_SOURCE_DIR}/src/SmoothPointCloud.cpp
@@ -157,7 +157,7 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/include/parametrization/SE3.h
         ${PROJECT_SOURCE_DIR}/src/parametrization/SE3.cpp
         ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/InlierCounter.cpp
-        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/ParamsRANSAC.cpp src/parametrization/MatchableInfo.cpp src/statistics/RobustEstimators.cpp include/statistics/RobustEstimators.h src/readerTUM/ReaderTum.cpp include/readerTUM/ReaderTum.h src/keyPointDetectionAndMatching/FeatureDetector.cpp include/keyPointDetectionAndMatching/FeatureDetector.h src/keyPointDetectionAndMatching/KeyPointsAndDescriptors.cpp include/keyPointDetectionAndMatching/KeyPointsAndDescriptors.h src/keyPointDetectionAndMatching/Match.cpp include/keyPointDetectionAndMatching/Match.h include/sparsePointCloud/ProjectableInfo.cpp include/sparsePointCloud/ProjectableInfo.h)
+        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/ParamsRANSAC.cpp src/parametrization/MatchableInfo.cpp src/statistics/RobustEstimators.cpp include/statistics/RobustEstimators.h src/readerTUM/ReaderTum.cpp include/readerTUM/ReaderTum.h src/keyPointDetectionAndMatching/FeatureDetector.cpp include/keyPointDetectionAndMatching/FeatureDetector.h src/keyPointDetectionAndMatching/KeyPointsAndDescriptors.cpp include/keyPointDetectionAndMatching/KeyPointsAndDescriptors.h src/keyPointDetectionAndMatching/Match.cpp include/keyPointDetectionAndMatching/Match.h src/sparsePointCloud/ProjectableInfo.cpp include/sparsePointCloud/ProjectableInfo.h)
 
 add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
 

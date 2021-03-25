@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <cassert>
 
 namespace gdr {
     KeyPointInfo::KeyPointInfo(const KeyPoint2D &keyPointToSet,
@@ -94,11 +95,13 @@ namespace gdr {
     }
 
     bool KeyPointInfo::isInitialized() const {
-        if (std::abs(getX() - getDefValue()) < epsilonD
+        bool xNotInit = std::abs(getX() - getDefValue()) < epsilonD;
+        if (xNotInit
             || std::abs(getY() - getDefValue()) < epsilonD
             || std::abs(getScale() - getDefValue()) < epsilonD
             || std::abs(getOrientation() - getDefValue()) < epsilonD
-            || std::abs(getDepth() - getDefValue()) < epsilonD) {
+            || std::abs(getDepth() - getDefValue()) < epsilonD
+                ) {
             return false;
         } else {
             return true;

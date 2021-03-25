@@ -8,7 +8,8 @@
 
 namespace gdr {
 
-    KeyPoint2D::KeyPoint2D(double newX, double newY,
+    KeyPoint2D::KeyPoint2D(double newX,
+                           double newY,
                            double newScale,
                            double newOrientation) :
             x(newX),
@@ -36,7 +37,7 @@ namespace gdr {
     }
 
     bool KeyPoint2D::scaleOrientationAreUsable() const {
-        return (scale > 0) && (orientation > 0);
+        return (scale > defValue) && (orientation > defValue);
     }
 
     KeyPoint2D::KeyPoint2D() :
@@ -44,7 +45,7 @@ namespace gdr {
             y(getDefValue()) {}
 
     bool KeyPoint2D::isUsable() const {
-        return (x > 0) && (y > 0);
+        return (x > getDefValue()) && (y > getDefValue());
     }
 
     void KeyPoint2D::setDepth(double newDepth) {
@@ -57,7 +58,7 @@ namespace gdr {
     }
 
     bool KeyPoint2D::isDepthUsable() const {
-        return (depth > 0);
+        return (depth > getDefValue());
     }
 
     double KeyPoint2D::getDefValue() {

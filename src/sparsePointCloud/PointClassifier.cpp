@@ -2,7 +2,7 @@
 // Created by leoneed on 2/1/21.
 //
 
-#include "sparsePointCloud/PointMatcher.h"
+#include "sparsePointCloud/PointClassifier.h"
 
 #include <queue>
 #include <iostream>
@@ -10,12 +10,7 @@
 
 namespace gdr {
 
-//    void PointMatcher::setNumberOfPoses(int numPoses) {
-//        pointClassesByPose = std::vector<std::unordered_map<int, int>>(numPoses);
-//        pointGlobalIndexByPose = std::vector<std::unordered_map<int, int>>(numPoses);
-//    }
-
-    int PointMatcher::getPointClass(int poseNumber, int keypointIndexLocal) const {
+    int PointClassifier::getPointClass(int poseNumber, int keypointIndexLocal) const {
         assert(poseNumber < pointClassesByPose.size());
         assert(poseNumber >= 0);
 
@@ -29,7 +24,7 @@ namespace gdr {
         }
     }
 
-    void PointMatcher::insertPointsWithNewClasses(const std::vector<std::pair<int, int>> &points) {
+    void PointClassifier::insertPointsWithNewClasses(const std::vector<std::pair<int, int>> &points) {
 
         std::vector<int> insertedGlobalIndices;
 
@@ -75,11 +70,11 @@ namespace gdr {
         }
     }
 
-    int PointMatcher::getUnknownClassIndex() const {
+    int PointClassifier::getUnknownClassIndex() const {
         return unknownClassIndex;
     }
 
-    int PointMatcher::getNumberOfPoses() const {
+    int PointClassifier::getNumberOfPoses() const {
 
         assert(pointClassesByPose.size() == pointGlobalIndexByPose.size());
 //        assert(matchesGlobalIndicesByPose.size() == pointGlobalIndexByPose.size());
@@ -87,13 +82,13 @@ namespace gdr {
         return pointClassesByPose.size();
     }
 
-    int PointMatcher::getNumberOfGlobalIndices() const {
+    int PointClassifier::getNumberOfGlobalIndices() const {
 
 //        assert(!poseNumberAndPointLocalIndexByGlobalIndex.empty());
         return poseNumberAndPointLocalIndexByGlobalIndex.size();
     }
 
-    std::vector<int> PointMatcher::assignPointClasses() {
+    std::vector<int> PointClassifier::assignPointClasses() {
         std::vector<bool> visitedGlobalIndices(getNumberOfGlobalIndices(), false);
         std::vector<int> classByGlobalIndex(getNumberOfGlobalIndices(), getUnknownClassIndex());
 
@@ -153,12 +148,12 @@ namespace gdr {
         return classByGlobalIndex;
     }
 
-    std::pair<int, int> PointMatcher::getPoseNumberAndLocalIndex(int globalIndex) const {
+    std::pair<int, int> PointClassifier::getPoseNumberAndLocalIndex(int globalIndex) const {
         assert(globalIndex < poseNumberAndPointLocalIndexByGlobalIndex.size());
         return poseNumberAndPointLocalIndexByGlobalIndex[globalIndex];
     }
 
-    int PointMatcher::getGetGlobalIndex(int poseNumber, int localIndex) const {
+    int PointClassifier::getGetGlobalIndex(int poseNumber, int localIndex) const {
 
         assert(poseNumber < pointGlobalIndexByPose.size());
         auto foundIt = pointGlobalIndexByPose[poseNumber].find(localIndex);
@@ -167,7 +162,7 @@ namespace gdr {
         return foundIt->second;
     }
 
-    PointMatcher::PointMatcher(int numPoses) {
+    PointClassifier::PointClassifier(int numPoses) {
         pointClassesByPose = std::vector<std::unordered_map<int, int>>(numPoses);
         pointGlobalIndexByPose = std::vector<std::unordered_map<int, int>>(numPoses);
     }

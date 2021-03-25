@@ -9,7 +9,7 @@
 
 #include "parametrization/Point3d.h"
 #include "keyPoints/KeyPointInfo.h"
-#include "sparsePointCloud/PointMatcher.h"
+#include "sparsePointCloud/PointClassifier.h"
 #include "parametrization/cameraRGBD.h"
 #include "ProjectableInfo.h"
 

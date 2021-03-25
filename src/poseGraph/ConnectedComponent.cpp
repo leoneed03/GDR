@@ -38,7 +38,7 @@ namespace gdr {
         assert(getNumberOfPoses() > 0);
         assert(getNumberOfPoses() == absolutePoses.size());
 
-        pointMatcher = std::make_unique<PointMatcher>(getNumberOfPoses());
+        pointMatcher = std::make_unique<PointClassifier>(getNumberOfPoses());
     }
 
     void ConnectedComponentPoseGraph::computePointClasses() {
@@ -212,6 +212,7 @@ namespace gdr {
         for (int i = 0; i < getNumberOfPoses(); ++i) {
             absolutePoses[i].setTranslation(optimizedAbsoluteTranslationsIRLS[i]);
         }
+
         return optimizedAbsoluteTranslationsIRLS;
     }
 
@@ -220,7 +221,9 @@ namespace gdr {
         computePointClasses();
         std::vector<Point3d> observedPoints = cloudProjector->setComputedPointsGlobalCoordinates();
         std::cout << "ready " << std::endl;
+
         std::vector<std::pair<SE3, CameraRGBD>> posesAndCameraParams;
+
         for (const auto &vertexPose: absolutePoses) {
             posesAndCameraParams.emplace_back(std::make_pair(vertexPose.getAbsolutePoseSE3(), cameraRgbd));
         }
@@ -351,7 +354,7 @@ namespace gdr {
 
                     int indexTo = transformation.getIndexTo();
                     int indexFrom = i;
-                    //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format) TODO: actually seems like NOT
+                    //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format)
                     file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
                     auto translationVector = transformation.getTranslation();
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '

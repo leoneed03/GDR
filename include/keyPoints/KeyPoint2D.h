@@ -6,10 +6,11 @@
 #ifndef GDR_KEYPOINT2D_H
 #define GDR_KEYPOINT2D_H
 
+#include <limits>
 
 namespace gdr {
     class KeyPoint2D {
-        static constexpr double defValue = -1.0;
+        static constexpr double defValue = (std::numeric_limits<double>::lowest() / 2.0);
         double x, y;
         double scale = defValue;
         double orientation = defValue;
@@ -25,7 +26,8 @@ namespace gdr {
 
         bool isDepthUsable() const;
 
-        KeyPoint2D(double newX, double newY,
+        KeyPoint2D(double newX,
+                   double newY,
                    double newScale,
                    double newOrientation);
 

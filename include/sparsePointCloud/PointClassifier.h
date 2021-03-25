@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_POINTMATCHER_H
-#define GDR_POINTMATCHER_H
+#ifndef GDR_POINTCLASSIFIER_H
+#define GDR_POINTCLASSIFIER_H
 
 #include <vector>
 #include <unordered_map>
@@ -13,10 +13,10 @@
 
 namespace gdr {
 
-    class PointMatcher : public IPointMatcher {
+    class PointClassifier : public IPointMatcher {
 
     public:
-        explicit PointMatcher(int numPoses);
+        explicit PointClassifier(int numPoses);
 
 //        void setNumberOfPoses(int numPoses) override;
 
