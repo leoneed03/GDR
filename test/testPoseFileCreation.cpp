@@ -28,7 +28,7 @@ TEST(testCorrespondenceGraph, relativePoseFileCreated_iterations) {
                                                      525.0, 239.5);
         std::cout << "compute poses" << std::endl;
         correspondenceGraph.computeRelativePoses();
-        int numberOfLines = countNumberOfLines(correspondenceGraph.relativePose);
+        int numberOfLines = countNumberOfLines(correspondenceGraph.relativePoseFileG2o);
         int defaultNumberOfLines = 19;
 
         ASSERT_GE(numberOfLines, correspondenceGraph.verticesOfCorrespondence.size());

@@ -23,7 +23,7 @@ namespace gdr {
 
         SE3(const Sophus::SE3d &relativePoseSE3);
 
-        SE3(const Eigen::Matrix4d &poseMatrix4);
+        explicit SE3(const Eigen::Matrix4d &poseMatrix4);
 
         void setRotation(const SO3 &orientationToSet);
 

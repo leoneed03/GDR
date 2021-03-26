@@ -13,6 +13,7 @@
 #include "poseGraph/CorrespondenceGraph.h"
 #include "readerTUM/ReaderTum.h"
 #include "poseGraph/ConnectedComponent.h"
+#include "computationHandlers/CorrespondenceGraphHandler.h"
 #include "SmoothPointCloud.h"
 
 #include "gnuplot_interface.h"
@@ -41,11 +42,16 @@ TEST(testBAOptimized, visualizationDesk98) {
         std::string shortDatasetName = "desk_";
         std::string datasetName = shortDatasetName + "sampled_" + numberOfPosesString + "_6";
         std::cout << datasetName << std::endl;
-        gdr::CorrespondenceGraph correspondenceGraph("../../data/" + datasetName + "/rgb",
-                                                     "../../data/" + datasetName + "/depth",
-                                                     517.3, 318.6,
-                                                     516.5, 255.3);
-        correspondenceGraph.computeRelativePoses();
+
+        std::string pathRGB = "../../data/" + datasetName + "/rgb";
+        std::string pathD = "../../data/" + datasetName + "/depth";
+        gdr::CameraRGBD cameraDefault(517.3, 318.6,
+                                      516.5, 255.3);
+        gdr::CorrespondenceGraphHandler cgHandler(pathRGB, pathD, cameraDefault);
+
+        const gdr::CorrespondenceGraph& correspondenceGraph = cgHandler.getCorrespondenceGraph();
+
+        cgHandler.computeRelativePoses();
         correspondenceGraph.bfsDrawToFile(
                 "../../tools/data/temp/" + shortDatasetName + "connectedComponents_" + numberOfPosesString + ".dot");
         std::vector<gdr::ConnectedComponentPoseGraph> connectedComponentsPoseGraph =
@@ -243,6 +249,7 @@ TEST(testBAOptimized, visualizationDesk98) {
         ASSERT_LE(maxErrorR_BA, maxErrorR_IRLS * coefficientR);
         ASSERT_LE(meanErrorR_BA_angDist, meanErrorR_IRLS_angDist * coefficientR);
         ASSERT_LE(meanErrorT_BA_L2, meanErrorT_IRLS_L2 * coefficientT);
+
     }
 }
 

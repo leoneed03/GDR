@@ -29,268 +29,8 @@
 
 namespace gdr {
 
-    int
-    CorrespondenceGraph::refineRelativePose(const VertexCG &vertexToBeTransformed,
-                                            const VertexCG &vertexDestination,
-                                            SE3 &initEstimationRelPos,
-                                            bool &refinementSuccess) {
+    void CorrespondenceGraph::decreaseDensity(int maxVertexDegree) {
 
-        MatchableInfo poseToBeTransformed(vertexToBeTransformed.getPathRGBImage(),
-                                          vertexToBeTransformed.getPathDImage(),
-                                          vertexToBeTransformed.getKeyPoints2D(),
-                                          vertexToBeTransformed.getCamera());
-
-        MatchableInfo poseDestination(vertexDestination.getPathRGBImage(),
-                                      vertexDestination.getPathDImage(),
-                                      vertexDestination.getKeyPoints2D(),
-                                      vertexDestination.getCamera());
-        refinementSuccess = relativePoseRefiner->refineRelativePose(poseToBeTransformed, poseDestination,
-                                                                    initEstimationRelPos);
-        assert(refinementSuccess);
-
-        return 0;
-    }
-
-    std::vector<std::pair<double, double>> getReprojectionErrorsXY(const Eigen::Matrix4Xd &destinationPoints,
-                                                                   const Eigen::Matrix4Xd &transformedPoints,
-                                                                   const CameraRGBD &cameraIntrinsics) {
-        Eigen::Matrix3d intrinsicsMatrix = cameraIntrinsics.getIntrinsicsMatrix3x3();
-
-        std::vector<std::pair<double, double>> errorsReprojection;
-        errorsReprojection.reserve(destinationPoints.cols());
-        assert(destinationPoints.cols() == transformedPoints.cols());
-
-        for (int i = 0; i < destinationPoints.cols(); ++i) {
-            Eigen::Vector3d homCoordDestination = intrinsicsMatrix * destinationPoints.col(i).topLeftCorner<3, 1>();
-            Eigen::Vector3d homCoordTransformed = intrinsicsMatrix * transformedPoints.col(i).topLeftCorner<3, 1>();
-
-            for (int j = 0; j < 2; ++j) {
-                homCoordDestination[j] /= homCoordDestination[2];
-                homCoordTransformed[j] /= homCoordTransformed[2];
-            }
-            double errorX = std::abs(homCoordTransformed[0] - homCoordDestination[0]);
-            double errorY = std::abs(homCoordTransformed[1] - homCoordDestination[1]);
-            errorsReprojection.emplace_back(std::make_pair(errorX, errorY));
-        }
-
-        return errorsReprojection;
-    }
-
-    /**
-     * @param vertexFrom is a vertex number relative transformation from is computed
-     * @param vertexInList is a vertex number in vertexFrom's adjacency list (transformation "destination" vertex)
-     * @param maxErrorL2 is max L2 error in meters for points to be counted as inliers
-     * @param transformation is relative SE3 transformation between poses
-     * @param useProjectionError is "true" if reprojection error should be used instead of L2 error
-     * @param maxProjectionErrorPixels is max reprojection error value for point pair to be an inlier
-     * @param p is parameter for Lp reprojection error metric
-     * @returns list of vectors each vector size is 2: for keypoint on the first image and the second
-     *      pair is {{obseervingPoseNumber, keyPointLocalIndexOnTheImage}, KeyPointInfo}
-     */
-
-    std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
-    CorrespondenceGraph::findInlierPointCorrespondences(int vertexFrom,
-                                                        int vertexInList,
-                                                        const SE3 &transformation,
-                                                        const ParamsRANSAC &paramsRansac) {
-
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
-        const auto &match = matches[vertexFrom][vertexInList];
-        int minSize = match.getSize();
-
-        bool useProjectionError = paramsRansac.getProjectionUsage();
-        int p = paramsRansac.getLpMetricParam();
-
-
-        std::vector<Point3d> toBeTransformedPointsVector;
-        std::vector<Point3d> destinationPointsVector;
-
-        for (int i = 0; i < minSize; ++i) {
-
-            double x_destination, y_destination, z_destination;
-            int localIndexDestination = match.getKeyPointIndexDestinationAndToBeTransformed(i).first;
-            const auto &siftKeyPointDestination = verticesOfCorrespondence[vertexFrom].keypoints[localIndexDestination];
-            x_destination = siftKeyPointDestination.getX();
-            y_destination = siftKeyPointDestination.getY();
-            z_destination = verticesOfCorrespondence[vertexFrom].depths[localIndexDestination];
-
-            destinationPointsVector.emplace_back(Point3d(x_destination, y_destination, z_destination));
-            KeyPointInfo keyPointInfoDestination(siftKeyPointDestination, z_destination, vertexFrom);
-
-            std::pair<std::pair<int, int>, KeyPointInfo> infoDestinationKeyPoint = {{vertexFrom, localIndexDestination},
-                                                                               KeyPointInfo(siftKeyPointDestination,
-                                                                                            z_destination,
-                                                                                            vertexFrom)};
-
-            double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
-            int localIndexToBeTransformed = match.getKeyPointIndexDestinationAndToBeTransformed(i).second;
-            int vertexToBeTransformed = match.getFrameNumber();
-            const auto &siftKeyPointToBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
-            x_toBeTransformed = siftKeyPointToBeTransformed.getX();
-            y_toBeTransformed = siftKeyPointToBeTransformed.getY();
-            z_toBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].depths[localIndexToBeTransformed];
-
-            toBeTransformedPointsVector.emplace_back(Point3d(x_toBeTransformed, y_toBeTransformed, z_toBeTransformed));
-
-
-            std::pair<std::pair<int, int>, KeyPointInfo> infoToBeTransformedKeyPoint = {
-                    {vertexToBeTransformed, localIndexToBeTransformed},
-                    KeyPointInfo(siftKeyPointToBeTransformed,
-                                 z_toBeTransformed,
-                                 vertexToBeTransformed)};
-            correspondencesBetweenTwoImages.push_back({infoDestinationKeyPoint, infoToBeTransformedKeyPoint});
-
-        }
-        assert(toBeTransformedPointsVector.size() == minSize);
-        assert(destinationPointsVector.size() == minSize);
-
-        const auto &poseToDestination = verticesOfCorrespondence[match.getFrameNumber()];
-
-        Eigen::Matrix4Xd toBeTransformedPoints = verticesOfCorrespondence[vertexFrom].getCamera().
-                getPointCloudXYZ1BeforeProjection(toBeTransformedPointsVector);
-        Eigen::Matrix4Xd destinationPoints = poseToDestination.getCamera().getPointCloudXYZ1BeforeProjection(
-                destinationPointsVector);
-
-        Eigen::Matrix4Xd transformedPoints = transformation.getSE3().matrix() * toBeTransformedPoints;
-
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondences;
-
-        if (useProjectionError) {
-            std::vector<std::pair<double, double>> errorsReprojection =
-                    getReprojectionErrorsXY(destinationPoints,
-                                            transformedPoints,
-                                            poseToDestination.getCamera());
-
-            assert(errorsReprojection.size() == destinationPoints.cols());
-
-            for (int i = 0; i < errorsReprojection.size(); ++i) {
-                Sophus::Vector2d errorReprojectionVector(errorsReprojection[i].first, errorsReprojection[i].second);
-                double errorNormLp = 0;
-                if (p == 1) {
-                    errorNormLp = errorReprojectionVector.lpNorm<1>();
-                } else if (p == 2) {
-                    errorNormLp = errorReprojectionVector.lpNorm<2>();
-                } else {
-                    assert(false && "only p=1 and p=2 L_p norms for reprojection error can be used");
-                }
-                if (errorNormLp < paramsRansac.getMaxProjectionErrorPixels()) {
-                    inlierCorrespondences.emplace_back(correspondencesBetweenTwoImages[i]);
-                }
-            }
-
-        } else {
-            Eigen::Matrix4Xd residuals = destinationPoints - transformedPoints;
-            for (int i = 0; i < residuals.cols(); ++i) {
-
-                double normResidual = residuals.col(i).norm();
-                if (normResidual < paramsRansac.getMax3DError()) {
-                    inlierCorrespondences.push_back(correspondencesBetweenTwoImages[i]);
-                }
-            }
-        }
-
-        return inlierCorrespondences;
-    }
-
-
-    int CorrespondenceGraph::findTransformationRtMatrices() {
-
-        std::mutex output;
-        tbb::concurrent_vector<tbb::concurrent_vector<RelativeSE3>> transformationMatricesConcurrent(
-                verticesOfCorrespondence.size());
-        transformationMatricesICP.resize(verticesOfCorrespondence.size());
-        transformationMatricesLoRansac.resize(verticesOfCorrespondence.size());
-
-        int matchFromIndex = 0;
-        std::mutex indexFromMutex;
-        tbb::parallel_for(0, static_cast<int>(matches.size()),
-                          [&matchFromIndex, &indexFromMutex, this,
-                                  &transformationMatricesConcurrent, &output](int) {
-                              int i = -1;
-                              {
-                                  std::unique_lock<std::mutex> lockCounterFrom(indexFromMutex);
-                                  i = matchFromIndex;
-                                  assert(matchFromIndex >= 0 && matchFromIndex < verticesOfCorrespondence.size());
-                                  ++matchFromIndex;
-                              }
-                              int matchToIndex = 0;
-                              std::mutex indexToMutex;
-
-                              tbb::parallel_for(0, static_cast<int>(matches[i].size()),
-                                                [&matchToIndex, &indexToMutex, i,
-                                                        &transformationMatricesConcurrent, this,
-                                                        &output](int) {
-
-                                                    int jPos = -1;
-                                                    {
-                                                        std::unique_lock<std::mutex> lockCounterTo(indexToMutex);
-                                                        jPos = matchToIndex;
-                                                        assert(matchToIndex >= 0 && matchToIndex < matches[i].size());
-                                                        ++matchToIndex;
-                                                    }
-                                                    int j = jPos;
-                                                    const auto &match = matches[i][j];
-                                                    const auto &frameFromDestination = verticesOfCorrespondence[i];
-                                                    const auto &frameToToBeTransformed = verticesOfCorrespondence[match.getFrameNumber()];
-                                                    assert(frameToToBeTransformed.getIndex() >
-                                                           frameFromDestination.getIndex());
-                                                    bool success = true;
-                                                    bool successICP = true;
-                                                    auto cameraMotion = getTransformationRtMatrixTwoImages(i, j,
-                                                                                                           success,
-                                                                                                           ParamsRANSAC());
-
-                                                    if (success) {
-                                                        int spaceIO = 18;
-                                                        {
-                                                            std::unique_lock<std::mutex> lockOutput(output);
-                                                            std::cout << "success frameFrom -> frameTo: " << std::endl
-                                                                      << "             " << frameFromDestination.index
-                                                                      << " -> "
-                                                                      << frameToToBeTransformed.index << std::endl;
-                                                        }
-
-                                                        Eigen::Matrix3d m3d = cameraMotion.block(0, 0, 3, 3);
-                                                        Eigen::Quaterniond qRelatived(m3d);
-                                                        Sophus::SE3d relativeTransformationSE3 = Sophus::SE3d::fitToSE3(
-                                                                cameraMotion);
-
-                                                        // fill info about relative pairwise transformations Rt
-                                                        transformationMatricesConcurrent[i].push_back(
-                                                                RelativeSE3(
-                                                                        relativeTransformationSE3.matrix(),
-                                                                        frameFromDestination,
-                                                                        frameToToBeTransformed));
-                                                        transformationMatricesConcurrent[frameToToBeTransformed.index].push_back(
-                                                                RelativeSE3(
-                                                                        relativeTransformationSE3.inverse().matrix(),
-                                                                        frameToToBeTransformed,
-                                                                        frameFromDestination));
-
-                                                    } else {
-
-
-                                                        std::unique_lock<std::mutex> lockOutput(output);
-                                                        std::cout << "                             NOT ___success____ "
-                                                                  << frameFromDestination.index
-                                                                  << " -> "
-                                                                  << frameToToBeTransformed.index << " \tmatches "
-                                                                  << match.getSize() << std::endl;
-                                                    }
-                                                });
-                          });
-
-        assert(transformationMatricesConcurrent.size() == transformationRtMatrices.size());
-        for (int i = 0; i < transformationMatricesConcurrent.size(); ++i) {
-            for (const auto &transformation: transformationMatricesConcurrent[i]) {
-                transformationRtMatrices[i].push_back(transformation);
-            }
-        }
-
-        return 0;
-    }
-
-    void CorrespondenceGraph::decreaseDensity() {
         for (std::vector<Match> &correspondenceList: matches) {
 
             std::sort(correspondenceList.begin(), correspondenceList.end(), [](const auto &lhs, const auto &rhs) {
@@ -305,174 +45,7 @@ namespace gdr {
         }
     }
 
-    Eigen::Matrix4d
-    CorrespondenceGraph::getTransformationRtMatrixTwoImages(int vertexFromDestDestination,
-                                                            int vertexInListToBeTransformedCanBeComputed,
-                                                            bool &success,
-                                                            const ParamsRANSAC &paramsRansac,
-                                                            bool showMatchesOnImages) {
-        Eigen::Matrix4d cR_t_umeyama;
-        cR_t_umeyama.setIdentity();
-        success = true;
-
-        double inlierCoeff = paramsRansac.getInlierCoeff();
-
-        if (inlierCoeff >= 1.0) {
-            inlierCoeff = 1.0;
-        }
-        if (inlierCoeff < 0) {
-            success = false;
-            return cR_t_umeyama;
-        }
-
-        const auto &match = matches[vertexFromDestDestination][vertexInListToBeTransformedCanBeComputed];
-        int minSize = match.getSize();
-        if (minSize < paramsRansac.getInlierNumber()) {
-            success = false;
-            return cR_t_umeyama;
-        }
-
-
-        std::vector<Point3d> toBeTransformedPointsVector;
-        std::vector<Point3d> destinationPointsVector;
-        int vertexToBeTransformed = match.getFrameNumber();
-
-        for (int i = 0; i < minSize; ++i) {
-
-            double x_destination, y_destination, z_destination;
-            int localIndexDestination = match.getKeyPointIndexDestinationAndToBeTransformed(i).first;
-            const auto &siftKeyPointDestination = verticesOfCorrespondence[vertexFromDestDestination].keypoints[localIndexDestination];
-            x_destination = siftKeyPointDestination.getX();
-            y_destination = siftKeyPointDestination.getY();
-            z_destination = verticesOfCorrespondence[vertexFromDestDestination].depths[localIndexDestination];
-            destinationPointsVector.emplace_back(Point3d(x_destination, y_destination, z_destination));
-
-            double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
-            int localIndexToBeTransformed = match.getKeyPointIndexDestinationAndToBeTransformed(i).second;
-
-            const auto &siftKeyPointToBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
-            x_toBeTransformed = siftKeyPointToBeTransformed.getX();
-            y_toBeTransformed = siftKeyPointToBeTransformed.getY();
-            z_toBeTransformed = verticesOfCorrespondence[vertexToBeTransformed].depths[localIndexToBeTransformed];
-            toBeTransformedPointsVector.emplace_back(Point3d(x_toBeTransformed, y_toBeTransformed, z_toBeTransformed));
-
-            std::vector<std::pair<int, int>> points = {{vertexFromDestDestination,  localIndexDestination},
-                                                       {vertexToBeTransformed, localIndexToBeTransformed}};
-
-        }
-        assert(toBeTransformedPointsVector.size() == minSize);
-        assert(destinationPointsVector.size() == minSize);
-
-
-        Eigen::Matrix4Xd toBeTransformedPoints = verticesOfCorrespondence[vertexFromDestDestination].getCamera()
-                .getPointCloudXYZ1BeforeProjection(toBeTransformedPointsVector);
-        Eigen::Matrix4Xd destinationPoints = verticesOfCorrespondence[match.getFrameNumber()].getCamera().
-                getPointCloudXYZ1BeforeProjection(destinationPointsVector);
-
-        assert(toBeTransformedPoints.cols() == minSize);
-        assert(destinationPoints.cols() == minSize);
-
-        const auto &cameraToBeTransformed = verticesOfCorrespondence[vertexFromDestDestination].getCamera();
-        const auto &cameraDest = verticesOfCorrespondence[match.getFrameNumber()].getCamera();
-        std::vector<int> inliersAgain;
-        SE3 relativePoseLoRANSAC = relativePoseEstimatorRobust->estimateRelativePose(toBeTransformedPoints,
-                                                                                     destinationPoints,
-                                                                                     cameraToBeTransformed,
-                                                                                     cameraDest,
-                                                                                     paramsRansac,
-                                                                                     success,
-                                                                                     inliersAgain);
-        if (!success) {
-            cR_t_umeyama.setIdentity();
-            return cR_t_umeyama;
-        }
-
-        Eigen::Matrix4d ransacPose = relativePoseLoRANSAC.getSE3().matrix();
-        auto inlierMatchesCorrespondingKeypointsLoRansac = findInlierPointCorrespondences(vertexFromDestDestination,
-                                                                                          vertexInListToBeTransformedCanBeComputed,
-                                                                                          relativePoseLoRANSAC,
-                                                                                          paramsRansac);
-        std::cout << "NEW INLIERS " << inliersAgain.size() << std::endl;
-        std::cout << "OLD INLIERS == NEW INLIERS " << inlierMatchesCorrespondingKeypointsLoRansac.size() << std::endl;
-        assert(inliersAgain.size() == inlierMatchesCorrespondingKeypointsLoRansac.size());
-        assert(inliersAgain.size() >= inlierCoeff * toBeTransformedPoints.cols());
-
-        bool successRefine = true;
-        SE3 refinedByICPRelativePose = relativePoseLoRANSAC;
-        refineRelativePose(verticesOfCorrespondence[vertexToBeTransformed],
-                           verticesOfCorrespondence[vertexFromDestDestination],
-                           refinedByICPRelativePose,
-                           successRefine);
-
-        transformationMatricesICP[vertexFromDestDestination].insert(
-                std::make_pair(vertexToBeTransformed,
-                               RelativeSE3(refinedByICPRelativePose,
-                                           verticesOfCorrespondence[vertexFromDestDestination],
-                                           verticesOfCorrespondence[vertexToBeTransformed])));
-        transformationMatricesICP[vertexToBeTransformed].insert(
-                std::make_pair(vertexFromDestDestination,
-                               RelativeSE3(
-                                       refinedByICPRelativePose.inverse(),
-                                       verticesOfCorrespondence[vertexToBeTransformed],
-                                       verticesOfCorrespondence[vertexFromDestDestination])));
-
-
-        auto inlierMatchesCorrespondingKeypointsAfterRefinement =
-                findInlierPointCorrespondences(vertexFromDestDestination,
-                                               vertexInListToBeTransformedCanBeComputed,
-                                               refinedByICPRelativePose,
-                                               paramsRansac);
-
-        ++totalMeausedRelativePoses;
-        int ransacInliers = inliersAgain.size();
-        int ICPinliers = inlierMatchesCorrespondingKeypointsAfterRefinement.size();
-        std::cout << "              ransac got " << ransacInliers << "/" << toBeTransformedPoints.cols()
-                  << " vs " << ICPinliers << std::endl;
-
-        if (ransacInliers > ICPinliers) {
-            // ICP did not refine the relative pose -- return umeyama result
-            cR_t_umeyama = relativePoseLoRANSAC.getSE3().matrix();
-
-        } else {
-            cR_t_umeyama = refinedByICPRelativePose.getSE3().matrix();
-            // ICP did refine the relative pose -- return ICP inliers TODO
-            std::cout << "REFINED________________________________________________" << std::endl;
-            ++refinedPoses;
-            pairsWhereGotBetterResults[vertexFromDestDestination].push_back(vertexToBeTransformed);
-            pairsWhereGotBetterResults[vertexToBeTransformed].push_back(vertexFromDestDestination);
-            // TODO:
-
-            std::swap(inlierMatchesCorrespondingKeypointsAfterRefinement, inlierMatchesCorrespondingKeypointsLoRansac);
-        }
-
-
-        if (inliersAgain.size() > ransacInliers) {
-            std::cout << "BETTER NOW!!!!" << std::endl;
-        }
-
-
-        std::vector<std::pair<int, int>> matchesForVisualization;
-        for (const auto &matchPair: inlierMatchesCorrespondingKeypointsLoRansac) {
-            tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>> matchesConcurrent;
-            for (const auto &matchEntry: matchPair) {
-                matchesConcurrent.push_back(matchEntry);
-            }
-            matchesForVisualization.push_back({matchPair[0].first.second, matchPair[1].first.second});
-            inlierCorrespondencesPoints.push_back(matchesConcurrent);
-        }
-        const auto &poseFrom = verticesOfCorrespondence[vertexFromDestDestination];
-        const auto &poseTo = verticesOfCorrespondence[vertexToBeTransformed];
-
-        if (showMatchesOnImages) {
-            ImageDrawer::showKeyPointMatchesTwoImages(poseFrom.getPathRGBImage(),
-                                                      poseFrom.getKeyPointInfoAllKeyPoints(),
-                                                      poseTo.getPathRGBImage(), poseTo.getKeyPointInfoAllKeyPoints(),
-                                                      matchesForVisualization);
-        }
-        return cR_t_umeyama;
-    }
-
-    int CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutRelativePoseFile) {
+    int CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutRelativePoseFile) const {
 
         std::ofstream file(pathOutRelativePoseFile);
 
@@ -511,107 +84,15 @@ namespace gdr {
         return 0;
     }
 
-    keyPointsDepthDescriptor filterKeypointsByKnownDepth(
-            const std::pair<std::vector<KeyPoint2D>, std::vector<float>> &keypointAndDescriptor,
-            const std::string &pathToDImage) {
-
-        double depthCoefficient = 5000.0;
-        std::cout << "start filtering keypoints for image pair " << pathToDImage << std::endl;
-        const std::vector<KeyPoint2D> &keypoints = keypointAndDescriptor.first;
-        const std::vector<float> &descriptors = keypointAndDescriptor.second;
-        std::vector<KeyPoint2D> keypointsKnownDepth;
-        std::vector<float> descriptorsKnownDepth;
-        std::vector<double> depths;
-
-        cv::Mat depthImage = cv::imread(pathToDImage, cv::IMREAD_ANYDEPTH);
-
-        for (int i = 0; i < keypoints.size(); ++i) {
-            int posInDescriptorVector = 128 * i;
-            int maxDepthValue = 65536;
-            auto coordY = keypoints[i].getY();
-            auto coordX = keypoints[i].getX();
-
-            assert(coordX >= 0 && coordX < depthImage.cols);
-            assert(coordY >= 0 && coordY < depthImage.rows);
-            int currentKeypointDepth = depthImage.at<ushort>(static_cast<ushort>(coordY),
-                                                             static_cast<ushort>(coordX));
-
-            if (currentKeypointDepth > 0) {
-                assert(currentKeypointDepth < maxDepthValue);
-                depths.push_back(currentKeypointDepth / depthCoefficient);
-                keypointsKnownDepth.push_back(keypoints[i]);
-                std::vector<float> currentDescriptors;
-                for (int descriptorCounter = 0; descriptorCounter < 128; ++descriptorCounter) {
-                    descriptorsKnownDepth.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
-                    currentDescriptors.push_back(descriptors[posInDescriptorVector + descriptorCounter]);
-                }
-            }
-        }
-
-        return keyPointsDepthDescriptor(keypointsKnownDepth, descriptorsKnownDepth, depths);
-
-    }
-
-    int CorrespondenceGraph::computeRelativePoses() {
-
-        std::cout << "start computing descriptors" << std::endl;
-
-        std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
-                keysDescriptorsAll = siftModule->getKeypoints2DDescriptorsAllImages(
-                imagesRgb,
-                {0});
-
-        verticesOfCorrespondence.reserve(keysDescriptorsAll.size());
-
-        for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
-
-            keyPointsDepthDescriptor keyPointsDepthDescriptor = filterKeypointsByKnownDepth(
-                    keysDescriptorsAll[currentImage], imagesD[currentImage]);
-            VertexCG currentVertex(currentImage,
-                                   cameraRgbd,
-                                   keyPointsDepthDescriptor,
-                                   imagesRgb[currentImage],
-                                   imagesD[currentImage]);
-            verticesOfCorrespondence.push_back(currentVertex);
-            assert(verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].depths.size() ==
-                   verticesOfCorrespondence[verticesOfCorrespondence.size() - 1].keypoints.size());
-        }
-
-        std::vector<KeyPointsDescriptors> keyPointsDescriptorsToBeMatched;
-        keyPointsDescriptorsToBeMatched.reserve(verticesOfCorrespondence.size());
-
-        for (const auto& vertex: verticesOfCorrespondence) {
-            keyPointsDescriptorsToBeMatched.emplace_back(KeyPointsDescriptors(
-                    vertex.getKeyPoints(),
-                    vertex.getDescriptors(),
-                    vertex.getDepths()
-                    ));
-        }
-
-        assert(keyPointsDescriptorsToBeMatched.size() == verticesOfCorrespondence.size());
-        matches = siftModule->findCorrespondences(keyPointsDescriptorsToBeMatched);
-
-        decreaseDensity();
-        findTransformationRtMatrices();
-        std::string poseFile = relativePose;
-        printRelativePosesFile(poseFile);
-
-        return 0;
-    }
 
     CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirectoryRGB,
                                              const std::string &newPathToImageDirectoryD,
-                                             float fx, float cx, float fy, float cy,
+                                             const CameraRGBD &cameraDefaultToSet,
                                              int numOfThreadsCpu) :
-            cameraRgbd({fx, cx, fy, cy}),
+            cameraDefault(cameraDefaultToSet),
             pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
             pathToImageDirectoryD(newPathToImageDirectoryD) {
 
-//        siftModule = std::make_unique<SiftModuleGPU>();
-        siftModule = FeatureDetector::getFeatureDetector(FeatureDetector::SiftDetectorMatcher::SIFTGPU);
-        relativePoseEstimatorRobust = std::make_unique<EstimatorRobustLoRANSAC>();
-        relativePoseRefiner = std::make_unique<ProcessorICP>();
-        threadPool = std::make_unique<ThreadPool>(numOfThreadsCpu);
         std::cout << "construct Graph" << std::endl;
         imagesRgb = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryRGB);
         imagesD = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryD);
@@ -619,20 +100,18 @@ namespace gdr {
 
         std::sort(imagesRgb.begin(), imagesRgb.end());
         std::sort(imagesD.begin(), imagesD.end());
-
-
-        PRINT_PROGRESS("images rgb vs d: " << imagesRgb.size() << " vs " << imagesD.size());
         assert(imagesRgb.size() == imagesD.size());
 
-        int numberOfPoses = std::min(imagesRgb.size(), imagesD.size());
-        pairsWhereGotBetterResults.resize(numberOfPoses);
-
+        int numberOfPosesRead = imagesRgb.size();
         transformationRtMatrices = std::vector<std::vector<RelativeSE3>>(imagesD.size());
+        verticesOfCorrespondence.reserve(numberOfPosesRead);
 
-        PRINT_PROGRESS("Totally read " << imagesRgb.size());
+        setNumberOfPoses(numberOfPosesRead);
+
+        assert(getNumberOfPoses() == numberOfPosesRead);
     }
 
-    void CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) {
+    void CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) const {
 
         int counter = 0;
         int counterSquared = 0;
@@ -641,6 +120,7 @@ namespace gdr {
             os << std::setw(space / 5) << i << ":";
             counter += transformationRtMatrices[i].size();
             counterSquared += transformationRtMatrices[i].size() * transformationRtMatrices[i].size();
+
             for (int j = 0; j < transformationRtMatrices[i].size(); ++j) {
                 const RelativeSE3 &e = transformationRtMatrices[i][j];
                 assert(i == e.getIndexFrom());
@@ -888,9 +368,9 @@ namespace gdr {
             connectedComponents.emplace_back(
                     ConnectedComponentPoseGraph(connectedComponentsVertices[componentNumber],
                                                 edgesOfComponentsByComponentsNumber[componentNumber],
-                                                cameraRgbd,
+                                                cameraDefault,
                                                 inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber],
-                                                namePrefix + relativePose,
+                                                namePrefix + relativePoseFileG2o,
                                                 namePrefix + absolutePose,
                                                 componentNumber));
         }
@@ -902,5 +382,89 @@ namespace gdr {
                          });
 
         return connectedComponents;
+    }
+
+    void CorrespondenceGraph::setRelativePoses(const std::vector<std::vector<RelativeSE3>> &pairwiseRelativePoses) {
+        assert(!transformationRtMatrices.empty());
+        assert(transformationRtMatrices.size() == pairwiseRelativePoses.size());
+
+        for (auto &transformations: transformationRtMatrices) {
+            transformations.clear();
+            assert(transformations.empty());
+        }
+
+        assert(transformationRtMatrices.size() == pairwiseRelativePoses.size());
+
+        for (int i = 0; i < pairwiseRelativePoses.size(); ++i) {
+            const auto &transformationsValuesToSet = pairwiseRelativePoses[i];
+            auto &transformationsWhereToSet = transformationRtMatrices[i];
+
+            for (int j = 0; j < transformationsValuesToSet.size(); ++j) {
+                transformationRtMatrices[i].emplace_back(transformationsValuesToSet[j]);
+            }
+            assert(transformationsWhereToSet.size() == transformationsValuesToSet.size());
+        }
+
+    }
+
+    void CorrespondenceGraph::setInlierPointMatches(
+            const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointMatches) {
+        inlierCorrespondencesPoints = inlierPointMatches;
+    }
+
+    const std::vector<std::string> &CorrespondenceGraph::getPathsRGB() const {
+        return imagesRgb;
+    }
+
+    const std::vector<std::string> &CorrespondenceGraph::getPathsD() const {
+        return imagesD;
+    }
+
+    void CorrespondenceGraph::setNumberOfPoses(int numberOfPosesToSet) {
+        numberOfPoses = numberOfPosesToSet;
+    }
+
+    int CorrespondenceGraph::getNumberOfPoses() const {
+        assert(numberOfPoses > 0 && "no images to process");
+        assert(numberOfPoses == imagesRgb.size());
+        assert(numberOfPoses == imagesD.size());
+
+        return numberOfPoses;
+    }
+
+    const CameraRGBD &CorrespondenceGraph::getCameraDefault() const {
+        return cameraDefault;
+    }
+
+    void CorrespondenceGraph::addVertex(const VertexCG &vertex) {
+        verticesOfCorrespondence.emplace_back(vertex);
+    }
+
+    const std::vector<VertexCG> &CorrespondenceGraph::getVertices() const {
+        assert(!verticesOfCorrespondence.empty());
+
+        return verticesOfCorrespondence;
+    }
+
+    void CorrespondenceGraph::setPointMatchesRGB(const std::vector<std::vector<Match>> &pointMatchesRGB) {
+        matches = pointMatchesRGB;
+    }
+
+    const std::vector<std::vector<Match>> &CorrespondenceGraph::getKeyPointMatches() const {
+        return matches;
+    }
+
+    const Match &CorrespondenceGraph::getMatch(int indexFromDestination,
+                                               int indexInMatchListToBeTransformedCanBeComputed) const {
+        assert(indexFromDestination >= 0 && indexFromDestination < matches.size());
+        const auto &matchList = matches[indexFromDestination];
+        assert(indexInMatchListToBeTransformedCanBeComputed >= 0 && indexInMatchListToBeTransformedCanBeComputed < matchList.size());
+
+        return matchList[indexInMatchListToBeTransformedCanBeComputed];
+    }
+
+    void CorrespondenceGraph::setVertexCamera(int vertexIndex, const CameraRGBD &camera) {
+        assert(vertexIndex >= 0 && vertexIndex < verticesOfCorrespondence.size());
+        verticesOfCorrespondence[vertexIndex].setCamera(camera);
     }
 }

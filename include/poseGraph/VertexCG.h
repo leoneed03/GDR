@@ -102,6 +102,8 @@ namespace gdr {
 
         const CameraRGBD &getCamera() const;
 
+        void setCamera(const CameraRGBD &camera);
+
         int getIndex() const;
 
         std::vector<KeyPointInfo> getKeyPointInfoAllKeyPoints() const;

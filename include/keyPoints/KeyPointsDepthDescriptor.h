@@ -25,6 +25,10 @@ namespace gdr {
         const std::vector<float> &getDescriptorsKnownDepth() const;
 
         const std::vector<double> &getDepths() const;
+
+        static keyPointsDepthDescriptor filterKeypointsByKnownDepth(
+                const std::pair<std::vector<KeyPoint2D>, std::vector<float>> &keypointAndDescriptor,
+                const std::string &pathToDImage);
     };
 }
 #endif

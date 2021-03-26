@@ -25,69 +25,70 @@
 
 namespace gdr {
 
-    struct CorrespondenceGraph {
+    class CorrespondenceGraph {
 
-        std::unique_ptr<ThreadPool> threadPool;
-        CameraRGBD cameraRgbd;
-        std::unique_ptr<ISiftModule> siftModule;
+        int numberOfPoses = 0;
+        CameraRGBD cameraDefault;
         std::vector<VertexCG> verticesOfCorrespondence;
-        std::unique_ptr<IEstimatorRelativePoseRobust> relativePoseEstimatorRobust;
-        std::unique_ptr<IRefinerRelativePose> relativePoseRefiner;
-        ParamsRANSAC paramsRansac;
 
-        int maxVertexDegree = 80;
         std::vector<std::vector<Match>> matches;
         std::vector<std::vector<RelativeSE3>> transformationRtMatrices;
-        tbb::concurrent_vector<tbb::concurrent_vector<int>> pairsWhereGotBetterResults;
-        tbb::concurrent_vector<tbb::concurrent_unordered_map<int, RelativeSE3>> transformationMatricesLoRansac;
-        tbb::concurrent_vector<tbb::concurrent_unordered_map<int, RelativeSE3>> transformationMatricesICP;
 
-        const std::string redCode = "\033[0;31m";
-        const std::string resetCode = "\033[0m";
-        const std::string relativePose = "relativeRotations.txt";
+        const std::string relativePoseFileG2o = "relativeRotations.txt";
         const std::string absolutePose = "absoluteRotations.txt";
         std::vector<std::string> imagesRgb;
         std::vector<std::string> imagesD;
         std::string pathToImageDirectoryRGB;
         std::string pathToImageDirectoryD;
-        std::atomic_int totalMeausedRelativePoses = 0;
-        std::atomic_int refinedPoses = 0;
 
-        tbb::concurrent_vector<tbb::concurrent_vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
-
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
 
     public:
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
-        findInlierPointCorrespondences(int vertexFrom,
-                                       int vertexInList,
-                                       const SE3 &transformation,
-                                       const ParamsRANSAC &paramsRansac);
-
         CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
                             const std::string &pathToImageDirectoryD,
-                            float fx, float cx,
-                            float fy, float cy,
+                            const CameraRGBD &cameraDefault,
                             int numOfThreadsCpu = 4);
 
-        int refineRelativePose(const VertexCG &vertexToBeTransformed,
-                               const VertexCG &vertexDestination,
-                               SE3 &initEstimationRelPos,
-                               bool &refinementSuccess);
+        const Match &getMatch(int indexFromDestDestination, int indexInMatchListToBeTransformedCanBeComputed) const;
 
-        int findTransformationRtMatrices();
+        std::vector<ConnectedComponentPoseGraph> splitGraphToConnectedComponents() const;
 
-        void decreaseDensity();
+        void decreaseDensity(int maxVertexDegree = 80);
 
-        Eigen::Matrix4d
-        getTransformationRtMatrixTwoImages(int vertexFromDestOrigin, int vertexInListToBeTransformedCanBeComputed,
-                                           bool &success,
-                                           const ParamsRANSAC &paramsRansac,
-                                           bool showMatchesOnImages = false);
+        void setRelativePoses(const std::vector<std::vector<RelativeSE3>> &pairwiseRelativePoses);
 
-        void printConnectionsRelative(std::ostream &os, int space = 10);
+        void setInlierPointMatches(
+                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointMatches);
 
-        int printRelativePosesFile(const std::string &outPutFileRelativePoses);
+        void setNumberOfPoses(int numberOfPoses);
+
+        void setPointMatchesRGB(const std::vector<std::vector<Match>> &pointMatchesRGB);
+
+        void setVertexCamera(int vertexIndex, const CameraRGBD &camera);
+
+        void addVertex(const VertexCG &vertex);
+
+        //TODO: bool addEdge(const RelativeSE3&)
+
+    public:
+
+
+        const std::vector<std::vector<Match>> &getKeyPointMatches() const;
+
+        const std::vector<VertexCG> &getVertices() const;
+
+        const CameraRGBD &getCameraDefault() const;
+
+        int getNumberOfPoses() const;
+
+        const std::vector<std::string> &getPathsRGB() const;
+
+        const std::vector<std::string> &getPathsD() const;
+
+        void printConnectionsRelative(std::ostream &os, int space = 10) const;
+
+        int printRelativePosesFile(const std::string &outPutFileRelativePoses) const;
 
         void bfsDrawToFile(const std::string &outFile) const;
 
@@ -97,10 +98,6 @@ namespace gdr {
          */
 
         std::vector<std::vector<int>> bfsComputeConnectedComponents(std::vector<int> &componentNumberByPoseIndex) const;
-
-        int computeRelativePoses();
-
-        std::vector<ConnectedComponentPoseGraph> splitGraphToConnectedComponents() const;
     };
 }
 

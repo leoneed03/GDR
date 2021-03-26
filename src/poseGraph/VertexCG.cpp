@@ -151,4 +151,8 @@ namespace gdr {
     void VertexCG::setAbsolutePoseSE3(const SE3 &absolutePoseToSet) {
         absolutePose = absolutePoseToSet;
     }
+
+    void VertexCG::setCamera(const CameraRGBD &camera) {
+        cameraRgbd = camera;
+    }
 }
