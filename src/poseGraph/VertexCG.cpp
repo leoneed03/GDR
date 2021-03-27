@@ -128,10 +128,7 @@ namespace gdr {
                                                       descriptors(keyPointsDepthDescriptor.getDescriptorsKnownDepth()),
                                                       depths(keyPointsDepthDescriptor.getDepths()),
                                                       pathToRGBimage(newPathRGB),
-                                                      pathToDimage(newPathD) {
-        //absoluteRotationTranslation.setIdentity();
-
-    }
+                                                      pathToDimage(newPathD) {}
 
     void VertexCG::setIndex(int newIndex) {
         index = newIndex;
@@ -154,5 +151,35 @@ namespace gdr {
 
     void VertexCG::setCamera(const CameraRGBD &camera) {
         cameraRgbd = camera;
+    }
+
+    int VertexCG::getInitialIndex() const {
+        return initialIndex;
+    }
+
+    int VertexCG::getKeyPointsNumber() const {
+        return keypoints.size();
+    }
+
+    const KeyPoint2D &VertexCG::getKeyPoint(int keyPointIndex) const {
+        assert(keyPointIndexIsValid(keyPointIndex));
+
+        return keypoints[keyPointIndex];
+    }
+
+    bool VertexCG::keyPointIndexIsValid(int keyPointIndex) const {
+        assert(keyPointIndex >= 0);
+        assert(keyPointIndex < keypoints.size());
+        int keyPointsNum = keypoints.size();
+        assert(keyPointsNum == depths.size());
+        assert(keyPointsNum * 128 == descriptors.size());
+
+        return true;
+    }
+
+    double VertexCG::getKeyPointDepth(int keyPointIndex) const {
+        assert(keyPointIndexIsValid(keyPointIndex));
+
+        return depths[keyPointIndex];
     }
 }

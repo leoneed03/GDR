@@ -27,7 +27,7 @@
 
 namespace gdr {
 
-    struct VertexCG {
+    class VertexCG {
 
         CameraRGBD cameraRgbd;
         int index;
@@ -105,6 +105,16 @@ namespace gdr {
         void setCamera(const CameraRGBD &camera);
 
         int getIndex() const;
+
+        int getInitialIndex() const;
+
+        int getKeyPointsNumber() const;
+
+        const KeyPoint2D &getKeyPoint(int index) const;
+
+        double getKeyPointDepth(int keyPointIndex) const;
+
+        bool keyPointIndexIsValid(int index) const;
 
         std::vector<KeyPointInfo> getKeyPointInfoAllKeyPoints() const;
     };

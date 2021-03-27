@@ -59,9 +59,6 @@ namespace gdr {
                                    imagesD[currentImage]);
 
             correspondenceGraph->addVertex(currentVertex);
-
-            assert(currentVertex.depths.size() ==
-                   currentVertex.keypoints.size());
         }
 
         std::vector<KeyPointsDescriptors> keyPointsDescriptorsToBeMatched;
@@ -177,7 +174,7 @@ namespace gdr {
                                                                         cameraMotion,
                                                                         frameFromDestination,
                                                                         frameToToBeTransformed));
-                                                        transformationMatricesConcurrent[frameToToBeTransformed.index].push_back(
+                                                        transformationMatricesConcurrent[frameToToBeTransformed.getIndex()].push_back(
                                                                 RelativeSE3(
                                                                         cameraMotion.inverse(),
                                                                         frameToToBeTransformed,
@@ -188,13 +185,10 @@ namespace gdr {
                           });
 
         std::vector<std::vector<RelativeSE3>> pairwiseTransformations(numberOfVertices);
-//        assert(pairwiseTransformations.size() == transformationRtMatrices.size());
-//        assert(transformationMatricesConcurrent.size() == transformationRtMatrices.size());
 
         for (int i = 0; i < transformationMatricesConcurrent.size(); ++i) {
             for (const auto &transformation: transformationMatricesConcurrent[i]) {
                 pairwiseTransformations[i].emplace_back(transformation);
-//                transformationRtMatrices[i].push_back(transformation);
             }
         }
         allInlierKeyPointMatches.clear();
@@ -249,19 +243,19 @@ namespace gdr {
 
             double x_destination, y_destination, z_destination;
             int localIndexDestination = match.getKeyPointIndexDestinationAndToBeTransformed(i).first;
-            const auto &siftKeyPointDestination = vertices[vertexFromDestDestination].keypoints[localIndexDestination];
+            const auto &siftKeyPointDestination = vertices[vertexFromDestDestination].getKeyPoint(localIndexDestination);
             x_destination = siftKeyPointDestination.getX();
             y_destination = siftKeyPointDestination.getY();
-            z_destination = vertices[vertexFromDestDestination].depths[localIndexDestination];
+            z_destination = vertices[vertexFromDestDestination].getKeyPointDepth(localIndexDestination);
             destinationPointsVector.emplace_back(Point3d(x_destination, y_destination, z_destination));
 
             double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
             int localIndexToBeTransformed = match.getKeyPointIndexDestinationAndToBeTransformed(i).second;
 
-            const auto &siftKeyPointToBeTransformed = vertices[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
+            const auto &siftKeyPointToBeTransformed = vertices[vertexToBeTransformed].getKeyPoint(localIndexToBeTransformed);
             x_toBeTransformed = siftKeyPointToBeTransformed.getX();
             y_toBeTransformed = siftKeyPointToBeTransformed.getY();
-            z_toBeTransformed = vertices[vertexToBeTransformed].depths[localIndexToBeTransformed];
+            z_toBeTransformed = vertices[vertexToBeTransformed].getKeyPointDepth(localIndexToBeTransformed);
             toBeTransformedPointsVector.emplace_back(Point3d(x_toBeTransformed, y_toBeTransformed, z_toBeTransformed));
 
             std::vector<std::pair<int, int>> points = {{vertexFromDestDestination, localIndexDestination},
@@ -387,10 +381,11 @@ namespace gdr {
 
             double x_destination, y_destination, z_destination;
             int localIndexDestination = match.getKeyPointIndexDestinationAndToBeTransformed(i).first;
-            const auto &siftKeyPointDestination = vertices[vertexFrom].keypoints[localIndexDestination];
+            //TODO: get coordinates from specialized VertexCG method
+            const auto &siftKeyPointDestination = vertices[vertexFrom].getKeyPoint(localIndexDestination);
             x_destination = siftKeyPointDestination.getX();
             y_destination = siftKeyPointDestination.getY();
-            z_destination = vertices[vertexFrom].depths[localIndexDestination];
+            z_destination = vertices[vertexFrom].getKeyPointDepth(localIndexDestination);
 
             destinationPointsVector.emplace_back(Point3d(x_destination, y_destination, z_destination));
             KeyPointInfo keyPointInfoDestination(siftKeyPointDestination, z_destination, vertexFrom);
@@ -404,10 +399,10 @@ namespace gdr {
             double x_toBeTransformed, y_toBeTransformed, z_toBeTransformed;
             int localIndexToBeTransformed = match.getKeyPointIndexDestinationAndToBeTransformed(i).second;
             int vertexToBeTransformed = match.getFrameNumber();
-            const auto &siftKeyPointToBeTransformed = vertices[vertexToBeTransformed].keypoints[localIndexToBeTransformed];
+            const auto &siftKeyPointToBeTransformed = vertices[vertexToBeTransformed].getKeyPoint(localIndexToBeTransformed);
             x_toBeTransformed = siftKeyPointToBeTransformed.getX();
             y_toBeTransformed = siftKeyPointToBeTransformed.getY();
-            z_toBeTransformed = vertices[vertexToBeTransformed].depths[localIndexToBeTransformed];
+            z_toBeTransformed = vertices[vertexToBeTransformed].getKeyPointDepth(localIndexToBeTransformed);
 
             toBeTransformedPointsVector.emplace_back(Point3d(x_toBeTransformed, y_toBeTransformed, z_toBeTransformed));
 

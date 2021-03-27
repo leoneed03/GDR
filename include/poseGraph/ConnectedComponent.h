@@ -53,8 +53,6 @@ namespace gdr {
 
     public:
 
-        std::vector<Eigen::Matrix4d> getAbsolutePosesEigenMatrix4d() const;
-
         std::set<int> initialIndices() const;
 
         std::vector<VertexCG*> getVerticesPointers();

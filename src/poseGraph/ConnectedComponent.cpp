@@ -42,17 +42,6 @@ namespace gdr {
         pointMatcher = std::make_unique<PointClassifier>(getNumberOfPoses());
     }
 
-
-    std::vector<Eigen::Matrix4d> ConnectedComponentPoseGraph::getAbsolutePosesEigenMatrix4d() const {
-        std::vector<Eigen::Matrix4d> poses;
-
-        for (const auto &pose: absolutePoses) {
-            poses.push_back(pose.getEigenMatrixAbsolutePose4d());
-        }
-
-        return poses;
-    }
-
     int ConnectedComponentPoseGraph::getNumberOfPoses() const {
         assert(absolutePoses.size() == relativePoses.size());
         return absolutePoses.size();
@@ -61,8 +50,8 @@ namespace gdr {
     std::set<int> ConnectedComponentPoseGraph::initialIndices() const {
         std::set<int> initialIndices;
         for (const auto &pose: absolutePoses) {
-            std::cout << " #index " << pose.getIndex() << " became " << pose.initialIndex << std::endl;
-            initialIndices.insert(pose.initialIndex);
+            std::cout << " #index " << pose.getIndex() << " became " << pose.getInitialIndex() << std::endl;
+            initialIndices.insert(pose.getInitialIndex());
         }
         return initialIndices;
     }
