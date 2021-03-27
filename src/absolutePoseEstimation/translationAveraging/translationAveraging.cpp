@@ -14,7 +14,7 @@ namespace gdr {
 
     SparseMatrixd
     translationAverager::constructSparseMatrix(const std::vector<translationMeasurement> &relativeTranslations,
-                                               const std::vector<Eigen::Matrix4d> &absolutePoses) {
+                                               const std::vector<SE3> &absolutePoses) {
         int numberOfAbsolutePoses = absolutePoses.size();
         int vectorDim = 3;
         std::vector<Tripletd> coefficients;
@@ -49,12 +49,12 @@ namespace gdr {
 
     Vectors3d
     translationAverager::constructColumnTermB(const std::vector<translationMeasurement> &relativeTranslations,
-                                              const std::vector<Eigen::Matrix4d> &absolutePoses) {
+                                              const std::vector<SE3> &absolutePoses) {
         std::vector<Eigen::Vector3d> b;
         b.reserve(relativeTranslations.size());
 
         for (const auto &relativeT: relativeTranslations) {
-            b.emplace_back(absolutePoses[relativeT.getIndexToDestination()].block<3, 3>(0, 0) *
+            b.emplace_back(absolutePoses[relativeT.getIndexToDestination()].getSO3().matrix() *
                            relativeT.getTranslation());
         }
         return Vectors3d(b);
@@ -170,7 +170,7 @@ namespace gdr {
 
     Vectors3d
     translationAverager::recoverTranslationsIRLS(const std::vector<translationMeasurement> &relativeTranslations,
-                                                 std::vector<Eigen::Matrix4d> &absolutePosesGuess,
+                                                 std::vector<SE3> &absolutePosesGuess,
                                                  const Vectors3d &absoluteTranslations,
                                                  bool &successIRLS,
                                                  int numOfIterations,
@@ -185,11 +185,9 @@ namespace gdr {
 
             assert(indexFrom < indexTo);
             Sophus::SE3d relativePoseFromTo;
-            Eigen::Matrix3d relRot = absolutePosesGuess[indexFrom].topLeftCorner<dim, dim>().inverse() *
-                                     absolutePosesGuess[indexTo].topLeftCorner<dim, dim>();
-            Eigen::Quaterniond relQ(relRot);
-
-            relativePoseFromTo.setQuaternion(relQ.normalized());
+            Sophus::SO3d relRot = absolutePosesGuess[indexFrom].getSO3().inverse() *
+                                     absolutePosesGuess[indexTo].getSO3();
+            relativePoseFromTo.setQuaternion(relRot.unit_quaternion());
             relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
             relativePoseFromTo = relativePoseFromTo.inverse();
             newRelativeTranslations.push_back(
@@ -208,7 +206,7 @@ namespace gdr {
 
     Vectors3d
     translationAverager::recoverTranslations(const std::vector<translationMeasurement> &relativeTranslations,
-                                             const std::vector<Eigen::Matrix4d> &absolutePoses,
+                                             const std::vector<SE3> &absolutePoses,
                                              double epsilonIRLSWeightMin) {
 
         const int dim = 3;
@@ -218,13 +216,12 @@ namespace gdr {
             int indexTo = relativeTranslations[i].getIndexToDestination();
             assert(indexFrom < indexTo);
             Sophus::SE3d relativePoseFromTo;
-            Eigen::Matrix3d relRot = absolutePoses[indexFrom].topLeftCorner<dim, dim>().inverse() *
-                                     absolutePoses[indexTo].topLeftCorner<dim, dim>();
-            Eigen::Quaterniond relQ(relRot);
-            relativePoseFromTo.setQuaternion(relQ.normalized());
+            Sophus::SO3d relRot = absolutePoses[indexFrom].getSO3().inverse() *
+                                     absolutePoses[indexTo].getSO3();
+            relativePoseFromTo.setQuaternion(relRot.unit_quaternion());
             relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
             relativePoseFromTo = relativePoseFromTo.inverse();
-            newRelativeTranslations.push_back(
+            newRelativeTranslations.emplace_back(
                     translationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
         }
 

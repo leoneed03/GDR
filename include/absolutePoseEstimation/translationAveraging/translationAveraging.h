@@ -6,6 +6,9 @@
 #ifndef GDR_TRANSLATIONAVERAGING_H
 #define GDR_TRANSLATIONAVERAGING_H
 
+
+#include "parametrization/SE3.h"
+
 #include <Eigen/Eigen>
 #include <vector>
 #include <map>
@@ -14,14 +17,15 @@
 #include "Vectors3d.h"
 
 namespace gdr {
+    
     class translationAverager {
 
         static SparseMatrixd constructSparseMatrix(const std::vector<translationMeasurement> &relativeTranslations,
-                                                   const std::vector<Eigen::Matrix4d> &absolutePoses);
+                                                   const std::vector<SE3> &absolutePoses);
 
         static Vectors3d
         constructColumnTermB(const std::vector<translationMeasurement> &relativeTranslations,
-                             const std::vector<Eigen::Matrix4d> &absolutePoses);
+                             const std::vector<SE3> &absolutePoses);
 
         static Vectors3d
         findLeastSquaresSolution(const SparseMatrixd &anyMatrixA,
@@ -47,7 +51,7 @@ namespace gdr {
 
         static Vectors3d
         recoverTranslationsIRLS(const std::vector<translationMeasurement> &relativeTranslations,
-                                std::vector<Eigen::Matrix4d> &absolutePoses,
+                                std::vector<SE3> &absolutePoses,
                                 const Vectors3d& absoluteTranslations,
                                 bool &successIRLS,
                                 int numOfIterations = 5,
@@ -55,7 +59,7 @@ namespace gdr {
 
         static Vectors3d
         recoverTranslations(const std::vector<translationMeasurement> &relativeTranslations,
-                            const std::vector<Eigen::Matrix4d> &absolutePoses,
+                            const std::vector<SE3> &absolutePoses,
                             double epsilonIRLSWeightMin = 1e-6);
     };
 }

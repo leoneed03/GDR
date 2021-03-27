@@ -16,7 +16,7 @@
 #include "sparsePointCloud/CloudProjector.h"
 #include "sparsePointCloud/ProjectableInfo.h"
 
-#include "AbsolutePosesComputationHandler.h"
+#include "computationHandlers/AbsolutePosesComputationHandler.h"
 
 namespace gdr {
 
@@ -144,7 +144,7 @@ namespace gdr {
     std::vector<Eigen::Vector3d> AbsolutePosesComputationHandler::optimizeAbsoluteTranslations(int indexFixedToZero) {
 
         std::vector<translationMeasurement> relativeTranslations;
-        std::vector<Eigen::Matrix4d> absolutePosesMatrix4d = connectedComponent->getAbsolutePosesEigenMatrix4d();
+        std::vector<SE3> absolutePoses = connectedComponent->getPoses();
 
         for (int indexFrom = 0; indexFrom < getNumberOfPoses(); ++indexFrom) {
             for (const auto &knownRelativePose: connectedComponent->getConnectionsFromVertex(indexFrom)) {
@@ -161,7 +161,7 @@ namespace gdr {
 
         std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = translationAverager::recoverTranslations(
                 relativeTranslations,
-                absolutePosesMatrix4d).toVectorOfVectors();
+                absolutePoses).toVectorOfVectors();
 
         bool successIRLS = true;
 
@@ -169,7 +169,7 @@ namespace gdr {
 
         optimizedAbsoluteTranslationsIRLS = translationAverager::recoverTranslationsIRLS(
                 relativeTranslations,
-                absolutePosesMatrix4d,
+                absolutePoses,
                 optimizedAbsoluteTranslationsIRLS,
                 successIRLS).toVectorOfVectors();
 
