@@ -9,11 +9,11 @@
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/connected_components.hpp>
 
-#include "GraphTraverser.h"
+#include "poseGraph/graphAlgorithms/GraphTraverser.h"
 
 namespace gdr {
 
-    std::vector<ConnectedComponentPoseGraph>
+    std::vector<std::unique_ptr<ConnectedComponentPoseGraph>>
     GraphTraverser::splitGraphToConnectedComponents(const CorrespondenceGraph &correspondenceGraph) {
 
         int numberOfVerticesCG = correspondenceGraph.getNumberOfPoses();
@@ -31,7 +31,8 @@ namespace gdr {
             }
             std::cout << std::endl;
         }
-        std::vector<ConnectedComponentPoseGraph> connectedComponents;
+
+        std::vector<std::unique_ptr<ConnectedComponentPoseGraph>> connectedComponents;
 
         // fill information about poses and change indices inside each components
         // so they are locally sequentially packed [0.. component.size() - 1]
@@ -165,8 +166,8 @@ namespace gdr {
             std::string namePrefix =
                     "comp_" + std::to_string(numberWhenSortedBySizeByGlobalIndex[componentNumber]) + "_";
 
-            connectedComponents.emplace_back(
-                    ConnectedComponentPoseGraph(connectedComponentsVertices[componentNumber],
+            connectedComponents.emplace_back(std::make_unique<
+                    ConnectedComponentPoseGraph>(connectedComponentsVertices[componentNumber],
                                                 edgesOfComponentsByComponentsNumber[componentNumber],
                                                 correspondenceGraph.getCameraDefault(),
                                                 inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber],
@@ -178,7 +179,7 @@ namespace gdr {
 
         std::stable_sort(connectedComponents.begin(), connectedComponents.end(),
                          [](const auto &lhs, const auto &rhs) {
-                             return lhs.getNumberOfPoses() > rhs.getNumberOfPoses();
+                             return lhs->getNumberOfPoses() > rhs->getNumberOfPoses();
                          });
 
         return connectedComponents;
@@ -199,7 +200,7 @@ namespace gdr {
         PoseGraphForBfs poseGraphForBfs;
         std::vector<VertexDescriptorForBfs> verticesBoost;
 
-        for (const auto &pose: correspondenceGraph.getVertices()) {
+        for (int poseNumber = 0; poseNumber < correspondenceGraph.getNumberOfPoses(); ++poseNumber) {
             verticesBoost.push_back(boost::add_vertex(poseGraphForBfs));
         }
 

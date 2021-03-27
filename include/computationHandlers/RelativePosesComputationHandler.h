@@ -3,15 +3,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_CORRESPONDENCEGRAPHHANDLER_H
-#define GDR_CORRESPONDENCEGRAPHHANDLER_H
+#ifndef GDR_RELATIVEPOSESCOMPUTATIONHANDLER_H
+#define GDR_RELATIVEPOSESCOMPUTATIONHANDLER_H
+
+#include "computationHandlers/AbsolutePosesComputationHandler.h"
 
 #include "poseGraph/graphAlgorithms/GraphTraverser.h"
 #include "poseGraph/CorrespondenceGraph.h"
 
 namespace gdr {
 
-    class CorrespondenceGraphHandler {
+    class RelativePosesComputationHandler {
 
         int numberOfThreadsCPU = 1;
 
@@ -77,9 +79,9 @@ namespace gdr {
         int getNumberOfVertices() const;
 
     public:
-        CorrespondenceGraphHandler(const std::string &pathToImageDirectoryRGB,
-                                   const std::string &pathToImageDirectoryD,
-                                   const CameraRGBD &cameraDefault = CameraRGBD());
+        RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
+                                        const std::string &pathToImageDirectoryD,
+                                        const CameraRGBD &cameraDefault = CameraRGBD());
 
         const CorrespondenceGraph &getCorrespondenceGraph() const;
 
@@ -89,8 +91,7 @@ namespace gdr {
         std::vector<std::vector<int>> bfsComputeConnectedComponents(
                 std::vector<int> &componentNumberByPoseIndex) const;
 
-        std::vector<ConnectedComponentPoseGraph>
-        splitGraphToConnectedComponents() const;
+        std::vector<std::unique_ptr<AbsolutePosesComputationHandler>> splitGraphToConnectedComponents() const;
     };
 }
 

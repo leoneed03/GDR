@@ -14,6 +14,7 @@ namespace gdr {
         int indexFrom;
         int indexTo;
         SE3 relativePoseSE3;
+    public:
 
         RelativePoseSE3(int indexFrom, int indexTo, const SE3 &relativePose);
 

@@ -13,18 +13,26 @@
 namespace gdr {
     class GraphTraverser {
     public:
+        // TODO: depend on same interface for ConnectedComponent and CorrespondenceGraph:
+        // getNumberOfPoses()
+        // getConnectionsFromVertex(indexFrom)
+        // getVertex(poseGlobalIndex)
 
         /**
+         * @param[in] correspondenceGraph is pose graph itself to be traversed
          * @param[out] componentNumberByPoseIndex -- vector containing each pose's component number
          * @returns vector of vectors -- connected components
          */
-
         static std::vector<std::vector<int>> bfsComputeConnectedComponents(
                 const CorrespondenceGraph &correspondenceGraph,
                 std::vector<int> &componentNumberByPoseIndex);
 
+        /**
+         * @param correspondenceGraph is pose graph to be split to connected components
+         * @returns vector of connected components of graph
+         */
         static
-        std::vector<ConnectedComponentPoseGraph>
+        std::vector<std::unique_ptr<ConnectedComponentPoseGraph>>
         splitGraphToConnectedComponents(const CorrespondenceGraph &correspondenceGraph);
     };
 }

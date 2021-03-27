@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
+#include "computationHandlers/AbsolutePosesComputationHandler.h"
 
 #include <iostream>
 #include <gtest/gtest.h>
@@ -13,7 +14,7 @@
 #include "poseGraph/CorrespondenceGraph.h"
 #include "readerTUM/ReaderTum.h"
 #include "poseGraph/ConnectedComponent.h"
-#include "computationHandlers/CorrespondenceGraphHandler.h"
+#include "computationHandlers/RelativePosesComputationHandler.h"
 #include "SmoothPointCloud.h"
 
 #include "gnuplot_interface.h"
@@ -47,32 +48,33 @@ TEST(testBAOptimized, visualizationDesk98) {
         std::string pathD = "../../data/" + datasetName + "/depth";
         gdr::CameraRGBD cameraDefault(517.3, 318.6,
                                       516.5, 255.3);
-        gdr::CorrespondenceGraphHandler cgHandler(pathRGB, pathD, cameraDefault);
+        gdr::RelativePosesComputationHandler cgHandler(pathRGB, pathD, cameraDefault);
 
         const gdr::CorrespondenceGraph& correspondenceGraph = cgHandler.getCorrespondenceGraph();
 
         cgHandler.computeRelativePoses();
         correspondenceGraph.bfsDrawToFile(
                 "../../tools/data/temp/" + shortDatasetName + "connectedComponents_" + numberOfPosesString + ".dot");
-        std::vector<gdr::ConnectedComponentPoseGraph> connectedComponentsPoseGraph =
+        std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph =
                 cgHandler.splitGraphToConnectedComponents();
         for (int componentNumber = 0; componentNumber < connectedComponentsPoseGraph.size(); ++componentNumber) {
             std::cout << " #component index by increment " << componentNumber << " of size "
-                      << connectedComponentsPoseGraph[componentNumber].getNumberOfPoses() << std::endl;
+                      << connectedComponentsPoseGraph[componentNumber]->getNumberOfPoses() << std::endl;
         }
+
         auto &biggestComponent = connectedComponentsPoseGraph[0];
 
-        std::vector<gdr::SO3> computedAbsoluteOrientationsNoRobust = biggestComponent.performRotationAveraging();
-        std::vector<gdr::SO3> computedAbsoluteOrientationsRobust = biggestComponent.optimizeRotationsRobust();
-        std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent.optimizeAbsoluteTranslations();
-        std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent.performBundleAdjustmentUsingDepth();
+        std::vector<gdr::SO3> computedAbsoluteOrientationsNoRobust = biggestComponent->performRotationAveraging();
+        std::vector<gdr::SO3> computedAbsoluteOrientationsRobust = biggestComponent->optimizeRotationsRobust();
+        std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent->optimizeAbsoluteTranslations();
+        std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
         std::string absolutePoses = "../../data/" + datasetName + "/" + "groundtruth.txt";
         std::vector<gdr::poseInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(absolutePoses);
 
         std::cout << "read poses GT: " << posesInfoFull.size() << std::endl;
         assert(posesInfoFull.size() == numberOfPosesInDataset);
-        std::set<int> indicesOfBiggestComponent = biggestComponent.initialIndices();
+        std::set<int> indicesOfBiggestComponent = biggestComponent->initialIndices();
         std::vector<gdr::poseInfo> posesInfo;
 
         for (int poseIndex = 0; poseIndex < posesInfoFull.size(); ++poseIndex) {
@@ -81,7 +83,7 @@ TEST(testBAOptimized, visualizationDesk98) {
             }
         }
         std::cout << "sampled GT poses size: " << posesInfo.size() << std::endl;
-        assert(posesInfo.size() == biggestComponent.size());
+        assert(posesInfo.size() == biggestComponent->getNumberOfPoses());
 
         // compute absolute poses IRLS
         std::vector<Sophus::SE3d> posesIRLS;
@@ -237,7 +239,7 @@ TEST(testBAOptimized, visualizationDesk98) {
         std::cout << "mean error rotation: " << meanErrorR_BA_angDist << std::endl;
 
         gdr::SmoothPointCloud smoothCloud;
-        smoothCloud.registerPointCloudFromImage(biggestComponent.getVerticesPointers());
+        smoothCloud.registerPointCloudFromImage(biggestComponent->getVerticesPointers());
 
         assert(posesGT.size() == bundleAdjustedPoses.size());
         assert(posesGT.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);

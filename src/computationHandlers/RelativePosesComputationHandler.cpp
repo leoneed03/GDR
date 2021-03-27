@@ -11,13 +11,13 @@
 #include "keyPointDetectionAndMatching/FeatureDetector.h"
 #include "relativePoseEstimators/EstimatorRobustLoRANSAC.h"
 #include "relativePoseRefinement/ICP.h"
-#include "computationHandlers/CorrespondenceGraphHandler.h"
+#include "computationHandlers/RelativePosesComputationHandler.h"
 
 namespace gdr {
 
-    CorrespondenceGraphHandler::CorrespondenceGraphHandler(const std::string &pathToImageDirectoryRGB,
-                                                           const std::string &pathToImageDirectoryD,
-                                                           const CameraRGBD &cameraDefault) {
+    RelativePosesComputationHandler::RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
+                                                                     const std::string &pathToImageDirectoryD,
+                                                                     const CameraRGBD &cameraDefault) {
         correspondenceGraph = std::make_unique<CorrespondenceGraph>(pathToImageDirectoryRGB,
                                                                     pathToImageDirectoryD,
                                                                     cameraDefault);
@@ -28,15 +28,15 @@ namespace gdr {
         threadPool = std::make_unique<ThreadPool>(numberOfThreadsCPU);
     }
 
-    const CorrespondenceGraph &CorrespondenceGraphHandler::getCorrespondenceGraph() const {
+    const CorrespondenceGraph &RelativePosesComputationHandler::getCorrespondenceGraph() const {
         return *correspondenceGraph;
     }
 
-    void CorrespondenceGraphHandler::setNumberOfThreadsCPU(int numberOfThreadsCPUToSet) {
+    void RelativePosesComputationHandler::setNumberOfThreadsCPU(int numberOfThreadsCPUToSet) {
         numberOfThreadsCPU = numberOfThreadsCPUToSet;
     }
 
-    std::vector<std::vector<RelativeSE3>> CorrespondenceGraphHandler::computeRelativePoses() {
+    std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::computeRelativePoses() {
 
         std::cout << "start computing descriptors" << std::endl;
 
@@ -93,15 +93,15 @@ namespace gdr {
         return relativePoses;
     }
 
-    void CorrespondenceGraphHandler::setPathRelativePoseFile(const std::string &relativePoseFilePath) {
+    void RelativePosesComputationHandler::setPathRelativePoseFile(const std::string &relativePoseFilePath) {
         relativePoseFileG2o = relativePoseFilePath;
     }
 
-    const std::string &CorrespondenceGraphHandler::getPathRelativePose() const {
+    const std::string &RelativePosesComputationHandler::getPathRelativePose() const {
         return relativePoseFileG2o;
     }
 
-    std::vector<std::vector<RelativeSE3>> CorrespondenceGraphHandler::findTransformationRtMatrices(
+    std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::findTransformationRtMatrices(
             std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &allInlierKeyPointMatches) const {
 
         std::mutex output;
@@ -207,16 +207,16 @@ namespace gdr {
         return pairwiseTransformations;
     }
 
-    int CorrespondenceGraphHandler::getNumberOfVertices() const {
+    int RelativePosesComputationHandler::getNumberOfVertices() const {
         return correspondenceGraph->getNumberOfPoses();
     }
 
-    SE3 CorrespondenceGraphHandler::getTransformationRtMatrixTwoImages(int vertexFromDestDestination,
-                                                                       int vertexInListToBeTransformedCanBeComputed,
-                                                                       std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &keyPointMatches,
-                                                                       bool &success,
-                                                                       const ParamsRANSAC &paramsRansac,
-                                                                       bool showMatchesOnImages) const {
+    SE3 RelativePosesComputationHandler::getTransformationRtMatrixTwoImages(int vertexFromDestDestination,
+                                                                            int vertexInListToBeTransformedCanBeComputed,
+                                                                            std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &keyPointMatches,
+                                                                            bool &success,
+                                                                            const ParamsRANSAC &paramsRansac,
+                                                                            bool showMatchesOnImages) const {
         SE3 cR_t_umeyama;
         success = true;
 
@@ -341,9 +341,9 @@ namespace gdr {
     }
 
     std::vector<std::pair<double, double>>
-    CorrespondenceGraphHandler::getReprojectionErrorsXY(const Eigen::Matrix4Xd &destinationPoints,
-                                                        const Eigen::Matrix4Xd &transformedPoints,
-                                                        const CameraRGBD &cameraIntrinsics) {
+    RelativePosesComputationHandler::getReprojectionErrorsXY(const Eigen::Matrix4Xd &destinationPoints,
+                                                             const Eigen::Matrix4Xd &transformedPoints,
+                                                             const CameraRGBD &cameraIntrinsics) {
         Eigen::Matrix3d intrinsicsMatrix = cameraIntrinsics.getIntrinsicsMatrix3x3();
 
         std::vector<std::pair<double, double>> errorsReprojection;
@@ -367,9 +367,9 @@ namespace gdr {
     }
 
     std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
-    CorrespondenceGraphHandler::findInlierPointCorrespondences(int vertexFrom, int vertexInList,
-                                                               const SE3 &transformation,
-                                                               const ParamsRANSAC &paramsRansac) const {
+    RelativePosesComputationHandler::findInlierPointCorrespondences(int vertexFrom, int vertexInList,
+                                                                    const SE3 &transformation,
+                                                                    const ParamsRANSAC &paramsRansac) const {
 
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
         const auto &match = correspondenceGraph->getMatch(vertexFrom, vertexInList);
@@ -471,9 +471,9 @@ namespace gdr {
         return inlierCorrespondences;
     }
 
-    int CorrespondenceGraphHandler::refineRelativePose(const VertexCG &vertexToBeTransformed,
-                                                       const VertexCG &vertexDestination, SE3 &initEstimationRelPos,
-                                                       bool &refinementSuccess) const {
+    int RelativePosesComputationHandler::refineRelativePose(const VertexCG &vertexToBeTransformed,
+                                                            const VertexCG &vertexDestination, SE3 &initEstimationRelPos,
+                                                            bool &refinementSuccess) const {
 
         MatchableInfo poseToBeTransformed(vertexToBeTransformed.getPathRGBImage(),
                                           vertexToBeTransformed.getPathDImage(),
@@ -493,7 +493,7 @@ namespace gdr {
     }
 
     std::vector<std::vector<int>>
-    CorrespondenceGraphHandler::bfsComputeConnectedComponents(std::vector<int> &componentNumberByPoseIndex) const {
+    RelativePosesComputationHandler::bfsComputeConnectedComponents(std::vector<int> &componentNumberByPoseIndex) const {
 
         int totalNumberOfPoses = correspondenceGraph->getNumberOfPoses();
         std::vector<std::vector<int>> connectedComponents =
@@ -511,7 +511,15 @@ namespace gdr {
         return connectedComponents;
     }
 
-    std::vector<ConnectedComponentPoseGraph> CorrespondenceGraphHandler::splitGraphToConnectedComponents() const {
-        return GraphTraverser::splitGraphToConnectedComponents(*correspondenceGraph);
+    std::vector<std::unique_ptr<AbsolutePosesComputationHandler>> RelativePosesComputationHandler::splitGraphToConnectedComponents() const {
+        auto components = GraphTraverser::splitGraphToConnectedComponents(*correspondenceGraph);
+        std::vector<std::unique_ptr<AbsolutePosesComputationHandler>> connectedComponentsHandlers;
+        connectedComponentsHandlers.reserve(components.size());
+
+        for (auto& component: components) {
+            connectedComponentsHandlers.emplace_back(std::make_unique<AbsolutePosesComputationHandler>(component));
+        }
+
+        return connectedComponentsHandlers;
     }
 }

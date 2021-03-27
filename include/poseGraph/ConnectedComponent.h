@@ -26,7 +26,7 @@ namespace gdr {
         std::vector<VertexCG> absolutePoses;
 //        std::vector<int> initialPosesIndices;
 
-        // indexing for absolute poses is from 0 to component.size() - 1 incl.
+        // indexing for absolute poses is from 0 to component.size() - 1 including
         std::vector<std::vector<RelativePoseSE3>> relativePoses;
         std::unique_ptr<IPointMatcher> pointMatcher;
         std::unique_ptr<ICloudProjector> cloudProjector;
@@ -51,29 +51,45 @@ namespace gdr {
                 const std::string& absoluteRotationsFile,
                 int componentNumber = -1);
 
-        int getNumberOfPoses() const;
-
-        void computePointClasses();
-
-        std::vector<SO3> performRotationAveraging();
-
-        std::vector<SO3> optimizeRotationsRobust();
-
-        std::vector<Eigen::Vector3d> optimizeAbsoluteTranslations(int indexFixedToZero = 0);
-
-        std::vector<SE3> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
+    public:
 
         std::vector<Eigen::Matrix4d> getAbsolutePosesEigenMatrix4d() const;
 
         std::set<int> initialIndices() const;
-
-        int printRelativeRotationsToFile(const std::string& pathToFileRelativeRotations) const;
 
         std::vector<VertexCG*> getVerticesPointers();
 
         int size() const;
 
         std::vector<SE3> getPoses() const;
+
+        bool poseIndexIsValid(int poseIndex) const;
+
+    public:
+
+        void setPoseSE3(int poseIndex, const SE3 &poseSE3);
+
+        void setRotation(int poseIndex, const SO3 &rotationSO3);
+
+        void setTranslation(int poseIndex, const Eigen::Vector3d &translation);
+
+        const std::vector<RelativePoseSE3> &getConnectionsFromVertex(int vertexNumber) const;
+
+        const std::vector<VertexCG> &getVertices() const;
+
+        const std::string &getPathRelativePoseFile() const;
+
+        const std::string &getPathAbsoluteRotationsFile() const;
+
+        const VertexCG &getVertex(int vertexNumber) const;
+
+        int getNumberOfPoses() const;
+
+        const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getInlierObservedPoints() const;
+
+    public:
+
+        int printRelativeRotationsToFile(const std::string& pathToFileRelativeRotations) const;
     };
 
 }

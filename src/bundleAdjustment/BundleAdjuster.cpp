@@ -286,7 +286,7 @@ namespace gdr {
         ceres::Solver::Options options;
         options.linear_solver_type = ceres::SPARSE_SCHUR;
         options.minimizer_progress_to_stdout = true;
-        options.max_num_iterations = 200;
+        options.max_num_iterations = 100;
         options.num_threads = 6;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
