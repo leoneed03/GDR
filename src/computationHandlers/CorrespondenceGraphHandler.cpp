@@ -491,4 +491,27 @@ namespace gdr {
 
         return 0;
     }
+
+    std::vector<std::vector<int>>
+    CorrespondenceGraphHandler::bfsComputeConnectedComponents(std::vector<int> &componentNumberByPoseIndex) const {
+
+        int totalNumberOfPoses = correspondenceGraph->getNumberOfPoses();
+        std::vector<std::vector<int>> connectedComponents =
+                GraphTraverser::bfsComputeConnectedComponents(*correspondenceGraph, componentNumberByPoseIndex);
+
+        assert(componentNumberByPoseIndex.size() == totalNumberOfPoses);
+        assert(totalNumberOfPoses == correspondenceGraph->getNumberOfPoses());
+
+        int sumNumberOfPoses = 0;
+        for (const auto &component: connectedComponents) {
+            sumNumberOfPoses += component.size();
+        }
+        assert(sumNumberOfPoses == totalNumberOfPoses);
+
+        return connectedComponents;
+    }
+
+    std::vector<ConnectedComponentPoseGraph> CorrespondenceGraphHandler::splitGraphToConnectedComponents() const {
+        return GraphTraverser::splitGraphToConnectedComponents(*correspondenceGraph);
+    }
 }

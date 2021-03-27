@@ -52,8 +52,6 @@ namespace gdr {
 
         const Match &getMatch(int indexFromDestDestination, int indexInMatchListToBeTransformedCanBeComputed) const;
 
-        std::vector<ConnectedComponentPoseGraph> splitGraphToConnectedComponents() const;
-
         void decreaseDensity(int maxVertexDegree = 80);
 
         void setRelativePoses(const std::vector<std::vector<RelativeSE3>> &pairwiseRelativePoses);
@@ -73,6 +71,15 @@ namespace gdr {
 
     public:
 
+        const std::string &getPathRelativePoseFile() const;
+
+        const std::string &getPathAbsoluteRotationsFile() const;
+
+        const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getInlierObservedPoints() const;
+
+        const VertexCG &getVertex(int vertexNumber) const;
+
+        const std::vector<RelativeSE3> &getConnectionsFromVertex(int vertexNumber) const;
 
         const std::vector<std::vector<Match>> &getKeyPointMatches() const;
 
@@ -91,13 +98,6 @@ namespace gdr {
         int printRelativePosesFile(const std::string &outPutFileRelativePoses) const;
 
         void bfsDrawToFile(const std::string &outFile) const;
-
-        /**
-         * @param[out] componentNumberByPoseIndex -- vector containing each pose's component number
-         * @returns vector of vectors -- connected components
-         */
-
-        std::vector<std::vector<int>> bfsComputeConnectedComponents(std::vector<int> &componentNumberByPoseIndex) const;
     };
 }
 

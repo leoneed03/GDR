@@ -6,9 +6,11 @@
 #ifndef GDR_CORRESPONDENCEGRAPHHANDLER_H
 #define GDR_CORRESPONDENCEGRAPHHANDLER_H
 
+#include "poseGraph/graphAlgorithms/GraphTraverser.h"
 #include "poseGraph/CorrespondenceGraph.h"
 
 namespace gdr {
+
     class CorrespondenceGraphHandler {
 
         int numberOfThreadsCPU = 1;
@@ -82,6 +84,13 @@ namespace gdr {
         const CorrespondenceGraph &getCorrespondenceGraph() const;
 
         void setNumberOfThreadsCPU(int numberOfThreadsCPU);
+
+
+        std::vector<std::vector<int>> bfsComputeConnectedComponents(
+                std::vector<int> &componentNumberByPoseIndex) const;
+
+        std::vector<ConnectedComponentPoseGraph>
+        splitGraphToConnectedComponents() const;
     };
 }
 

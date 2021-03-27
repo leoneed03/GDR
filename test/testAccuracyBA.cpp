@@ -55,7 +55,7 @@ TEST(testBAOptimized, visualizationDesk98) {
         correspondenceGraph.bfsDrawToFile(
                 "../../tools/data/temp/" + shortDatasetName + "connectedComponents_" + numberOfPosesString + ".dot");
         std::vector<gdr::ConnectedComponentPoseGraph> connectedComponentsPoseGraph =
-                correspondenceGraph.splitGraphToConnectedComponents();
+                cgHandler.splitGraphToConnectedComponents();
         for (int componentNumber = 0; componentNumber < connectedComponentsPoseGraph.size(); ++componentNumber) {
             std::cout << " #component index by increment " << componentNumber << " of size "
                       << connectedComponentsPoseGraph[componentNumber].getNumberOfPoses() << std::endl;
