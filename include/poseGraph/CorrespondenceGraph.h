@@ -26,15 +26,14 @@ namespace gdr {
 
     class CorrespondenceGraph {
 
-        int numberOfPoses = 0;
         CameraRGBD cameraDefault;
         std::vector<VertexCG> verticesOfCorrespondence;
 
         std::vector<std::vector<Match>> matches;
         std::vector<std::vector<RelativeSE3>> transformationRtMatrices;
 
-        const std::string relativePoseFileG2o = "relativeRotations.txt";
-        const std::string absolutePose = "absoluteRotations.txt";
+        const std::string relativePosesFileG2o = "relativeRotations.txt";
+        const std::string absoluteRotationsFileG2o = "absoluteRotations.txt";
         std::vector<std::string> imagesRgb;
         std::vector<std::string> imagesD;
         std::string pathToImageDirectoryRGB;
@@ -57,8 +56,6 @@ namespace gdr {
 
         void setInlierPointMatches(
                 const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &inlierPointMatches);
-
-        void setNumberOfPoses(int numberOfPoses);
 
         void setPointMatchesRGB(const std::vector<std::vector<Match>> &pointMatchesRGB);
 

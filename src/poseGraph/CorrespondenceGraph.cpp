@@ -100,9 +100,6 @@ namespace gdr {
         transformationRtMatrices = std::vector<std::vector<RelativeSE3>>(imagesD.size());
         verticesOfCorrespondence.reserve(numberOfPosesRead);
 
-        setNumberOfPoses(numberOfPosesRead);
-
-        assert(getNumberOfPoses() == numberOfPosesRead);
     }
 
     void CorrespondenceGraph::printConnectionsRelative(std::ostream &os, int space) const {
@@ -165,12 +162,10 @@ namespace gdr {
         return imagesD;
     }
 
-    void CorrespondenceGraph::setNumberOfPoses(int numberOfPosesToSet) {
-        numberOfPoses = numberOfPosesToSet;
-    }
-
     int CorrespondenceGraph::getNumberOfPoses() const {
-        assert(numberOfPoses > 0 && "no images to process");
+
+        int numberOfPoses = verticesOfCorrespondence.size();
+
         assert(numberOfPoses == imagesRgb.size());
         assert(numberOfPoses == imagesD.size());
         assert(numberOfPoses == transformationRtMatrices.size());
@@ -231,10 +226,10 @@ namespace gdr {
     }
 
     const std::string &CorrespondenceGraph::getPathRelativePoseFile() const {
-        return relativePoseFileG2o;
+        return relativePosesFileG2o;
     }
 
     const std::string &CorrespondenceGraph::getPathAbsoluteRotationsFile() const {
-        return absolutePose;
+        return absoluteRotationsFileG2o;
     }
 }
