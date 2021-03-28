@@ -8,16 +8,6 @@
 
 namespace gdr {
 
-//    SO3::SO3() {
-//        Eigen::Matrix3d matrixId;
-//        matrixId.setIdentity();
-//        rotationInner = Sophus::SO3d::fitToSO3(matrixId);
-//    }
-
-//    SO3::SO3(const Sophus::SO3d &rotationSophus) {
-//        rotationInner = rotationSophus;
-//    }
-
     SO3::SO3(const Eigen::Matrix3d &rotationEigenMatrix) {
         rotationInner = Sophus::SO3d::fitToSO3(rotationEigenMatrix);
     }
@@ -56,11 +46,12 @@ namespace gdr {
     }
 
     std::ostream &operator<<(std::ostream &os, const SO3 &rotation3D) {
-        auto quat = rotation3D.getUnitQuaternion();
-        os << "[qx, qy, qz, qw]:" << std::setw(rotation3D.getSpaceIO()) << quat.x() << ' '
-        << std::setw(rotation3D.getSpaceIO()) << quat.y() << ' '
-        << std::setw(rotation3D.getSpaceIO()) << quat.z() << ' '
-        << std::setw(rotation3D.getSpaceIO()) << quat.w() << std::endl;
+        const auto& quat = rotation3D.getUnitQuaternion();
+        os << quat.x() << ' '
+        << quat.y() << ' '
+        << quat.z() << ' '
+        << quat.w();
+
         return os;
     }
 

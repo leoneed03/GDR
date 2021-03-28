@@ -3,11 +3,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-
-//#include <boost/graph/graphviz.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/connected_components.hpp>
+#include <boost/graph/graphviz.hpp>
 
 #include "poseGraph/graphAlgorithms/GraphTraverser.h"
 
@@ -44,7 +43,7 @@ namespace gdr {
         // each vector element represents one connected component connection (edges)
         // each vector of vectors is components.size() sized
         // and i-th vector containes edges from i-th pose (local index)
-        std::vector<std::vector<std::vector<RelativePoseSE3>>> edgesOfComponentsByComponentsNumber(components.size());
+        std::vector<std::vector<std::vector<RelativeSE3>>> edgesOfComponentsByComponentsNumber(components.size());
 
         for (int componentNumber = 0; componentNumber < components.size(); ++componentNumber) {
             edgesOfComponentsByComponentsNumber[componentNumber].resize(components[componentNumber].size());
@@ -91,9 +90,9 @@ namespace gdr {
                 assert(componentNumberIndexFrom == componentNumberIndexTo);
 
                 const Sophus::SE3d &relativePoseSE3 = transformation.getRelativePoseSE3();
-                RelativePoseSE3 localRelativePoseSE3(localIndexFrom,
-                                                     localIndexTo,
-                                                     transformation.getRelativePose());
+                RelativeSE3 localRelativePoseSE3(localIndexFrom,
+                                                 localIndexTo,
+                                                 transformation.getRelativePose());
                 assert(componentNumberByPose[indexFrom] == componentNumberByPose[indexTo]);
                 assert(componentNumberByPose[indexFrom] == componentNumberIndexTo);
 
@@ -168,12 +167,12 @@ namespace gdr {
 
             connectedComponents.emplace_back(std::make_unique<
                     ConnectedComponentPoseGraph>(connectedComponentsVertices[componentNumber],
-                                                edgesOfComponentsByComponentsNumber[componentNumber],
-                                                correspondenceGraph.getCameraDefault(),
-                                                inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber],
-                                                namePrefix + correspondenceGraph.getPathRelativePoseFile(),
-                                                namePrefix + correspondenceGraph.getPathAbsoluteRotationsFile(),
-                                                componentNumber));
+                                                 edgesOfComponentsByComponentsNumber[componentNumber],
+                                                 correspondenceGraph.getCameraDefault(),
+                                                 inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber],
+                                                 namePrefix + correspondenceGraph.getPathRelativePoseFile(),
+                                                 namePrefix + correspondenceGraph.getPathAbsoluteRotationsFile(),
+                                                 componentNumber));
         }
         assert(addedVertices == correspondenceGraph.getNumberOfPoses());
 
@@ -233,5 +232,39 @@ namespace gdr {
             }
         }
         return components;
+    }
+
+    void GraphTraverser::bfsDrawToFile(const CorrespondenceGraph &correspondenceGraph,
+                                       const std::string &outFile) {
+
+        class V {
+        };
+        class C {
+        };
+        typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, V, C> PoseGraphForBfs;
+        typedef boost::graph_traits<PoseGraphForBfs>::vertex_descriptor VertexDescriptorForBfs;
+
+        PoseGraphForBfs poseGraphForBfs;
+        std::vector<VertexDescriptorForBfs> verticesBoost;
+
+        for (const auto &pose: correspondenceGraph.getVertices()) {
+            verticesBoost.push_back(boost::add_vertex(poseGraphForBfs));
+        }
+
+        for (int i = 0; i < correspondenceGraph.getNumberOfPoses(); ++i) {
+            for (const auto &edge: correspondenceGraph.getConnectionsFromVertex(i)) {
+                assert(i == edge.getIndexFrom());
+
+                if (edge.getIndexFrom() > edge.getIndexTo()) {
+                    continue;
+                }
+                boost::add_edge(verticesBoost[edge.getIndexFrom()], verticesBoost[edge.getIndexTo()], poseGraphForBfs);
+            }
+        }
+
+        if (!outFile.empty()) {
+            std::ofstream outf(outFile);
+            boost::write_graphviz(outf, poseGraphForBfs);
+        }
     }
 }

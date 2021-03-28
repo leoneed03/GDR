@@ -80,7 +80,7 @@ set(GDR_HEADER_FILES
         include/directoryTraversing/DirectoryReader.h
         include/poseGraph/VertexCG.h
         include/poseGraph/CorrespondenceGraph.h
-        include/poseGraph/RelativeSE3.h
+        include/parametrization/RelativeSE3.h
         include/parametrization/cameraRGBD.h
         include/keyPointDetectionAndMatching/SiftModuleGPU.h
         include/absolutePoseEstimation/rotationAveraging/rotationAveraging.h
@@ -105,7 +105,6 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/ThreadPool.h
         include/keyPoints/KeyPointsDepthDescriptor.h
         include/poseGraph/ConnectedComponent.h
-        include/parametrization/RelativePoseSE3.h
         include/readerTUM/ImagesAssociator.h
         include/optimization/lossFunctions/LossHuber.h
         ${PROJECT_SOURCE_DIR}/include/gnuplot_interface.h
@@ -119,7 +118,7 @@ set(GDR_SOURCE_FILES
         src/directoryTraversing/DirectoryReader.cpp
         src/poseGraph/VertexCG.cpp
         src/poseGraph/CorrespondenceGraph.cpp
-        src/poseGraph/RelativeSE3.cpp
+        src/parametrization/RelativeSE3.cpp
         src/parametrization/cameraRGBD.cpp
         src/keyPointDetectionAndMatching/SiftModuleGPU.cpp
         src/absolutePoseEstimation/rotationAveraging/rotationAveraging.cpp
@@ -143,7 +142,6 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/SmoothPointCloud.cpp
         src/keyPoints/KeyPointsDepthDescriptor.cpp
         src/poseGraph/ConnectedComponent.cpp
-        src/parametrization/RelativePoseSE3.cpp
         src/readerTUM/ImagesAssociator.cpp
         src/keyPoints/KeyPoint2D.cpp
         include/keyPoints/KeyPoint2D.h

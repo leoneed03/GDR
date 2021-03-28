@@ -23,7 +23,8 @@ namespace gdr {
     public:
         KeyPointInfo();
 
-        KeyPointInfo(const KeyPoint2D &keyPointToSet, double depthToSet, int observingPoseNumberToSet);
+        KeyPointInfo(const KeyPoint2D &keyPointToSet,
+                     int observingPoseNumberToSet);
 
         int getInitObservingPoseNumber() const;
 

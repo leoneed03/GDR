@@ -17,14 +17,11 @@
 #include <cmath>
 #include <string>
 #include <opencv2/opencv.hpp>
-#include <tbb/parallel_for.h>
 #include <absolutePoseEstimation/translationAveraging/translationAveraging.h>
-#include <mutex>
 
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/breadth_first_search.hpp>
-#include <boost/graph/connected_components.hpp>
 
 namespace gdr {
 
@@ -73,9 +70,7 @@ namespace gdr {
                          << std::to_string(translationVector.col(0)[2]) << ' ';
                     const auto &qR = transformationRtMatrices[i][j].getRelativeRotation();
 
-                    file << std::to_string(qR.x()) << ' ' << std::to_string(qR.y()) << ' ' <<
-                         std::to_string(qR.z()) << ' '
-                         << std::to_string(qR.w()) << noise << '\n';
+                    file << qR << ' ' << noise << '\n';
                 }
             }
         }
@@ -134,39 +129,6 @@ namespace gdr {
 
     }
 
-    void CorrespondenceGraph::bfsDrawToFile(const std::string &outFile) const {
-
-        class V {
-        };
-        class C {
-        };
-        typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, V, C> PoseGraphForBfs;
-        typedef boost::graph_traits<PoseGraphForBfs>::vertex_descriptor VertexDescriptorForBfs;
-
-        PoseGraphForBfs poseGraphForBfs;
-        std::vector<VertexDescriptorForBfs> verticesBoost;
-
-        for (const auto &pose: verticesOfCorrespondence) {
-            verticesBoost.push_back(boost::add_vertex(poseGraphForBfs));
-        }
-
-        for (int i = 0; i < transformationRtMatrices.size(); ++i) {
-            for (const auto &edge: transformationRtMatrices[i]) {
-                assert(i == edge.getIndexFrom());
-
-                if (edge.getIndexFrom() > edge.getIndexTo()) {
-                    continue;
-                }
-                boost::add_edge(verticesBoost[edge.getIndexFrom()], verticesBoost[edge.getIndexTo()], poseGraphForBfs);
-            }
-        }
-
-        if (!outFile.empty()) {
-            std::ofstream outf(outFile);
-            boost::write_graphviz(outf, poseGraphForBfs);
-        }
-    }
-
     void CorrespondenceGraph::setRelativePoses(const std::vector<std::vector<RelativeSE3>> &pairwiseRelativePoses) {
         assert(!transformationRtMatrices.empty());
         assert(transformationRtMatrices.size() == pairwiseRelativePoses.size());
@@ -191,7 +153,7 @@ namespace gdr {
     }
 
     void CorrespondenceGraph::setInlierPointMatches(
-            const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointMatches) {
+            const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &inlierPointMatches) {
         inlierCorrespondencesPoints = inlierPointMatches;
     }
 
@@ -263,7 +225,7 @@ namespace gdr {
         return verticesOfCorrespondence[vertexNumber];
     }
 
-    const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &
+    const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &
     CorrespondenceGraph::getInlierObservedPoints() const {
         return inlierCorrespondencesPoints;
     }

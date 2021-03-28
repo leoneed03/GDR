@@ -120,8 +120,8 @@ namespace gdr {
                 assert(indexFrom == knownRelativePose.getIndexFrom());
 
                 if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
-                    relativeRotationsAfterICP.push_back(
-                            rotationMeasurement(knownRelativePose.getRelativeRotationSO3Quatd(),
+                    relativeRotationsAfterICP.emplace_back(
+                            rotationMeasurement(knownRelativePose.getRelativeRotation(),
                                                 knownRelativePose.getIndexFrom(),
                                                 knownRelativePose.getIndexTo()));
                 }
@@ -152,7 +152,7 @@ namespace gdr {
 
                 if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
                     relativeTranslations.emplace_back(
-                            translationMeasurement(knownRelativePose.getTranslation(),
+                            translationMeasurement(knownRelativePose.getRelativeTranslation(),
                                                    knownRelativePose.getIndexFrom(),
                                                    knownRelativePose.getIndexTo()));
                 }
@@ -206,7 +206,8 @@ namespace gdr {
         auto shownResidualsBefore = cloudProjector->showPointsReprojectionError(observedPoints,
                                                                                 "before",
                                                                                 errorsBefore,
-                                                                                connectedComponent->getVertex(0).getCamera(),
+                                                                                connectedComponent->getVertex(
+                                                                                        0).getCamera(),
                                                                                 maxNumberOfPointsToShow);
 
         std::unique_ptr<IBundleAdjuster> bundleAdjuster =
@@ -231,7 +232,8 @@ namespace gdr {
         auto shownResidualsAfter = cloudProjector->showPointsReprojectionError(observedPoints,
                                                                                "after",
                                                                                errorsAfter,
-                                                                               connectedComponent->getVertex(0).getCamera(),
+                                                                               connectedComponent->getVertex(
+                                                                                       0).getCamera(),
                                                                                maxNumberOfPointsToShow);
 
         assert(shownResidualsAfter.size() == shownResidualsBefore.size());
@@ -300,8 +302,8 @@ namespace gdr {
         return connectedComponent->initialIndices();
     }
 
-    std::vector<VertexCG *> AbsolutePosesComputationHandler::getVerticesPointers() const {
-        return connectedComponent->getVerticesPointers();
+    const std::vector<VertexCG> &AbsolutePosesComputationHandler::getVertices() const {
+        return connectedComponent->getVertices();
     }
 
 }

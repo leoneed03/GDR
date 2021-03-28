@@ -7,9 +7,12 @@
 #define GDR_CONNECTEDCOMPONENT_H
 
 #include "VertexCG.h"
-#include "parametrization/RelativePoseSE3.h"
+
+#include "parametrization/RelativeSE3.h"
 #include "parametrization/cameraRGBD.h"
+
 #include "keyPoints/KeyPointInfo.h"
+
 #include "sparsePointCloud/IPointMatcher.h"
 #include "sparsePointCloud/ICloudProjector.h"
 
@@ -19,17 +22,13 @@
 
 namespace gdr {
 
-    struct ConnectedComponentPoseGraph {
+    class ConnectedComponentPoseGraph {
 
-
-        int componentGlobalNumberOptional;
+        int componentNumber;
         std::vector<VertexCG> absolutePoses;
-//        std::vector<int> initialPosesIndices;
 
         // indexing for absolute poses is from 0 to component.size() - 1 including
-        std::vector<std::vector<RelativePoseSE3>> relativePoses;
-        std::unique_ptr<IPointMatcher> pointMatcher;
-        std::unique_ptr<ICloudProjector> cloudProjector;
+        std::vector<std::vector<RelativeSE3>> relativePoses;
         CameraRGBD cameraRgbd;
         std::string relativeRotationsFile;
         std::string absoluteRotationsFile;
@@ -37,27 +36,25 @@ namespace gdr {
         /*
          * each pair is poseNumber and point's local index in pose's list of detected keypoints
          *  paired with its KeyPointInfo
-         *  pairs are grouped in one vector if representing same global point
+         *  pairs are grouped in one vector if they represent same global point
          */
 
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierPointCorrespondences;
 
+    public:
+
         ConnectedComponentPoseGraph(
                 const std::vector<VertexCG> &absolutePoses,
-                const std::vector<std::vector<RelativePoseSE3>> &edgesLocalIndicesRelativePoses,
+                const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
                 const CameraRGBD &defaultCamera,
                 const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointCorrespondences,
                 const std::string& RelativeRotationsFile,
                 const std::string& absoluteRotationsFile,
-                int componentNumber = -1);
+                int componentNumber);
 
-    public:
+        int getComponentNumber() const;
 
         std::set<int> initialIndices() const;
-
-        std::vector<VertexCG*> getVerticesPointers();
-
-        int size() const;
 
         std::vector<SE3> getPoses() const;
 
@@ -71,7 +68,7 @@ namespace gdr {
 
         void setTranslation(int poseIndex, const Eigen::Vector3d &translation);
 
-        const std::vector<RelativePoseSE3> &getConnectionsFromVertex(int vertexNumber) const;
+        const std::vector<RelativeSE3> &getConnectionsFromVertex(int vertexNumber) const;
 
         const std::vector<VertexCG> &getVertices() const;
 

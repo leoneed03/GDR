@@ -48,12 +48,12 @@ TEST(testBAOptimized, visualizationDesk98) {
         std::string pathD = "../../data/" + datasetName + "/depth";
         gdr::CameraRGBD cameraDefault(517.3, 318.6,
                                       516.5, 255.3);
-        gdr::RelativePosesComputationHandler cgHandler(pathRGB, pathD, cameraDefault);
+        gdr::RelativePosesComputationHandler cgHandler(pathRGB, pathD, gdr::ParamsRANSAC(), cameraDefault);
 
         const gdr::CorrespondenceGraph& correspondenceGraph = cgHandler.getCorrespondenceGraph();
 
         cgHandler.computeRelativePoses();
-        correspondenceGraph.bfsDrawToFile(
+        cgHandler.bfsDrawToFile(
                 "../../tools/data/temp/" + shortDatasetName + "connectedComponents_" + numberOfPosesString + ".dot");
         std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph =
                 cgHandler.splitGraphToConnectedComponents();
@@ -239,7 +239,7 @@ TEST(testBAOptimized, visualizationDesk98) {
         std::cout << "mean error rotation: " << meanErrorR_BA_angDist << std::endl;
 
         gdr::SmoothPointCloud smoothCloud;
-        smoothCloud.registerPointCloudFromImage(biggestComponent->getVerticesPointers());
+        smoothCloud.registerPointCloudFromImage(biggestComponent->getVertices());
 
         assert(posesGT.size() == bundleAdjustedPoses.size());
         assert(posesGT.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);

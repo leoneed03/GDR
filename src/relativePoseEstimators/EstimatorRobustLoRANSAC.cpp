@@ -75,7 +75,7 @@ namespace gdr {
                                                           cameraIntrDestination);
 
             std::vector<std::pair<double, int>> projectionErrorsAndInlierIndices =
-                    inlierCounter.calculateProjectionErrors(
+                    inlierCounter.calculateInlierProjectionErrors(
                             toBeTransformedPoints,
                             destinationPoints,
                             cameraIntrDestination,
@@ -105,7 +105,7 @@ namespace gdr {
                         cameraIntrDestination);
 
                 std::vector<std::pair<double, int>> projectionErrorsAndInlierIndicesAfterLocalOptimization =
-                        inlierCounter.calculateProjectionErrors(
+                        inlierCounter.calculateInlierProjectionErrors(
                                 toBeTransformedPoints,
                                 destinationPoints,
                                 cameraIntrDestination,
@@ -130,7 +130,7 @@ namespace gdr {
 
 
         std::vector<std::pair<double, int>> totalProjectionErrorsAndInlierIndices =
-                inlierCounter.calculateProjectionErrors(
+                inlierCounter.calculateInlierProjectionErrors(
                         toBeTransformedPoints,
                         destinationPoints,
                         cameraIntrDestination,

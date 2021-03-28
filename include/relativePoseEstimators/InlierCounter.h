@@ -19,12 +19,22 @@ namespace gdr {
         // return vector of pairs for each inlier:
         // {errorInPixelsAfterTransformationAndProjection, columnNumber in Original Matrix toBeTransformedPoints}
     public:
-        virtual std::vector<std::pair<double, int>> calculateProjectionErrors(
+        /** Calculate reprojection errors for alignment
+         * @param toBeTransformedPoints point cloud to be aligned
+         * @param destinationPoints static point cloud
+         * @param cameraIntr3x3Destination camera intrinsics for destination camera
+         * @param umeyamaRt SE3 transformation of toBeTransformed point cloud
+         * @param paramsRansac LoRANSAC parameters
+         * @returns all inlier reprojection errors where each element contains reprojection error and point's index
+         */
+        virtual std::vector<std::pair<double, int>> calculateInlierProjectionErrors(
                 const Eigen::Matrix4Xd &toBeTransformedPoints,
                 const Eigen::Matrix4Xd &destinationPoints,
                 const CameraRGBD &cameraIntr3x3Destination,
                 const SE3 &umeyamaRt,
                 const ParamsRANSAC &paramsRansac) const;
+
+        virtual ~InlierCounter() = default;
     };
 }
 

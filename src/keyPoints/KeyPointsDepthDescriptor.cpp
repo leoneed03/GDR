@@ -25,6 +25,11 @@ namespace gdr {
 
         assert(depths.size() == keypointsKnownDepth.size());
         assert(depths.size() * 128 == descriptorsKnownDepth.size());
+
+        for (int pointIndex = 0; pointIndex < keypointsKnownDepth.size(); ++pointIndex) {
+            keypointsKnownDepth[pointIndex].setDepth(depths[pointIndex]);
+            assert(std::abs(keypointsKnownDepth[pointIndex].getDepth() - depths[pointIndex]) < 3 * std::numeric_limits<double>::epsilon());
+        }
     }
 
     const std::vector<KeyPoint2D> &keyPointsDepthDescriptor::getKeyPointsKnownDepth() const {

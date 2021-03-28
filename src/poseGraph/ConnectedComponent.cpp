@@ -5,7 +5,7 @@
 
 #include "absolutePoseEstimation/rotationAveraging/rotationAveraging.h"
 #include "poseGraph/ConnectedComponent.h"
-#include "poseGraph/RelativeSE3.h"
+#include "parametrization/RelativeSE3.h"
 #include "parametrization/Point3d.h"
 #include "bundleAdjustment/IBundleAdjuster.h"
 #include "bundleAdjustment/BundleAdjuster.h"
@@ -22,24 +22,22 @@ namespace gdr {
 
     ConnectedComponentPoseGraph::ConnectedComponentPoseGraph(
             const std::vector<VertexCG> &newAbsolutePoses,
-            const std::vector<std::vector<RelativePoseSE3>> &edgesLocalIndicesRelativePoses,
+            const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
             const CameraRGBD &newDefaultCamera,
             const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &newInlierPointCorrespondences,
             const std::string &newRelativeRotationsFile,
             const std::string &newAbsoluteRotationsFile,
-            int componentNumber
+            int componentNumberToSet
     ) : absolutePoses(newAbsolutePoses),
         relativePoses(edgesLocalIndicesRelativePoses),
         cameraRgbd(newDefaultCamera),
         inlierPointCorrespondences(newInlierPointCorrespondences),
         relativeRotationsFile(newRelativeRotationsFile),
         absoluteRotationsFile(newAbsoluteRotationsFile),
-        componentGlobalNumberOptional(componentNumber) {
+        componentNumber(componentNumberToSet) {
 
         assert(getNumberOfPoses() > 0);
         assert(getNumberOfPoses() == absolutePoses.size());
-
-        pointMatcher = std::make_unique<PointClassifier>(getNumberOfPoses());
     }
 
     int ConnectedComponentPoseGraph::getNumberOfPoses() const {
@@ -82,14 +80,13 @@ namespace gdr {
                     int indexFrom = i;
                     //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)(gtsam format)
                     file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
-                    auto translationVector = transformation.getTranslation();
+                    auto translationVector = transformation.getRelativeTranslation();
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
                          << std::to_string(translationVector.col(0)[1]) << ' '
                          << std::to_string(translationVector.col(0)[2]) << ' ';
 
-                    Eigen::Quaterniond qR = transformation.getRelativeRotationSO3Quatd();
-                    file << std::to_string(qR.x()) << ' ' << std::to_string(qR.y()) << ' '
-                         << std::to_string(qR.z()) << ' ' << std::to_string(qR.w()) << noise << '\n';
+                    const auto &qR = transformation.getRelativeRotation();
+                    file << qR << noise << '\n';
                 }
             }
         } else {
@@ -99,27 +96,10 @@ namespace gdr {
         return 0;
     }
 
-    std::vector<VertexCG *> ConnectedComponentPoseGraph::getVerticesPointers() {
-        std::vector<VertexCG *> verticesPointers;
-
-        for (int i = 0; i < absolutePoses.size(); ++i) {
-            VertexCG *vertex = &absolutePoses[i];
-            verticesPointers.push_back(vertex);
-        }
-
-        return verticesPointers;
-    }
-
-    int ConnectedComponentPoseGraph::size() const {
-        return absolutePoses.size();
-    }
 
     std::vector<SE3> ConnectedComponentPoseGraph::getPoses() const {
         std::vector<SE3> poses;
         poses.reserve(getNumberOfPoses());
-
-        assert(getNumberOfPoses() == absolutePoses.size());
-        assert(getNumberOfPoses() == size());
 
         for (const auto &pose: absolutePoses) {
             poses.emplace_back(pose.getAbsolutePoseSE3());
@@ -158,7 +138,7 @@ namespace gdr {
         return absolutePoses;
     }
 
-    const std::vector<RelativePoseSE3> &ConnectedComponentPoseGraph::getConnectionsFromVertex(int vertexNumber) const {
+    const std::vector<RelativeSE3> &ConnectedComponentPoseGraph::getConnectionsFromVertex(int vertexNumber) const {
         assert(poseIndexIsValid(vertexNumber));
 
         return relativePoses[vertexNumber];
@@ -182,5 +162,11 @@ namespace gdr {
         assert(poseIndexIsValid(poseIndex));
 
         absolutePoses[poseIndex].setAbsolutePoseSE3(poseSE3);
+    }
+
+    int ConnectedComponentPoseGraph::getComponentNumber() const {
+        assert(componentNumber >= 0 && "component number not initialized");
+
+        return componentNumber;
     }
 }

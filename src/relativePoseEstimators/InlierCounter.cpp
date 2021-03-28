@@ -8,11 +8,11 @@
 namespace gdr {
 
     std::vector<std::pair<double, int>>
-    InlierCounter::calculateProjectionErrors(const Eigen::Matrix4Xd &toBeTransformedPoints,
-                                             const Eigen::Matrix4Xd &destinationPoints,
-                                             const CameraRGBD &cameraDest,
-                                             const SE3 &umeyamaRt,
-                                             const ParamsRANSAC &paramsRansac) const {
+    InlierCounter::calculateInlierProjectionErrors(const Eigen::Matrix4Xd &toBeTransformedPoints,
+                                                   const Eigen::Matrix4Xd &destinationPoints,
+                                                   const CameraRGBD &cameraIntr3x3Destination,
+                                                   const SE3 &umeyamaRt,
+                                                   const ParamsRANSAC &paramsRansac) const {
 
 
         double thresholdProjectionErrorPixels = paramsRansac.getMaxProjectionErrorPixels();
@@ -25,10 +25,10 @@ namespace gdr {
 
         for (int pointCounter = 0; pointCounter < pointsAfterTransformation.cols(); ++pointCounter) {
             Eigen::Vector3d toBeTransformedProjection =
-                    cameraDest.getIntrinsicsMatrix3x3() *
+                    cameraIntr3x3Destination.getIntrinsicsMatrix3x3() *
                     pointsAfterTransformation.col(pointCounter).topLeftCorner<3, 1>();
             Eigen::Vector3d destinationPointProjection =
-                    cameraDest.getIntrinsicsMatrix3x3() * destinationPoints.col(pointCounter).topLeftCorner<3, 1>();
+                    cameraIntr3x3Destination.getIntrinsicsMatrix3x3() * destinationPoints.col(pointCounter).topLeftCorner<3, 1>();
 
             for (int i = 0; i < 2; ++i) {
                 toBeTransformedProjection[i] /= toBeTransformedProjection[2];

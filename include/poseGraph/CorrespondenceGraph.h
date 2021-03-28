@@ -12,13 +12,12 @@
 
 #include "sparsePointCloud/CloudProjector.h"
 #include "VertexCG.h"
-#include "RelativeSE3.h"
+#include "parametrization/RelativeSE3.h"
 #include "parametrization/cameraRGBD.h"
 #include "keyPointDetectionAndMatching/ISiftModule.h"
 #include "absolutePoseEstimation/rotationAveraging/rotationAveraging.h"
 #include "Vectors3d.h"
 #include "ThreadPool.h"
-#include "parametrization/RelativePoseSE3.h"
 #include "ConnectedComponent.h"
 #include "relativePoseEstimators/IEstimatorRelativePoseRobust.h"
 #include "relativePoseRefinement/IRefinerRelativePose.h"
@@ -41,7 +40,7 @@ namespace gdr {
         std::string pathToImageDirectoryRGB;
         std::string pathToImageDirectoryD;
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
+        std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> inlierCorrespondencesPoints;
 
     public:
 
@@ -57,7 +56,7 @@ namespace gdr {
         void setRelativePoses(const std::vector<std::vector<RelativeSE3>> &pairwiseRelativePoses);
 
         void setInlierPointMatches(
-                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointMatches);
+                const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &inlierPointMatches);
 
         void setNumberOfPoses(int numberOfPoses);
 
@@ -75,7 +74,7 @@ namespace gdr {
 
         const std::string &getPathAbsoluteRotationsFile() const;
 
-        const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getInlierObservedPoints() const;
+        const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &getInlierObservedPoints() const;
 
         const VertexCG &getVertex(int vertexNumber) const;
 
@@ -96,8 +95,6 @@ namespace gdr {
         void printConnectionsRelative(std::ostream &os, int space = 10) const;
 
         int printRelativePosesFile(const std::string &outPutFileRelativePoses) const;
-
-        void bfsDrawToFile(const std::string &outFile) const;
     };
 }
 

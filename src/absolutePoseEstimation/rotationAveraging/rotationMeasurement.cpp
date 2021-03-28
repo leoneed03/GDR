@@ -6,9 +6,9 @@
 #include "absolutePoseEstimation/rotationAveraging/rotationMeasurement.h"
 
 namespace gdr {
-    rotationMeasurement::rotationMeasurement(const Eigen::Quaterniond &newRelativeRotationQuat,
+    rotationMeasurement::rotationMeasurement(const SO3 &relativeRotationToSet,
                                              int newIndexFrom,
-                                             int newIndexTo) : relativeRotationQuat(newRelativeRotationQuat.normalized()),
+                                             int newIndexTo) : relativeRotationQuat(relativeRotationToSet),
                                                                indexFrom(newIndexFrom),
                                                                indexTo(newIndexTo) {}
     Eigen::Quaterniond rotationMeasurement::getRotationQuat() const {

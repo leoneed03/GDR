@@ -77,20 +77,6 @@ namespace gdr {
         const SE3& getAbsolutePoseSE3() const;
 
         VertexCG(int newIndex,
-                 const CameraRGBD& newCameraRgbd,
-                 const std::string &newPathRGB,
-                 const std::string &newPathD,
-                 const Sophus::SE3d &absolutePose);
-
-        VertexCG(int newIndex,
-                 const CameraRGBD &newCameraRgbd,
-                 const std::vector<KeyPoint2D> &newKeypoints,
-                 const std::vector<float> &newDescriptors,
-                 const std::vector<double> &newDepths,
-                 const std::string &newPathRGB,
-                 const std::string &newPathD);
-
-        VertexCG(int newIndex,
                  const CameraRGBD &newCameraRgbd,
                  const keyPointsDepthDescriptor& keyPointsDepthDescriptor,
                  const std::string &newPathRGB,
@@ -115,8 +101,6 @@ namespace gdr {
         double getKeyPointDepth(int keyPointIndex) const;
 
         bool keyPointIndexIsValid(int index) const;
-
-        std::vector<KeyPointInfo> getKeyPointInfoAllKeyPoints() const;
     };
 }
 

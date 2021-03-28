@@ -7,33 +7,6 @@
 
 namespace gdr {
 
-
-    VertexCG::VertexCG(int newIndex,
-                       const CameraRGBD &newCameraRgbd,
-                       const std::vector<KeyPoint2D> &newKeypoints,
-                       const std::vector<float> &newDescriptors,
-                       const std::vector<double> &newDepths,
-                       const std::string &newPathRGB,
-                       const std::string &newPathD) : index(newIndex),
-                                                      initialIndex(newIndex),
-                                                      cameraRgbd(newCameraRgbd),
-                                                      keypoints(newKeypoints),
-                                                      descriptors(newDescriptors),
-                                                      depths(newDepths),
-                                                      pathToRGBimage(newPathRGB),
-                                                      pathToDimage(newPathD) {}
-
-    VertexCG::VertexCG(int newIndex,
-                       const CameraRGBD &newCameraRgbd,
-                       const std::string &newPathRGB,
-                       const std::string &newPathD,
-                       const Sophus::SE3d &newAbsolutePose) : index(newIndex),
-                                                              initialIndex(newIndex),
-                                                              cameraRgbd(newCameraRgbd),
-                                                              pathToRGBimage(newPathRGB),
-                                                              pathToDimage(newPathD),
-                                                              absolutePose(newAbsolutePose) {}
-
     const std::vector<KeyPoint2D> &VertexCG::getKeyPoints() const {
         return keypoints;
     }
@@ -132,17 +105,6 @@ namespace gdr {
 
     void VertexCG::setIndex(int newIndex) {
         index = newIndex;
-    }
-
-    std::vector<KeyPointInfo> VertexCG::getKeyPointInfoAllKeyPoints() const {
-        std::vector<KeyPointInfo> keyPointsInfo;
-
-        for (int keyPointsIndex = 0; keyPointsIndex < keypoints.size(); ++keyPointsIndex) {
-            keyPointsInfo.emplace_back(KeyPointInfo(keypoints[keyPointsIndex],
-                                                    depths[keyPointsIndex],
-                                                    getIndex()));
-        }
-        return keyPointsInfo;
     }
 
     void VertexCG::setAbsolutePoseSE3(const SE3 &absolutePoseToSet) {

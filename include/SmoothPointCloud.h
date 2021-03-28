@@ -19,7 +19,7 @@
 namespace gdr {
 
     struct SmoothPointCloud {
-        void registerPointCloudFromImage(const std::vector<VertexCG*> &posesToBeRegistered,
+        void registerPointCloudFromImage(const std::vector<VertexCG> &posesToBeRegistered,
                                          double voxelSizeX = 0.01,
                                          double voxelSizeY = 0.01,
                                          double voxelSixeZ = 0.01);

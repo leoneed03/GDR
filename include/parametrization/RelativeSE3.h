@@ -15,23 +15,23 @@ namespace gdr {
 
     class RelativeSE3 {
 
-        const VertexCG &vertexFrom;
-        const VertexCG &vertexTo;
+        int indexFromDestination;
+        int indexToToBeTransformed;
 
         SE3 relativePose;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        RelativeSE3(const SE3 &se3,
-                    const VertexCG &vertexFrom,
-                    const VertexCG &vertexTo);
+        RelativeSE3(int indexFromDestinationToSet,
+                    int indexToToBeTransformedToSet,
+                    const SE3 &se3);
 
         int getIndexTo() const;
 
         int getIndexFrom() const;
 
-        Eigen::Quaterniond getRelativeRotation() const;
+        SO3 getRelativeRotation() const;
 
         Eigen::Vector3d getRelativeTranslation() const;
 

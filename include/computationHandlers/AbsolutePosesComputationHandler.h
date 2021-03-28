@@ -27,7 +27,7 @@ namespace gdr {
 
         std::set<int> initialIndices() const;
 
-        std::vector<VertexCG*> getVerticesPointers() const;
+        const std::vector<VertexCG>& getVertices() const;
 
     public:
 

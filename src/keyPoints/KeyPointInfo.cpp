@@ -13,12 +13,9 @@
 
 namespace gdr {
     KeyPointInfo::KeyPointInfo(const KeyPoint2D &keyPointToSet,
-                               double depthToSet,
                                int observingPoseNumberToSet) : keyPoint2D(keyPointToSet),
                                                                observingPoseNumber(observingPoseNumberToSet),
-                                                               initialObservingPoseNumber(observingPoseNumberToSet) {
-        keyPoint2D.setDepth(depthToSet);
-    }
+                                                               initialObservingPoseNumber(observingPoseNumberToSet) {}
 
 
     double KeyPointInfo::getX() const {

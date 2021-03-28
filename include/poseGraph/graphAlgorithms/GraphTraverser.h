@@ -34,6 +34,14 @@ namespace gdr {
         static
         std::vector<std::unique_ptr<ConnectedComponentPoseGraph>>
         splitGraphToConnectedComponents(const CorrespondenceGraph &correspondenceGraph);
+
+        /**
+         * @param correspondenceGraph is pose graph to be shown
+         * @param outFile file name graph will be written to
+         * @returns vector of connected components of graph
+         */
+        static void bfsDrawToFile(const CorrespondenceGraph &correspondenceGraph,
+                                  const std::string &outFile);
     };
 }
 
