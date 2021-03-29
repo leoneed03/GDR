@@ -94,7 +94,7 @@ namespace gdr {
         }
     }
 
-    int ImageAssociator::AssociateImagePairs(double maxTimeTreshold,
+    int ImageAssociator::associateImagePairs(double maxTimeTreshold,
                                              double timeOffset,
                                              const std::string &rgbDirShortName,
                                              const std::string &depthDirShortName,
@@ -262,14 +262,14 @@ namespace gdr {
         return timestampByNameToReturn;
     }
 
-    std::vector<poseInfo>
+    std::vector<PoseFullInfo>
     ImageAssociator::getAssociatedPoseInfo(const std::string &pathToGT,
                                            const std::vector<double> &timestamps,
                                            std::unordered_set<double> &putFoundTimestamps,
                                            double maxTimeTreshold,
                                            double timeOffset) {
-        std::vector<poseInfo> absolutePosesFoundByTimestamps;
-        std::map<double, poseInfo> poseInfoByTimestamps;
+        std::vector<PoseFullInfo> absolutePosesFoundByTimestamps;
+        std::map<double, PoseFullInfo> poseInfoByTimestamps;
         std::unordered_map<double, int> stampIndexByTime;
         std::unordered_set<double> foundTimestamps;
         foundTimestamps.reserve(timestamps.size());
@@ -307,17 +307,17 @@ namespace gdr {
                     poseInformation >> orientation[i];
                 }
 
-                poseInfo currentPoseInfo(timestamp,
-                                         Eigen::Quaterniond(orientation.data()),
-                                         Eigen::Vector3d(translation.data()));
+                PoseFullInfo currentPoseInfo(timestamp,
+                                             Eigen::Quaterniond(orientation.data()),
+                                             Eigen::Vector3d(translation.data()));
                 poseInfoByTimestamps.insert(std::make_pair(timestamp, currentPoseInfo));
 
             }
         }
 
         for (const auto &timestamp: timestamps) {
-            auto closestMatch = findClosestKeyMatch<double, poseInfo>(poseInfoByTimestamps,
-                                                                      timestamp);
+            auto closestMatch = findClosestKeyMatch<double, PoseFullInfo>(poseInfoByTimestamps,
+                                                                          timestamp);
             if (closestMatch == poseInfoByTimestamps.end()) {
                 std::cout << " did not find timestamp [FOUND END ?!] " << timestamp << std::endl;
                 ++notFoundCounter;
@@ -369,8 +369,9 @@ namespace gdr {
                                                   const std::string &shortNameRGBDir,
                                                   const std::string &shortNameDepthDir,
                                                   const std::string &shortFilenameGT,
-                                                  const std::string &extension) const {
+                                                  const std::string &extension) {
 
+        associateImagePairs();
         const fs::path path(outDirectory);
         fs::create_directory(path);
 

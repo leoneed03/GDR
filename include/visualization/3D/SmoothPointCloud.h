@@ -19,6 +19,7 @@
 namespace gdr {
 
     struct SmoothPointCloud {
+        //TODO: export pointCloud as tree-like structure
         void registerPointCloudFromImage(const std::vector<VertexCG> &posesToBeRegistered,
                                          double voxelSizeX = 0.01,
                                          double voxelSizeY = 0.01,

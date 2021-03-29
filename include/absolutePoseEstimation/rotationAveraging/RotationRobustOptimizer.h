@@ -12,6 +12,7 @@
 
 #include "parametrization/SO3.h"
 #include "RotationMeasurement.h"
+#include "absolutePoseEstimation/rotationAveraging/IRotationRobustOptimizer.h"
 
 namespace gdr {
 
@@ -60,24 +61,24 @@ namespace gdr {
         }
 
         std::vector<double> relativeRotation;
-
-    public:
-
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 
-    class RotationRobustOptimizer {
+    class RotationRobustOptimizer : public IRotationRobustOptimizer {
 
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         std::vector<SO3> orientations;
         std::vector<RotationMeasurement> relativeRotations;
+        bool printProgressToConsole = false;
 
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        RotationRobustOptimizer(const std::vector<SO3>& orientations,
+                                const std::vector<RotationMeasurement>& pairWiseRotations);
 
-        RotationRobustOptimizer(const std::vector<SO3>& orientations, const std::vector<RotationMeasurement>& pairWiseRotations);
+        std::vector<SO3> getOptimizedOrientation(int indexFixed = 0) const override;
 
-        std::vector<SO3> getOptimizedOrientation(int indexFixed = 0,
-                                                 bool printProgressToConsole = false) const;
+        bool getPrintToConsole() const;
+
+        void setPrintProgressToConsole(bool printToConsoleToSet);
     };
 }
 

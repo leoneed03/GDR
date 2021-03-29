@@ -2,16 +2,16 @@
 // Created by leoneed on 1/16/21.
 //
 
-#include "readerTUM/poseInfo.h"
+#include "readerTUM/PoseFullInfo.h"
 #include <iomanip>
 
 namespace gdr {
-    poseInfo::poseInfo(double newTimestamp, const Eigen::Quaterniond &newOrientationQuat,
-                       const Eigen::Vector3d &newCoordinates) : timestamp(newTimestamp),
+    PoseFullInfo::PoseFullInfo(double newTimestamp, const Eigen::Quaterniond &newOrientationQuat,
+                               const Eigen::Vector3d &newCoordinates) : timestamp(newTimestamp),
                                                                 orientationQuat(newOrientationQuat),
                                                                 coordinated3d(newCoordinates) {}
 
-    poseInfo::poseInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation) {
+    PoseFullInfo::PoseFullInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation) {
         assert(rawPoseInfoTimestampTranslationOrientation.size() == elementsRaw);
         timestamp = rawPoseInfoTimestampTranslationOrientation[0];
 
@@ -32,7 +32,7 @@ namespace gdr {
 
     }
 
-    std::ostream &operator<<(std::ostream &os, const poseInfo &timeTranslationOrientation) {
+    std::ostream &operator<<(std::ostream &os, const PoseFullInfo &timeTranslationOrientation) {
         int space = 15;
 
         os.precision(std::numeric_limits<double>::max_digits10);
@@ -50,18 +50,18 @@ namespace gdr {
     }
 
 
-    double poseInfo::getTimestamp() const {
+    double PoseFullInfo::getTimestamp() const {
         return timestamp;
     }
-    Eigen::Quaterniond poseInfo::getOrientationQuat() const {
+    Eigen::Quaterniond PoseFullInfo::getOrientationQuat() const {
         return orientationQuat;
     }
 
-    Eigen::Vector3d poseInfo::getTranslation() const {
+    Eigen::Vector3d PoseFullInfo::getTranslation() const {
         return coordinated3d;
     }
 
-    Sophus::SE3d poseInfo::getSophusPose() const {
+    Sophus::SE3d PoseFullInfo::getSophusPose() const {
         Sophus::SE3d poseSE3;
         poseSE3.setQuaternion(orientationQuat);
         poseSE3.translation() = coordinated3d;

@@ -12,7 +12,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <readerTUM/poseInfo.h>
+#include <readerTUM/PoseFullInfo.h>
 
 namespace gdr {
     class ImageAssociator {
@@ -28,7 +28,7 @@ namespace gdr {
 
         std::vector<std::pair<double, double>> associatedTimestampsRGBAndDepth;
         std::vector<std::pair<std::string, std::string>> associatedImagesRGBAndDepth;
-        std::vector<poseInfo> associatedGroundTruthInfo;
+        std::vector<PoseFullInfo> associatedGroundTruthInfo;
 
 //        std::map<std::string, int> imageNumberByNameRGB;
 //        std::map<std::string, int> imageNumberByNameD;
@@ -40,7 +40,7 @@ namespace gdr {
 
         static std::map<std::string, double> getTimestampsByImageName(const std::string &pathToDirectory);
 
-        static std::map<std::string, poseInfo> getPoseInfoByImageName(const std::string &pathToDirectory);
+        static std::map<std::string, PoseFullInfo> getPoseInfoByImageName(const std::string &pathToDirectory);
 
         int checkSize() const;
     public:
@@ -64,14 +64,14 @@ namespace gdr {
          * @param timeOffset -- time offset to be added to all depth timestamps
          */
 
-        int AssociateImagePairs(double maxTimeTreshold = 0.02,
+        int associateImagePairs(double maxTimeTreshold = 0.02,
                                 double timeOffset = 0.0,
                                 const std::string &rgbDirShortName = "rgb",
                                 const std::string &depthDirShortName = "depth",
                                 const std::string &groundtruthFileName = "groundtruth.txt",
                                 const std::string &fileExtension = "txt");
 
-        static std::vector<poseInfo> getAssociatedPoseInfo(
+        static std::vector<PoseFullInfo> getAssociatedPoseInfo(
                 const std::string &pathToGT,
                 const std::vector<double> &timestamps,
                 std::unordered_set<double> &foundTimestamps,
@@ -85,7 +85,7 @@ namespace gdr {
                                      const std::string &shortNameDepthDir = "depth",
                                      const std::string &shortFilenameGT = "groundtruth",
                                      const std::string &extension = "txt"
-        ) const;
+        );
 
 
     };

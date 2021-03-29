@@ -15,8 +15,7 @@ namespace gdr {
             relativeRotations(pairWiseRotationsVector) {
     }
 
-    std::vector<SO3> RotationRobustOptimizer::getOptimizedOrientation(int indexFixed,
-                                                                      bool printProgressToConsole) const {
+    std::vector<SO3> RotationRobustOptimizer::getOptimizedOrientation(int indexFixed) const {
 
         int dim = 4;
         std::vector<std::vector<double>> result(orientations.size());
@@ -70,5 +69,13 @@ namespace gdr {
         }
 
         return optimizedOrientations;
+    }
+
+    bool RotationRobustOptimizer::getPrintToConsole() const {
+        return printProgressToConsole;
+    }
+
+    void RotationRobustOptimizer::setPrintProgressToConsole(bool printToConsoleToSet) {
+        printProgressToConsole = printToConsoleToSet;
     }
 }

@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "poseGraph/CorrespondenceGraph.h"
-#include "readerTUM/poseInfo.h"
+#include "readerTUM/PoseFullInfo.h"
 #include "readerTUM/ReaderTum.h"
 
 TEST(testRelativePosesComputation, PlantPASSED) {

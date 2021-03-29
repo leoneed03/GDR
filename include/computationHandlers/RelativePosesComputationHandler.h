@@ -11,6 +11,8 @@
 #include "poseGraph/graphAlgorithms/GraphTraverser.h"
 #include "poseGraph/CorrespondenceGraph.h"
 
+#include "relativePoseEstimators/InlierCounter.h"
+
 namespace gdr {
 
     class RelativePosesComputationHandler {
@@ -18,13 +20,14 @@ namespace gdr {
         bool printInformationConsole = false;
         int numberOfThreadsCPU = 1;
 
-        std::unique_ptr<ISiftModule> siftModule;
+        std::unique_ptr<IFeatureDetectorMatcher> siftModule;
         std::unique_ptr<IEstimatorRelativePoseRobust> relativePoseEstimatorRobust;
         std::unique_ptr<IRefinerRelativePose> relativePoseRefiner;
         // unused right now
         std::unique_ptr<ThreadPool> threadPool;
         CameraRGBD cameraDefault;
         ParamsRANSAC paramsRansac;
+        InlierCounter inlierCounter;
 
         std::unique_ptr<CorrespondenceGraph> correspondenceGraph;
 

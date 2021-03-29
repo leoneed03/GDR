@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "relativePoseRefinement/ICP.h"
+#include "relativePoseRefinement/ICPCUDA.h"
 #include "ICPOdometry.h"
 
 #include <pangolin/image/image_io.h>
@@ -35,9 +35,9 @@ namespace gdr {
     }
 
 
-    bool ProcessorICP::refineRelativePose(const MatchableInfo &poseToBeTransformedICP,
-                                          const MatchableInfo &poseDestinationICPModel,
-                                          SE3 &initTransformationSE3) {
+    bool ICPCUDA::refineRelativePose(const MatchableInfo &poseToBeTransformedICP,
+                                     const MatchableInfo &poseDestinationICPModel,
+                                     SE3 &initTransformationSE3) {
 
         const CameraRGBD &cameraRgbdToBeTransformed = poseToBeTransformedICP.getCameraRGB();
         CameraIntrinsics cameraIntrinsicsToBeTransformed(cameraIntrinsicsToBeTransformed.getFx(),

@@ -1,5 +1,6 @@
 //
-// Created by leo on 3/19/21.
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
 #ifndef GDR_ICLOUDPROJECTOR_H
@@ -13,7 +14,6 @@
 #include "parametrization/Point3d.h"
 
 namespace gdr {
-
 
     class ICloudProjector {
         

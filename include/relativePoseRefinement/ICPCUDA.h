@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_ICP_H
-#define GDR_ICP_H
+#ifndef GDR_ICPCUDA_H
+#define GDR_ICPCUDA_H
 
 #include "IRefinerRelativePose.h"
 #include "poseGraph/VertexCG.h"
@@ -12,7 +12,7 @@
 
 namespace gdr {
 
-    class ProcessorICP : public IRefinerRelativePose {
+    class ICPCUDA : public IRefinerRelativePose {
 
     public:
         bool refineRelativePose(const MatchableInfo &poseToBeTransformedICP,

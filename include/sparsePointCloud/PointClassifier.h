@@ -18,8 +18,6 @@ namespace gdr {
     public:
         explicit PointClassifier(int numPoses);
 
-//        void setNumberOfPoses(int numPoses) override;
-
         /** Compute unique class for each observed point
          *      (some keypoints are observed by multiple cameras but represent same 3D point)
          * @returns vector of unique classes for each point

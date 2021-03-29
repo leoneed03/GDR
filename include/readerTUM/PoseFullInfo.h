@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_POSEINFO_H
-#define GDR_POSEINFO_H
+#ifndef GDR_POSEFULLINFO_H
+#define GDR_POSEFULLINFO_H
 
 #include <Eigen/Eigen>
 #include <sophus/se3.hpp>
@@ -13,8 +13,9 @@
 
 namespace gdr {
 
-    struct poseInfo {
-        const int elementsRaw = 8;
+    struct PoseFullInfo {
+
+        int elementsRaw = 8;
         double timestamp;
         //TODO: use SE3 class
         Eigen::Quaterniond orientationQuat;
@@ -24,11 +25,11 @@ namespace gdr {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        poseInfo(double newTimestamp,
-                 const Eigen::Quaterniond &newOrientationQuat,
-                 const Eigen::Vector3d &newCoordinates);
+        PoseFullInfo(double newTimestamp,
+                     const Eigen::Quaterniond &newOrientationQuat,
+                     const Eigen::Vector3d &newCoordinates);
 
-        poseInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation);
+        explicit PoseFullInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation);
 
         Eigen::Quaterniond getOrientationQuat() const;
 
@@ -38,7 +39,7 @@ namespace gdr {
 
         double getTimestamp() const;
 
-        friend std::ostream &operator<<(std::ostream &os, const poseInfo &dt);
+        friend std::ostream &operator<<(std::ostream &os, const PoseFullInfo &poseFullInfo);
     };
 }
 

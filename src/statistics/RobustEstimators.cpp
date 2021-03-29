@@ -1,5 +1,6 @@
 //
-// Created by leo on 3/18/21.
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
 #include "statistics/RobustEstimators.h"
@@ -10,11 +11,17 @@
 namespace gdr {
 
 
-    double RobustEstimators::getMedian(const std::vector<double> &values, double quantile) {
+    double RobustEstimators::getMedian(const std::vector<double> &values,
+                                       double quantile) {
         std::vector<double> valuesToSort = values;
 
         assert(quantile >= 0.0 && quantile <= 1.0);
-        int indexMedianOfMeasurements = valuesToSort.size() * quantile;
+        int indexMedianOfMeasurements = static_cast<int>(valuesToSort.size() * quantile);
+
+        indexMedianOfMeasurements = std::min(indexMedianOfMeasurements, static_cast<int>(valuesToSort.size() - 1));
+        indexMedianOfMeasurements = std::max(0, indexMedianOfMeasurements);
+
+        assert(indexMedianOfMeasurements >= 0 && indexMedianOfMeasurements < valuesToSort.size());
 
         std::nth_element(valuesToSort.begin(),
                          valuesToSort.begin() + indexMedianOfMeasurements,

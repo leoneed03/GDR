@@ -9,10 +9,10 @@
 
 namespace gdr {
 
-    std::vector<poseInfo>
+    std::vector<PoseFullInfo>
     ReaderTUM::getPoseInfoTimeTranslationOrientation(const std::string &pathToGroundTruthFile) {
 
-        std::vector<poseInfo> posesInfo;
+        std::vector<PoseFullInfo> posesInfo;
         {
             std::string currentLine;
             std::ifstream timeTranslationOrientations(pathToGroundTruthFile);
@@ -38,9 +38,9 @@ namespace gdr {
                 Eigen::Quaterniond orientationQuat(orientation.data());
                 assert(orientationQuat.norm() > 0.95 && orientationQuat.norm() < 1.05);
 
-                poseInfo currentPoseInfo(timestamp,
-                                         orientationQuat.normalized(),
-                                         Eigen::Vector3d(translation.data()));
+                PoseFullInfo currentPoseInfo(timestamp,
+                                             orientationQuat.normalized(),
+                                             Eigen::Vector3d(translation.data()));
                 posesInfo.emplace_back(currentPoseInfo);
             }
         }

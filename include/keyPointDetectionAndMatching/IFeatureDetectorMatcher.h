@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_ISIFTMODULE_H
-#define GDR_ISIFTMODULE_H
+#ifndef GDR_IFEATUREDETECTORMATCHER_H
+#define GDR_IFEATUREDETECTORMATCHER_H
 
 #include <vector>
 #include <tbb/concurrent_vector.h>
@@ -16,7 +16,7 @@
 namespace gdr {
 
     /** KeyPoint SIFT detector and matcher */
-    class ISiftModule {
+    class IFeatureDetectorMatcher {
     public:
 
         /** Process directory of images and return detected keypoints
@@ -38,7 +38,7 @@ namespace gdr {
         findCorrespondences(const std::vector<KeyPointsDescriptors> &keyPointsDescriptorsByImageIndex,
                             const std::vector<int> &matchDevicesNumbers = {0}) = 0;
 
-        virtual ~ISiftModule() = default;
+        virtual ~IFeatureDetectorMatcher() = default;
     };
 }
 

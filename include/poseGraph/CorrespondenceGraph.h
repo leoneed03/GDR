@@ -14,7 +14,7 @@
 #include "VertexCG.h"
 #include "parametrization/RelativeSE3.h"
 #include "parametrization/cameraRGBD.h"
-#include "keyPointDetectionAndMatching/ISiftModule.h"
+#include "keyPointDetectionAndMatching/IFeatureDetectorMatcher.h"
 #include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
 #include "parametrization/Vectors3d.h"
 #include "computationHandlers/ThreadPool.h"

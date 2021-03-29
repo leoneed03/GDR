@@ -5,15 +5,16 @@
 
 #include <boost/filesystem.hpp>
 #include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
-#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h"
 #include "absolutePoseEstimation/translationAveraging/TranslationMeasurement.h"
 #include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
 #include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 
 #include "bundleAdjustment/IBundleAdjuster.h"
-#include "bundleAdjustment/BundleAdjuster.h"
+#include "bundleAdjustment/BundleAdjusterCreator.h"
 
-#include "sparsePointCloud/CloudProjector.h"
+#include "sparsePointCloud/CloudProjectorCreator.h"
+#include "sparsePointCloud/PointClassifierCreator.h"
 #include "sparsePointCloud/ProjectableInfo.h"
 
 #include "computationHandlers/AbsolutePosesComputationHandler.h"
@@ -37,7 +38,7 @@ namespace gdr {
                     ));
         }
 
-        cloudProjector = std::make_unique<CloudProjector>(posesForCloudProjector);
+        cloudProjector = CloudProjectorCreator::getRefiner(posesForCloudProjector);
 
         const auto &matchesBetweenPoints = connectedComponent->getInlierObservedPoints();
         for (const auto &vectorOfMatches: matchesBetweenPoints) {
@@ -128,8 +129,12 @@ namespace gdr {
             }
         }
 
-        RotationRobustOptimizer rotationOptimizer(shonanOptimizedAbsolutePoses, relativeRotationsAfterICP);
-        std::vector<SO3> optimizedPosesRobust = rotationOptimizer.getOptimizedOrientation();
+        std::unique_ptr<IRotationRobustOptimizer> rotationOptimizer =
+                RotationRobustOptimizerCreator::getRefiner(shonanOptimizedAbsolutePoses,
+                                                           relativeRotationsAfterICP,
+                                                           RotationRobustOptimizerCreator::RobustParameterType::DEFAULT);
+
+        std::vector<SO3> optimizedPosesRobust = rotationOptimizer->getOptimizedOrientation();
 
         assert(getNumberOfPoses() == optimizedPosesRobust.size());
 
@@ -213,9 +218,10 @@ namespace gdr {
         }
 
         std::unique_ptr<IBundleAdjuster> bundleAdjuster =
-                std::make_unique<BundleAdjuster>(observedPoints,
-                                                 posesAndCameraParams,
-                                                 cloudProjector->getKeyPointInfoByPoseNumberAndPointClass());
+                BundleAdjusterCreator::getFeatureDetector(observedPoints,
+                                                          posesAndCameraParams,
+                                                          cloudProjector->getKeyPointInfoByPoseNumberAndPointClass(),
+                                                          BundleAdjusterCreator::BundleAdjustmentType::USE_DEPTH_INFO);
 
         std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPoses(indexFixedToZero);
 
@@ -301,7 +307,7 @@ namespace gdr {
             std::unique_ptr<ConnectedComponentPoseGraph> &connectedComponentPoseGraph) {
 
         connectedComponent = std::move(connectedComponentPoseGraph);
-        pointMatcher = std::make_unique<PointClassifier>(getNumberOfPoses());
+        pointMatcher = PointClassifierCreator::getRefiner(getNumberOfPoses());
     }
 
     std::set<int> AbsolutePosesComputationHandler::initialIndices() const {

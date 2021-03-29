@@ -23,7 +23,6 @@ namespace gdr {
          * @param toBeTransformedPoints, destinationPoints 3D point clouds observed by first and second camera
          *      each column of matrix represents one point: {x, y, z, 1.0}
          * @param cameraIntrToBeTransformed, cameraIntrDestination store camera intrinsics
-         * @param paramsRansac store parameters used for LoRANSAC configuration
          * @param[out] estimationSuccess indicates ransac procedure success
          * @param[out] inlierIndices contains numbers of points that represent "inlier" matches
          * @returns relative pose estimation SE3 for given pair of point clouds (id by default)
@@ -33,7 +32,6 @@ namespace gdr {
                 const Eigen::Matrix4Xd &destinationPoints,
                 const CameraRGBD &cameraIntrToBeTransformed,
                 const CameraRGBD &cameraIntrDestination,
-                const ParamsRANSAC &paramsRansac,
                 bool &estimationSuccess,
                 std::vector<int> &inlierIndices) = 0;
 

@@ -10,20 +10,18 @@ namespace gdr {
     SE3 EstimatorRobustLoRANSAC::getTransformationMatrixUmeyamaLoRANSACProjectiveError(
             const Estimator3Points &estimator3p,
             const EstimatorNPoints &estimatorNp,
-            const InlierCounter &inlierCounter,
             const Eigen::Matrix4Xd &toBeTransformedPoints,
             const Eigen::Matrix4Xd &destinationPoints,
             const CameraRGBD &cameraIntrToBeTransformed,
             const CameraRGBD &cameraIntrDestination,
-            const ParamsRANSAC &paramsRansac,
             bool &estimationSuccess,
             std::vector<int> &inlierIndicesToReturn) const {
 
-        int numIterationsRansac = paramsRansac.getNumIterations();
-        double inlierCoeff = paramsRansac.getInlierCoeff();
-        double max3DError = paramsRansac.getMax3DError();
-        double maxProjectionErrorPixels = paramsRansac.getMaxProjectionErrorPixels();
-        bool useProjection = paramsRansac.getProjectionUsage();
+        int numIterationsRansac = paramsLoRansac.getNumIterations();
+        double inlierCoeff = paramsLoRansac.getInlierCoeff();
+        double max3DError = paramsLoRansac.getMax3DError();
+        double maxProjectionErrorPixels = paramsLoRansac.getMaxProjectionErrorPixels();
+        bool useProjection = paramsLoRansac.getProjectionUsage();
 
         estimationSuccess = true;
         int dim = 3;
@@ -80,7 +78,7 @@ namespace gdr {
                             destinationPoints,
                             cameraIntrDestination,
                             cR_t_umeyama_3_points,
-                            paramsRansac);
+                            paramsLoRansac);
 
             int numInliers = projectionErrorsAndInlierIndices.size();
 
@@ -113,7 +111,7 @@ namespace gdr {
                                 destinationPoints,
                                 cameraIntrDestination,
                                 inlier_optimal_cR_t_umeyama_transformation,
-                                paramsRansac);
+                                paramsLoRansac);
 
                 if (getPrintProgressToCout()) {
                     std::cout << "         NEW after LO number Of Inliers is "
@@ -135,7 +133,7 @@ namespace gdr {
                         destinationPoints,
                         cameraIntrDestination,
                         optimal_cR_t_umeyama_transformation,
-                        paramsRansac);
+                        paramsLoRansac);
 
         int numberInliersOptimal = totalProjectionErrorsAndInlierIndices.size();
         estimationSuccess = numberInliersOptimal > inlierCoeff * toBeTransformedPoints.cols();
@@ -157,18 +155,15 @@ namespace gdr {
                                                       const Eigen::Matrix4Xd &destinationPoints,
                                                       const CameraRGBD &cameraIntrToBeTransformed,
                                                       const CameraRGBD &cameraIntrDestination,
-                                                      const ParamsRANSAC &paramsRansac,
                                                       bool &estimationSuccess,
                                                       std::vector<int> &inlierIndices) {
         return getTransformationMatrixUmeyamaLoRANSACProjectiveError(
                 Estimator3Points(),
                 EstimatorNPoints(),
-                InlierCounter(),
                 toBeTransformedPoints,
                 destinationPoints,
                 cameraIntrToBeTransformed,
                 cameraIntrDestination,
-                ParamsRANSAC(),
                 estimationSuccess,
                 inlierIndices);
     }
@@ -180,4 +175,9 @@ namespace gdr {
     void EstimatorRobustLoRANSAC::setPrintProgressToCout(bool printProgress) {
         printProgressToCout = printProgress;
     }
+
+    EstimatorRobustLoRANSAC::EstimatorRobustLoRANSAC(const InlierCounter &inlierCounterToSet,
+                                                     const ParamsRANSAC &paramsRansacToSet) :
+            inlierCounter(inlierCounterToSet),
+            paramsLoRansac(paramsRansacToSet) {}
 }

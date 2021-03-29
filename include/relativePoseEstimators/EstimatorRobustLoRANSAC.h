@@ -14,8 +14,16 @@
 namespace gdr {
 
     class EstimatorRobustLoRANSAC : public IEstimatorRelativePoseRobust {
+
         bool printProgressToCout = false;
+
+        InlierCounter inlierCounter;
+        ParamsRANSAC paramsLoRansac;
+
     public:
+
+        EstimatorRobustLoRANSAC(const InlierCounter &inlierCounterToSet,
+                                const ParamsRANSAC &paramsRansacToSet);
 
         bool getPrintProgressToCout() const;
 
@@ -26,7 +34,6 @@ namespace gdr {
                 const Eigen::Matrix4Xd &destinationPoints,
                 const CameraRGBD &cameraIntrToBeTransformed,
                 const CameraRGBD &cameraIntrDestination,
-                const ParamsRANSAC &paramsRansac,
                 bool& estimationSuccess,
                 std::vector<int>& inlierIndices) override;
 
@@ -34,12 +41,10 @@ namespace gdr {
         getTransformationMatrixUmeyamaLoRANSACProjectiveError(
                 const Estimator3Points& estimator3p,
                 const EstimatorNPoints& estimatorNp,
-                const InlierCounter& inlierCounter,
                 const Eigen::Matrix4Xd &toBeTransformedPoints,
                 const Eigen::Matrix4Xd &destinationPoints,
                 const CameraRGBD &cameraIntrToBeTransformed,
                 const CameraRGBD &cameraIntrDestination,
-                const ParamsRANSAC &paramsRansac,
                 bool &estimationSuccess,
                 std::vector<int>& inlierIndices) const;
     };

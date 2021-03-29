@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10.0)
 
 project(GDR)
-#enable_language(CUDA)
+
 set(CMAKE_CXX_STANDARD 17)
 set(GCC_COVERAGE_COMPILE_FLAGS " -O3")
 
@@ -81,11 +81,10 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/parametrization/cameraRGBD.h
         ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/SiftModuleGPU.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationAverager.h
-        ${PROJECT_SOURCE_DIR}/include/printer.h
-        ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/ICP.h
+        ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/ICPCUDA.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationMeasurement.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationAverager.h
-        include/readerTUM/poseInfo.h
+        include/readerTUM/PoseFullInfo.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationMeasurement.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.h
         include/parametrization/Vectors3d.h
@@ -114,20 +113,20 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/ICloudProjector.h
         ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPoint2DAndDepth.h
         ${PROJECT_SOURCE_DIR}/include/optimization/lossFunctions/LossFunctions.h
-        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/ISiftModule.h
+        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/IFeatureDetectorMatcher.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorNPoints.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorRobustLoRANSAC.h
         ${PROJECT_SOURCE_DIR}/include/parametrization/SE3.h
         ${PROJECT_SOURCE_DIR}/include/statistics/RobustEstimators.h
         ${PROJECT_SOURCE_DIR}/include/readerTUM/ReaderTum.h
-        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/FeatureDetector.h
+        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.h
         ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/KeyPointsAndDescriptors.h
         ${PROJECT_SOURCE_DIR}/include/computationHandlers/RelativePosesComputationHandler.h
         ${PROJECT_SOURCE_DIR}/include/poseGraph/graphAlgorithms/GraphTraverser.h
         ${PROJECT_SOURCE_DIR}/include/computationHandlers/AbsolutePosesComputationHandler.h
         ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/Match.h
         ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/ProjectableInfo.h
-        )
+        include/absolutePoseEstimation/rotationAveraging/IRotationRobustOptimizer.h)
 
 set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/directoryTraversing/DirectoryReader.cpp
@@ -137,10 +136,10 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/parametrization/cameraRGBD.cpp
         ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/SiftModuleGPU.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationAverager.cpp
-        ${PROJECT_SOURCE_DIR}/src/relativePoseRefinement/ICP.cpp
+        ${PROJECT_SOURCE_DIR}/src/relativePoseRefinement/ICPCUDA.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationAverager.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationMeasurement.cpp
-        src/readerTUM/poseInfo.cpp
+        src/readerTUM/PoseFullInfo.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.cpp
         src/parametrization/Vectors3d.cpp
@@ -167,13 +166,13 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/parametrization/MatchableInfo.cpp
         ${PROJECT_SOURCE_DIR}/src/statistics/RobustEstimators.cpp
         ${PROJECT_SOURCE_DIR}/src/readerTUM/ReaderTum.cpp
-        ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/FeatureDetector.cpp
+        ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.cpp
         ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/KeyPointsAndDescriptors.cpp
         ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/Match.cpp
         ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/ProjectableInfo.cpp
         ${PROJECT_SOURCE_DIR}/src/computationHandlers/RelativePosesComputationHandler.cpp
         ${PROJECT_SOURCE_DIR}/src/poseGraph/graphAlgorithms/GraphTraverser.cpp
-        ${PROJECT_SOURCE_DIR}/src/computationHandlers/AbsolutePosesComputationHandler.cpp)
+        ${PROJECT_SOURCE_DIR}/src/computationHandlers/AbsolutePosesComputationHandler.cpp src/bundleAdjustment/BundleAdjusterCreator.cpp include/bundleAdjustment/BundleAdjusterCreator.h src/relativePoseEstimators/EstimatorRelativePoseRobustCreator.cpp include/relativePoseEstimators/EstimatorRelativePoseRobustCreator.h include/relativePoseRefinement/RefinerRelativePoseCreator.cpp include/relativePoseRefinement/RefinerRelativePoseCreator.h src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.cpp include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h include/sparsePointCloud/CloudProjectorCreator.cpp include/sparsePointCloud/CloudProjectorCreator.h include/sparsePointCloud/PointClassifierCreator.cpp include/sparsePointCloud/PointClassifierCreator.h)
 
 add_subdirectory(lib)
 

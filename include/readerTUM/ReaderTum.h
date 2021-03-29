@@ -8,12 +8,12 @@
 #define GDR_READERTUM_H
 
 #include <vector>
-#include "poseInfo.h"
+#include "PoseFullInfo.h"
 
 namespace gdr {
     class ReaderTUM {
     public:
-        static std::vector<poseInfo> getPoseInfoTimeTranslationOrientation(const std::string &pathToGroundTruthFile);
+        static std::vector<PoseFullInfo> getPoseInfoTimeTranslationOrientation(const std::string &pathToGroundTruthFile);
     };
 }
 

@@ -5,9 +5,10 @@
 
 #include <thread>
 #include <mutex>
+#include <iostream>
+
 #include "keyPointDetectionAndMatching/KeyPointsAndDescriptors.h"
 #include "keyPointDetectionAndMatching/SiftModuleGPU.h"
-#include "printer.h"
 
 
 namespace gdr {

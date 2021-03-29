@@ -7,7 +7,6 @@
 #include "boost/filesystem.hpp"
 
 #include "directoryTraversing/DirectoryReader.h"
-#include "printer.h"
 
 #include <algorithm>
 

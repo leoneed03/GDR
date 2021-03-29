@@ -8,11 +8,9 @@
 #include <tbb/parallel_for.h>
 
 #include "keyPoints/KeyPointsDepthDescriptor.h"
-#include "keyPointDetectionAndMatching/FeatureDetector.h"
-
-#include "relativePoseEstimators/InlierCounter.h"
-#include "relativePoseEstimators/EstimatorRobustLoRANSAC.h"
-#include "relativePoseRefinement/ICP.h"
+#include "keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.h"
+#include "relativePoseEstimators/EstimatorRelativePoseRobustCreator.h"
+#include "relativePoseRefinement/RefinerRelativePoseCreator.h"
 
 #include "computationHandlers/RelativePosesComputationHandler.h"
 
@@ -29,10 +27,16 @@ namespace gdr {
                                                                     pathToImageDirectoryD,
                                                                     cameraDefault);
 
-        siftModule = FeatureDetector::getFeatureDetector(FeatureDetector::SiftDetectorMatcher::SIFTGPU);
-        relativePoseEstimatorRobust = std::make_unique<EstimatorRobustLoRANSAC>();
-        relativePoseRefiner = std::make_unique<ProcessorICP>();
-        //TODO: use multiple threads safely
+        siftModule = FeatureDetectorMatcherCreator::getFeatureDetector(
+                FeatureDetectorMatcherCreator::SiftDetectorMatcher::SIFTGPU);
+        relativePoseEstimatorRobust = EstimatorRelativePoseRobustCreator::getEstimator(
+                inlierCounter,
+                paramsRansac,
+                EstimatorRelativePoseRobustCreator::EstimatorMinimal::UMEYAMA,
+                EstimatorRelativePoseRobustCreator::EstimatorScalable::UMEYAMA);
+        relativePoseRefiner = RefinerRelativePoseCreator::getRefiner(RefinerRelativePoseCreator::TypeICP::ICPCUDA);
+
+        //TODO: use multiple threads safely, not one
         threadPool = std::make_unique<ThreadPool>(1);
     }
 
@@ -294,7 +298,6 @@ namespace gdr {
                                                                                      destinationPoints,
                                                                                      cameraToBeTransformed,
                                                                                      cameraDest,
-                                                                                     paramsRansac,
                                                                                      success,
                                                                                      inliersAgain);
         if (!success) {
@@ -441,7 +444,6 @@ namespace gdr {
         Eigen::Matrix4Xd transformedPoints = transformation.getSE3().matrix() * toBeTransformedPoints;
 
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondences;
-        InlierCounter inlierCounter;
         std::vector<std::pair<double, int>> reprojectionInlierErrors = inlierCounter.calculateInlierProjectionErrors(
                 toBeTransformedPoints,
                 destinationPoints,

@@ -2,7 +2,7 @@ set(TESTS
     #testICP
 #    testImageAssociator
     testAccuracyBA
-#        testAbsolutePoseStructure testPoint3dRepresentation testRotationRepresentation testPoseFileCreation testRelativePosesComputation testTranslationAveraging testVectors3dRepresentation
+#        testPoint3dRepresentation testRotationRepresentation testPoseFileCreation testRelativePosesComputation testTranslationAveraging testVectors3dRepresentation
         )
 
 foreach(TEST ${TESTS})

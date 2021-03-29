@@ -61,14 +61,14 @@ void testReconstruction(
         std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
         std::string absolutePoses = "../../data/" + datasetName + "/" + "groundtruth.txt";
-        std::vector<gdr::poseInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(absolutePoses);
+        std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(absolutePoses);
 
         if (printToConsole) {
             std::cout << "read poses GT: " << posesInfoFull.size() << std::endl;
         }
         assert(posesInfoFull.size() == numberOfPosesInDataset);
         std::set<int> indicesOfBiggestComponent = biggestComponent->initialIndices();
-        std::vector<gdr::poseInfo> posesInfo;
+        std::vector<gdr::PoseFullInfo> posesInfo;
 
         for (int poseIndex = 0; poseIndex < posesInfoFull.size(); ++poseIndex) {
             if (indicesOfBiggestComponent.find(poseIndex) != indicesOfBiggestComponent.end()) {

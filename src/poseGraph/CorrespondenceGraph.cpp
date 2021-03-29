@@ -5,11 +5,9 @@
 
 #include "directoryTraversing/DirectoryReader.h"
 #include "poseGraph/CorrespondenceGraph.h"
-#include "printer.h"
-#include "relativePoseRefinement/ICP.h"
+#include "relativePoseRefinement/ICPCUDA.h"
 #include "visualization/2D/ImageDrawer.h"
-#include "keyPointDetectionAndMatching/KeyPointsAndDescriptors.h"
-#include "keyPointDetectionAndMatching/FeatureDetector.h"
+#include "keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.h"
 #include "relativePoseEstimators/EstimatorRobustLoRANSAC.h"
 
 #include <vector>
@@ -20,8 +18,6 @@
 #include <absolutePoseEstimation/translationAveraging/TranslationAverager.h>
 
 #include <boost/graph/graphviz.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/breadth_first_search.hpp>
 
 namespace gdr {
 
@@ -105,8 +101,11 @@ namespace gdr {
         int counter = 0;
         int counterSquared = 0;
         os << "EDGES of the Correspondence Graph:" << std::endl;
+
         for (int i = 0; i < transformationRtMatrices.size(); ++i) {
+
             os << std::setw(space / 5) << i << ":";
+
             counter += transformationRtMatrices[i].size();
             counterSquared += transformationRtMatrices[i].size() * transformationRtMatrices[i].size();
 
