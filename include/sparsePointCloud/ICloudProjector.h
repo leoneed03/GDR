@@ -12,12 +12,19 @@
 
 #include "keyPoints/KeyPointInfo.h"
 #include "parametrization/Point3d.h"
+#include "sparsePointCloud/ProjectableInfo.h"
 
 namespace gdr {
 
     class ICloudProjector {
         
     public:
+
+        /**
+         * @param cameraPoses contains information about observing camera poses
+         */
+        virtual void setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) = 0;
+
         /**
          * @param indexedPoint is observed point number
          * @param poseNumberAndProjectedKeyPointInfo contains information about

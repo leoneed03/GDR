@@ -25,34 +25,15 @@ namespace gdr {
 
     public:
 
-        /**
-         * @param cameraPoses contains information about observing poses
-         */
-        explicit CloudProjector(const std::vector<ProjectableInfo> &cameraPoses);
+        void setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) override;
 
-        /**
-         * @param indexedPoint is observed point number
-         * @param poseNumberAndProjectedKeyPointInfo contains information about
-         *      which poses observe specific point and Sift keypoint info like x, y, scale and orientation
-         */
         int addPoint(int indexedPoint,
                      const std::vector<KeyPointInfo> &poseNumberAndProjectedKeyPointInfo) override;
 
-        /**
-         * Computes global coordinates for all the observed points
-         * @returns vector of computed points
-         */
         std::vector<Point3d> computedPointsGlobalCoordinates() override;
 
-        /**
-         * Gets information about all the observed points and cameras
-         * @returns vector of maps, where each map returns keypoint information by keypoint's class
-         */
         const std::vector<std::unordered_map<int, KeyPointInfo>> &getKeyPointInfoByPoseNumberAndPointClass() const override;
 
-        /**
-         * Shows where observed point is on images (for debug purposes)
-         */
         std::vector<cv::Mat> showPointsReprojectionError(const std::vector<Point3d> &pointsGlobalCoordinates,
                                                          const std::string &pathToRGBDirectoryToSave,
                                                          std::vector<double> &totalL2Errors,

@@ -4,13 +4,13 @@
 //
 
 #include "sparsePointCloud/PointClassifier.h"
-#include "PointClassifierCreator.h"
+#include "sparsePointCloud/PointClassifierCreator.h"
 
 
 namespace gdr {
 
-    std::unique_ptr<IPointClassifier> PointClassifierCreator::getRefiner(int numberOfPoses) {
+    std::unique_ptr<IPointClassifier> PointClassifierCreator::getPointClassifier() {
 
-        return std::make_unique<PointClassifier>(numberOfPoses);
+        return std::make_unique<PointClassifier>();
     }
 }

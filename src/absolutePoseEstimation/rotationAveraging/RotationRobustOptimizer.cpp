@@ -9,14 +9,18 @@
 
 namespace gdr {
 
-    RotationRobustOptimizer::RotationRobustOptimizer(const std::vector<SO3> &newOrientations,
-                                                     const std::vector<RotationMeasurement> &pairWiseRotationsVector) :
-            orientations(newOrientations),
-            relativeRotations(pairWiseRotationsVector) {
-    }
+//    RotationRobustOptimizer::RotationRobustOptimizer(const std::vector<SO3> &newOrientations,
+//                                                     const std::vector<RotationMeasurement> &pairWiseRotationsVector) :
+//            orientations(newOrientations),
+//            relativeRotations(pairWiseRotationsVector) {
+//    }
 
-    std::vector<SO3> RotationRobustOptimizer::getOptimizedOrientation(int indexFixed) const {
+    std::vector<SO3> RotationRobustOptimizer::getOptimizedOrientation(const std::vector<SO3>& orientationsToSet,
+                                                                      const std::vector<RotationMeasurement>& pairWiseRotationsToSet,
+                                                                      int indexFixed) {
 
+        orientations = orientationsToSet;
+        relativeRotations = pairWiseRotationsToSet;
         int dim = 4;
         std::vector<std::vector<double>> result(orientations.size());
         for (int i = 0; i < orientations.size(); ++i) {

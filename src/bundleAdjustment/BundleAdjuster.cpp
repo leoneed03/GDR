@@ -10,44 +10,45 @@
 
 namespace gdr {
 
-    BundleAdjuster::BundleAdjuster(const std::vector<Point3d> &points,
-                                   const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
-                                   const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo) {
 
-        assert(keyPointinfo.size() == absolutePoses.size());
-        assert(!absolutePoses.empty());
-        assert(absolutePoses.size() > 0);
-
-        for (const auto &point: points) {
-            pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
-        }
-
-        for (const auto &mapIntInfo: keyPointinfo) {
-            for (const auto &pairIntInfo: mapIntInfo) {
-                assert(pairIntInfo.second.getX() >= 0);
-                assert(pairIntInfo.second.getY() >= 0);
-            }
-        }
-        keyPointInfoByPoseNumberAndPointNumber = keyPointinfo;
-
-        for (const auto &pose: absolutePoses) {
-            const auto &translation = pose.first.getTranslation();
-            const auto &rotationQuat = pose.first.getRotationQuatd();
-            const auto &cameraIntr = pose.second;
-            poseTxTyTzByPoseNumber.push_back({translation[0], translation[1], translation[2]});
-            poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.fx, cameraIntr.cx, cameraIntr.fy, cameraIntr.cy});
-            orientationsqxyzwByPoseNumber.push_back(
-                    {rotationQuat.x(), rotationQuat.y(), rotationQuat.z(), rotationQuat.w()});
-
-            cameraModelByPoseNumber.push_back(pose.second);
-            assert(poseTxTyTzByPoseNumber[poseTxTyTzByPoseNumber.size() - 1].size() == dimPose);
-        }
-
-        assert(pointsXYZbyIndex.size() == points.size());
-        assert(keyPointinfo.size() == keyPointInfoByPoseNumberAndPointNumber.size());
-        assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
-
-    }
+//    BundleAdjuster::BundleAdjuster(const std::vector<Point3d> &points,
+//                                   const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+//                                   const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo) {
+//
+//        assert(keyPointInfo.size() == absolutePoses.size());
+//        assert(!absolutePoses.empty());
+//        assert(absolutePoses.size() > 0);
+//
+//        for (const auto &point: points) {
+//            pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
+//        }
+//
+//        for (const auto &mapIntInfo: keyPointInfo) {
+//            for (const auto &pairIntInfo: mapIntInfo) {
+//                assert(pairIntInfo.second.getX() >= 0);
+//                assert(pairIntInfo.second.getY() >= 0);
+//            }
+//        }
+//        keyPointInfoByPoseNumberAndPointNumber = keyPointInfo;
+//
+//        for (const auto &pose: absolutePoses) {
+//            const auto &translation = pose.first.getTranslation();
+//            const auto &rotationQuat = pose.first.getRotationQuatd();
+//            const auto &cameraIntr = pose.second;
+//            poseTxTyTzByPoseNumber.push_back({translation[0], translation[1], translation[2]});
+//            poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.fx, cameraIntr.cx, cameraIntr.fy, cameraIntr.cy});
+//            orientationsqxyzwByPoseNumber.push_back(
+//                    {rotationQuat.x(), rotationQuat.y(), rotationQuat.z(), rotationQuat.w()});
+//
+//            cameraModelByPoseNumber.push_back(pose.second);
+//            assert(poseTxTyTzByPoseNumber[poseTxTyTzByPoseNumber.size() - 1].size() == dimPose);
+//        }
+//
+//        assert(pointsXYZbyIndex.size() == points.size());
+//        assert(keyPointInfo.size() == keyPointInfoByPoseNumberAndPointNumber.size());
+//        assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
+//
+//    }
 
     std::pair<std::vector<double>, std::vector<double>>
     BundleAdjuster::getNormalizedErrorsReprojectionAndDepth(bool performNormalizing) {
@@ -191,9 +192,13 @@ namespace gdr {
     }
 
 // each unordered map maps from poseNumber to unordered map
-// mapping from keyPointGlobalIndex to {errorPixelX, errorPixelY}
-    std::vector<SE3> BundleAdjuster::optimizePointsAndPoses(int indexFixed) {
+// mapping from keyPointGlobalIndex to KeyPoint information (sift-keypoint and depth)
+    std::vector<SE3> BundleAdjuster::optimizePointsAndPoses(const std::vector<Point3d> &points,
+                                                            const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                                            const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo,
+                                                            int indexFixed) {
 
+        setPosesAndPoints(points, absolutePoses, keyPointInfo);
 
         if (getPrintProgressToCout()) {
             std::cout << "entered BA depth optimization" << std::endl;
@@ -292,7 +297,7 @@ namespace gdr {
 
 
         ceres::Solver::Options options;
-        //TODO: make these parameters variables
+        //TODO: make these parameters customizable
         options.linear_solver_type = ceres::SPARSE_SCHUR;
         options.minimizer_progress_to_stdout = getPrintProgressToCout();
         options.max_num_iterations = 100;
@@ -542,6 +547,43 @@ namespace gdr {
 
     void BundleAdjuster::setPrintProgressToCout(bool printProgress) {
         printProgressToCout = printProgress;
+    }
+
+    void BundleAdjuster::setPosesAndPoints(const std::vector<Point3d> &points,
+                                           const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                           const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo) {
+
+        assert(keyPointInfo.size() == absolutePoses.size());
+        assert(!absolutePoses.empty());
+
+        for (const auto &point: points) {
+            pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
+        }
+
+        for (const auto &mapIntInfo: keyPointInfo) {
+            for (const auto &pairIntInfo: mapIntInfo) {
+                assert(pairIntInfo.second.getX() >= 0);
+                assert(pairIntInfo.second.getY() >= 0);
+            }
+        }
+        keyPointInfoByPoseNumberAndPointNumber = keyPointInfo;
+
+        for (const auto &pose: absolutePoses) {
+            const auto &translation = pose.first.getTranslation();
+            const auto &rotationQuat = pose.first.getRotationQuatd();
+            const auto &cameraIntr = pose.second;
+            poseTxTyTzByPoseNumber.push_back({translation[0], translation[1], translation[2]});
+            poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.fx, cameraIntr.cx, cameraIntr.fy, cameraIntr.cy});
+            orientationsqxyzwByPoseNumber.push_back(
+                    {rotationQuat.x(), rotationQuat.y(), rotationQuat.z(), rotationQuat.w()});
+
+            cameraModelByPoseNumber.push_back(pose.second);
+            assert(poseTxTyTzByPoseNumber[poseTxTyTzByPoseNumber.size() - 1].size() == dimPose);
+        }
+
+        assert(pointsXYZbyIndex.size() == points.size());
+        assert(keyPointInfo.size() == keyPointInfoByPoseNumberAndPointNumber.size());
+        assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
     }
 
 }

@@ -4,15 +4,15 @@
 //
 
 #include "sparsePointCloud/CloudProjector.h"
-#include "CloudProjectorCreator.h"
+#include "sparsePointCloud/CloudProjectorCreator.h"
 
 
 namespace gdr {
 
     std::unique_ptr<ICloudProjector>
-    gdr::CloudProjectorCreator::getRefiner(const std::vector<ProjectableInfo> &cameraPoses) {
+    gdr::CloudProjectorCreator::getCloudProjector() {
 
-        return std::make_unique<CloudProjector>(cameraPoses);
+        return std::make_unique<CloudProjector>();
     }
 
 }

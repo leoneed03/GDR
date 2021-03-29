@@ -21,12 +21,11 @@ namespace gdr {
 
         BundleAdjusterCreator() = delete;
 
-        enum class BundleAdjustmentType {USE_DEPTH_INFO};
+        enum class BundleAdjustmentType {
+            USE_DEPTH_INFO
+        };
 
-        static std::unique_ptr<IBundleAdjuster> getFeatureDetector(const std::vector<Point3d> &points,
-                                                                   const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
-                                                                   const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo,
-                                                                   const BundleAdjustmentType& bundleAdjustmentType);
+        static std::unique_ptr<IBundleAdjuster> getBundleAdjuster(const BundleAdjustmentType &bundleAdjustmentType);
     };
 }
 

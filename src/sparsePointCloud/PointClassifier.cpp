@@ -148,9 +148,10 @@ namespace gdr {
         return foundIt->second;
     }
 
-    PointClassifier::PointClassifier(int numPoses) {
-        pointClassesByPose = std::vector<std::unordered_map<int, int>>(numPoses);
-        pointGlobalIndexByPose = std::vector<std::unordered_map<int, int>>(numPoses);
+    void PointClassifier::setNumberOfPoses(int numberOfPoses) {
+
+        pointClassesByPose = std::vector<std::unordered_map<int, int>>(numberOfPoses);
+        pointGlobalIndexByPose = std::vector<std::unordered_map<int, int>>(numberOfPoses);
     }
 
 }

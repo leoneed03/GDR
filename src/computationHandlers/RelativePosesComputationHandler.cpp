@@ -34,7 +34,7 @@ namespace gdr {
                 paramsRansac,
                 EstimatorRelativePoseRobustCreator::EstimatorMinimal::UMEYAMA,
                 EstimatorRelativePoseRobustCreator::EstimatorScalable::UMEYAMA);
-        relativePoseRefiner = RefinerRelativePoseCreator::getRefiner(RefinerRelativePoseCreator::TypeICP::ICPCUDA);
+        relativePoseRefiner = RefinerRelativePoseCreator::getRefiner(RefinerRelativePoseCreator::RefinerType::ICPCUDA);
 
         //TODO: use multiple threads safely, not one
         threadPool = std::make_unique<ThreadPool>(1);

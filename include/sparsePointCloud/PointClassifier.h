@@ -16,7 +16,8 @@ namespace gdr {
     class PointClassifier : public IPointClassifier {
 
     public:
-        explicit PointClassifier(int numPoses);
+
+        void setNumberOfPoses(int numberOfPoses) override;
 
         /** Compute unique class for each observed point
          *      (some keypoints are observed by multiple cameras but represent same 3D point)

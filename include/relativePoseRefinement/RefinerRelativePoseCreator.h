@@ -19,11 +19,11 @@ namespace gdr {
 
         RefinerRelativePoseCreator() = delete;
 
-        enum class TypeICP {
+        enum class RefinerType {
             ICPCUDA
         };
 
-        static std::unique_ptr<IRefinerRelativePose> getRefiner(const TypeICP &refinerType);
+        static std::unique_ptr<IRefinerRelativePose> getRefiner(const RefinerType &refinerType);
     };
 }
 

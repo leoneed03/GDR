@@ -23,6 +23,8 @@ namespace gdr {
 
         virtual int getNumberOfPoses() const = 0;
 
+        virtual void setNumberOfPoses(int numberOfPoses) = 0;
+
         virtual ~IPointClassifier() = default;
     };
 }

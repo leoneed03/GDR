@@ -4,11 +4,11 @@
 //
 
 #include <iostream>
+#include <sophus/se3.hpp>
 
 #include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 #include "parametrization/Vectors3d.h"
 
-#include <sophus/se3.hpp>
 
 namespace gdr {
 
@@ -34,8 +34,8 @@ namespace gdr {
                 int posRow = 3 * i + counter;
                 int posLeftCol = 3 * posLeftPlus + counter;
                 int posRightCol = 3 * posRightMinus + counter;
-                coefficients.push_back(Tripletd(posRow, posLeftCol, 1));
-                coefficients.push_back(Tripletd(posRow, posRightCol, -1));
+                coefficients.emplace_back(Tripletd(posRow, posLeftCol, 1));
+                coefficients.emplace_back(Tripletd(posRow, posRightCol, -1));
             }
         }
         SparseMatrixd systemSparseMatrix(vectorDim * relativeTranslations.size(), vectorDim * absolutePoses.size());
@@ -171,7 +171,6 @@ namespace gdr {
                                                  int numOfIterations,
                                                  double epsilonIRLS) {
 
-        const int dim = 3;
         std::vector<TranslationMeasurement> newRelativeTranslations;
 
         for (int i = 0; i < relativeTranslations.size(); ++i) {
@@ -181,11 +180,11 @@ namespace gdr {
             assert(indexFrom < indexTo);
             Sophus::SE3d relativePoseFromTo;
             Sophus::SO3d relRot = absolutePosesGuess[indexFrom].getSO3().inverse() *
-                                     absolutePosesGuess[indexTo].getSO3();
+                                  absolutePosesGuess[indexTo].getSO3();
             relativePoseFromTo.setQuaternion(relRot.unit_quaternion());
             relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
             relativePoseFromTo = relativePoseFromTo.inverse();
-            newRelativeTranslations.push_back(
+            newRelativeTranslations.emplace_back(
                     TranslationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
         }
 
@@ -204,18 +203,20 @@ namespace gdr {
                                              const std::vector<SE3> &absolutePoses,
                                              double epsilonIRLSWeightMin) {
 
-        const int dim = 3;
         std::vector<TranslationMeasurement> newRelativeTranslations;
+
         for (int i = 0; i < relativeTranslations.size(); ++i) {
+
             int indexFrom = relativeTranslations[i].getIndexFromToBeTransformed();
             int indexTo = relativeTranslations[i].getIndexToDestination();
             assert(indexFrom < indexTo);
             Sophus::SE3d relativePoseFromTo;
             Sophus::SO3d relRot = absolutePoses[indexFrom].getSO3().inverse() *
-                                     absolutePoses[indexTo].getSO3();
+                                  absolutePoses[indexTo].getSO3();
             relativePoseFromTo.setQuaternion(relRot.unit_quaternion());
             relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
             relativePoseFromTo = relativePoseFromTo.inverse();
+
             newRelativeTranslations.emplace_back(
                     TranslationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
         }

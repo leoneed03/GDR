@@ -5,8 +5,6 @@ project(GDR)
 set(CMAKE_CXX_STANDARD 17)
 set(GCC_COVERAGE_COMPILE_FLAGS " -O3")
 
-#set(GCC_COVERAGE_COMPILE_FLAGS " -march=native")
-
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
@@ -64,12 +62,6 @@ if(${DEBUG_PRINT_PROGRESS})
   list(APPEND GDR_FLAGS "-DDEBUG_PRINT_PROGRESS")
 endif()
 
-#set(SIFTGPU_LIBS ${PROJECT_SOURCE_DIR}/siftgpu/bin/libsiftgpu.so)
-#set(SIFTGPU_LIBS /home/leo/Desktop/projects/linuxSift/SiftGPU_Linux/siftgpu/bin/libsiftgpu.so)
-#set(SIFTGPU_LIBS /home/leo/CLionProjects/colmap/lib/SiftGPU/cmake-build-debug/libsift_gpu.a)
-#set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${custom_Pangolin_BUILD_NAME}/lib/libgtsam.a)
-#set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${custom_Pangolin_BUILD_NAME}/include)
-
 set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}/lib/libgtsam.a)
 set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}/include)
 
@@ -86,7 +78,6 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationAverager.h
         include/readerTUM/PoseFullInfo.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationMeasurement.h
-        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.h
         include/parametrization/Vectors3d.h
         ${PROJECT_SOURCE_DIR}/include/parametrization/SO3.h
         ${PROJECT_SOURCE_DIR}/include/parametrization/Point3d.h
@@ -141,7 +132,6 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationMeasurement.cpp
         src/readerTUM/PoseFullInfo.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
-        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.cpp
         src/parametrization/Vectors3d.cpp
         src/computationHandlers/ThreadPool.cpp
         ${PROJECT_SOURCE_DIR}/src/parametrization/SO3.cpp
@@ -172,7 +162,7 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/ProjectableInfo.cpp
         ${PROJECT_SOURCE_DIR}/src/computationHandlers/RelativePosesComputationHandler.cpp
         ${PROJECT_SOURCE_DIR}/src/poseGraph/graphAlgorithms/GraphTraverser.cpp
-        ${PROJECT_SOURCE_DIR}/src/computationHandlers/AbsolutePosesComputationHandler.cpp src/bundleAdjustment/BundleAdjusterCreator.cpp include/bundleAdjustment/BundleAdjusterCreator.h src/relativePoseEstimators/EstimatorRelativePoseRobustCreator.cpp include/relativePoseEstimators/EstimatorRelativePoseRobustCreator.h include/relativePoseRefinement/RefinerRelativePoseCreator.cpp include/relativePoseRefinement/RefinerRelativePoseCreator.h src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.cpp include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h include/sparsePointCloud/CloudProjectorCreator.cpp include/sparsePointCloud/CloudProjectorCreator.h include/sparsePointCloud/PointClassifierCreator.cpp include/sparsePointCloud/PointClassifierCreator.h)
+        ${PROJECT_SOURCE_DIR}/src/computationHandlers/AbsolutePosesComputationHandler.cpp src/bundleAdjustment/BundleAdjusterCreator.cpp include/bundleAdjustment/BundleAdjusterCreator.h src/relativePoseEstimators/EstimatorRelativePoseRobustCreator.cpp include/relativePoseEstimators/EstimatorRelativePoseRobustCreator.h src/relativePoseRefinement/RefinerRelativePoseCreator.cpp include/relativePoseRefinement/RefinerRelativePoseCreator.h src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.cpp include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h src/sparsePointCloud/CloudProjectorCreator.cpp include/sparsePointCloud/CloudProjectorCreator.h src/sparsePointCloud/PointClassifierCreator.cpp include/sparsePointCloud/PointClassifierCreator.h)
 
 add_subdirectory(lib)
 
@@ -198,11 +188,7 @@ target_link_libraries(
   ${ICPCUDA_LIBS}
   ${Pangolin_LIBRARIES}
     ${CERES_LIBRARIES}
-#    ${PCL_LIBRARY_DIRS}
     ${PCL_LIBRARIES}
-#        Python3::Python
-#        Python3::NumPy
-#  ceres
 )
 
 
@@ -210,7 +196,6 @@ target_include_directories(
   GDR_LIB
   PUBLIC ${GTSAM_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/include
-#        ${PROJECT_SOURCE_DIR}/siftgpu/src/SiftGPU
         ${EIGEN3_INCLUDE_DIRS}
         ${Sophus_INCLUDE_DIRS}
         ${ICPCUDA_INCLUDE_DIRS}
@@ -223,8 +208,3 @@ target_include_directories(
 
 enable_testing()
 add_subdirectory(test)
-
-
-message("CUDA home directories ${CUDA_BIN_PATH} " )
-message("CUDA library directories ${CUDA_LIBRARIES} " )
-message("CUDA incl directory ${CUDA_INCLUDE_DIRS} " )

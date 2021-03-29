@@ -21,9 +21,7 @@ namespace gdr {
             DEFAULT
         };
 
-        static std::unique_ptr<IRotationRobustOptimizer> getRefiner(const std::vector<SO3> &orientations,
-                                                                    const std::vector<RotationMeasurement> &pairWiseRotations,
-                                                                    const RobustParameterType &robustParameterType);
+        static std::unique_ptr<IRotationRobustOptimizer> getRefiner(const RobustParameterType &robustParameterType);
     };
 }
 #endif

@@ -71,10 +71,11 @@ namespace gdr {
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        RotationRobustOptimizer(const std::vector<SO3>& orientations,
-                                const std::vector<RotationMeasurement>& pairWiseRotations);
+//        RotationRobustOptimizer();
 
-        std::vector<SO3> getOptimizedOrientation(int indexFixed = 0) const override;
+        std::vector<SO3> getOptimizedOrientation(const std::vector<SO3>& orientations,
+                                                 const std::vector<RotationMeasurement>& pairWiseRotations,
+                                                 int indexFixed = 0) override;
 
         bool getPrintToConsole() const;
 

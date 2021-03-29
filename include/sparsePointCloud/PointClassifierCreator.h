@@ -19,7 +19,7 @@ namespace gdr {
 
         PointClassifierCreator() = delete;
 
-        static std::unique_ptr<IPointClassifier> getRefiner(int numberOfPoses);
+        static std::unique_ptr<IPointClassifier> getPointClassifier();
     };
 }
 

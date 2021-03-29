@@ -25,18 +25,26 @@ namespace gdr {
 
     class BundleAdjuster : public IBundleAdjuster {
 
-        bool printProgressToCout = false;
+        bool printProgressToCout = true;
+
+        void setPosesAndPoints(const std::vector<Point3d> &points,
+                               const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                               const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo);
+
     public:
 
         bool getPrintProgressToCout() const;
 
         void setPrintProgressToCout(bool printProgress);
 
-        BundleAdjuster(const std::vector<Point3d> &points,
-                       const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
-                       const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo);
+//        BundleAdjuster(const std::vector<Point3d> &points,
+//                       const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+//                       const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo);
 
-        std::vector<SE3> optimizePointsAndPoses(int indexFixed = 0) override;
+        std::vector<SE3> optimizePointsAndPoses(const std::vector<Point3d> &points,
+                                                const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                                const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo,
+                                                int indexFixed = 0) override;
 
         std::vector<Point3d> getOptimizedPoints() const override;
 
@@ -204,7 +212,7 @@ namespace gdr {
                 {
                     T normResidual = ceres::sqrt(resX * resX + resY * resY);
                     normResidual = ILossFunction::evaluate<T>(normResidual / T(deviationDividerReproj),
-                                                          T(deviationEstimationNormalizedReproj));
+                                                              T(deviationEstimationNormalizedReproj));
                     residuals[0] = ceres::sqrt(normResidual);
                 }
 
@@ -212,7 +220,7 @@ namespace gdr {
                 {
                     T normResidual = ceres::abs(T(observedDepth) - computedDepth);
                     normResidual = ILossFunction::evaluate<T>(normResidual / T(deviationDividerDepth),
-                                                          T(deviationEstimationNormalizedDepth));
+                                                              T(deviationEstimationNormalizedDepth));
                     residuals[1] = ceres::sqrt(normResidual);
                 }
 

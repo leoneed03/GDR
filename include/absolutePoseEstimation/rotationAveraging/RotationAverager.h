@@ -17,7 +17,7 @@ namespace gdr {
     class RotationAverager {
 
     public:
-        //TODO: depend on  Rotation Measurement and add g2o file parser as separate class
+        //TODO: depend on  Rotation Measurement and add g2o file creator as separate class
         static std::vector<SO3>
         shanonAveraging(const std::string &pathToRelativeRotations,
                         const std::string &pathOut,

@@ -16,7 +16,7 @@ namespace gdr {
 
         FeatureDetectorMatcherCreator() = delete;
 
-        enum class SiftDetectorMatcher {SIFTGPU, SIFTCPU};
+        enum class SiftDetectorMatcher {SIFTGPU};
 
         static std::unique_ptr<IFeatureDetectorMatcher> getFeatureDetector(const SiftDetectorMatcher& siftDetectorMatcher);
     };

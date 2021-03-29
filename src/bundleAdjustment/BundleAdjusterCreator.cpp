@@ -9,10 +9,7 @@
 namespace gdr {
 
     std::unique_ptr<IBundleAdjuster>
-    BundleAdjusterCreator::getFeatureDetector(const std::vector<Point3d> &points,
-                                              const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
-                                              const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointinfo,
-                                              const BundleAdjusterCreator::BundleAdjustmentType &bundleAdjustmentType) {
+    BundleAdjusterCreator::getBundleAdjuster(const BundleAdjusterCreator::BundleAdjustmentType &bundleAdjustmentType) {
 
         if (bundleAdjustmentType == BundleAdjustmentType::USE_DEPTH_INFO) {
 
@@ -20,8 +17,6 @@ namespace gdr {
             std::cout << "only BA with depth info is implemented" << std::endl;
         }
 
-        return std::make_unique<BundleAdjuster>(points,
-                                                absolutePoses,
-                                                keyPointinfo);
+        return std::make_unique<BundleAdjuster>();
     }
 }

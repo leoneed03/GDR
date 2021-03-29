@@ -6,14 +6,19 @@
 #ifndef GDR_IBUNDLEADJUSTER_H
 #define GDR_IBUNDLEADJUSTER_H
 
-#include <parametrization/SE3.h>
+#include "parametrization/SE3.h"
 #include "parametrization/Point3d.h"
+#include "parametrization/cameraRGBD.h"
+#include "keyPoints/KeyPointInfo.h"
 
 namespace gdr {
 
     class IBundleAdjuster {
     public:
-        virtual std::vector<SE3> optimizePointsAndPoses(int fixedPoseNumber) = 0;
+        virtual std::vector<SE3> optimizePointsAndPoses(const std::vector<Point3d> &points,
+                                                        const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                                        const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo,
+                                                        int fixedPoseNumber = 0) = 0;
 
         virtual std::vector<Point3d> getOptimizedPoints() const = 0;
 

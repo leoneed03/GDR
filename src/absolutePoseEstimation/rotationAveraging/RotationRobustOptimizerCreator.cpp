@@ -10,8 +10,6 @@
 namespace gdr {
 
     std::unique_ptr<IRotationRobustOptimizer> RotationRobustOptimizerCreator::getRefiner(
-            const std::vector<SO3> &orientations,
-            const std::vector<RotationMeasurement> &pairwiseRelRotations,
             const RotationRobustOptimizerCreator::RobustParameterType &robustParameterType) {
 
         if (robustParameterType == RobustParameterType::DEFAULT) {
@@ -20,6 +18,6 @@ namespace gdr {
             std::cout << "only default ceres optimization is available at the moment" << std::endl;
         }
 
-        return std::make_unique<RotationRobustOptimizer>(orientations, pairwiseRelRotations);
+        return std::make_unique<RotationRobustOptimizer>();
     }
 }

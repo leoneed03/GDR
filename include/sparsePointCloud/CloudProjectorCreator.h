@@ -19,7 +19,7 @@ namespace gdr {
 
         CloudProjectorCreator() = delete;
 
-        static std::unique_ptr<ICloudProjector> getRefiner(const std::vector<ProjectableInfo> &cameraPoses);
+        static std::unique_ptr<ICloudProjector> getCloudProjector();
     };
 }
 

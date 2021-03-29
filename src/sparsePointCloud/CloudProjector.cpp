@@ -331,11 +331,6 @@ namespace gdr {
         return keyPointInfoByPose;
     }
 
-
-    CloudProjector::CloudProjector(const std::vector<ProjectableInfo> &cameraPoses) :
-            poses(cameraPoses),
-            keyPointInfoByPose(cameraPoses.size()) {}
-
     void CloudProjector::setPoses(const std::vector<SE3> &posesSE3Refined) {
         assert(poses.size() == posesSE3Refined.size());
 
@@ -347,6 +342,11 @@ namespace gdr {
     void CloudProjector::setPoints(const std::vector<Point3d> &pointsRefined) {
         assert(pointsRefined.size() == indexedPoints.size());
         indexedPoints = pointsRefined;
+    }
+
+    void CloudProjector::setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) {
+        poses = cameraPoses;
+        keyPointInfoByPose = std::vector<std::unordered_map<int, KeyPointInfo>>(cameraPoses.size());
     }
 
 }

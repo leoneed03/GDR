@@ -9,9 +9,9 @@
 namespace gdr {
 
     std::unique_ptr<IRefinerRelativePose> RefinerRelativePoseCreator::getRefiner(
-            const RefinerRelativePoseCreator::TypeICP &refinerType) {
+            const RefinerRelativePoseCreator::RefinerType &refinerType) {
 
-        if (refinerType == TypeICP::ICPCUDA) {
+        if (refinerType == RefinerType::ICPCUDA) {
 
         } else {
             std::cout << " only ICPCUDA version can be used right now" << std::endl;

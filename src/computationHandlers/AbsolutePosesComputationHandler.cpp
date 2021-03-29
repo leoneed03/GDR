@@ -38,7 +38,8 @@ namespace gdr {
                     ));
         }
 
-        cloudProjector = CloudProjectorCreator::getRefiner(posesForCloudProjector);
+        cloudProjector = CloudProjectorCreator::getCloudProjector();
+        cloudProjector->setCameraPoses(posesForCloudProjector);
 
         const auto &matchesBetweenPoints = connectedComponent->getInlierObservedPoints();
         for (const auto &vectorOfMatches: matchesBetweenPoints) {
@@ -130,11 +131,11 @@ namespace gdr {
         }
 
         std::unique_ptr<IRotationRobustOptimizer> rotationOptimizer =
-                RotationRobustOptimizerCreator::getRefiner(shonanOptimizedAbsolutePoses,
-                                                           relativeRotationsAfterICP,
-                                                           RotationRobustOptimizerCreator::RobustParameterType::DEFAULT);
+                RotationRobustOptimizerCreator::getRefiner(
+                        RotationRobustOptimizerCreator::RobustParameterType::DEFAULT);
 
-        std::vector<SO3> optimizedPosesRobust = rotationOptimizer->getOptimizedOrientation();
+        std::vector<SO3> optimizedPosesRobust = rotationOptimizer->getOptimizedOrientation(shonanOptimizedAbsolutePoses,
+                                                                                           relativeRotationsAfterICP);
 
         assert(getNumberOfPoses() == optimizedPosesRobust.size());
 
@@ -218,12 +219,12 @@ namespace gdr {
         }
 
         std::unique_ptr<IBundleAdjuster> bundleAdjuster =
-                BundleAdjusterCreator::getFeatureDetector(observedPoints,
-                                                          posesAndCameraParams,
-                                                          cloudProjector->getKeyPointInfoByPoseNumberAndPointClass(),
-                                                          BundleAdjusterCreator::BundleAdjustmentType::USE_DEPTH_INFO);
+                BundleAdjusterCreator::getBundleAdjuster(BundleAdjusterCreator::BundleAdjustmentType::USE_DEPTH_INFO);
 
-        std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPoses(indexFixedToZero);
+        std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPoses(observedPoints,
+                                                                                 posesAndCameraParams,
+                                                                                 cloudProjector->getKeyPointInfoByPoseNumberAndPointClass(),
+                                                                                 indexFixedToZero);
 
 
         assert(posesOptimized.size() == getNumberOfPoses());
@@ -307,7 +308,8 @@ namespace gdr {
             std::unique_ptr<ConnectedComponentPoseGraph> &connectedComponentPoseGraph) {
 
         connectedComponent = std::move(connectedComponentPoseGraph);
-        pointMatcher = PointClassifierCreator::getRefiner(getNumberOfPoses());
+        pointMatcher = PointClassifierCreator::getPointClassifier();
+        pointMatcher->setNumberOfPoses(getNumberOfPoses());
     }
 
     std::set<int> AbsolutePosesComputationHandler::initialIndices() const {
