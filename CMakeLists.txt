@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.10.0)
 
 project(GDR)
 #enable_language(CUDA)
@@ -18,12 +18,9 @@ find_package(METIS REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
-#find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
-
-#find_package(Python3 REQUIRED COMPONENTS Development Interpreter NumPy)
 find_package(Ceres REQUIRED)
 
 find_package(
@@ -157,22 +154,6 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/InlierCounter.cpp
         ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/ParamsRANSAC.cpp src/parametrization/MatchableInfo.cpp src/statistics/RobustEstimators.cpp include/statistics/RobustEstimators.h src/readerTUM/ReaderTum.cpp include/readerTUM/ReaderTum.h src/keyPointDetectionAndMatching/FeatureDetector.cpp include/keyPointDetectionAndMatching/FeatureDetector.h src/keyPointDetectionAndMatching/KeyPointsAndDescriptors.cpp include/keyPointDetectionAndMatching/KeyPointsAndDescriptors.h src/keyPointDetectionAndMatching/Match.cpp include/keyPointDetectionAndMatching/Match.h src/sparsePointCloud/ProjectableInfo.cpp include/sparsePointCloud/ProjectableInfo.h include/computationHandlers/RelativePosesComputationHandler.h src/computationHandlers/RelativePosesComputationHandler.cpp src/poseGraph/graphAlgorithms/GraphTraverser.cpp include/poseGraph/graphAlgorithms/GraphTraverser.h src/computationHandlers/AbsolutePosesComputationHandler.cpp include/computationHandlers/AbsolutePosesComputationHandler.h)
 
-add_executable(readerVisionTumICP ${ICPCUDA_PROJECT_PATH}/ICP.cpp)
-
-add_dependencies(readerVisionTumICP icpCuda)
-
-target_link_libraries(readerVisionTumICP
-    ${ICPCUDA_LIBS}
-    ${Pangolin_LIBRARIES}
-    ${CUDA_LIBRARIES})
-target_include_directories(
-    readerVisionTumICP
-    PUBLIC
-    ${EIGEN3_INCLUDE_DIRS}
-    ${Sophus_INCLUDE_DIRS}
-    ${ICPCUDA_INCLUDE_DIRS}
-    ${Pangolin_INCLUDE_DIRS}
-    ${CUDA_INCLUDE_DIRS})
 add_subdirectory(lib)
 
 

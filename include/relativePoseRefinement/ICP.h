@@ -15,8 +15,8 @@ namespace gdr {
     class ProcessorICP : public IRefinerRelativePose {
 
     public:
-        bool refineRelativePose(const MatchableInfo &poseToBeTransformed,
-                                const MatchableInfo &poseDestination,
+        bool refineRelativePose(const MatchableInfo &poseToBeTransformedICP,
+                                const MatchableInfo &poseDestinationICPModel,
                                 SE3 &initTransformationSE3) override;
     };
 }

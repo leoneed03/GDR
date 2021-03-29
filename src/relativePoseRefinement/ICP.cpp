@@ -34,20 +34,31 @@ namespace gdr {
         return 0;
     }
 
-    bool ProcessorICP::refineRelativePose(const MatchableInfo &poseToBeTransformed,
-                                          const MatchableInfo &poseDestination,
+
+    bool ProcessorICP::refineRelativePose(const MatchableInfo &poseToBeTransformedICP,
+                                          const MatchableInfo &poseDestinationICPModel,
                                           SE3 &initTransformationSE3) {
 
-        int height = poseToBeTransformed.getImagePixelHeight();
-        int width = poseToBeTransformed.getImagePixelWidth();
+        const CameraRGBD &cameraRgbdToBeTransformed = poseToBeTransformedICP.getCameraRGB();
+        CameraIntrinsics cameraIntrinsicsToBeTransformed(cameraIntrinsicsToBeTransformed.getFx(),
+                                                         cameraIntrinsicsToBeTransformed.getCx(),
+                                                         cameraIntrinsicsToBeTransformed.getFy(),
+                                                         cameraIntrinsicsToBeTransformed.getCy());
 
-        assert(height == poseDestination.getImagePixelHeight());
-        assert(width == poseDestination.getImagePixelWidth());
+        const CameraRGBD &cameraRgbdDestination = poseDestinationICPModel.getCameraRGB();
+        CameraIntrinsics cameraIntrinsicsDestination(cameraIntrinsicsDestination.getFx(),
+                                                     cameraIntrinsicsDestination.getCx(),
+                                                     cameraIntrinsicsDestination.getFy(),
+                                                     cameraIntrinsicsDestination.getCy());
 
-        const auto &cameraRgbdOfToBeTransformed = poseToBeTransformed.getCameraRGB();
-        ICPOdometry icpOdom(width, height,
-                            cameraRgbdOfToBeTransformed.getCx(), cameraRgbdOfToBeTransformed.getCy(),
-                            cameraRgbdOfToBeTransformed.getFx(), cameraRgbdOfToBeTransformed.getFy());
+        int height = poseToBeTransformedICP.getImagePixelHeight();
+        int width = poseToBeTransformedICP.getImagePixelWidth();
+
+        assert(height == poseDestinationICPModel.getImagePixelHeight());
+        assert(width == poseDestinationICPModel.getImagePixelWidth());
+
+        const auto &cameraRgbdOfToBeTransformed = poseToBeTransformedICP.getCameraRGB();
+        ICPOdometry icpOdom(width, height);
 
         cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, 0);
@@ -67,15 +78,22 @@ namespace gdr {
                                                       secondData.pitch,
                                                       (unsigned short *) secondData.ptr);
 
-        loadDepth(imageICPModel, poseDestination.getPathImageD(), width, height);
-        loadDepth(imageICP, poseToBeTransformed.getPathImageD(), width, height);
+        loadDepth(imageICPModel, poseDestinationICPModel.getPathImageD(), width, height);
+        loadDepth(imageICP, poseToBeTransformedICP.getPathImageD(), width, height);
 
-        icpOdom.initICPModel(imageICPModel.ptr);
-        icpOdom.initICP(imageICP.ptr);
+        icpOdom.initICPModel(imageICPModel.ptr, cameraIntrinsicsDestination);
+        icpOdom.initICP(imageICP.ptr, cameraIntrinsicsToBeTransformed);
 
         Sophus::SE3d relativeSE3_Rt = initTransformationSE3.getSE3();
 
-        icpOdom.getIncrementalTransformation(relativeSE3_Rt, threads, blocks);
+        int iterationsLevel0 = 10;
+        int iterationsLevel1 = 5;
+        int iterationsLevel2 = 4;
+
+        icpOdom.getIncrementalTransformation(relativeSE3_Rt,
+                                             true,
+                                             threads, blocks,
+                                             iterationsLevel0, iterationsLevel1, iterationsLevel2);
 
         initTransformationSE3 = SE3(relativeSE3_Rt);
 
