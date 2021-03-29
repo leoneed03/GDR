@@ -35,8 +35,8 @@ namespace gdr {
     }
 
     bool ProcessorICP::refineRelativePose(const MatchableInfo &poseToBeTransformed,
-                                         const MatchableInfo &poseDestination,
-                                         SE3 &initTransformationSE3) {
+                                          const MatchableInfo &poseDestination,
+                                          SE3 &initTransformationSE3) {
 
         int height = poseToBeTransformed.getImagePixelHeight();
         int width = poseToBeTransformed.getImagePixelWidth();
