@@ -16,6 +16,7 @@ namespace gdr {
     struct poseInfo {
         const int elementsRaw = 8;
         double timestamp;
+        //TODO: use SE3 class
         Eigen::Quaterniond orientationQuat;
         Eigen::Vector3d coordinated3d;
 

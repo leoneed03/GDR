@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "Vectors3d.h"
+#include "parametrization/Vectors3d.h"
 
 TEST(testVectors3d, simpleTestConstructorId) {
 

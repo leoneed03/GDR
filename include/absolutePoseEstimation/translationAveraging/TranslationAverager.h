@@ -14,7 +14,7 @@
 #include <map>
 
 #include "TranslationMeasurement.h"
-#include "Vectors3d.h"
+#include "parametrization/Vectors3d.h"
 
 namespace gdr {
     

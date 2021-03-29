@@ -12,7 +12,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <poseInfo.h>
+#include <readerTUM/poseInfo.h>
 
 namespace gdr {
     class ImageAssociator {

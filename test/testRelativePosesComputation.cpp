@@ -8,9 +8,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "poseEstimation.h"
 #include "poseGraph/CorrespondenceGraph.h"
-#include "poseInfo.h"
+#include "readerTUM/poseInfo.h"
 #include "readerTUM/ReaderTum.h"
 
 TEST(testRelativePosesComputation, PlantPASSED) {

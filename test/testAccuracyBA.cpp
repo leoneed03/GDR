@@ -10,11 +10,10 @@
 #include <vector>
 #include <thread>
 #include <chrono>
-#include "poseEstimation.h"
 #include "readerTUM/ReaderTum.h"
 #include "poseGraph/ConnectedComponent.h"
 #include "computationHandlers/RelativePosesComputationHandler.h"
-#include "SmoothPointCloud.h"
+#include "visualization/3D/SmoothPointCloud.h"
 
 void testReconstruction(
         const std::string &shortDatasetName,

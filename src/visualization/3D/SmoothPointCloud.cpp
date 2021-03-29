@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "SmoothPointCloud.h"
+#include "visualization/3D/SmoothPointCloud.h"
 
 
 #include <pcl/visualization/cloud_viewer.h>

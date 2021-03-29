@@ -74,85 +74,106 @@ set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}/lib/l
 set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}/include)
 
 set(GDR_HEADER_FILES
-        include/directoryTraversing/DirectoryReader.h
-        include/poseGraph/VertexCG.h
-        include/poseGraph/CorrespondenceGraph.h
-        include/parametrization/RelativeSE3.h
-        include/parametrization/cameraRGBD.h
-        include/keyPointDetectionAndMatching/SiftModuleGPU.h
-        include/absolutePoseEstimation/rotationAveraging/RotationAverager.h
-        ${PROJECT_SOURCE_DIR}/include/poseEstimation.h
-    ${PROJECT_SOURCE_DIR}/include/printer.h
-        include/relativePoseRefinement/ICP.h
-        include/absolutePoseEstimation/translationAveraging/TranslationMeasurement.h
-        include/absolutePoseEstimation/translationAveraging/TranslationAverager.h
-    ${PROJECT_SOURCE_DIR}/include/poseInfo.h
-        include/absolutePoseEstimation/rotationAveraging/RotationMeasurement.h
-        include/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.h
-    ${PROJECT_SOURCE_DIR}/include/Vectors3d.h
-        include/parametrization/SO3.h
-        include/parametrization/Point3d.h
-        include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h
+        ${PROJECT_SOURCE_DIR}/include/directoryTraversing/DirectoryReader.h
+        ${PROJECT_SOURCE_DIR}/include/poseGraph/VertexCG.h
+        ${PROJECT_SOURCE_DIR}/include/poseGraph/CorrespondenceGraph.h
+        ${PROJECT_SOURCE_DIR}/include/parametrization/RelativeSE3.h
+        ${PROJECT_SOURCE_DIR}/include/parametrization/cameraRGBD.h
+        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/SiftModuleGPU.h
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationAverager.h
+        ${PROJECT_SOURCE_DIR}/include/printer.h
+        ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/ICP.h
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationMeasurement.h
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationAverager.h
+        include/readerTUM/poseInfo.h
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationMeasurement.h
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.h
+        include/parametrization/Vectors3d.h
+        ${PROJECT_SOURCE_DIR}/include/parametrization/SO3.h
+        ${PROJECT_SOURCE_DIR}/include/parametrization/Point3d.h
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h
     ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjector.h
-        include/keyPoints/KeyPointInfo.h
-        include/sparsePointCloud/PointClassifier.h
-        include/visualization/2D/ImageDrawer.h
-        include/bundleAdjustment/BundleAdjuster.h
-    ${PROJECT_SOURCE_DIR}/include/SmoothPointCloud.h
-    ${PROJECT_SOURCE_DIR}/include/ThreadPool.h
-        include/keyPoints/KeyPointsDepthDescriptor.h
-        include/poseGraph/ConnectedComponent.h
-        include/readerTUM/ImagesAssociator.h
-        include/optimization/lossFunctions/LossHuber.h
-        ${PROJECT_SOURCE_DIR}/include/gnuplot_interface.h
+        ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointInfo.h
+        ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/PointClassifier.h
+        ${PROJECT_SOURCE_DIR}/include/visualization/2D/ImageDrawer.h
+        ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleAdjuster.h
+        include/visualization/3D/SmoothPointCloud.h
+        include/computationHandlers/ThreadPool.h
+        ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointsDepthDescriptor.h
+        ${PROJECT_SOURCE_DIR}/include/poseGraph/ConnectedComponent.h
+        ${PROJECT_SOURCE_DIR}/include/readerTUM/ImagesAssociator.h
+        ${PROJECT_SOURCE_DIR}/include/optimization/lossFunctions/LossHuber.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/Estimator3Points.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/InlierCounter.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/IEstimatorRelativePoseRobust.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/ParamsRANSAC.h
-        ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/IRefinerRelativePose.h include/parametrization/MatchableInfo.h include/bundleAdjustment/IBundleAdjuster.h include/sparsePointCloud/IPointClassifier.h include/sparsePointCloud/ICloudProjector.h)
-
-set(GDR_SOURCE_FILES
-        src/directoryTraversing/DirectoryReader.cpp
-        src/poseGraph/VertexCG.cpp
-        src/poseGraph/CorrespondenceGraph.cpp
-        src/parametrization/RelativeSE3.cpp
-        src/parametrization/cameraRGBD.cpp
-        src/keyPointDetectionAndMatching/SiftModuleGPU.cpp
-        src/absolutePoseEstimation/rotationAveraging/RotationAverager.cpp
-        ${PROJECT_SOURCE_DIR}/src/poseEstimation.cpp
-        src/relativePoseRefinement/ICP.cpp
-        src/absolutePoseEstimation/translationAveraging/TranslationAverager.cpp
-        src/absolutePoseEstimation/translationAveraging/TranslationMeasurement.cpp
-    ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
-        src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
-        src/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.cpp
-    ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp
-    ${PROJECT_SOURCE_DIR}/src/ThreadPool.cpp
-        src/parametrization/SO3.cpp
-        src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.cpp
-        src/parametrization/Point3d.cpp
-        src/sparsePointCloud/CloudProjector.cpp
-        src/keyPoints/KeyPointInfo.cpp
-        src/sparsePointCloud/PointClassifier.cpp
-        src/visualization/2D/ImageDrawer.cpp
-        src/bundleAdjustment/BundleAdjuster.cpp
-    ${PROJECT_SOURCE_DIR}/src/SmoothPointCloud.cpp
-        src/keyPoints/KeyPointsDepthDescriptor.cpp
-        src/poseGraph/ConnectedComponent.cpp
-        src/readerTUM/ImagesAssociator.cpp
-        src/keyPoints/KeyPoint2DAndDepth.cpp
-        include/keyPoints/KeyPoint2DAndDepth.h
-        include/optimization/lossFunctions/LossFunctions.h
-        include/keyPointDetectionAndMatching/ISiftModule.h
-        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/Estimator3Points.cpp
-        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/EstimatorNPoints.cpp
+        ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/IRefinerRelativePose.h
+        ${PROJECT_SOURCE_DIR}/include/parametrization/MatchableInfo.h
+        ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/IBundleAdjuster.h
+        ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/IPointClassifier.h
+        ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/ICloudProjector.h
+        ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPoint2DAndDepth.h
+        ${PROJECT_SOURCE_DIR}/include/optimization/lossFunctions/LossFunctions.h
+        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/ISiftModule.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorNPoints.h
-        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/EstimatorRobustLoRANSAC.cpp
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorRobustLoRANSAC.h
         ${PROJECT_SOURCE_DIR}/include/parametrization/SE3.h
+        ${PROJECT_SOURCE_DIR}/include/statistics/RobustEstimators.h
+        ${PROJECT_SOURCE_DIR}/include/readerTUM/ReaderTum.h
+        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/FeatureDetector.h
+        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/KeyPointsAndDescriptors.h
+        ${PROJECT_SOURCE_DIR}/include/computationHandlers/RelativePosesComputationHandler.h
+        ${PROJECT_SOURCE_DIR}/include/poseGraph/graphAlgorithms/GraphTraverser.h
+        ${PROJECT_SOURCE_DIR}/include/computationHandlers/AbsolutePosesComputationHandler.h
+        ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/Match.h
+        ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/ProjectableInfo.h
+        )
+
+set(GDR_SOURCE_FILES
+        ${PROJECT_SOURCE_DIR}/src/directoryTraversing/DirectoryReader.cpp
+        ${PROJECT_SOURCE_DIR}/src/poseGraph/VertexCG.cpp
+        ${PROJECT_SOURCE_DIR}/src/poseGraph/CorrespondenceGraph.cpp
+        ${PROJECT_SOURCE_DIR}/src/parametrization/RelativeSE3.cpp
+        ${PROJECT_SOURCE_DIR}/src/parametrization/cameraRGBD.cpp
+        ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/SiftModuleGPU.cpp
+        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationAverager.cpp
+        ${PROJECT_SOURCE_DIR}/src/relativePoseRefinement/ICP.cpp
+        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationAverager.cpp
+        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationMeasurement.cpp
+        src/readerTUM/poseInfo.cpp
+        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
+        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.cpp
+        src/parametrization/Vectors3d.cpp
+        src/computationHandlers/ThreadPool.cpp
+        ${PROJECT_SOURCE_DIR}/src/parametrization/SO3.cpp
+        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.cpp
+        ${PROJECT_SOURCE_DIR}/src/parametrization/Point3d.cpp
+        ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/CloudProjector.cpp
+        ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointInfo.cpp
+        ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifier.cpp
+        ${PROJECT_SOURCE_DIR}/src/visualization/2D/ImageDrawer.cpp
+        ${PROJECT_SOURCE_DIR}/src/bundleAdjustment/BundleAdjuster.cpp
+        src/visualization/3D/SmoothPointCloud.cpp
+        ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointsDepthDescriptor.cpp
+        ${PROJECT_SOURCE_DIR}/src/poseGraph/ConnectedComponent.cpp
+        ${PROJECT_SOURCE_DIR}/src/readerTUM/ImagesAssociator.cpp
+        ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPoint2DAndDepth.cpp
+        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/Estimator3Points.cpp
+        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/EstimatorNPoints.cpp
+        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/EstimatorRobustLoRANSAC.cpp
         ${PROJECT_SOURCE_DIR}/src/parametrization/SE3.cpp
         ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/InlierCounter.cpp
-        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/ParamsRANSAC.cpp src/parametrization/MatchableInfo.cpp src/statistics/RobustEstimators.cpp include/statistics/RobustEstimators.h src/readerTUM/ReaderTum.cpp include/readerTUM/ReaderTum.h src/keyPointDetectionAndMatching/FeatureDetector.cpp include/keyPointDetectionAndMatching/FeatureDetector.h src/keyPointDetectionAndMatching/KeyPointsAndDescriptors.cpp include/keyPointDetectionAndMatching/KeyPointsAndDescriptors.h src/keyPointDetectionAndMatching/Match.cpp include/keyPointDetectionAndMatching/Match.h src/sparsePointCloud/ProjectableInfo.cpp include/sparsePointCloud/ProjectableInfo.h include/computationHandlers/RelativePosesComputationHandler.h src/computationHandlers/RelativePosesComputationHandler.cpp src/poseGraph/graphAlgorithms/GraphTraverser.cpp include/poseGraph/graphAlgorithms/GraphTraverser.h src/computationHandlers/AbsolutePosesComputationHandler.cpp include/computationHandlers/AbsolutePosesComputationHandler.h)
+        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/ParamsRANSAC.cpp
+        ${PROJECT_SOURCE_DIR}/src/parametrization/MatchableInfo.cpp
+        ${PROJECT_SOURCE_DIR}/src/statistics/RobustEstimators.cpp
+        ${PROJECT_SOURCE_DIR}/src/readerTUM/ReaderTum.cpp
+        ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/FeatureDetector.cpp
+        ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/KeyPointsAndDescriptors.cpp
+        ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/Match.cpp
+        ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/ProjectableInfo.cpp
+        ${PROJECT_SOURCE_DIR}/src/computationHandlers/RelativePosesComputationHandler.cpp
+        ${PROJECT_SOURCE_DIR}/src/poseGraph/graphAlgorithms/GraphTraverser.cpp
+        ${PROJECT_SOURCE_DIR}/src/computationHandlers/AbsolutePosesComputationHandler.cpp)
 
 add_subdirectory(lib)
 
@@ -161,7 +182,6 @@ add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
 add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
 
-#add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY)
 target_compile_definitions(GDR_LIB PUBLIC ${GDR_FLAGS} PRIVATE CERES_USE_CXX11_THREADS=1
     )
 

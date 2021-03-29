@@ -32,7 +32,8 @@ namespace gdr {
         siftModule = FeatureDetector::getFeatureDetector(FeatureDetector::SiftDetectorMatcher::SIFTGPU);
         relativePoseEstimatorRobust = std::make_unique<EstimatorRobustLoRANSAC>();
         relativePoseRefiner = std::make_unique<ProcessorICP>();
-        threadPool = std::make_unique<ThreadPool>(numberOfThreadsCPU);
+        //TODO: use multiple threads safely
+        threadPool = std::make_unique<ThreadPool>(1);
     }
 
     const CorrespondenceGraph &RelativePosesComputationHandler::getCorrespondenceGraph() const {

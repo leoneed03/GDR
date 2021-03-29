@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "Vectors3d.h"
+#include "parametrization/Vectors3d.h"
 #include <iostream>
 
 namespace gdr {

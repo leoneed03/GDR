@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
-#include "Vectors3d.h"
+#include "parametrization/Vectors3d.h"
 
 #include <sophus/se3.hpp>
 
