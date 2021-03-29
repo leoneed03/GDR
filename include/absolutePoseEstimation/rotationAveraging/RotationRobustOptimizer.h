@@ -3,15 +3,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_ROTATIONOPTIMIZATIONROBUST_H
-#define GDR_ROTATIONOPTIMIZATIONROBUST_H
+#ifndef GDR_ROTATIONROBUSTOPTIMIZER_H
+#define GDR_ROTATIONROBUSTOPTIMIZER_H
 
 #include <map>
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
 #include "parametrization/SO3.h"
-#include "rotationMeasurement.h"
+#include "RotationMeasurement.h"
 
 namespace gdr {
 
@@ -66,17 +66,18 @@ namespace gdr {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 
-    class RotationOptimizer {
+    class RotationRobustOptimizer {
 
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         std::vector<SO3> orientations;
-        std::vector<rotationMeasurement> relativeRotations;
+        std::vector<RotationMeasurement> relativeRotations;
 
     public:
 
-        RotationOptimizer(const std::vector<SO3>& orientations, const std::vector<rotationMeasurement>& pairWiseRotations);
+        RotationRobustOptimizer(const std::vector<SO3>& orientations, const std::vector<RotationMeasurement>& pairWiseRotations);
 
-        std::vector<SO3> getOptimizedOrientation(int indexFixed = 0) const;
+        std::vector<SO3> getOptimizedOrientation(int indexFixed = 0,
+                                                 bool printProgressToConsole = false) const;
     };
 }
 

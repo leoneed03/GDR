@@ -4,11 +4,11 @@
 //
 
 #include <boost/filesystem.hpp>
-#include "absolutePoseEstimation/rotationAveraging/rotationAveraging.h"
-#include "absolutePoseEstimation/rotationAveraging/RotationOptimizationRobust.h"
-#include "absolutePoseEstimation/translationAveraging/translationMeasurement.h"
-#include "absolutePoseEstimation/rotationAveraging/rotationMeasurement.h"
-#include "absolutePoseEstimation/translationAveraging/translationAveraging.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
+#include "absolutePoseEstimation/translationAveraging/TranslationMeasurement.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
+#include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 
 #include "bundleAdjustment/IBundleAdjuster.h"
 #include "bundleAdjustment/BundleAdjuster.h"
@@ -90,7 +90,7 @@ namespace gdr {
 
         connectedComponent->printRelativeRotationsToFile(connectedComponent->getPathRelativePoseFile());
 
-        std::vector<SO3> absoluteRotations = rotationAverager::shanonAveraging(
+        std::vector<SO3> absoluteRotations = RotationAverager::shanonAveraging(
                 connectedComponent->getPathRelativePoseFile(),
                 connectedComponent->getPathAbsoluteRotationsFile());
 
@@ -101,7 +101,7 @@ namespace gdr {
         return absoluteRotations;
     }
 
-    std::vector<SO3> AbsolutePosesComputationHandler::optimizeRotationsRobust() {
+    std::vector<SO3> AbsolutePosesComputationHandler::performRotationRobustOptimization() {
 
 
         std::vector<SO3> shonanOptimizedAbsolutePoses;
@@ -113,7 +113,7 @@ namespace gdr {
         assert(shonanOptimizedAbsolutePoses.size() == getNumberOfPoses());
 
 
-        std::vector<rotationMeasurement> relativeRotationsAfterICP;
+        std::vector<RotationMeasurement> relativeRotationsAfterICP;
 
         for (int indexFrom = 0; indexFrom < getNumberOfPoses(); ++indexFrom) {
             for (const auto &knownRelativePose: connectedComponent->getConnectionsFromVertex(indexFrom)) {
@@ -121,14 +121,14 @@ namespace gdr {
 
                 if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
                     relativeRotationsAfterICP.emplace_back(
-                            rotationMeasurement(knownRelativePose.getRelativeRotation(),
+                            RotationMeasurement(knownRelativePose.getRelativeRotation(),
                                                 knownRelativePose.getIndexFrom(),
                                                 knownRelativePose.getIndexTo()));
                 }
             }
         }
 
-        RotationOptimizer rotationOptimizer(shonanOptimizedAbsolutePoses, relativeRotationsAfterICP);
+        RotationRobustOptimizer rotationOptimizer(shonanOptimizedAbsolutePoses, relativeRotationsAfterICP);
         std::vector<SO3> optimizedPosesRobust = rotationOptimizer.getOptimizedOrientation();
 
         assert(getNumberOfPoses() == optimizedPosesRobust.size());
@@ -141,9 +141,9 @@ namespace gdr {
 
     }
 
-    std::vector<Eigen::Vector3d> AbsolutePosesComputationHandler::optimizeAbsoluteTranslations(int indexFixedToZero) {
+    std::vector<Eigen::Vector3d> AbsolutePosesComputationHandler::performTranslationAveraging(int indexFixedToZero) {
 
-        std::vector<translationMeasurement> relativeTranslations;
+        std::vector<TranslationMeasurement> relativeTranslations;
         std::vector<SE3> absolutePoses = connectedComponent->getPoses();
 
         for (int indexFrom = 0; indexFrom < getNumberOfPoses(); ++indexFrom) {
@@ -152,14 +152,14 @@ namespace gdr {
 
                 if (knownRelativePose.getIndexFrom() < knownRelativePose.getIndexTo()) {
                     relativeTranslations.emplace_back(
-                            translationMeasurement(knownRelativePose.getRelativeTranslation(),
+                            TranslationMeasurement(knownRelativePose.getRelativeTranslation(),
                                                    knownRelativePose.getIndexFrom(),
                                                    knownRelativePose.getIndexTo()));
                 }
             }
         }
 
-        std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = translationAverager::recoverTranslations(
+        std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = TranslationAverager::recoverTranslations(
                 relativeTranslations,
                 absolutePoses).toVectorOfVectors();
 
@@ -167,7 +167,7 @@ namespace gdr {
 
         // Now run IRLS with PCG answer as init solution
 
-        optimizedAbsoluteTranslationsIRLS = translationAverager::recoverTranslationsIRLS(
+        optimizedAbsoluteTranslationsIRLS = TranslationAverager::recoverTranslationsIRLS(
                 relativeTranslations,
                 absolutePoses,
                 optimizedAbsoluteTranslationsIRLS,
@@ -191,31 +191,33 @@ namespace gdr {
     std::vector<SE3> AbsolutePosesComputationHandler::performBundleAdjustmentUsingDepth(int indexFixedToZero) {
         int maxNumberOfPointsToShow = -1;
         computePointClasses();
-        std::vector<Point3d> observedPoints = cloudProjector->setComputedPointsGlobalCoordinates();
-        std::cout << "ready " << std::endl;
-
+        std::vector<Point3d> observedPoints = cloudProjector->computedPointsGlobalCoordinates();
         std::vector<std::pair<SE3, CameraRGBD>> posesAndCameraParams;
 
         assert(!connectedComponent->getVertices().empty());
         for (const auto &vertexPose: connectedComponent->getVertices()) {
             posesAndCameraParams.emplace_back(std::make_pair(vertexPose.getAbsolutePoseSE3(), vertexPose.getCamera()));
         }
-        std::cout << "BA depth create BundleAdjuster" << std::endl;
 
         std::vector<double> errorsBefore;
-        auto shownResidualsBefore = cloudProjector->showPointsReprojectionError(observedPoints,
-                                                                                "before",
-                                                                                errorsBefore,
-                                                                                connectedComponent->getVertex(
-                                                                                        0).getCamera(),
-                                                                                maxNumberOfPointsToShow);
+        std::vector<cv::Mat> shownResidualsBefore;
+
+
+        if (saveDebugImages) {
+            shownResidualsBefore = cloudProjector->showPointsReprojectionError(observedPoints,
+                                                                               "before",
+                                                                               errorsBefore,
+                                                                               connectedComponent->getVertex(
+                                                                                       0).getCamera(),
+                                                                               maxNumberOfPointsToShow);
+        }
 
         std::unique_ptr<IBundleAdjuster> bundleAdjuster =
                 std::make_unique<BundleAdjuster>(observedPoints,
                                                  posesAndCameraParams,
                                                  cloudProjector->getKeyPointInfoByPoseNumberAndPointClass());
 
-        std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPosesUsingDepthInfo(indexFixedToZero);
+        std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPoses(indexFixedToZero);
 
 
         assert(posesOptimized.size() == getNumberOfPoses());
@@ -229,64 +231,68 @@ namespace gdr {
         cloudProjector->setPoses(connectedComponent->getPoses());
         cloudProjector->setPoints(bundleAdjuster->getOptimizedPoints());
 
-        auto shownResidualsAfter = cloudProjector->showPointsReprojectionError(observedPoints,
-                                                                               "after",
-                                                                               errorsAfter,
-                                                                               connectedComponent->getVertex(
-                                                                                       0).getCamera(),
-                                                                               maxNumberOfPointsToShow);
+        if (saveDebugImages) {
+            auto shownResidualsAfter = cloudProjector->showPointsReprojectionError(observedPoints,
+                                                                                   "after",
+                                                                                   errorsAfter,
+                                                                                   connectedComponent->getVertex(
+                                                                                           0).getCamera(),
+                                                                                   maxNumberOfPointsToShow);
 
-        assert(shownResidualsAfter.size() == shownResidualsBefore.size());
+            assert(shownResidualsAfter.size() == shownResidualsBefore.size());
 
 
-        std::string pathToRGBDirectoryToSave = "shownResiduals";
-        boost::filesystem::path pathToRemove(pathToRGBDirectoryToSave);
+            std::string pathToRGBDirectoryToSave = "shownResiduals";
+            boost::filesystem::path pathToRemove(pathToRGBDirectoryToSave);
 
-        std::cout << "path [" << pathToRemove.string() << "]" << " exists? Answer: "
-                  << boost::filesystem::exists(pathToRemove) << std::endl;
-        boost::filesystem::remove_all(pathToRemove);
-        std::cout << "removed from " << pathToRemove.string() << std::endl;
-        boost::filesystem::create_directories(pathToRemove);
+            std::cout << "path [" << pathToRemove.string() << "]" << " exists? Answer: "
+                      << boost::filesystem::exists(pathToRemove) << std::endl;
+            boost::filesystem::remove_all(pathToRemove);
+            std::cout << "removed from " << pathToRemove.string() << std::endl;
+            boost::filesystem::create_directories(pathToRemove);
 
-        int counterMedianErrorGotWorse = 0;
-        int counterMedianErrorGotBetter = 0;
-        int counterSumMedianError = 0;
 
-        for (int i = 0; i < shownResidualsAfter.size(); ++i) {
+            int counterMedianErrorGotWorse = 0;
+            int counterMedianErrorGotBetter = 0;
+            int counterSumMedianError = 0;
 
-            boost::filesystem::path pathToSave = pathToRemove;
-            bool medianErrorGotLessAfterBA = (errorsBefore[i] > errorsAfter[i]);
+            for (int i = 0; i < shownResidualsAfter.size(); ++i) {
 
-            if (medianErrorGotLessAfterBA) {
-                ++counterMedianErrorGotBetter;
-            } else {
-                ++counterMedianErrorGotWorse;
+                boost::filesystem::path pathToSave = pathToRemove;
+                bool medianErrorGotLessAfterBA = (errorsBefore[i] > errorsAfter[i]);
+
+                if (medianErrorGotLessAfterBA) {
+                    ++counterMedianErrorGotBetter;
+                } else {
+                    ++counterMedianErrorGotWorse;
+                }
+                ++counterSumMedianError;
+
+                std::string betterOrWorseResults = medianErrorGotLessAfterBA ? " " : " [WORSE] ";
+                std::string nameImageReprojErrors =
+                        std::to_string(i) + betterOrWorseResults + " quantils: " + std::to_string(errorsBefore[i]) +
+                        " -> " + std::to_string(errorsAfter[i]) + ".png";
+                pathToSave.append(nameImageReprojErrors);
+                cv::Mat stitchedImageResiduals;
+                std::vector<cv::DMatch> matches1to2;
+                std::vector<cv::KeyPoint> keyPointsToShowFirst;
+                std::vector<cv::KeyPoint> keyPointsToShowSecond;
+                cv::Mat stitchedImage;
+                cv::drawMatches(shownResidualsBefore[i], {},
+                                shownResidualsAfter[i], {},
+                                matches1to2,
+                                stitchedImage);
+                cv::imwrite(pathToSave.string(), stitchedImage);
             }
-            ++counterSumMedianError;
 
-            std::string betterOrWorseResults = medianErrorGotLessAfterBA ? " " : " [WORSE] ";
-            std::string nameImageReprojErrors =
-                    std::to_string(i) + betterOrWorseResults + " quantils: " + std::to_string(errorsBefore[i]) +
-                    " -> " + std::to_string(errorsAfter[i]) + ".png";
-            pathToSave.append(nameImageReprojErrors);
-            cv::Mat stitchedImageResiduals;
-            std::vector<cv::DMatch> matches1to2;
-            std::vector<cv::KeyPoint> keyPointsToShowFirst;
-            std::vector<cv::KeyPoint> keyPointsToShowSecond;
-            cv::Mat stitchedImage;
-            cv::drawMatches(shownResidualsBefore[i], {},
-                            shownResidualsAfter[i], {},
-                            matches1to2,
-                            stitchedImage);
-            cv::imwrite(pathToSave.string(), stitchedImage);
+            std::cout << "BETTER #median error: " << counterMedianErrorGotBetter
+                      << " vs WORSE: " << counterMedianErrorGotWorse << " of total " << counterSumMedianError
+                      << std::endl;
+            std::cout << "percentage better median error is "
+                      << 1.0 * counterMedianErrorGotBetter / counterSumMedianError << std::endl;
+
+            assert(counterMedianErrorGotWorse + counterMedianErrorGotBetter == counterSumMedianError);
         }
-
-        std::cout << "BETTER #median error: " << counterMedianErrorGotBetter
-                  << " vs WORSE: " << counterMedianErrorGotWorse << " of total " << counterSumMedianError << std::endl;
-        std::cout << "percentage better median error is "
-                  << 1.0 * counterMedianErrorGotBetter / counterSumMedianError << std::endl;
-
-        assert(counterMedianErrorGotWorse + counterMedianErrorGotBetter == counterSumMedianError);
 
         return posesOptimized;
     }
@@ -304,6 +310,22 @@ namespace gdr {
 
     const std::vector<VertexCG> &AbsolutePosesComputationHandler::getVertices() const {
         return connectedComponent->getVertices();
+    }
+
+    bool AbsolutePosesComputationHandler::getSaveDebugImages() const {
+        return saveDebugImages;
+    }
+
+    bool AbsolutePosesComputationHandler::getPrintProgressToCout() const {
+        return printProgressToConsole;
+    }
+
+    void AbsolutePosesComputationHandler::setSaveDebugImages(bool saveImages) {
+        saveDebugImages = saveImages;
+    }
+
+    void AbsolutePosesComputationHandler::setPrintProgressToCout(bool printProgress) {
+        printProgressToConsole = printProgress;
     }
 
 }

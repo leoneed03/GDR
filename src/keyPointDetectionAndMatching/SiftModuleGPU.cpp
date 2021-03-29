@@ -12,40 +12,8 @@
 
 namespace gdr {
 
-    Eigen::MatrixXf SiftModuleGPU::normalizeDescriptorsL1Root(const Eigen::MatrixXf &descriptors) {
-        Eigen::MatrixXf descriptors_normalized(descriptors.rows(),
-                                               descriptors.cols());
-        for (Eigen::MatrixXf::Index r = 0; r < descriptors.rows(); ++r) {
-            const float norm = descriptors.row(r).lpNorm<1>();
-            descriptors_normalized.row(r) = descriptors.row(r) / norm;
-            descriptors_normalized.row(r) =
-                    descriptors_normalized.row(r).array().sqrt();
-        }
-        return descriptors_normalized;
-    }
-
     void SiftModuleGPU::siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs) {
         sift->ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
-    }
-
-    SiftModuleGPU::SiftModuleGPU() {
-
-        std::string siftGpuFarg = std::to_string(SIFTGPU_ARG_V);
-        std::vector<std::string> siftGpuArgsStrings = {"-cuda", "0", "-fo", "-1", "-v", siftGpuFarg};
-        std::vector<char *> siftGpuArgs;
-
-        for (auto &stringArg: siftGpuArgsStrings) {
-            siftGpuArgs.push_back(stringArg.data());
-        }
-        matcher = std::make_unique<SiftMatchGPU>(SiftMatchGPU(maxSift));
-
-        std::cout << "matcher created by SiftModuleGPU Constructor" << std::endl;
-        auto contextVerified = matcher->VerifyContextGL();
-        if (contextVerified == 0) {
-            std::cout << "_____________________________________________________matching context not verified"
-                      << std::endl;
-        }
-//        assert(contextVerified != 0);
     }
 
     std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
@@ -58,30 +26,25 @@ namespace gdr {
         }
 
         for (int i = 0; i < numOfDevicesForDetection.size(); ++i) {
-            std::string siftGpuFarg = std::to_string(SIFTGPU_ARG_V);
+
+            bool printDebugSymbols = (whatToPrint == PrintDebug::EVERYTHING);
+            std::string siftGpuFarg = std::to_string(printDebugSymbols);
+
             const auto &detector = detectorsSift[i];
-            //TODO: right args
             std::vector<std::string> siftGpuArgsStrings = {"-cuda", std::to_string(numOfDevicesForDetection[i]),
                                                            "-fo", "-1",
-                                                           "-v", /*siftGpuFarg*/"1"};
+                                                           "-v", siftGpuFarg};
             std::vector<char *> siftGpuArgs;
 
             for (auto &stringArg: siftGpuArgsStrings) {
                 siftGpuArgs.push_back(stringArg.data());
             }
             detector->ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
-            std::cout << "create context GL" << std::endl;
-            int contextCreated = detector->CreateContextGL();
-            if (contextCreated != SiftGPU::SIFTGPU_FULL_SUPPORTED) {
-                std::cout << "_____________________________________________________context not created"
-                          << std::endl;
-            }
             auto contextVerified = detector->VerifyContextGL();
             if (contextVerified == 0) {
                 std::cout << "_____________________________________________________detection context not verified"
                           << std::endl;
             }
-            assert(contextCreated == SiftGPU::SIFTGPU_FULL_SUPPORTED);
             assert(contextVerified != 0);
         }
 
@@ -123,9 +86,6 @@ namespace gdr {
 
         while (pathsToImagesAndImageIndices.try_pop(pathToImageAndIndex)) {
             const auto &pathToTheImage = pathToImageAndIndex.first;
-            output.lock();
-            std::cout << "image: " << pathToTheImage << std::endl;
-            output.unlock();
 
             detectorSift->RunSIFT(pathToTheImage.data());
             int num1 = detectorSift->GetFeatureNum();
@@ -133,7 +93,6 @@ namespace gdr {
             std::vector<SiftGPU::SiftKeypoint> keys1(num1);
             detectorSift->GetFeatureVector(keys1.data(), descriptors1.data());
 
-            // L1 Root normalization of secriptors:
             if (normalizeRootL1) {
                 descriptors1 = normalizeDescriptorsL1Root(descriptors1);
             }
@@ -162,8 +121,6 @@ namespace gdr {
         assert(num1 * 128 == descriptors1.size());
         assert(num2 * 128 == descriptors2.size());
 
-
-        std::cout << "set descriptors" << std::endl;
         matcher->SetDescriptors(0, num1, descriptors1.data()); //image 1
         matcher->SetDescriptors(1, num2, descriptors2.data()); //image 2
 
@@ -171,7 +128,6 @@ namespace gdr {
         std::vector<std::pair<int, int>> matchingKeypoints;
         int (*match_buf)[2] = new int[num1][2];
 
-        std::cout << "get sift match" << std::endl;
         int num_match = matcher->GetSiftMatch(num1, match_buf);
         matchingKeypoints.reserve(num_match);
 
@@ -202,7 +158,6 @@ namespace gdr {
 
         std::vector<std::unique_ptr<SiftMatchGPU>> matchers;
 
-        std::cout << "create matchers" << std::endl;
         for (int i = 0; i < matchDevicesNumbers.size(); ++i) {
             matchers.push_back(std::make_unique<SiftMatchGPU>(maxSift));
             auto contextVerified = matchers[i]->VerifyContextGL();
@@ -216,7 +171,6 @@ namespace gdr {
 
         int numberPoseFromLess = 0;
         int numberPoseToBigger = 1;
-        int numberPoses = verticesToBeMatched.size();
         std::mutex counterMutex;
 
         std::vector<std::thread> threads(matchDevicesNumbers.size());
@@ -236,7 +190,6 @@ namespace gdr {
         }
 
         for (int i = 0; i < matches.size(); ++i) {
-            std::cout << "matching from " << i << ": " << matches[i].size() << std::endl;
             assert(matches[i].size() == (matches.size() - i) - 1);
         }
 
@@ -255,7 +208,6 @@ namespace gdr {
 
             counterMutex.lock();
 
-            std::cout << indexFrom << " -[matching]-> " << indexTo << " of " << matches.size() << std::endl;
             assert(indexFrom < indexTo);
 
             if (indexTo >= matches.size()) {
@@ -267,8 +219,6 @@ namespace gdr {
                 return;
             }
             assert(indexFrom < indexTo);
-            std::cout << "local indices are: " << indexFrom << " -[matching]-> " << indexTo << " of " << matches.size()
-                      << "                " << matcher << std::endl;
 
 
             localIndexFrom = indexFrom;
@@ -283,7 +233,6 @@ namespace gdr {
                     std::make_pair(verticesToBeMatched[localIndexTo].getKeyPoints(),
                                    verticesToBeMatched[localIndexTo].getDescriptors()),
                     matcher);
-            std::cout << "matched keypoint pairs " << matchingNumbers.size() << std::endl;
             matches[localIndexFrom].push_back({localIndexTo, matchingNumbers});
 
         }
@@ -309,13 +258,13 @@ namespace gdr {
         return descriptors;
     }
 
-    std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
+    std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
     SiftModuleGPU::getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                                       const std::vector<int> &numOfDevicesForDetectors) {
 
         int descriptorLength = 128;
         auto keyPointsDescriptorsSiftGPU = getKeypointsDescriptorsAllImages(pathsToImages, numOfDevicesForDetectors);
-        std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
+        std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
                 keyPointsAndDescriptorsAllImages(keyPointsDescriptorsSiftGPU.size());
 
 
@@ -328,8 +277,8 @@ namespace gdr {
                  keyPointNumber < keyPointsAndDescriptorsOneImage.first.size(); ++keyPointNumber) {
                 const auto &siftKeyPoint = keyPointsAndDescriptorsOneImage.first[keyPointNumber];
                 keyPointsAndDescriptorsAllImages[imageNumber]
-                        .first.emplace_back(KeyPoint2D(siftKeyPoint.x, siftKeyPoint.y,
-                                                       siftKeyPoint.s, siftKeyPoint.o));
+                        .first.emplace_back(KeyPoint2DAndDepth(siftKeyPoint.x, siftKeyPoint.y,
+                                                               siftKeyPoint.s, siftKeyPoint.o));
 
 //                keyPointsAndDescriptorsAllImages[imageNumber]
 //                        .second.emplace_back(keyPointsAndDescriptorsOneImage.second[keyPointNumber]);
@@ -341,5 +290,17 @@ namespace gdr {
                    keyPointsAndDescriptorsAllImages[imageNumber].first.size() * descriptorLength);
         }
         return keyPointsAndDescriptorsAllImages;
+    }
+
+    void SiftModuleGPU::setPrintDebug(const SiftModuleGPU::PrintDebug &printDebug) {
+        whatToPrint = printDebug;
+    }
+
+    const SiftModuleGPU::PrintDebug &SiftModuleGPU::getPrintDebug() const {
+        return whatToPrint;
+    }
+
+    bool SiftModuleGPU::printAllInformation() const {
+        return whatToPrint == PrintDebug::EVERYTHING;
     }
 }

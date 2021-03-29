@@ -13,7 +13,7 @@
 
 #include "keyPoints/KeyPointInfo.h"
 
-#include "sparsePointCloud/IPointMatcher.h"
+#include "sparsePointCloud/IPointClassifier.h"
 #include "sparsePointCloud/ICloudProjector.h"
 
 #include <tbb/concurrent_vector.h>

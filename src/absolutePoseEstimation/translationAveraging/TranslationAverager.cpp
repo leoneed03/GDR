@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-#include "absolutePoseEstimation/translationAveraging/translationAveraging.h"
+#include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 #include "Vectors3d.h"
 
 #include <sophus/se3.hpp>
@@ -13,7 +13,7 @@
 namespace gdr {
 
     SparseMatrixd
-    translationAverager::constructSparseMatrix(const std::vector<translationMeasurement> &relativeTranslations,
+    TranslationAverager::constructSparseMatrix(const std::vector<TranslationMeasurement> &relativeTranslations,
                                                const std::vector<SE3> &absolutePoses) {
         int numberOfAbsolutePoses = absolutePoses.size();
         int vectorDim = 3;
@@ -48,7 +48,7 @@ namespace gdr {
     }
 
     Vectors3d
-    translationAverager::constructColumnTermB(const std::vector<translationMeasurement> &relativeTranslations,
+    TranslationAverager::constructColumnTermB(const std::vector<TranslationMeasurement> &relativeTranslations,
                                               const std::vector<SE3> &absolutePoses) {
         std::vector<Eigen::Vector3d> b;
         b.reserve(relativeTranslations.size());
@@ -61,7 +61,7 @@ namespace gdr {
     }
 
     Vectors3d
-    translationAverager::findLeastSquaresSolution(const SparseMatrixd &anyMatrixA,
+    TranslationAverager::findLeastSquaresSolution(const SparseMatrixd &anyMatrixA,
                                                   const Vectors3d &resultVector_b,
                                                   bool &success,
                                                   const SparseMatrixd &weightDiagonalMatrix,
@@ -99,25 +99,20 @@ namespace gdr {
             x = cg.solveWithGuess(freeTermToSolveB, guessRaw);
         }
 
+        //TODO: catch unsuccessful steps
         if (cg.info() != Eigen::Success) {
             success = false;
         }
 
         assert(x.rows() % 3 == 0);
-        std::cout << "rows after solution " << x.rows() / 3 << std::endl;
         Vectors3d solution(x);
-
-
-        if (success) {
-            std::cout << "SUCCESS!!" << std::endl;
-        }
 
         return solution;
 
     }
 
     SparseMatrixd
-    translationAverager::getWeightMatrixRaw(const std::vector<double> &weights,
+    TranslationAverager::getWeightMatrixRaw(const std::vector<double> &weights,
                                             double epsilonWeightMin) {
 
         int dim = 3;
@@ -140,7 +135,7 @@ namespace gdr {
     }
 
     Vectors3d
-    translationAverager::IRLS(const SparseMatrixd &systemMatrix,
+    TranslationAverager::IRLS(const SparseMatrixd &systemMatrix,
                               const Vectors3d &b,
                               SparseMatrixd &weightDiagonalMatrix,
                               const Vectors3d &translationsGuess,
@@ -169,7 +164,7 @@ namespace gdr {
 
 
     Vectors3d
-    translationAverager::recoverTranslationsIRLS(const std::vector<translationMeasurement> &relativeTranslations,
+    TranslationAverager::recoverTranslationsIRLS(const std::vector<TranslationMeasurement> &relativeTranslations,
                                                  std::vector<SE3> &absolutePosesGuess,
                                                  const Vectors3d &absoluteTranslations,
                                                  bool &successIRLS,
@@ -177,7 +172,7 @@ namespace gdr {
                                                  double epsilonIRLS) {
 
         const int dim = 3;
-        std::vector<translationMeasurement> newRelativeTranslations;
+        std::vector<TranslationMeasurement> newRelativeTranslations;
 
         for (int i = 0; i < relativeTranslations.size(); ++i) {
             int indexFrom = relativeTranslations[i].getIndexFromToBeTransformed();
@@ -191,7 +186,7 @@ namespace gdr {
             relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
             relativePoseFromTo = relativePoseFromTo.inverse();
             newRelativeTranslations.push_back(
-                    translationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
+                    TranslationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
         }
 
         SparseMatrixd systemMatrix = constructSparseMatrix(newRelativeTranslations, absolutePosesGuess);
@@ -205,12 +200,12 @@ namespace gdr {
     }
 
     Vectors3d
-    translationAverager::recoverTranslations(const std::vector<translationMeasurement> &relativeTranslations,
+    TranslationAverager::recoverTranslations(const std::vector<TranslationMeasurement> &relativeTranslations,
                                              const std::vector<SE3> &absolutePoses,
                                              double epsilonIRLSWeightMin) {
 
         const int dim = 3;
-        std::vector<translationMeasurement> newRelativeTranslations;
+        std::vector<TranslationMeasurement> newRelativeTranslations;
         for (int i = 0; i < relativeTranslations.size(); ++i) {
             int indexFrom = relativeTranslations[i].getIndexFromToBeTransformed();
             int indexTo = relativeTranslations[i].getIndexToDestination();
@@ -222,7 +217,7 @@ namespace gdr {
             relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
             relativePoseFromTo = relativePoseFromTo.inverse();
             newRelativeTranslations.emplace_back(
-                    translationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
+                    TranslationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
         }
 
         SparseMatrixd systemMatrix = constructSparseMatrix(newRelativeTranslations, absolutePoses);

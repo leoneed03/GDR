@@ -10,7 +10,7 @@
 
 namespace gdr {
 
-    class translationMeasurement {
+    class TranslationMeasurement {
 
         Eigen::Vector3d translation3d;
 
@@ -20,7 +20,7 @@ namespace gdr {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        translationMeasurement(const Eigen::Vector3d &newTranslation3d, int newIndexFrom, int newIndexTo);
+        TranslationMeasurement(const Eigen::Vector3d &newTranslation3d, int newIndexFrom, int newIndexTo);
 
         const Eigen::Vector3d& getTranslation() const;
 

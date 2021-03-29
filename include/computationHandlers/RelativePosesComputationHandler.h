@@ -15,6 +15,7 @@ namespace gdr {
 
     class RelativePosesComputationHandler {
 
+        bool printInformationConsole = false;
         int numberOfThreadsCPU = 1;
 
         std::unique_ptr<ISiftModule> siftModule;
@@ -48,7 +49,7 @@ namespace gdr {
          * @returns list of vectors each vector size is 2: for keypoint on the first image and the second
          *      pair is {{observingPoseNumber, keyPointLocalIndexOnTheImage}, KeyPointInfo}
          */
-        std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>>
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
         findInlierPointCorrespondences(int vertexFrom,
                                        int vertexInList,
                                        const SE3 &transformation) const;
@@ -77,7 +78,7 @@ namespace gdr {
         SE3
         getTransformationRtMatrixTwoImages(int vertexFromDestOrigin,
                                            int vertexInListToBeTransformedCanBeComputed,
-                                           std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &keyPointMatches,
+                                           std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &keyPointMatches,
                                            bool &success,
                                            bool showMatchesOnImages = false) const;
 
@@ -88,9 +89,12 @@ namespace gdr {
          * @returns N vectors where i-th vector contains all successfully estimated transformations from i-th pose
          */
         std::vector<std::vector<RelativeSE3>> findTransformationRtMatrices(
-                std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &allInlierKeyPointMatches) const;
+                std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &allInlierKeyPointMatches) const;
 
     public:
+        bool getPrintInformationCout() const;
+
+        void setPrintInformationCout(bool printProgressToCout);
         /**
          * @param pathToImageDirectoryRGB path to directory with N colour images
          * @param pathToImageDirectoryD path to directory with N depth images

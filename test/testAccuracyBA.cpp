@@ -11,68 +11,62 @@
 #include <thread>
 #include <chrono>
 #include "poseEstimation.h"
-#include "poseGraph/CorrespondenceGraph.h"
 #include "readerTUM/ReaderTum.h"
 #include "poseGraph/ConnectedComponent.h"
 #include "computationHandlers/RelativePosesComputationHandler.h"
 #include "SmoothPointCloud.h"
 
-#include "gnuplot_interface.h"
+void testReconstruction(
+        const std::string &shortDatasetName,
+        int numberOfPosesInDataset,
+        int subsamplingPeriodFrames,
+        double errorTresholdR,
+        double errorTresholdT,
+        const gdr::CameraRGBD &cameraDefault = gdr::CameraRGBD(),
+        const gdr::ParamsRANSAC &paramsRansac = gdr::ParamsRANSAC(),
+        int numberOfIterations = 1,
+        bool printToConsole = false,
+        bool showVisualization3D = false,
+        double minCoefficientOfBiggestComponent = 0.5,
+        double coefficientR = 1.8,
+        double coefficientT = 1.8) {
 
-void plot(const std::string &func,
-          double rangeFrom,
-          double rangeTo) {
-    {
-        std::string realFuncCommand =
-                "plot [" + std::to_string(rangeFrom) + ":" + std::to_string(rangeTo) + "] " + func;
-        GnuplotPipe gp;
-        gp.sendLine(realFuncCommand);
-    }
-}
-
-
-TEST(testBAOptimized, visualizationDesk98) {
-
-    for (int iterations = 0; iterations < 1; ++iterations) {
-        int numberOfPosesInDataset = 98;
-        double minCoefficientOfBiggestComponent = 0.4;
+    for (int iteration = 0; iteration < numberOfIterations; ++iteration) {
         std::string numberOfPosesString = std::to_string(numberOfPosesInDataset);
-        double coefficientR = 1.8;
-        double coefficientT = 1.8;
-
-        std::string shortDatasetName = "desk_";
-        std::string datasetName = shortDatasetName + "sampled_" + numberOfPosesString + "_6";
-        std::cout << datasetName << std::endl;
+        std::string frequency = std::to_string(subsamplingPeriodFrames);
+        std::string datasetName = shortDatasetName + "_sampled_" + numberOfPosesString + "_" + frequency;
+        std::cout << "Running test on " << datasetName << std::endl;
 
         std::string pathRGB = "../../data/" + datasetName + "/rgb";
         std::string pathD = "../../data/" + datasetName + "/depth";
-        gdr::CameraRGBD cameraDefault(517.3, 318.6,
-                                      516.5, 255.3);
         gdr::RelativePosesComputationHandler cgHandler(pathRGB, pathD, gdr::ParamsRANSAC(), cameraDefault);
-
-        const gdr::CorrespondenceGraph& correspondenceGraph = cgHandler.getCorrespondenceGraph();
 
         cgHandler.computeRelativePoses();
         cgHandler.bfsDrawToFile(
-                "../../tools/data/temp/" + shortDatasetName + "connectedComponents_" + numberOfPosesString + ".dot");
+                "../../tools/data/temp/" + shortDatasetName + "_connectedComponents_" + numberOfPosesString + ".dot");
         std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph =
                 cgHandler.splitGraphToConnectedComponents();
-        for (int componentNumber = 0; componentNumber < connectedComponentsPoseGraph.size(); ++componentNumber) {
-            std::cout << " #component index by increment " << componentNumber << " of size "
-                      << connectedComponentsPoseGraph[componentNumber]->getNumberOfPoses() << std::endl;
+
+        if (printToConsole) {
+            for (int componentNumber = 0; componentNumber < connectedComponentsPoseGraph.size(); ++componentNumber) {
+                std::cout << " #component index by increment " << componentNumber << " of size "
+                          << connectedComponentsPoseGraph[componentNumber]->getNumberOfPoses() << std::endl;
+            }
         }
 
         auto &biggestComponent = connectedComponentsPoseGraph[0];
 
         std::vector<gdr::SO3> computedAbsoluteOrientationsNoRobust = biggestComponent->performRotationAveraging();
-        std::vector<gdr::SO3> computedAbsoluteOrientationsRobust = biggestComponent->optimizeRotationsRobust();
-        std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent->optimizeAbsoluteTranslations();
+        std::vector<gdr::SO3> computedAbsoluteOrientationsRobust = biggestComponent->performRotationRobustOptimization();
+        std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent->performTranslationAveraging();
         std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
         std::string absolutePoses = "../../data/" + datasetName + "/" + "groundtruth.txt";
         std::vector<gdr::poseInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(absolutePoses);
 
-        std::cout << "read poses GT: " << posesInfoFull.size() << std::endl;
+        if (printToConsole) {
+            std::cout << "read poses GT: " << posesInfoFull.size() << std::endl;
+        }
         assert(posesInfoFull.size() == numberOfPosesInDataset);
         std::set<int> indicesOfBiggestComponent = biggestComponent->initialIndices();
         std::vector<gdr::poseInfo> posesInfo;
@@ -82,7 +76,9 @@ TEST(testBAOptimized, visualizationDesk98) {
                 posesInfo.emplace_back(posesInfoFull[poseIndex]);
             }
         }
-        std::cout << "sampled GT poses size: " << posesInfo.size() << std::endl;
+        if (printToConsole) {
+            std::cout << "sampled GT poses size: " << posesInfo.size() << std::endl;
+        }
         assert(posesInfo.size() == biggestComponent->getNumberOfPoses());
 
         // compute absolute poses IRLS
@@ -111,9 +107,10 @@ TEST(testBAOptimized, visualizationDesk98) {
         {
             // print ground truth poses to file
             std::string outputName =
-                    "../../tools/data/temp/" + shortDatasetName + "posesBiggestComponent_GT_" + numberOfPosesString +
+                    "../../tools/data/temp/" + shortDatasetName + "_posesBiggestComponent_GT_" + numberOfPosesString +
                     ".txt";
             std::ofstream computedPoses(outputName);
+
             for (int i = 0; i < posesInfo.size(); ++i) {
                 Sophus::SE3d poseSE3 = posesInfo[i].getSophusPose();
 
@@ -133,7 +130,7 @@ TEST(testBAOptimized, visualizationDesk98) {
         {
             // print poses IRLS to file
             std::string outputName =
-                    "../../tools/data/temp/" + shortDatasetName + "posesBiggestComponent_IRLS_" + numberOfPosesString +
+                    "../../tools/data/temp/" + shortDatasetName + "_posesBiggestComponent_IRLS_" + numberOfPosesString +
                     ".txt";
             std::ofstream computedPoses(outputName);
             for (int i = 0; i < posesInfo.size(); ++i) {
@@ -154,7 +151,7 @@ TEST(testBAOptimized, visualizationDesk98) {
         {
             // print poses BA depth to file
             std::string outputName =
-                    "../../tools/data/temp/" + shortDatasetName + "posesBiggestComponent_BA_" + numberOfPosesString +
+                    "../../tools/data/temp/" + shortDatasetName + "_posesBiggestComponent_BA_" + numberOfPosesString +
                     ".txt";
             std::ofstream computedPoses(outputName);
             for (int i = 0; i < posesInfo.size(); ++i) {
@@ -189,7 +186,6 @@ TEST(testBAOptimized, visualizationDesk98) {
 
         double sumErrorT_BA = 0;
         double sumErrorR_BA = 0;
-
 
         double sumErrorT_IRLS = 0;
         double sumErrorR_IRLS = 0;
@@ -230,22 +226,27 @@ TEST(testBAOptimized, visualizationDesk98) {
         double meanErrorT_IRLS_L2 = sumErrorT_IRLS / posesGT.size();
         double meanErrorR_IRLS_angDist = sumErrorR_IRLS / posesGT.size();
 
+        {
+            std::cout << "__________IRLS test report " + shortDatasetName + " poses_____________" << std::endl;
+            std::cout << "mean error translation: " << meanErrorT_IRLS_L2 << std::endl;
+            std::cout << "mean error rotation: " << meanErrorR_IRLS_angDist << std::endl;
+            std::cout << "__________BA test report " + shortDatasetName + " poses_____________" << std::endl;
+            std::cout << "mean error translation: " << meanErrorT_BA_L2 << std::endl;
+            std::cout << "mean error rotation: " << meanErrorR_BA_angDist << std::endl;
 
-        std::cout << "__________IRLS test report " + shortDatasetName + " poses_____________" << std::endl;
-        std::cout << "mean error translation: " << meanErrorT_IRLS_L2 << std::endl;
-        std::cout << "mean error rotation: " << meanErrorR_IRLS_angDist << std::endl;
-        std::cout << "__________BA test report " + shortDatasetName + " poses_____________" << std::endl;
-        std::cout << "mean error translation: " << meanErrorT_BA_L2 << std::endl;
-        std::cout << "mean error rotation: " << meanErrorR_BA_angDist << std::endl;
+            std::cout << "\n poses estimated " << bundleAdjustedPoses.size() << "/" << numberOfPosesInDataset << std::endl;
+        }
 
-        gdr::SmoothPointCloud smoothCloud;
-        smoothCloud.registerPointCloudFromImage(biggestComponent->getVertices());
+        if (showVisualization3D) {
+            gdr::SmoothPointCloud smoothCloud;
+            smoothCloud.registerPointCloudFromImage(biggestComponent->getVertices());
+        }
 
         assert(posesGT.size() == bundleAdjustedPoses.size());
         assert(posesGT.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);
 
-        ASSERT_LE(meanErrorR_BA_angDist, 0.04); // was 0.02
-        ASSERT_LE(meanErrorT_BA_L2, 0.04); // was 0.02
+        ASSERT_LE(meanErrorR_BA_angDist, errorTresholdR);
+        ASSERT_LE(meanErrorT_BA_L2, errorTresholdT);
 
         ASSERT_LE(maxErrorT_BA, maxErrorT_IRLS * coefficientT);
         ASSERT_LE(maxErrorR_BA, maxErrorR_IRLS * coefficientR);
@@ -253,6 +254,18 @@ TEST(testBAOptimized, visualizationDesk98) {
         ASSERT_LE(meanErrorT_BA_L2, meanErrorT_IRLS_L2 * coefficientT);
 
     }
+}
+
+
+TEST(testBAOptimized, visualizationDesk98) {
+
+    testReconstruction("plant", 19, 3,
+                       0.04, 0.04,
+                       gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));
+
+//    testReconstruction("desk", 98, 6,
+//                       0.04, 0.04,
+//                       gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));
 }
 
 int main(int argc, char *argv[]) {

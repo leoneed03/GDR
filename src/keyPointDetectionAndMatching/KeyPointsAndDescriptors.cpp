@@ -9,7 +9,7 @@
 
 namespace gdr {
 
-    KeyPointsDescriptors::KeyPointsDescriptors(const std::vector<KeyPoint2D> &keypointsToSet,
+    KeyPointsDescriptors::KeyPointsDescriptors(const std::vector<KeyPoint2DAndDepth> &keypointsToSet,
                                                const std::vector<float> &descriptorsToSet,
                                                const std::vector<double> &depthsToSet) :
             keypoints(keypointsToSet),
@@ -19,7 +19,7 @@ namespace gdr {
         assert(depths.size() == keypoints.size());
     }
 
-    const std::vector<KeyPoint2D> &KeyPointsDescriptors::getKeyPoints() const {
+    const std::vector<KeyPoint2DAndDepth> &KeyPointsDescriptors::getKeyPoints() const {
         return keypoints;
     }
 

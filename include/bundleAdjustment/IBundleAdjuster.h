@@ -13,7 +13,7 @@ namespace gdr {
 
     class IBundleAdjuster {
     public:
-        virtual std::vector<SE3> optimizePointsAndPosesUsingDepthInfo(int fixedPoseNumber) = 0;
+        virtual std::vector<SE3> optimizePointsAndPoses(int fixedPoseNumber) = 0;
 
         virtual std::vector<Point3d> getOptimizedPoints() const = 0;
 

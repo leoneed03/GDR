@@ -5,17 +5,18 @@
 
 
 
-#include "absolutePoseEstimation/rotationAveraging/RotationOptimizationRobust.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
 
 namespace gdr {
 
-    RotationOptimizer::RotationOptimizer(const std::vector<SO3> &newOrientations,
-                                         const std::vector<rotationMeasurement> &pairWiseRotationsVector) :
+    RotationRobustOptimizer::RotationRobustOptimizer(const std::vector<SO3> &newOrientations,
+                                                     const std::vector<RotationMeasurement> &pairWiseRotationsVector) :
             orientations(newOrientations),
             relativeRotations(pairWiseRotationsVector) {
     }
 
-    std::vector<SO3> RotationOptimizer::getOptimizedOrientation(int indexFixed) const {
+    std::vector<SO3> RotationRobustOptimizer::getOptimizedOrientation(int indexFixed,
+                                                                      bool printProgressToConsole) const {
 
         int dim = 4;
         std::vector<std::vector<double>> result(orientations.size());
@@ -37,6 +38,8 @@ namespace gdr {
             int indexTo = relativeRotObservation.getIndexToDestination();
             assert(indexFrom >= 0 && indexFrom < result.size() && indexTo >= 0 && indexTo < result.size());
             assert(result[indexFrom].size() == dim && result[indexTo].size() == dim);
+
+            // TODO: fix loss function
             problem.AddResidualBlock(cost_function,
                                      new ceres::CauchyLoss(0.5),
                                      result[indexFrom].data(),
@@ -49,18 +52,20 @@ namespace gdr {
 
         ceres::Solver::Options options;
         options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-        options.minimizer_progress_to_stdout = true;
+        options.minimizer_progress_to_stdout = printProgressToConsole;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
-        std::cout << "done ceres robust rotation optimization" << std::endl;
-        std::cout << summary.FullReport() << "\n";
 
-        // check if we can use solution
+        if (printProgressToConsole) {
+            std::cout << "done ceres robust rotation optimization" << std::endl;
+            std::cout << summary.FullReport() << "\n";
+        }
+
         assert(summary.IsSolutionUsable());
 
         std::vector<SO3> optimizedOrientations;
         for (const auto& orientationVectorRaw: result) {
-            Eigen::Quaterniond quat = Eigen::Quaterniond(orientationVectorRaw.data());
+            auto quat = Eigen::Quaterniond(orientationVectorRaw.data());
             optimizedOrientations.emplace_back(SO3(quat.normalized()));
         }
 

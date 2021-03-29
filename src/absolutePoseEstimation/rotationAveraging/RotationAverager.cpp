@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "absolutePoseEstimation/rotationAveraging/rotationAveraging.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
 
 #include <random>
 #include <fstream>
@@ -16,13 +16,13 @@
 
 namespace gdr {
 
-    std::vector<SO3> rotationAverager::shanonAveraging(const std::string &pathToRelativeRotationsInput,
-                                                       const std::string &pathOut) {
+    std::vector<SO3> RotationAverager::shanonAveraging(const std::string &pathToRelativeRotationsInput,
+                                                       const std::string &pathOut,
+                                                       bool printProgressToConsole) {
 
         std::string inputFile = pathToRelativeRotationsInput;
         std::vector<SO3> absoluteRotationsSO3;
 
-        // Seed random number generator
         int seed = 42;
         std::mt19937 rng(seed);
 
@@ -30,9 +30,10 @@ namespace gdr {
         gtsam::Values::shared_ptr posesInFile;
         gtsam::Values poses;
         {
-            std::cout << "Running Shonan averaging for SO(3) on " << inputFile << std::endl;
+            if (printProgressToConsole) {
+                std::cout << "Shonan Averaging: " << inputFile << std::endl;
+            }
             gtsam::ShonanAveraging3 shonan(inputFile);
-            std::cout << "init randomly" << std::endl;
             auto initial = shonan.initializeRandomly(rng);
             auto result = shonan.run(initial);
 
@@ -41,14 +42,14 @@ namespace gdr {
             auto priorModel = gtsam::noiseModel::Unit::Create(6);
             inputGraph->addPrior(0, posesInFile->at<gtsam::Pose3>(0), priorModel);
 
-            std::cout << "recovering 3D translations" << std::endl;
             auto poseGraph = gtsam::initialize::buildPoseGraph<gtsam::Pose3>(*inputGraph);
             poses = gtsam::initialize::computePoses<gtsam::Pose3>(result.first, &poseGraph);
         }
-        std::cout << "Writing result to " << pathOut << std::endl;
-        writeG2o(gtsam::NonlinearFactorGraph(), poses, pathOut);
 
-        //extract information about poses absolute orientations
+        if (printProgressToConsole) {
+            std::cout << "result to " << pathOut << std::endl;
+        }
+        writeG2o(gtsam::NonlinearFactorGraph(), poses, pathOut);
 
         for (const auto key_value : poses) {
             auto p = dynamic_cast<const gtsam::GenericValue<gtsam::Pose3> *>(&key_value.value);

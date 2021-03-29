@@ -7,8 +7,8 @@
 
 namespace gdr {
 
-    RelativePoseMeasurement::RelativePoseMeasurement(const gdr::rotationMeasurement &newRotationMeasurement,
-                                                     const gdr::translationMeasurement &newTranslationMeasurement) :
+    RelativePoseMeasurement::RelativePoseMeasurement(const gdr::RotationMeasurement &newRotationMeasurement,
+                                                     const gdr::TranslationMeasurement &newTranslationMeasurement) :
             relativeRotation(newRotationMeasurement),
             relativeTranslation(newTranslationMeasurement) {}
 

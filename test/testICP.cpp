@@ -19,11 +19,11 @@
 TEST(testRelativePosesComputation, getPairwiseTransformationsICPinversedComputedPoses) {
 
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/plant_sampled_19_3/rgb", "../../data/plant_sampled_19_3/depth",
                                                  517.3,
                                                  318.6, 516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
-    std::string pathToGroundTruth = "../../data/plantDataset_19_3/groundtruth_new.txt";
+    std::string pathToGroundTruth = "../../data/plant_sampled_19_3/groundtruth.txt";
     std::string estimatedPairWise = correspondenceGraph.relativePose;
     ASSERT_TRUE(correspondenceGraph.verticesOfCorrespondence.size() == 19);
     std::pair<gdr::errorStats, gdr::errorStats> errorsStatsTR = gdr::getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
@@ -42,11 +42,11 @@ TEST(testRelativePosesComputation, getPairwiseTransformationsICPinversedComputed
 TEST(testRelativePosesComputation, getPairwiseTransformationsICP) {
 
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/plant_sampled_19_3/rgb", "../../data/plant_sampled_19_3/depth",
                                                  517.3,318.6,
                                                  516.5, 255.3);
     correspondenceGraph.computeRelativePoses();
-    std::string pathToGroundTruth = "../../data/plantDataset_19_3/groundtruth_new.txt";
+    std::string pathToGroundTruth = "../../data/plant_sampled_19_3/groundtruth.txt";
     std::string estimatedPairWise = correspondenceGraph.relativePose;
     ASSERT_TRUE(correspondenceGraph.verticesOfCorrespondence.size() == 19);
     std::pair<gdr::errorStats, gdr::errorStats> errorsStatsTR = gdr::getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(
@@ -66,11 +66,11 @@ TEST(testRelativePosesComputation, getPairwiseTransformationsICP) {
 TEST(testRelativePosesComputation, getPairwiseTransformationsStandardIntrinsics) {
 
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/plant_sampled_19_3/rgb", "../../data/plant_sampled_19_3/depth",
                                                  525.0,
                                                  319.5, 525.0, 239.5);
     correspondenceGraph.computeRelativePoses();
-    std::string pathToGroundTruth = "../../data/plantDataset_19_3/groundtruth_new.txt";
+    std::string pathToGroundTruth = "../../data/plant_sampled_19_3/groundtruth.txt";
     std::string estimatedPairWise = correspondenceGraph.relativePose;
     ASSERT_TRUE(correspondenceGraph.verticesOfCorrespondence.size() == 19);
     std::pair<gdr::errorStats, gdr::errorStats> errorsStatsTR = gdr::getErrorStatsTranslationRotationFromGroundTruthAndEstimatedPairWise(

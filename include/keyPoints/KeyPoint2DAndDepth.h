@@ -3,13 +3,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_KEYPOINT2D_H
-#define GDR_KEYPOINT2D_H
+#ifndef GDR_KEYPOINT2DANDDEPTH_H
+#define GDR_KEYPOINT2DANDDEPTH_H
 
 #include <limits>
 
 namespace gdr {
-    class KeyPoint2D {
+    class KeyPoint2DAndDepth {
         static constexpr double defValue = (std::numeric_limits<double>::lowest() / 2.0);
         double x, y;
         double scale = defValue;
@@ -18,7 +18,7 @@ namespace gdr {
 
     public:
 
-        KeyPoint2D();
+        KeyPoint2DAndDepth();
 
         void setDepth(double depth);
 
@@ -26,12 +26,12 @@ namespace gdr {
 
         bool isDepthUsable() const;
 
-        KeyPoint2D(double newX,
-                   double newY,
-                   double newScale,
-                   double newOrientation);
+        KeyPoint2DAndDepth(double newX,
+                           double newY,
+                           double newScale,
+                           double newOrientation);
 
-        KeyPoint2D(double newX, double newY);
+        KeyPoint2DAndDepth(double newX, double newY);
 
         double getX() const;
 

@@ -5,14 +5,14 @@
 
 
 #include "keyPoints/KeyPointInfo.h"
-#include "keyPoints/KeyPoint2D.h"
+#include "keyPoints/KeyPoint2DAndDepth.h"
 
 #include <iostream>
 #include <cmath>
 #include <cassert>
 
 namespace gdr {
-    KeyPointInfo::KeyPointInfo(const KeyPoint2D &keyPointToSet,
+    KeyPointInfo::KeyPointInfo(const KeyPoint2DAndDepth &keyPointToSet,
                                int observingPoseNumberToSet) : keyPoint2D(keyPointToSet),
                                                                observingPoseNumber(observingPoseNumberToSet),
                                                                initialObservingPoseNumber(observingPoseNumberToSet) {}

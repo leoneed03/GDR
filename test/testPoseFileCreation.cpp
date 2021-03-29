@@ -22,8 +22,8 @@ int countNumberOfLines(const std::string &relPosesFile) {
 TEST(testCorrespondenceGraph, relativePoseFileCreated_iterations) {
 
     for (int iterations = 0; iterations < 1; ++iterations) {
-        gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb",
-                                                     "../../data/plantDataset_19_3/depth",
+        gdr::CorrespondenceGraph correspondenceGraph("../../data/plant_sampled_19_3/rgb",
+                                                     "../../data/plant_sampled_19_3/depth",
                                                      525.0, 319.5,
                                                      525.0, 239.5);
         std::cout << "compute poses" << std::endl;
@@ -37,7 +37,7 @@ TEST(testCorrespondenceGraph, relativePoseFileCreated_iterations) {
 }
 
 //TEST(testDepthTxtFile, fileCreated) {
-//    gdr::GTT::createDepthTxtFile("../../data/plantDataset_19_3/depth", "../../data/plantDataset_19_3/depth.txt");
+//    gdr::GTT::createDepthTxtFile("../../data/plant_sampled_19_3/depth", "../../data/plant_sampled_19_3/depth.txt");
 //}
 
 

@@ -7,22 +7,22 @@
 #define GDR_KEYPOINTSANDDESCRIPTORS_H
 
 #include <vector>
-#include "keyPoints/KeyPoint2D.h"
+#include "keyPoints/KeyPoint2DAndDepth.h"
 
 namespace gdr {
 
     struct KeyPointsDescriptors {
     private:
-        std::vector<KeyPoint2D> keypoints;
+        std::vector<KeyPoint2DAndDepth> keypoints;
         std::vector<float> descriptors;
         std::vector<double> depths;
     public:
         KeyPointsDescriptors(
-                const std::vector<KeyPoint2D> &keypoints,
+                const std::vector<KeyPoint2DAndDepth> &keypoints,
                 const std::vector<float> &descriptors,
                 const std::vector<double> &depths);
 
-        const std::vector<KeyPoint2D>& getKeyPoints() const;
+        const std::vector<KeyPoint2DAndDepth>& getKeyPoints() const;
 
         const std::vector<float>& getDescriptors() const;
 

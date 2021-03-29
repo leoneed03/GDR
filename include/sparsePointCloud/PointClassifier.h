@@ -9,11 +9,11 @@
 #include <vector>
 #include <unordered_map>
 
-#include "IPointMatcher.h"
+#include "IPointClassifier.h"
 
 namespace gdr {
 
-    class PointClassifier : public IPointMatcher {
+    class PointClassifier : public IPointClassifier {
 
     public:
         explicit PointClassifier(int numPoses);

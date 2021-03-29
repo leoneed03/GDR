@@ -4,7 +4,7 @@
 //
 
 #include "sparsePointCloud/CloudProjector.h"
-#include "keyPoints/KeyPoint2D.h"
+#include "keyPoints/KeyPoint2DAndDepth.h"
 
 #include "boost/filesystem.hpp"
 
@@ -54,7 +54,7 @@ namespace gdr {
         return poses.size();
     }
 
-    std::vector<Point3d> CloudProjector::setComputedPointsGlobalCoordinates() {
+    std::vector<Point3d> CloudProjector::computedPointsGlobalCoordinates() {
 
         assert(maxPointIndex >= 0);
         assert(indexedPoints.empty());
@@ -162,8 +162,6 @@ namespace gdr {
             indexedPoints[i].setEigenVector3dPointXYZ(sumCoordinates);
         }
 
-
-        std::cout << "points are computed" << std::endl;
         for (int i = 0; i < pointsSize; ++i) {
             assert(indexedPoints[i].getIndex() == i);
         }
@@ -186,7 +184,7 @@ namespace gdr {
         std::vector<cv::Mat> imagesToShowKeyPoints;
 
         std::vector<double> sumL2Errors(getPoseNumber(), 0);
-        std::vector<std::vector<std::pair<KeyPoint2D, KeyPoint2D>>>
+        std::vector<std::vector<std::pair<KeyPoint2DAndDepth, KeyPoint2DAndDepth>>>
                 keyPointsRealAndComputedByImageIndex(getPoseNumber());
 
         for (int poseIndexComponent = 0; poseIndexComponent < getPoseNumber(); ++poseIndexComponent) {
@@ -203,7 +201,7 @@ namespace gdr {
             for (const auto &poseIndex: numbersOfPosesObservingSpecificPoint[i]) {
 
                 KeyPointInfo p = keyPointInfoByPose[poseIndex].find(i)->second;
-                KeyPoint2D keyPointToShow(p.getX(), p.getY(), p.getScale(), p.getOrientation());
+                KeyPoint2DAndDepth keyPointToShow(p.getX(), p.getY(), p.getScale(), p.getOrientation());
                 keyPointToShow.setDepth(p.getDepth());
 
                 const auto &camera = poses[poseIndex].getCamera();
@@ -215,7 +213,7 @@ namespace gdr {
                 Eigen::Vector3d projected = cameraIntr * globalCoordinatesMoved;
                 double projectedX = projected[0] / projected[2];
                 double projectedY = projected[1] / projected[2];
-                KeyPoint2D keyPointComputed(projectedX, projectedY, p.getScale(), p.getOrientation());
+                KeyPoint2DAndDepth keyPointComputed(projectedX, projectedY, p.getScale(), p.getOrientation());
                 keyPointComputed.setDepth(globalCoordinatesMoved[2]);
                 assert(std::abs(projectedX - keyPointComputed.getX()) < std::numeric_limits<double>::epsilon());
                 keyPointsRealAndComputedByImageIndex[poseIndex].emplace_back(
@@ -250,8 +248,8 @@ namespace gdr {
             sumL2Errors[imageIndex] = errorsL2[errorsL2.size() * quantil];
 
             std::sort(pairsOfKeyPoints.begin(), pairsOfKeyPoints.end(),
-                      [](const std::pair<KeyPoint2D, KeyPoint2D> &lhs,
-                         const std::pair<KeyPoint2D, KeyPoint2D> &rhs) {
+                      [](const std::pair<KeyPoint2DAndDepth, KeyPoint2DAndDepth> &lhs,
+                         const std::pair<KeyPoint2DAndDepth, KeyPoint2DAndDepth> &rhs) {
                           auto &leftKeyPointReal = lhs.first;
                           auto &leftKeyPointComputed = lhs.second;
 
@@ -273,8 +271,8 @@ namespace gdr {
             auto imageKeyPoints = imageNoKeyPoints;
 
 
-            std::vector<KeyPoint2D> keyPointsToShow;
-            std::vector<KeyPoint2D> keyPointsExactToShow;
+            std::vector<KeyPoint2DAndDepth> keyPointsToShow;
+            std::vector<KeyPoint2DAndDepth> keyPointsExactToShow;
             for (int keyPointPairIndex = 0;
                  keyPointPairIndex < keyPointsRealAndComputedByImageIndex[imageIndex].size(); ++keyPointPairIndex) {
                 const auto &keyPointsPair = keyPointsRealAndComputedByImageIndex[imageIndex][keyPointPairIndex];

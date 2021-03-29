@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_TRANSLATIONAVERAGING_H
-#define GDR_TRANSLATIONAVERAGING_H
+#ifndef GDR_TRANSLATIONAVERAGER_H
+#define GDR_TRANSLATIONAVERAGER_H
 
 
 #include "parametrization/SE3.h"
@@ -13,18 +13,18 @@
 #include <vector>
 #include <map>
 
-#include "translationMeasurement.h"
+#include "TranslationMeasurement.h"
 #include "Vectors3d.h"
 
 namespace gdr {
     
-    class translationAverager {
+    class TranslationAverager {
 
-        static SparseMatrixd constructSparseMatrix(const std::vector<translationMeasurement> &relativeTranslations,
+        static SparseMatrixd constructSparseMatrix(const std::vector<TranslationMeasurement> &relativeTranslations,
                                                    const std::vector<SE3> &absolutePoses);
 
         static Vectors3d
-        constructColumnTermB(const std::vector<translationMeasurement> &relativeTranslations,
+        constructColumnTermB(const std::vector<TranslationMeasurement> &relativeTranslations,
                              const std::vector<SE3> &absolutePoses);
 
         static Vectors3d
@@ -50,7 +50,7 @@ namespace gdr {
     public:
 
         static Vectors3d
-        recoverTranslationsIRLS(const std::vector<translationMeasurement> &relativeTranslations,
+        recoverTranslationsIRLS(const std::vector<TranslationMeasurement> &relativeTranslations,
                                 std::vector<SE3> &absolutePoses,
                                 const Vectors3d& absoluteTranslations,
                                 bool &successIRLS,
@@ -58,7 +58,7 @@ namespace gdr {
                                 double epsilonIRLS = 1e-6);
 
         static Vectors3d
-        recoverTranslations(const std::vector<translationMeasurement> &relativeTranslations,
+        recoverTranslations(const std::vector<TranslationMeasurement> &relativeTranslations,
                             const std::vector<SE3> &absolutePoses,
                             double epsilonIRLSWeightMin = 1e-6);
     };

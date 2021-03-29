@@ -12,7 +12,7 @@
 
 namespace gdr {
 
-    class rotationMeasurement {
+    class RotationMeasurement {
 
         SO3 relativeRotationQuat;
 
@@ -22,7 +22,7 @@ namespace gdr {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        rotationMeasurement(const SO3 &newRelativeRotationQuat,
+        RotationMeasurement(const SO3 &newRelativeRotationQuat,
                             int newIndexFrom,
                             int newIndexTo);
 

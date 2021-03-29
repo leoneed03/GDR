@@ -15,7 +15,7 @@
 #include "parametrization/RelativeSE3.h"
 #include "parametrization/cameraRGBD.h"
 #include "keyPointDetectionAndMatching/ISiftModule.h"
-#include "absolutePoseEstimation/rotationAveraging/rotationAveraging.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
 #include "Vectors3d.h"
 #include "ThreadPool.h"
 #include "ConnectedComponent.h"
@@ -39,7 +39,7 @@ namespace gdr {
         std::string pathToImageDirectoryRGB;
         std::string pathToImageDirectoryD;
 
-        std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> inlierCorrespondencesPoints;
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
 
     public:
 
@@ -55,7 +55,7 @@ namespace gdr {
         void setRelativePoses(const std::vector<std::vector<RelativeSE3>> &pairwiseRelativePoses);
 
         void setInlierPointMatches(
-                const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &inlierPointMatches);
+                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointMatches);
 
         void setPointMatchesRGB(const std::vector<std::vector<Match>> &pointMatchesRGB);
 
@@ -71,7 +71,7 @@ namespace gdr {
 
         const std::string &getPathAbsoluteRotationsFile() const;
 
-        const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &getInlierObservedPoints() const;
+        const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getInlierObservedPoints() const;
 
         const VertexCG &getVertex(int vertexNumber) const;
 

@@ -33,7 +33,7 @@ namespace gdr {
         int index;
         int initialIndex;
         SE3 absolutePose;
-        std::vector<KeyPoint2D> keypoints;
+        std::vector<KeyPoint2DAndDepth> keypoints;
         std::vector<float> descriptors;
         std::vector<double> depths;
         std::string pathToRGBimage;
@@ -60,13 +60,13 @@ namespace gdr {
 
         void setAbsolutePoseSE3(const SE3 &absolutePose);
 
-        const std::vector<KeyPoint2D>& getKeyPoints() const;
+        const std::vector<KeyPoint2DAndDepth>& getKeyPoints() const;
 
         const std::vector<float>& getDescriptors() const;
 
         const std::vector<double>& getDepths() const;
 
-        const std::vector<KeyPoint2D>& getKeyPoints2D() const;
+        const std::vector<KeyPoint2DAndDepth>& getKeyPoints2D() const;
 
         Eigen::Quaterniond getRotationQuat() const;
 
@@ -96,7 +96,7 @@ namespace gdr {
 
         int getKeyPointsNumber() const;
 
-        const KeyPoint2D &getKeyPoint(int index) const;
+        const KeyPoint2DAndDepth &getKeyPoint(int index) const;
 
         double getKeyPointDepth(int keyPointIndex) const;
 

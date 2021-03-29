@@ -17,7 +17,7 @@
 #include <cmath>
 #include <string>
 #include <opencv2/opencv.hpp>
-#include <absolutePoseEstimation/translationAveraging/translationAveraging.h>
+#include <absolutePoseEstimation/translationAveraging/TranslationAverager.h>
 
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -62,7 +62,7 @@ namespace gdr {
                     int indexTo = transformationRtMatrices[i][j].getIndexTo();
                     int indexFrom = i;
                     //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)
-                    // (gtsam format)
+
                     file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
                     auto translationVector = transformationRtMatrices[i][j].getRelativeTranslation();
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
@@ -87,10 +87,8 @@ namespace gdr {
             pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
             pathToImageDirectoryD(newPathToImageDirectoryD) {
 
-        std::cout << "construct Graph" << std::endl;
         imagesRgb = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryRGB);
         imagesD = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryD);
-        std::cout << "data have been read" << std::endl;
 
         std::sort(imagesRgb.begin(), imagesRgb.end());
         std::sort(imagesD.begin(), imagesD.end());
@@ -150,7 +148,7 @@ namespace gdr {
     }
 
     void CorrespondenceGraph::setInlierPointMatches(
-            const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &inlierPointMatches) {
+            const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointMatches) {
         inlierCorrespondencesPoints = inlierPointMatches;
     }
 
@@ -220,7 +218,7 @@ namespace gdr {
         return verticesOfCorrespondence[vertexNumber];
     }
 
-    const std::vector<std::array<std::pair<std::pair<int, int>, KeyPointInfo>, 2>> &
+    const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &
     CorrespondenceGraph::getInlierObservedPoints() const {
         return inlierCorrespondencesPoints;
     }

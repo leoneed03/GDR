@@ -3,11 +3,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_IPOINTMATCHER_H
-#define GDR_IPOINTMATCHER_H
+#ifndef GDR_IPOINTCLASSIFIER_H
+#define GDR_IPOINTCLASSIFIER_H
 
 namespace gdr {
-    class IPointMatcher {
+    class IPointClassifier {
 
     public:
         /** Compute unique class for each observed point
@@ -23,7 +23,7 @@ namespace gdr {
 
         virtual int getNumberOfPoses() const = 0;
 
-        virtual ~IPointMatcher() = default;
+        virtual ~IPointClassifier() = default;
     };
 }
 #endif

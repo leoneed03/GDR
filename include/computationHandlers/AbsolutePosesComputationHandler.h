@@ -12,13 +12,25 @@
 namespace gdr {
 
     class AbsolutePosesComputationHandler {
+
+        bool printProgressToConsole = false;
+        bool saveDebugImages = false;
+
         std::unique_ptr<ConnectedComponentPoseGraph> connectedComponent;
-        std::unique_ptr<IPointMatcher> pointMatcher;
+        std::unique_ptr<IPointClassifier> pointMatcher;
         std::unique_ptr<ICloudProjector> cloudProjector;
 
         void computePointClasses();
 
     public:
+
+        bool getSaveDebugImages() const;
+
+        bool getPrintProgressToCout() const;
+
+        void setSaveDebugImages(bool saveImages);
+
+        void setPrintProgressToCout(bool printProgress);
 
         explicit AbsolutePosesComputationHandler(
                 std::unique_ptr<ConnectedComponentPoseGraph> &connectedComponentPoseGraph);
@@ -27,15 +39,15 @@ namespace gdr {
 
         std::set<int> initialIndices() const;
 
-        const std::vector<VertexCG>& getVertices() const;
+        const std::vector<VertexCG> &getVertices() const;
 
     public:
 
         std::vector<SO3> performRotationAveraging();
 
-        std::vector<SO3> optimizeRotationsRobust();
+        std::vector<SO3> performRotationRobustOptimization();
 
-        std::vector<Eigen::Vector3d> optimizeAbsoluteTranslations(int indexFixedToZero = 0);
+        std::vector<Eigen::Vector3d> performTranslationAveraging(int indexFixedToZero = 0);
 
         std::vector<SE3> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
     };

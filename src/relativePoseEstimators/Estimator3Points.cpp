@@ -10,10 +10,6 @@
 
 namespace gdr {
 
-    void Estimator3Points::hello() {
-        std::cout << "hello" << std::endl;
-    }
-
     SE3 Estimator3Points::getRt(const Eigen::Matrix4Xd &toBeTransformed3Points,
                                 const Eigen::Matrix4Xd &dest3Points,
                                 const CameraRGBD &cameraIntrToBeTransformed,

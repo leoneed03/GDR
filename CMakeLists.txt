@@ -83,19 +83,19 @@ set(GDR_HEADER_FILES
         include/parametrization/RelativeSE3.h
         include/parametrization/cameraRGBD.h
         include/keyPointDetectionAndMatching/SiftModuleGPU.h
-        include/absolutePoseEstimation/rotationAveraging/rotationAveraging.h
+        include/absolutePoseEstimation/rotationAveraging/RotationAverager.h
         ${PROJECT_SOURCE_DIR}/include/poseEstimation.h
     ${PROJECT_SOURCE_DIR}/include/printer.h
         include/relativePoseRefinement/ICP.h
-        include/absolutePoseEstimation/translationAveraging/translationMeasurement.h
-        include/absolutePoseEstimation/translationAveraging/translationAveraging.h
+        include/absolutePoseEstimation/translationAveraging/TranslationMeasurement.h
+        include/absolutePoseEstimation/translationAveraging/TranslationAverager.h
     ${PROJECT_SOURCE_DIR}/include/poseInfo.h
-        include/absolutePoseEstimation/rotationAveraging/rotationMeasurement.h
+        include/absolutePoseEstimation/rotationAveraging/RotationMeasurement.h
         include/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.h
     ${PROJECT_SOURCE_DIR}/include/Vectors3d.h
         include/parametrization/SO3.h
         include/parametrization/Point3d.h
-        include/absolutePoseEstimation/rotationAveraging/RotationOptimizationRobust.h
+        include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h
     ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjector.h
         include/keyPoints/KeyPointInfo.h
         include/sparsePointCloud/PointClassifier.h
@@ -112,7 +112,7 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/InlierCounter.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/IEstimatorRelativePoseRobust.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/ParamsRANSAC.h
-        ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/IRefinerRelativePose.h include/parametrization/MatchableInfo.h include/bundleAdjustment/IBundleAdjuster.h include/sparsePointCloud/IPointMatcher.h include/sparsePointCloud/ICloudProjector.h)
+        ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/IRefinerRelativePose.h include/parametrization/MatchableInfo.h include/bundleAdjustment/IBundleAdjuster.h include/sparsePointCloud/IPointClassifier.h include/sparsePointCloud/ICloudProjector.h)
 
 set(GDR_SOURCE_FILES
         src/directoryTraversing/DirectoryReader.cpp
@@ -121,18 +121,18 @@ set(GDR_SOURCE_FILES
         src/parametrization/RelativeSE3.cpp
         src/parametrization/cameraRGBD.cpp
         src/keyPointDetectionAndMatching/SiftModuleGPU.cpp
-        src/absolutePoseEstimation/rotationAveraging/rotationAveraging.cpp
+        src/absolutePoseEstimation/rotationAveraging/RotationAverager.cpp
         ${PROJECT_SOURCE_DIR}/src/poseEstimation.cpp
         src/relativePoseRefinement/ICP.cpp
-        src/absolutePoseEstimation/translationAveraging/translationAveraging.cpp
-        src/absolutePoseEstimation/translationAveraging/translationMeasurement.cpp
+        src/absolutePoseEstimation/translationAveraging/TranslationAverager.cpp
+        src/absolutePoseEstimation/translationAveraging/TranslationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/poseInfo.cpp
-        src/absolutePoseEstimation/rotationAveraging/rotationMeasurement.cpp
+        src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
         src/absolutePoseEstimation/translationAveraging/RelativePoseMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/Vectors3d.cpp
     ${PROJECT_SOURCE_DIR}/src/ThreadPool.cpp
         src/parametrization/SO3.cpp
-        src/absolutePoseEstimation/rotationAveraging/RotationOptimizationRobust.cpp
+        src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.cpp
         src/parametrization/Point3d.cpp
         src/sparsePointCloud/CloudProjector.cpp
         src/keyPoints/KeyPointInfo.cpp
@@ -143,8 +143,8 @@ set(GDR_SOURCE_FILES
         src/keyPoints/KeyPointsDepthDescriptor.cpp
         src/poseGraph/ConnectedComponent.cpp
         src/readerTUM/ImagesAssociator.cpp
-        src/keyPoints/KeyPoint2D.cpp
-        include/keyPoints/KeyPoint2D.h
+        src/keyPoints/KeyPoint2DAndDepth.cpp
+        include/keyPoints/KeyPoint2DAndDepth.h
         include/optimization/lossFunctions/LossFunctions.h
         include/keyPointDetectionAndMatching/ISiftModule.h
         ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/Estimator3Points.cpp

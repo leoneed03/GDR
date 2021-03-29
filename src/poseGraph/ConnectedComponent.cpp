@@ -3,15 +3,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "absolutePoseEstimation/rotationAveraging/rotationAveraging.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
 #include "poseGraph/ConnectedComponent.h"
 #include "parametrization/RelativeSE3.h"
 #include "parametrization/Point3d.h"
 #include "bundleAdjustment/IBundleAdjuster.h"
 #include "bundleAdjustment/BundleAdjuster.h"
-#include "absolutePoseEstimation/rotationAveraging/RotationOptimizationRobust.h"
-#include "absolutePoseEstimation/translationAveraging/translationMeasurement.h"
-#include "absolutePoseEstimation/translationAveraging/translationAveraging.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
+#include "absolutePoseEstimation/translationAveraging/TranslationMeasurement.h"
+#include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 
 #include <fstream>
 #include <boost/filesystem.hpp>
@@ -48,7 +48,6 @@ namespace gdr {
     std::set<int> ConnectedComponentPoseGraph::initialIndices() const {
         std::set<int> initialIndices;
         for (const auto &pose: absolutePoses) {
-            std::cout << " #index " << pose.getIndex() << " became " << pose.getInitialIndex() << std::endl;
             initialIndices.insert(pose.getInitialIndex());
         }
         return initialIndices;

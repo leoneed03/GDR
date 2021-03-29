@@ -16,7 +16,7 @@ namespace gdr {
 
 
     class ICloudProjector {
-
+        
     public:
         /**
          * @param indexedPoint is observed point number
@@ -30,7 +30,7 @@ namespace gdr {
          * Computes global coordinates for all the observed points
          * @returns vector of computed points
          */
-        virtual std::vector<Point3d> setComputedPointsGlobalCoordinates() = 0;
+        virtual std::vector<Point3d> computedPointsGlobalCoordinates() = 0;
 
         /**
          * Gets information about all the observed points and cameras
@@ -40,7 +40,7 @@ namespace gdr {
         getKeyPointInfoByPoseNumberAndPointClass() const = 0;
 
 
-        // TODO: this part should be in a separate class
+        // TODO: further methods should be in a separate class
         /**
          * Shows where observed point are projected on images (for debug purposes)
          */

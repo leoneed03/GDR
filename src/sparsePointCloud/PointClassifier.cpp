@@ -98,22 +98,15 @@ namespace gdr {
             if (visitedGlobalIndices[globalIndexToVisit]) {
                 continue;
             }
-
-
+            //TODO: use graph libraries for BFS
             std::queue<int> globalIndicesToVisit;
 
             globalIndicesToVisit.push(globalIndexToVisit);
-
-//            std::cout << "====================================NEW COMPONENT " << globalIndexToVisit << " class is " << newClassNumber << std::endl;
-
             std::vector<int> currentClassGlobalIndices;
 
             while (!globalIndicesToVisit.empty()) {
                 int currentGlobalIndex = globalIndicesToVisit.front();
                 globalIndicesToVisit.pop();
-
-//                std::cout << "enter while " << currentGlobalIndex << std::endl;
-//                assert(!visitedGlobalIndices[currentGlobalIndex]);
                 visitedGlobalIndices[currentGlobalIndex] = true;
 
                 classByGlobalIndex[currentGlobalIndex] = newClassNumber;
@@ -122,22 +115,15 @@ namespace gdr {
                        pointClassesByPose[poseAndLocalInd.first].end());
                 pointClassesByPose[poseAndLocalInd.first][poseAndLocalInd.second] = newClassNumber;
 
-//                std::cout << " SIZE of list for " << currentGlobalIndex << " is " << edgesBetweenPointsByGlobalIndices[currentGlobalIndex].size() << std::endl;
                 for (const auto& samePoint: edgesBetweenPointsByGlobalIndices[currentGlobalIndex]) {
                     if (!visitedGlobalIndices[samePoint]) {
-
-//                        std::cout << "         pushed from " << currentGlobalIndex << " to " << samePoint << std::endl;
                         globalIndicesToVisit.push(samePoint);
                         visitedGlobalIndices[samePoint] = true;
-                    } else {
-
-//                        std::cout << "        NOT pushed from " << currentGlobalIndex << " to " << samePoint << std::endl;
                     }
                 }
             }
 
             ++numClasses;
-
         }
 
         for (int i = 0; i < getNumberOfGlobalIndices(); ++i) {

@@ -8,7 +8,7 @@
 #include <random>
 
 #include "readerTUM/ReaderTum.h"
-#include "absolutePoseEstimation/translationAveraging/translationAveraging.h"
+#include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 
 
 TEST(testTranslationAveraging, translationRecovery19PosesFromFileUsingSE3) {

@@ -22,13 +22,10 @@ namespace gdr {
                                                                                  componentNumberByPose);
 
         for (int i = 0; i < components.size(); ++i) {
-            std::cout << " component " << std::setw(4) << i << "-th size: " << components[i].size() << " elements: ";
 
             for (const auto &pose: components[i]) {
-                std::cout << pose << ' ';
                 assert(componentNumberByPose[pose] == i);
             }
-            std::cout << std::endl;
         }
 
         std::vector<std::unique_ptr<ConnectedComponentPoseGraph>> connectedComponents;
@@ -70,9 +67,6 @@ namespace gdr {
 
         for (int globalPoseIndex = 0; globalPoseIndex < numberOfVerticesCG; ++globalPoseIndex) {
             const auto &infoAboutpose = componentNumberAndLocalIndexByPoseGlobalIndex[globalPoseIndex];
-            std::cout << "  INFO about #global pose " << globalPoseIndex
-                      << " in #component " << infoAboutpose.first
-                      << " index inside component is: " << infoAboutpose.second << std::endl;
         }
 
         // recompute transformation matrices using new local indices
@@ -150,10 +144,7 @@ namespace gdr {
             auto &sizeAndIndex = componentSizeAndComponentNumber[i];
             numberWhenSortedBySizeByGlobalIndex[sizeAndIndex.second] = i;
         }
-        for (const auto &indexAndIndexWhenSorted: numberWhenSortedBySizeByGlobalIndex) {
-            std::cout << " for pose #indexed " << indexAndIndexWhenSorted.first << " sorted pose is "
-                      << indexAndIndexWhenSorted.second << std::endl;
-        }
+
         int addedVertices = 0;
         for (int componentNumber = 0; componentNumber < components.size(); ++componentNumber) {
             addedVertices += connectedComponentsVertices[componentNumber].size();
@@ -161,7 +152,6 @@ namespace gdr {
             assert(numberOfComponents == connectedComponentsVertices.size());
             assert(numberOfComponents == edgesOfComponentsByComponentsNumber.size());
             assert(numberOfComponents == inlierCorrespondencesPointsInsideComponentByComponentNumber.size());
-            int indexWhenSorted = numberWhenSortedBySizeByGlobalIndex[componentNumber];
             std::string namePrefix =
                     "comp_" + std::to_string(numberWhenSortedBySizeByGlobalIndex[componentNumber]) + "_";
 

@@ -14,7 +14,13 @@
 namespace gdr {
 
     class EstimatorRobustLoRANSAC : public IEstimatorRelativePoseRobust {
+        bool printProgressToCout = false;
     public:
+
+        bool getPrintProgressToCout() const;
+
+        void setPrintProgressToCout(bool printProgress);
+
         SE3 estimateRelativePose(
                 const Eigen::Matrix4Xd &toBeTransformedPoints,
                 const Eigen::Matrix4Xd &destinationPoints,

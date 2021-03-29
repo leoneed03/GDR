@@ -42,7 +42,7 @@ namespace gdr {
          * Computes global coordinates for all the observed points
          * @returns vector of computed points
          */
-        std::vector<Point3d> setComputedPointsGlobalCoordinates() override;
+        std::vector<Point3d> computedPointsGlobalCoordinates() override;
 
         /**
          * Gets information about all the observed points and cameras

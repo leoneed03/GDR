@@ -6,8 +6,8 @@
 #ifndef GDR_RELATIVEPOSEMEASUREMENT_H
 #define GDR_RELATIVEPOSEMEASUREMENT_H
 
-#include "absolutePoseEstimation/rotationAveraging/rotationMeasurement.h"
-#include "absolutePoseEstimation/translationAveraging/translationMeasurement.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
+#include "absolutePoseEstimation/translationAveraging/TranslationMeasurement.h"
 
 namespace gdr {
 
@@ -15,14 +15,14 @@ namespace gdr {
 
     class RelativePoseMeasurement {
 
-        rotationMeasurement relativeRotation;
+        RotationMeasurement relativeRotation;
 
-        translationMeasurement relativeTranslation;
+        TranslationMeasurement relativeTranslation;
 
     public:
 
-        RelativePoseMeasurement(const rotationMeasurement &newRotationMeasurement,
-                                const translationMeasurement &newTranslationMeasurement);
+        RelativePoseMeasurement(const RotationMeasurement &newRotationMeasurement,
+                                const TranslationMeasurement &newTranslationMeasurement);
 
         Eigen::Quaterniond getRotationRelative() const;
 

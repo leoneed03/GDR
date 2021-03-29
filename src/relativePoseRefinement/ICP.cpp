@@ -1,5 +1,6 @@
 //
-// Created by leoneed on 1/9/21.
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
 #include "relativePoseRefinement/ICP.h"
@@ -10,22 +11,25 @@
 
 namespace gdr {
 
-    int loadDepth(pangolin::Image<unsigned short> &depth, const std::string &fileName, unsigned int width = 640,
-                  unsigned int height = 480) {
-        pangolin::TypedImage depthRaw =
-                pangolin::LoadImage(fileName, pangolin::ImageFileTypePng);
+    int loadDepth(pangolin::Image<unsigned short> &imageDepth,
+                  const std::string &filename,
+                  int width,
+                  int height) {
+
+        pangolin::TypedImage depthRawImage =
+                pangolin::LoadImage(filename, pangolin::ImageFileTypePng);
 
         pangolin::Image<unsigned short> depthRaw16(
-                (unsigned short *) depthRaw.ptr, depthRaw.w, depthRaw.h,
-                depthRaw.w * sizeof(unsigned short));
+                (unsigned short *) depthRawImage.ptr, depthRawImage.w, depthRawImage.h,
+                depthRawImage.w * sizeof(unsigned short));
 
-        for (unsigned int i = 0; i < height; ++i) {
-            for (unsigned int j = 0; j < width; ++j) {
-                depth.RowPtr(i)[j] = depthRaw16(j, i) / 5;
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                imageDepth.RowPtr(y)[x] = depthRaw16(x, y) / 5;
             }
         }
 
-        depthRaw.Dealloc();
+        depthRawImage.Dealloc();
 
         return 0;
     }
@@ -37,9 +41,6 @@ namespace gdr {
         int height = poseToBeTransformed.getImagePixelHeight();
         int width = poseToBeTransformed.getImagePixelWidth();
 
-        assert(height == 480);
-        assert(width == 640);
-
         assert(height == poseDestination.getImagePixelHeight());
         assert(width == poseDestination.getImagePixelWidth());
 
@@ -47,13 +48,10 @@ namespace gdr {
         ICPOdometry icpOdom(width, height,
                             cameraRgbdOfToBeTransformed.getCx(), cameraRgbdOfToBeTransformed.getCy(),
                             cameraRgbdOfToBeTransformed.getFx(), cameraRgbdOfToBeTransformed.getFy());
-        Sophus::SE3d T_wc_prev;
-        Sophus::SE3d T_wc_curr;
 
         cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, 0);
         std::string dev(prop.name);
-        //std::cout << "CUDA device used is " << dev << std::endl;
 
         int threads = 224;
         int blocks = 96;
@@ -69,38 +67,16 @@ namespace gdr {
                                                       secondData.pitch,
                                                       (unsigned short *) secondData.ptr);
 
+        loadDepth(imageICPModel, poseDestination.getPathImageD(), width, height);
+        loadDepth(imageICP, poseToBeTransformed.getPathImageD(), width, height);
 
-        //swap here
-        loadDepth(imageICPModel, poseDestination.getPathImageD());
-        loadDepth(imageICP, poseToBeTransformed.getPathImageD());
-
-
-        ///TODO: swap due to inverse order of images used by imageICP (?)
-//        std::swap(imageICP, imageICPModel);
         icpOdom.initICPModel(imageICPModel.ptr);
         icpOdom.initICP(imageICP.ptr);
 
-        T_wc_prev = T_wc_curr;
         Sophus::SE3d relativeSE3_Rt = initTransformationSE3.getSE3();
-        Sophus::SE3d preICP_SE3 = relativeSE3_Rt;
 
-        // TODO: use init umeyama as init
         icpOdom.getIncrementalTransformation(relativeSE3_Rt, threads, blocks);
-//        icpOdom.getIncrementalTransformation(relativeSE3_Rt, threads, blocks);
 
-
-        Eigen::Quaterniond sophusBeforeToEigen(preICP_SE3.rotationMatrix().matrix());
-        Eigen::Quaterniond sophusAfterToEigen(relativeSE3_Rt.rotationMatrix().matrix());
-
-        std::cout << "Rotation diff is " << std::endl << sophusAfterToEigen.angularDistance(sophusBeforeToEigen)
-                  << std::endl;
-        std::cout << "Translation diff is " << std::endl
-                  << (preICP_SE3.translation() - relativeSE3_Rt.translation()).norm() << std::endl;
-        //std::cout << "=========================================================================" << std::endl;
-
-
-        ///finally refine the measurement
-//        initRelPosEstimation = relativeSE3_Rt.matrix();
         initTransformationSE3 = SE3(relativeSE3_Rt);
 
         return true;

@@ -14,23 +14,32 @@
 
 #include <Eigen/Eigen>
 #include "SiftGPU.h"
-#include "keyPoints/KeyPoint2D.h"
+#include "keyPoints/KeyPoint2DAndDepth.h"
 
 #include "ISiftModule.h"
 
 namespace gdr {
 
-    using imageDescriptor = std::pair<std::vector<KeyPoint2D>, std::vector<float>>;
+    using imageDescriptor = std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>;
 
     class SiftModuleGPU : public ISiftModule {
 
-        std::unique_ptr<SiftMatchGPU> matcher;
+    public:
+        enum class PrintDebug {NOTHING, EVERYTHING};
+
+    private:
+        PrintDebug whatToPrint = PrintDebug::NOTHING;
         int maxSift = 4096;
 
     public:
-        SiftModuleGPU();
 
-        std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
+        void setPrintDebug(const PrintDebug &printDebug);
+
+        const PrintDebug &getPrintDebug() const;
+
+        bool printAllInformation() const;
+
+        std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
         getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                            const std::vector<int> &numOfDevicesForDetectors = {0}) override;
 
@@ -56,14 +65,6 @@ namespace gdr {
 
         void siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs);
 
-
-        /* L1-Root-normalize feature descriptors
-         * @param descriptors -- matrix of N descriptors
-         * each row of matrix represents one feature.
-         */
-
-        static
-        Eigen::MatrixXf normalizeDescriptorsL1Root(const Eigen::MatrixXf &descriptors);
 
         static
         std::vector<float> normalizeDescriptorsL1Root(const std::vector<float> &descriptors);

@@ -14,8 +14,8 @@ namespace gdr {
     class IRefinerRelativePose {
     public:
         virtual bool refineRelativePose(const MatchableInfo &poseToBeTransformed,
-                                       const MatchableInfo &poseDestination,
-                                       SE3 &initTransformationSE3) = 0;
+                                        const MatchableInfo &poseDestination,
+                                        SE3 &initTransformationSE3) = 0;
 
         virtual ~IRefinerRelativePose() = default;
     };

@@ -3,23 +3,23 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "absolutePoseEstimation/translationAveraging/translationMeasurement.h"
+#include "absolutePoseEstimation/translationAveraging/TranslationMeasurement.h"
 
 namespace gdr {
 
-    translationMeasurement::translationMeasurement(const Eigen::Vector3d &newTranslation3d, int newIndexFrom,
+    TranslationMeasurement::TranslationMeasurement(const Eigen::Vector3d &newTranslation3d, int newIndexFrom,
                                                    int newIndexTo) : translation3d(newTranslation3d),
                                                                      indexFrom(newIndexFrom),
                                                                      indexTo(newIndexTo) {}
-    const Eigen::Vector3d& translationMeasurement::getTranslation() const {
+    const Eigen::Vector3d& TranslationMeasurement::getTranslation() const {
         return translation3d;
     }
 
 
-    int translationMeasurement::getIndexFromToBeTransformed() const {
+    int TranslationMeasurement::getIndexFromToBeTransformed() const {
         return indexFrom;
     }
-    int translationMeasurement::getIndexToDestination() const {
+    int TranslationMeasurement::getIndexToDestination() const {
         return indexTo;
     }
 }

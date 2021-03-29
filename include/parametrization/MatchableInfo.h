@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "keyPoints/KeyPoint2D.h"
+#include "keyPoints/KeyPoint2DAndDepth.h"
 #include "cameraRGBD.h"
 
 
@@ -23,13 +23,13 @@ namespace gdr {
         std::string pathImageRGB;
         CameraRGBD cameraRGB;
         std::string pathImageD;
-        std::vector<KeyPoint2D> keyPoints2D;
+        std::vector<KeyPoint2DAndDepth> keyPoints2D;
 
     public:
 
         MatchableInfo(const std::string &pathRGB,
                       const std::string &pathD,
-                      const std::vector<KeyPoint2D> &keyPoints2D,
+                      const std::vector<KeyPoint2DAndDepth> &keyPoints2D,
                       const CameraRGBD &cameraRGB);
 
         MatchableInfo() = default;
@@ -38,7 +38,7 @@ namespace gdr {
 
         const std::string &getPathImageD() const;
 
-        const std::vector<KeyPoint2D> getKeyPoints2D() const;
+        const std::vector<KeyPoint2DAndDepth> getKeyPoints2D() const;
 
         const CameraRGBD& getCameraRGB() const;
 

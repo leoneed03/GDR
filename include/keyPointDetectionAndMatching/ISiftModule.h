@@ -11,7 +11,7 @@
 
 #include "keyPointDetectionAndMatching/KeyPointsAndDescriptors.h"
 #include "keyPointDetectionAndMatching/Match.h"
-#include "keyPoints/KeyPoint2D.h"
+#include "keyPoints/KeyPoint2DAndDepth.h"
 
 namespace gdr {
 
@@ -24,7 +24,7 @@ namespace gdr {
          * @param numOfDevicesForDetectors device indices used for multiple GPU instances, should be different
          * @returns vector where i-th element represents keypoint collection of the i-th image
          */
-        virtual std::vector<std::pair<std::vector<KeyPoint2D>, std::vector<float>>>
+        virtual std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
         getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                            const std::vector<int> &numOfDevicesForDetectors = {0}) = 0;
 

@@ -20,7 +20,6 @@ namespace gdr {
               const CameraRGBD &cameraIntrToBeTransformed,
               const CameraRGBD &cameraIntrDestination) const;
 
-        static void hello();
     };
 }
 

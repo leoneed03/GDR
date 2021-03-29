@@ -15,7 +15,7 @@
 
 TEST(testRelativePosesComputation, PlantPASSED) {
 
-    gdr::CorrespondenceGraph correspondenceGraph("../../data/plantDataset_19_3/rgb", "../../data/plantDataset_19_3/depth",
+    gdr::CorrespondenceGraph correspondenceGraph("../../data/plant_sampled_19_3/rgb", "../../data/plant_sampled_19_3/depth",
                                                  517.3, 318.6,
                                                  516.5, 255.3);
     correspondenceGraph.computeRelativePoses();

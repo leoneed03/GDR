@@ -16,7 +16,7 @@
 namespace gdr {
 
 
-    keyPointsDepthDescriptor::keyPointsDepthDescriptor(const std::vector<KeyPoint2D> &newKeypointsKnownDepth,
+    keyPointsDepthDescriptor::keyPointsDepthDescriptor(const std::vector<KeyPoint2DAndDepth> &newKeypointsKnownDepth,
                                                        const std::vector<float> &newDescriptorsKnownDepth,
                                                        const std::vector<double> &newDepths) :
             keypointsKnownDepth(newKeypointsKnownDepth),
@@ -32,7 +32,7 @@ namespace gdr {
         }
     }
 
-    const std::vector<KeyPoint2D> &keyPointsDepthDescriptor::getKeyPointsKnownDepth() const {
+    const std::vector<KeyPoint2DAndDepth> &keyPointsDepthDescriptor::getKeyPointsKnownDepth() const {
         return keypointsKnownDepth;
     }
 
@@ -45,13 +45,13 @@ namespace gdr {
     }
 
     keyPointsDepthDescriptor keyPointsDepthDescriptor::filterKeypointsByKnownDepth(
-            const std::pair<std::vector<KeyPoint2D>, std::vector<float>> &keypointAndDescriptor,
+            const std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>> &keypointAndDescriptor,
             const std::string &pathToDImage) {
 
         double depthCoefficient = 5000.0;
-        const std::vector<KeyPoint2D> &keypoints = keypointAndDescriptor.first;
+        const std::vector<KeyPoint2DAndDepth> &keypoints = keypointAndDescriptor.first;
         const std::vector<float> &descriptors = keypointAndDescriptor.second;
-        std::vector<KeyPoint2D> keypointsKnownDepth;
+        std::vector<KeyPoint2DAndDepth> keypointsKnownDepth;
         std::vector<float> descriptorsKnownDepth;
         std::vector<double> depths;
 

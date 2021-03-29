@@ -6,14 +6,14 @@
 #ifndef GDR_KEYPOINTINFO_H
 #define GDR_KEYPOINTINFO_H
 
-#include "KeyPoint2D.h"
+#include "KeyPoint2DAndDepth.h"
 #include <limits>
 
 namespace gdr {
 
     class KeyPointInfo {
 
-        KeyPoint2D keyPoint2D;
+        KeyPoint2DAndDepth keyPoint2D;
 
         int observingPoseNumber;
         int initialObservingPoseNumber;
@@ -23,7 +23,7 @@ namespace gdr {
     public:
         KeyPointInfo();
 
-        KeyPointInfo(const KeyPoint2D &keyPointToSet,
+        KeyPointInfo(const KeyPoint2DAndDepth &keyPointToSet,
                      int observingPoseNumberToSet);
 
         int getInitObservingPoseNumber() const;

@@ -83,10 +83,13 @@ namespace gdr {
                             paramsRansac);
 
             int numInliers = projectionErrorsAndInlierIndices.size();
+
             if (numInliers > totalNumberInliers && numInliers >= minPointNumberEstimator) {
 
-                std::cout << "3 point NEW estimator got better results: " << numInliers
-                          << " vs old " << totalNumberInliers << std::endl;
+                if (getPrintProgressToCout()) {
+                    std::cout << "3 point NEW estimator got better results: " << numInliers
+                              << " vs old " << totalNumberInliers << std::endl;
+                }
 
                 optimal_cR_t_umeyama_transformation = cR_t_umeyama_3_points;
                 totalNumberInliers = numInliers;
@@ -112,19 +115,16 @@ namespace gdr {
                                 inlier_optimal_cR_t_umeyama_transformation,
                                 paramsRansac);
 
-                // TODO: often estimation after Local Optimization gets worse -- why?!
-                std::cout << "         NEW after LO number Of Inliers is "
-                          << projectionErrorsAndInlierIndicesAfterLocalOptimization.size()
-                          << " vs " << totalNumberInliers << std::endl;
+                if (getPrintProgressToCout()) {
+                    std::cout << "         NEW after LO number Of Inliers is "
+                              << projectionErrorsAndInlierIndicesAfterLocalOptimization.size()
+                              << " vs " << totalNumberInliers << std::endl;
+                }
 
-                // TODO: in "success.." number of inliers is not optimal
                 if (projectionErrorsAndInlierIndicesAfterLocalOptimization.size() >= totalNumberInliers) {
-                    std::cout << "_NEW___________________________________________GOT BETTER!!!!";
                     optimal_cR_t_umeyama_transformation = inlier_optimal_cR_t_umeyama_transformation;
                     totalNumberInliers = projectionErrorsAndInlierIndicesAfterLocalOptimization.size();
-
                 }
-                std::cout << std::endl;
             }
         }
 
@@ -141,18 +141,6 @@ namespace gdr {
         estimationSuccess = numberInliersOptimal > inlierCoeff * toBeTransformedPoints.cols();
 
         std::string logs;
-        std::cout << "before LO " << totalNumberInliers << std::endl;
-        if (estimationSuccess) {
-            std::cout << "NEW success [CHECK], inliers " << numberInliersOptimal << " of "
-                      << toBeTransformedPoints.cols() << " ratio "
-                      << 1.0 * numberInliersOptimal / toBeTransformedPoints.cols();
-        } else {
-
-            std::cout << "NEW not success, inliers ONLY " << numberInliersOptimal << " of "
-                      << toBeTransformedPoints.cols() << " ratio "
-                      << (double) numberInliersOptimal / toBeTransformedPoints.cols();
-        }
-        std::cout << std::endl;
 
         std::vector<int> inlierIndices;
         inlierIndices.reserve(totalProjectionErrorsAndInlierIndices.size());
@@ -183,5 +171,13 @@ namespace gdr {
                 ParamsRANSAC(),
                 estimationSuccess,
                 inlierIndices);
+    }
+
+    bool EstimatorRobustLoRANSAC::getPrintProgressToCout() const {
+        return printProgressToCout;
+    }
+
+    void EstimatorRobustLoRANSAC::setPrintProgressToCout(bool printProgress) {
+        printProgressToCout = printProgress;
     }
 }

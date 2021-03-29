@@ -17,7 +17,7 @@ namespace gdr {
         assert(keyPointinfo.size() == absolutePoses.size());
         assert(!absolutePoses.empty());
         assert(absolutePoses.size() > 0);
-        std::cout << "poses: " << absolutePoses.size() << std::endl;
+
         for (const auto &point: points) {
             pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
         }
@@ -94,8 +94,7 @@ namespace gdr {
                                                                    keyPointInfo.getDepth(),
                                                                    defaultQuadraticParameterNoiseModelDepth);
                 double depthErrorToUse = performNormalizing ? normalizedErrorDepth : depthError;
-//                std::cout << "keyPoint Depth " << keyPointInfo.getDepth() << " error is " << depthError
-//                          << " & normalized: " << normalizedErrorDepth << std::endl;
+
                 assert(std::abs(normalizedErrorDepth -
                                 depthError / (0.003331 * (keyPointInfo.getDepth() * keyPointInfo.getDepth()))) <
                        10 * std::numeric_limits<double>::epsilon());
@@ -155,7 +154,10 @@ namespace gdr {
                 errorsDepth.push_back(std::abs(computedDepth - keyPointInfo.getDepth()));
             }
         }
-        std::cout << "min max scale: " << minScale << ' ' << maxScale << std::endl;
+
+        if (getPrintProgressToCout()) {
+            std::cout << "min max scale: " << minScale << ' ' << maxScale << std::endl;
+        }
         assert(errorsDepth.size() == errorsReprojectionX.size());
         assert(errorsDepth.size() == errorsReprojectionY.size());
 
@@ -190,10 +192,12 @@ namespace gdr {
 
 // each unordered map maps from poseNumber to unordered map
 // mapping from keyPointGlobalIndex to {errorPixelX, errorPixelY}
-    std::vector<SE3> BundleAdjuster::optimizePointsAndPosesUsingDepthInfo(int indexFixed) {
+    std::vector<SE3> BundleAdjuster::optimizePointsAndPoses(int indexFixed) {
 
 
-        std::cout << "entered BA depth optimization" << std::endl;
+        if (getPrintProgressToCout()) {
+            std::cout << "entered BA depth optimization" << std::endl;
+        }
 
         std::vector<double> medians = getMedianErrorsXYDepth();
 
@@ -208,7 +212,9 @@ namespace gdr {
         ceres::Problem problem;
         ceres::LocalParameterization *quaternionLocalParameterization =
                 new ceres::EigenQuaternionParameterization;
-        std::cout << "started BA [depth using] ! " << std::endl;
+        if (getPrintProgressToCout()) {
+            std::cout << "started BA [depth using] ! " << std::endl;
+        }
         assert(orientationsqxyzwByPoseNumber.size() == poseTxTyTzByPoseNumber.size());
         assert(!orientationsqxyzwByPoseNumber.empty());
 
@@ -227,8 +233,10 @@ namespace gdr {
 
         assert(errors3DL2Raw.size() == errorsReprojDepthRaw.first.size());
 
-        std::cout << "deviation estimation sigmas are (pixels) " << sigmaReproj << " && (meters) " << sigmaDepth
-                  << std::endl;
+        if (getPrintProgressToCout()) {
+            std::cout << "deviation estimation sigmas are (pixels) " << sigmaReproj << " && (meters) " << sigmaDepth
+                      << std::endl;
+        }
 
         for (int poseIndex = 0; poseIndex < poseTxTyTzByPoseNumber.size(); ++poseIndex) {
 
@@ -284,17 +292,23 @@ namespace gdr {
 
 
         ceres::Solver::Options options;
+        //TODO: make these parameters variables
         options.linear_solver_type = ceres::SPARSE_SCHUR;
-        options.minimizer_progress_to_stdout = true;
+        options.minimizer_progress_to_stdout = getPrintProgressToCout();
         options.max_num_iterations = 100;
         options.num_threads = 6;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
-        std::cout << "done ceres BA" << std::endl;
-        std::cout << summary.FullReport() << std::endl;
-        std::cout << "Is BA USABLE?" << std::endl;
+        if (getPrintProgressToCout()) {
+            std::cout << "done ceres BA" << std::endl;
+            std::cout << summary.FullReport() << std::endl;
+            std::cout << "Is BA USABLE?" << std::endl;
+        }
         assert(summary.IsSolutionUsable());
-        std::cout << "Threads used " << summary.num_threads_used << std::endl;
+
+        if (getPrintProgressToCout()) {
+            std::cout << "Threads used " << summary.num_threads_used << std::endl;
+        }
 
         std::pair<std::vector<double>, std::vector<double>> errorsReprojDepthRawAfter =
                 getNormalizedErrorsReprojectionAndDepth(false);
@@ -303,18 +317,20 @@ namespace gdr {
         double medianErrorDepthRawAfter = RobustEstimators::getMedian(errorsReprojDepthRawAfter.second);
         double medianErrorL2RawAfter = RobustEstimators::getMedian(getL2Errors());
 
-        std::cout << "-----------------------------------------------------" << std::endl;
+        if (getPrintProgressToCout()) {
+            std::cout << "-----------------------------------------------------" << std::endl;
 
-        std::cout << "medians [m] L2 3D errors before: " << medianErrorL2Raw
-                  << " & \tafter: " << medianErrorL2RawAfter << '\n';
+            std::cout << "medians [m] L2 3D errors before: " << medianErrorL2Raw
+                      << " & \tafter: " << medianErrorL2RawAfter << '\n';
 
-        std::cout << "-----------------------------------------------------" << std::endl;
+            std::cout << "-----------------------------------------------------" << std::endl;
 
-        std::cout << "medians [pixels] L2 reproj before: " << medianErrorReprojRaw
-                  << " & \tafter: " << medianErrorReprojRawAfter << '\n';
+            std::cout << "medians [pixels] L2 reproj before: " << medianErrorReprojRaw
+                      << " & \tafter: " << medianErrorReprojRawAfter << '\n';
 
-        std::cout << "medians [m] depth before: " << medianErrorDepthRaw
-                  << " & \tafter : " << medianErrorDepthRawAfter << std::endl;
+            std::cout << "medians [m] depth before: " << medianErrorDepthRaw
+                      << " & \tafter : " << medianErrorDepthRawAfter << std::endl;
+        }
 
         std::vector<double> mediansAfter = getMedianErrorsXYDepth();
 
@@ -326,28 +342,34 @@ namespace gdr {
         double quantile90ErrorYafter = mediansAfter[4];
         double quantile90ErrorDepthAfter = mediansAfter[5];
 
-        std::cout << "=============================median errors information!============================" << std::endl;
-        std::cout << "medians BEFORE (x, y, depth), quantiles (x, y, depth): "
-                  << medianErrorX << ", " << medianErrorY << ", " << medianErrorDepth << ", "
-                  << quantile90ErrorX << ", " << quantile90ErrorY << ", " << quantile90ErrorDepth
-                  << std::endl;
-        std::cout << "medians AFTER (x, y, depth), quantiles (x, y, depth): "
-                  << medianErrorXafter << ", " << medianErrorYafter << ", " << medianErrorDepthAfter << ", "
-                  << quantile90ErrorXafter << ", " << quantile90ErrorYafter << ", " << quantile90ErrorDepthAfter
-                  << std::endl;
+        if (getPrintProgressToCout()) {
+            std::cout << "=============================median errors information!============================"
+                      << std::endl;
+            std::cout << "medians BEFORE (x, y, depth), quantiles (x, y, depth): "
+                      << medianErrorX << ", " << medianErrorY << ", " << medianErrorDepth << ", "
+                      << quantile90ErrorX << ", " << quantile90ErrorY << ", " << quantile90ErrorDepth
+                      << std::endl;
+            std::cout << "medians AFTER (x, y, depth), quantiles (x, y, depth): "
+                      << medianErrorXafter << ", " << medianErrorYafter << ", " << medianErrorDepthAfter << ", "
+                      << quantile90ErrorXafter << ", " << quantile90ErrorYafter << ", " << quantile90ErrorDepthAfter
+                      << std::endl;
+        }
         std::vector<SE3> posesOptimized;
 
         assert(cameraModelByPoseNumber.size() == poseTxTyTzByPoseNumber.size());
+
         for (int i = 0; i < poseTxTyTzByPoseNumber.size(); ++i) {
+
             Eigen::Quaterniond orientation(orientationsqxyzwByPoseNumber[i].data());
             const auto &poseTranslationCameraIntr = poseTxTyTzByPoseNumber[i];
+
             std::vector<double> t = {poseTranslationCameraIntr[0], poseTranslationCameraIntr[1],
                                      poseTranslationCameraIntr[2]};
             Eigen::Vector3d translation(t.data());
-            assert(std::abs(orientation.norm() - 1.0) < 1e-10);
             Sophus::SE3d poseCurrent;
             poseCurrent.setQuaternion(orientation);
             poseCurrent.translation() = translation;
+
             posesOptimized.emplace_back(SE3(poseCurrent));
         }
 
@@ -407,25 +429,29 @@ namespace gdr {
         const auto &errorsNormalizedReproj = normalizedErrorsReprojAndDepth.first;
         const auto &errorsNormalizedDepth = normalizedErrorsReprojAndDepth.second;
 
-        std::cout << "total number of points " << errorsNormalizedReproj.size() << std::endl;
+        if (getPrintProgressToCout()) {
+            std::cout << "total number of points " << errorsNormalizedReproj.size() << std::endl;
+        }
         assert(!errorsNormalizedReproj.empty());
         assert(errorsNormalizedReproj.size() == errorsNormalizedDepth.size());
 
         double medianNormalizedReprojection = RobustEstimators::getMedian(errorsNormalizedReproj);
         double medianNormalizedDepth = RobustEstimators::getMedian(errorsNormalizedDepth);
 
-
-        std::cout << "Medians of normalized errors are (pixels) " << medianNormalizedReprojection
-                  << " && (m) " << medianNormalizedDepth << std::endl;
         double initScaleReproj = computeInitialScaleByMedian(medianNormalizedReprojection);
         double initScaleDepth = computeInitialScaleByMedian(medianNormalizedDepth);
-        std::cout << "init Scales of normalized errors are (pixels) " << initScaleReproj
-                  << " && (m) " << initScaleDepth << std::endl;
+
+        if (getPrintProgressToCout()) {
+            std::cout << "Medians of normalized errors are (pixels) " << medianNormalizedReprojection
+                      << " && (m) " << medianNormalizedDepth << std::endl;
+            std::cout << "init Scales of normalized errors are (pixels) " << initScaleReproj
+                      << " && (m) " << initScaleDepth << std::endl;
+        }
 
         inlierErrorsReprojection = getInlierErrors(errorsNormalizedReproj, initScaleReproj, thresholdInlier);
         inlierErrorsDepth = getInlierErrors(errorsNormalizedDepth, initScaleDepth, thresholdInlier);
 
-        {
+        if (getPrintProgressToCout()) {
             auto copyReproj = inlierErrorsReprojection;
             auto copyDepth = inlierErrorsDepth;
             std::sort(copyReproj.begin(), copyReproj.end());
@@ -465,11 +491,13 @@ namespace gdr {
         std::pair<std::vector<double>, std::vector<double>> inlierErrorsReprojAndDepth =
                 getInlierNormalizedErrorsReprojectionAndDepth(threshold);
 
-        std::cout << "Number of inlier errors for pixels is (pixels) " << inlierErrorsReprojAndDepth.first.size()
-                  << " almost " << std::endl;
+        if (getPrintProgressToCout()) {
+            std::cout << "Number of inlier errors for pixels is (pixels) " << inlierErrorsReprojAndDepth.first.size()
+                      << " almost " << std::endl;
 
-        std::cout << "Number of inlier errors for pixels is (m) " << inlierErrorsReprojAndDepth.second.size()
-                  << " almost " << std::endl;
+            std::cout << "Number of inlier errors for pixels is (m) " << inlierErrorsReprojAndDepth.second.size()
+                      << " almost " << std::endl;
+        }
 
         const auto &errorsReproj = inlierErrorsReprojAndDepth.first;
         const auto &errorsDepth = inlierErrorsReprojAndDepth.second;
@@ -506,6 +534,14 @@ namespace gdr {
         assert(!errorsL2.empty());
 
         return errorsL2;
+    }
+
+    bool BundleAdjuster::getPrintProgressToCout() const {
+        return printProgressToCout;
+    }
+
+    void BundleAdjuster::setPrintProgressToCout(bool printProgress) {
+        printProgressToCout = printProgress;
     }
 
 }
