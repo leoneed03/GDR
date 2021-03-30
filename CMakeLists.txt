@@ -62,6 +62,7 @@ if(${DEBUG_PRINT_PROGRESS})
   list(APPEND GDR_FLAGS "-DDEBUG_PRINT_PROGRESS")
 endif()
 
+# TODO: how to include gtsam without hardcoding library name?
 set(GTSAM_LIBS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}/lib/libgtsam.a)
 set(GTSAM_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}/include)
 
@@ -123,7 +124,8 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjectorCreator.h
         ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/PointClassifierCreator.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h
-        ${PROJECT_SOURCE_DIR}/include/parametrization/SparseMatrixClass.h)
+        ${PROJECT_SOURCE_DIR}/include/parametrization/SparseMatrixClass.h
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RelativeRotationError.h)
 
 set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/directoryTraversing/DirectoryReader.cpp
@@ -175,7 +177,8 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.cpp
         ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/CloudProjectorCreator.cpp
         ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifierCreator.cpp
-        ${PROJECT_SOURCE_DIR}/src/parametrization/SparseMatrixClass.cpp src/absolutePoseEstimation/rotationAveraging/RelativeRotationError.cpp include/absolutePoseEstimation/rotationAveraging/RelativeRotationError.h)
+        ${PROJECT_SOURCE_DIR}/src/parametrization/SparseMatrixClass.cpp
+        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativeRotationError.cpp)
 
 add_subdirectory(lib)
 
@@ -206,17 +209,16 @@ target_link_libraries(
 
 target_include_directories(
   GDR_LIB
-  PUBLIC ${GTSAM_INCLUDE_DIRS}
-        ${PROJECT_SOURCE_DIR}/include
+  PUBLIC ${PROJECT_SOURCE_DIR}/include
         ${EIGEN3_INCLUDE_DIRS}
         ${Sophus_INCLUDE_DIRS}
+        ${CERES_INCLUDE_DIRS}
+        ${CUDA_INCLUDE_DIRS}
+  PRIVATE ${OpenGL_INCLUDE_DIR}
+        ${PCL_INCLUDE_DIRS}
         ${ICPCUDA_INCLUDE_DIRS}
         ${Pangolin_INCLUDE_DIRS}
-        ${CERES_INCLUDE_DIRS}
-        ${PCL_INCLUDE_DIRS}
-        ${CUDA_INCLUDE_DIRS}
-  PRIVATE ${OpenGL_INCLUDE_DIR})
-
+        ${GTSAM_INCLUDE_DIRS})
 
 enable_testing()
 add_subdirectory(test)
