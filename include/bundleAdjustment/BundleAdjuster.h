@@ -14,7 +14,7 @@
 
 #include "IBundleAdjuster.h"
 #include "keyPoints/KeyPointInfo.h"
-#include "parametrization/cameraRGBD.h"
+#include "parametrization/CameraRGBD.h"
 #include "parametrization/SE3.h"
 #include "parametrization/Point3d.h"
 #include "readerTUM/PoseFullInfo.h"

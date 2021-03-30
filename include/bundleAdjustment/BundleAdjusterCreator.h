@@ -10,7 +10,7 @@
 
 #include "bundleAdjustment/IBundleAdjuster.h"
 
-#include "parametrization/cameraRGBD.h"
+#include "parametrization/CameraRGBD.h"
 #include "keyPoints/KeyPointInfo.h"
 
 namespace gdr {

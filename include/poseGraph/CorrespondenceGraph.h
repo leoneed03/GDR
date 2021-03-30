@@ -9,7 +9,7 @@
 #include "sparsePointCloud/CloudProjector.h"
 #include "VertexCG.h"
 #include "parametrization/RelativeSE3.h"
-#include "parametrization/cameraRGBD.h"
+#include "parametrization/CameraRGBD.h"
 #include "keyPointDetectionAndMatching/IFeatureDetectorMatcher.h"
 #include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
 #include "parametrization/Vectors3d.h"

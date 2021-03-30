@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "keyPoints/KeyPoint2DAndDepth.h"
-#include "cameraRGBD.h"
+#include "CameraRGBD.h"
 
 
 namespace gdr {

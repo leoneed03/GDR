@@ -14,7 +14,7 @@
 
 #include "parametrization/SE3.h"
 #include "parametrization/SO3.h"
-#include "parametrization/cameraRGBD.h"
+#include "parametrization/CameraRGBD.h"
 
 #include "keyPoints/KeyPointsDepthDescriptor.h"
 

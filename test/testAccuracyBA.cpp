@@ -263,10 +263,6 @@ TEST(testBAOptimized, visualizationDesk98) {
     testReconstruction("plant", 19, 3,
                        0.04, 0.04,
                        gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));
-//
-//    testReconstruction("desk", 98, 6,
-//                       0.04, 0.04,
-//                       gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));
 }
 
 int main(int argc, char *argv[]) {

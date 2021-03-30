@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "parametrization/cameraRGBD.h"
+#include "parametrization/CameraRGBD.h"
 
 namespace gdr {
 

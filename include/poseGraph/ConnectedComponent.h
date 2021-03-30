@@ -9,7 +9,7 @@
 #include "VertexCG.h"
 
 #include "parametrization/RelativeSE3.h"
-#include "parametrization/cameraRGBD.h"
+#include "parametrization/CameraRGBD.h"
 
 #include "keyPoints/KeyPointInfo.h"
 
