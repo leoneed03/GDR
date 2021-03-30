@@ -8,10 +8,10 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
-#include <thread>
 #include <chrono>
+
 #include "readerTUM/ReaderTum.h"
-#include "poseGraph/ConnectedComponent.h"
+
 #include "computationHandlers/RelativePosesComputationHandler.h"
 #include "visualization/3D/SmoothPointCloud.h"
 
@@ -61,7 +61,8 @@ void testReconstruction(
         std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
         std::string absolutePoses = "../../data/" + datasetName + "/" + "groundtruth.txt";
-        std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(absolutePoses);
+        std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
+                absolutePoses);
 
         if (printToConsole) {
             std::cout << "read poses GT: " << posesInfoFull.size() << std::endl;
@@ -233,7 +234,8 @@ void testReconstruction(
             std::cout << "mean error translation: " << meanErrorT_BA_L2 << std::endl;
             std::cout << "mean error rotation: " << meanErrorR_BA_angDist << std::endl;
 
-            std::cout << "\n poses estimated " << bundleAdjustedPoses.size() << "/" << numberOfPosesInDataset << std::endl;
+            std::cout << "\n poses estimated " << bundleAdjustedPoses.size() << "/" << numberOfPosesInDataset
+                      << std::endl;
         }
 
         if (showVisualization3D) {
@@ -261,7 +263,7 @@ TEST(testBAOptimized, visualizationDesk98) {
     testReconstruction("plant", 19, 3,
                        0.04, 0.04,
                        gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));
-
+//
 //    testReconstruction("desk", 98, 6,
 //                       0.04, 0.04,
 //                       gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));

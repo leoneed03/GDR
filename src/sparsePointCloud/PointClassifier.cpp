@@ -1,11 +1,11 @@
 //
-// Created by leoneed on 2/1/21.
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
 #include "sparsePointCloud/PointClassifier.h"
 
 #include <queue>
-#include <iostream>
 #include <cassert>
 
 namespace gdr {
@@ -84,7 +84,6 @@ namespace gdr {
 
     int PointClassifier::getNumberOfGlobalIndices() const {
 
-//        assert(!poseNumberAndPointLocalIndexByGlobalIndex.empty());
         return poseNumberAndPointLocalIndexByGlobalIndex.size();
     }
 
@@ -115,7 +114,7 @@ namespace gdr {
                        pointClassesByPose[poseAndLocalInd.first].end());
                 pointClassesByPose[poseAndLocalInd.first][poseAndLocalInd.second] = newClassNumber;
 
-                for (const auto& samePoint: edgesBetweenPointsByGlobalIndices[currentGlobalIndex]) {
+                for (const auto &samePoint: edgesBetweenPointsByGlobalIndices[currentGlobalIndex]) {
                     if (!visitedGlobalIndices[samePoint]) {
                         globalIndicesToVisit.push(samePoint);
                         visitedGlobalIndices[samePoint] = true;

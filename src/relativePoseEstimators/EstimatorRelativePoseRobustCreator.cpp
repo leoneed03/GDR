@@ -4,7 +4,6 @@
 //
 
 #include "relativePoseEstimators/EstimatorRelativePoseRobustCreator.h"
-
 #include "relativePoseEstimators/EstimatorRobustLoRANSAC.h"
 
 namespace gdr {

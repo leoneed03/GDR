@@ -8,6 +8,8 @@
 
 #include <vector>
 #include <unordered_map>
+
+//TODO: hide this opencv header in wrapper
 #include <opencv2/opencv.hpp>
 
 #include "keyPoints/KeyPointInfo.h"
@@ -17,7 +19,7 @@
 namespace gdr {
 
     class ICloudProjector {
-        
+
     public:
 
         /**
@@ -47,7 +49,7 @@ namespace gdr {
         getKeyPointInfoByPoseNumberAndPointClass() const = 0;
 
 
-        // TODO: further methods should be in a separate class
+        // TODO: further methods should be in a separate class and cv::Mat wrapper
         /**
          * Shows where observed point are projected on images (for debug purposes)
          */

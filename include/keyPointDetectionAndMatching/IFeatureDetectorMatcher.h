@@ -7,7 +7,6 @@
 #define GDR_IFEATUREDETECTORMATCHER_H
 
 #include <vector>
-#include <tbb/concurrent_vector.h>
 
 #include "keyPointDetectionAndMatching/KeyPointsAndDescriptors.h"
 #include "keyPointDetectionAndMatching/Match.h"

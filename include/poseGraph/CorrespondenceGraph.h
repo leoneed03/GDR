@@ -3,12 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_SIFTGPU_CG_H
-#define GDR_SIFTGPU_CG_H
-
-#include <queue>
-#include <atomic>
-#include <tbb/concurrent_unordered_map.h>
+#ifndef GDR_CORRESPONDENCE_GRAPH_H
+#define GDR_CORRESPONDENCE_GRAPH_H
 
 #include "sparsePointCloud/CloudProjector.h"
 #include "VertexCG.h"
@@ -45,8 +41,7 @@ namespace gdr {
 
         CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
                             const std::string &pathToImageDirectoryD,
-                            const CameraRGBD &cameraDefault,
-                            int numOfThreadsCpu = 4);
+                            const CameraRGBD &cameraDefault);
 
         const Match &getMatch(int indexFromDestDestination, int indexInMatchListToBeTransformedCanBeComputed) const;
 

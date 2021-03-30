@@ -22,13 +22,11 @@ namespace gdr {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        RotationMeasurement(const SO3 &newRelativeRotationQuat,
-                            int newIndexFrom,
-                            int newIndexTo);
+        RotationMeasurement(const SO3 &relativeRotation,
+                            int indexFrom,
+                            int indexTo);
 
-        Eigen::Quaterniond getRotationQuat() const;
-
-        const SO3 &getRotation3d() const;
+        const SO3 &getRotationSO3() const;
 
         int getIndexFromToBeTransformed() const;
 

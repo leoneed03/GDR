@@ -16,9 +16,7 @@
 #include "sparsePointCloud/IPointClassifier.h"
 #include "sparsePointCloud/ICloudProjector.h"
 
-#include <tbb/concurrent_vector.h>
 #include <vector>
-#include <set>
 
 namespace gdr {
 
@@ -48,8 +46,8 @@ namespace gdr {
                 const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
                 const CameraRGBD &defaultCamera,
                 const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointCorrespondences,
-                const std::string& RelativeRotationsFile,
-                const std::string& absoluteRotationsFile,
+                const std::string &RelativeRotationsFile,
+                const std::string &absoluteRotationsFile,
                 int componentNumber);
 
         int getComponentNumber() const;
@@ -59,8 +57,6 @@ namespace gdr {
         std::vector<SE3> getPoses() const;
 
         bool poseIndexIsValid(int poseIndex) const;
-
-    public:
 
         void setPoseSE3(int poseIndex, const SE3 &poseSE3);
 
@@ -82,9 +78,7 @@ namespace gdr {
 
         const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getInlierObservedPoints() const;
 
-    public:
-
-        int printRelativeRotationsToFile(const std::string& pathToFileRelativeRotations) const;
+        int printRelativeRotationsToFile(const std::string &pathToFileRelativeRotations) const;
     };
 
 }

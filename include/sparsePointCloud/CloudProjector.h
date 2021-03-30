@@ -3,7 +3,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-
 #ifndef GDR_CLOUDPROJECTOR_H
 #define GDR_CLOUDPROJECTOR_H
 
@@ -15,6 +14,7 @@
 
 #include <unordered_map>
 #include <vector>
+//TODO: hide this opencv header
 #include <opencv2/opencv.hpp>
 
 #include "sparsePointCloud/ICloudProjector.h"
@@ -34,6 +34,7 @@ namespace gdr {
 
         const std::vector<std::unordered_map<int, KeyPointInfo>> &getKeyPointInfoByPoseNumberAndPointClass() const override;
 
+        //TODO: class wrapper for cv::Mat
         std::vector<cv::Mat> showPointsReprojectionError(const std::vector<Point3d> &pointsGlobalCoordinates,
                                                          const std::string &pathToRGBDirectoryToSave,
                                                          std::vector<double> &totalL2Errors,
@@ -51,11 +52,12 @@ namespace gdr {
         std::vector<Point3d> indexedPoints;
         std::vector<ProjectableInfo> poses;
 
-        // i-th unordered map maps from point's index (int) to struct containing information
-        // about keypoint (KeyPointInfo) -- point's observation by i-th camera
+        /** i-th unordered map maps from point's index (int) to struct containing information
+         * about keypoint (KeyPointInfo) -- point's observation by i-th camera
+         */
         std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPose;
 
-        // j-th vector contains pose numbers observing j-keypoint
+        /** j-th vector contains pose numbers observing j-keypoint */
         std::vector<std::vector<int>> numbersOfPosesObservingSpecificPoint;
 
         const Point3d &getPointByIndex3d(int pointNumber3d) const;

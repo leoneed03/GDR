@@ -13,7 +13,9 @@
 #include <mutex>
 
 #include <Eigen/Eigen>
+
 #include "SiftGPU.h"
+
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
 #include "IFeatureDetectorMatcher.h"
@@ -25,7 +27,9 @@ namespace gdr {
     class SiftModuleGPU : public IFeatureDetectorMatcher {
 
     public:
-        enum class PrintDebug {NOTHING, EVERYTHING};
+        enum class PrintDebug {
+            NOTHING, EVERYTHING
+        };
 
     private:
         PrintDebug whatToPrint = PrintDebug::NOTHING;
@@ -47,16 +51,18 @@ namespace gdr {
         getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                          const std::vector<int> &numOfDevicesForDetectors = {0});
 
-        std::vector<std::vector<Match>> findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                                                            const std::vector<int> &matchDevicesNumbers = {
-                                                                    0}) override;
+        std::vector<std::vector<Match>>
+        findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
+                            const std::vector<int> &matchDevicesNumbers = {
+                                    0}) override;
 
     private:
 
 
-        std::vector<tbb::concurrent_vector<Match>> findCorrespondencesConcurrent(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                                                                       const std::vector<int> &matchDevicesNumbers = {
-                                                                               0});
+        std::vector<tbb::concurrent_vector<Match>>
+        findCorrespondencesConcurrent(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
+                                      const std::vector<int> &matchDevicesNumbers = {
+                                              0});
 
         static std::vector<std::pair<int, int>>
         getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,

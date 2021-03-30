@@ -12,6 +12,7 @@
 namespace gdr {
 
     class IRefinerRelativePose {
+
     public:
         virtual bool refineRelativePose(const MatchableInfo &poseToBeTransformed,
                                         const MatchableInfo &poseDestination,

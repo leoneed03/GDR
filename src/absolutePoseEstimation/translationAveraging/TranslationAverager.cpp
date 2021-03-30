@@ -9,7 +9,6 @@
 #include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 #include "parametrization/Vectors3d.h"
 
-
 namespace gdr {
 
     SparseMatrixd
@@ -78,6 +77,7 @@ namespace gdr {
         const Eigen::VectorXd &guessRaw = initialGuessX.getVectorRaw();
 
 
+        //TODO: multiply be preconditioner
         auto SymMatrix = anyMatrixA.transpose() * weightDiagonalMatrix * anyMatrixA;
 
         Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower | Eigen::Upper> cg;
@@ -87,7 +87,6 @@ namespace gdr {
         }
         assert(cg.info() == Eigen::Success);
         const Eigen::VectorXd &b = resultVector_b.getVectorRaw();
-
 
         Eigen::VectorXd freeTermToSolveB = anyMatrixA.transpose() * weightDiagonalMatrix * b;
 

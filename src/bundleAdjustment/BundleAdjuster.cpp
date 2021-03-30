@@ -5,50 +5,9 @@
 
 #include "bundleAdjustment/BundleAdjuster.h"
 
-#include <opencv2/opencv.hpp>
 #include <ceres/ceres.h>
 
 namespace gdr {
-
-
-//    BundleAdjuster::BundleAdjuster(const std::vector<Point3d> &points,
-//                                   const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
-//                                   const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo) {
-//
-//        assert(keyPointInfo.size() == absolutePoses.size());
-//        assert(!absolutePoses.empty());
-//        assert(absolutePoses.size() > 0);
-//
-//        for (const auto &point: points) {
-//            pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
-//        }
-//
-//        for (const auto &mapIntInfo: keyPointInfo) {
-//            for (const auto &pairIntInfo: mapIntInfo) {
-//                assert(pairIntInfo.second.getX() >= 0);
-//                assert(pairIntInfo.second.getY() >= 0);
-//            }
-//        }
-//        keyPointInfoByPoseNumberAndPointNumber = keyPointInfo;
-//
-//        for (const auto &pose: absolutePoses) {
-//            const auto &translation = pose.first.getTranslation();
-//            const auto &rotationQuat = pose.first.getRotationQuatd();
-//            const auto &cameraIntr = pose.second;
-//            poseTxTyTzByPoseNumber.push_back({translation[0], translation[1], translation[2]});
-//            poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.fx, cameraIntr.cx, cameraIntr.fy, cameraIntr.cy});
-//            orientationsqxyzwByPoseNumber.push_back(
-//                    {rotationQuat.x(), rotationQuat.y(), rotationQuat.z(), rotationQuat.w()});
-//
-//            cameraModelByPoseNumber.push_back(pose.second);
-//            assert(poseTxTyTzByPoseNumber[poseTxTyTzByPoseNumber.size() - 1].size() == dimPose);
-//        }
-//
-//        assert(pointsXYZbyIndex.size() == points.size());
-//        assert(keyPointInfo.size() == keyPointInfoByPoseNumberAndPointNumber.size());
-//        assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
-//
-//    }
 
     std::pair<std::vector<double>, std::vector<double>>
     BundleAdjuster::getNormalizedErrorsReprojectionAndDepth(bool performNormalizing) {
@@ -122,7 +81,9 @@ namespace gdr {
         return pointsOptimized;
     }
 
-// get median and max errors: reprojection OX and OY and Depth: [{OX, OY, Depth}_median, {OX, OY, Depth}_max, {OX, OY, Depth}_min]
+    /** [DEBUG] Get median and 0.9 qunatile errors: reprojection OX and OY and Depth:
+     *      [{OX, OY, Depth}_median, {OX, OY, Depth}_max, {OX, OY, Depth}_min]
+     */
     std::vector<double> BundleAdjuster::getMedianErrorsXYDepth() {
 
         std::vector<double> errorsReprojectionX;
@@ -191,8 +152,6 @@ namespace gdr {
                 medianErrorDepthquant90};
     }
 
-// each unordered map maps from poseNumber to unordered map
-// mapping from keyPointGlobalIndex to KeyPoint information (sift-keypoint and depth)
     std::vector<SE3> BundleAdjuster::optimizePointsAndPoses(const std::vector<Point3d> &points,
                                                             const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
                                                             const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo,
@@ -573,7 +532,8 @@ namespace gdr {
             const auto &rotationQuat = pose.first.getRotationQuatd();
             const auto &cameraIntr = pose.second;
             poseTxTyTzByPoseNumber.push_back({translation[0], translation[1], translation[2]});
-            poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.fx, cameraIntr.cx, cameraIntr.fy, cameraIntr.cy});
+            poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.getFx(), cameraIntr.getCx(),
+                                                     cameraIntr.getFy(), cameraIntr.getCy()});
             orientationsqxyzwByPoseNumber.push_back(
                     {rotationQuat.x(), rotationQuat.y(), rotationQuat.z(), rotationQuat.w()});
 
@@ -586,4 +546,43 @@ namespace gdr {
         assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
     }
 
+    ceres::CostFunction *BundleAdjuster::ReprojectionWithDepthError::Create(double newObservedX, double newObservedY,
+                                                                            double newObservedDepth,
+                                                                            double scale,
+                                                                            const CameraRGBD &camera,
+                                                                            double estNormalizedReproj,
+                                                                            double estNormalizedDepth,
+                                                                            double devDividerReproj,
+                                                                            double devDividerDepth,
+                                                                            double medianResReproj,
+                                                                            double medianResDepth) {
+
+        return (new ceres::AutoDiffCostFunction<ReprojectionWithDepthError, 2, dimPoint, dimPose, dimOrientation>(
+                new ReprojectionWithDepthError(newObservedX, newObservedY, newObservedDepth,
+                                               scale, camera,
+                                               estNormalizedReproj, estNormalizedDepth,
+                                               devDividerReproj, devDividerDepth,
+                                               medianResReproj, medianResDepth)));
+    }
+
+    BundleAdjuster::ReprojectionWithDepthError::ReprojectionWithDepthError(double newObservedX, double newObservedY,
+                                                                           double newObservedDepth, double scale,
+                                                                           const CameraRGBD &cameraRgbd,
+                                                                           double devNormalizedEstReproj,
+                                                                           double devNormalizedEstDepth,
+                                                                           double devDividerReproj,
+                                                                           double devDividerDepth,
+                                                                           double medianResReproj,
+                                                                           double medianResDepth)
+            : observedX(newObservedX),
+              observedY(newObservedY),
+              observedDepth(newObservedDepth),
+              scaleKeyPoint(scale),
+              camera(cameraRgbd),
+              deviationEstimationNormalizedReproj(devNormalizedEstReproj),
+              deviationEstimationNormalizedDepth(devNormalizedEstDepth),
+              deviationDividerReproj(devDividerReproj),
+              deviationDividerDepth(devDividerDepth),
+              medianResidualReproj(medianResReproj),
+              medianResidualDepth(medianResDepth) {}
 }

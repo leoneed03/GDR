@@ -12,7 +12,6 @@
 #include <cassert>
 #include <string>
 
-
 namespace gdr {
 
 
@@ -28,7 +27,8 @@ namespace gdr {
 
         for (int pointIndex = 0; pointIndex < keypointsKnownDepth.size(); ++pointIndex) {
             keypointsKnownDepth[pointIndex].setDepth(depths[pointIndex]);
-            assert(std::abs(keypointsKnownDepth[pointIndex].getDepth() - depths[pointIndex]) < 3 * std::numeric_limits<double>::epsilon());
+            assert(std::abs(keypointsKnownDepth[pointIndex].getDepth() - depths[pointIndex]) <
+                   3 * std::numeric_limits<double>::epsilon());
         }
     }
 

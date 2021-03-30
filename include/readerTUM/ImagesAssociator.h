@@ -15,6 +15,8 @@
 #include <readerTUM/PoseFullInfo.h>
 
 namespace gdr {
+
+    /** Associate closest by timestamps RGB and Depth images (TUM dataset format)*/
     class ImageAssociator {
 
         std::string pathToDatasetRoot;
@@ -30,22 +32,17 @@ namespace gdr {
         std::vector<std::pair<std::string, std::string>> associatedImagesRGBAndDepth;
         std::vector<PoseFullInfo> associatedGroundTruthInfo;
 
-//        std::map<std::string, int> imageNumberByNameRGB;
-//        std::map<std::string, int> imageNumberByNameD;
         std::unordered_map<double, std::vector<double>> absolutePoseByTimestamp;
-
-        /*
-         * @param pathToDirectory -- path to the Directory with the images
-         */
 
         static std::map<std::string, double> getTimestampsByImageName(const std::string &pathToDirectory);
 
         static std::map<std::string, PoseFullInfo> getPoseInfoByImageName(const std::string &pathToDirectory);
 
         int checkSize() const;
+
     public:
 
-        /*
+        /**
          * @param pathToDirectory -- path to the Directory with all the data
          * In the Directory:
          * Provide rgb, depth directories with images
@@ -58,7 +55,7 @@ namespace gdr {
                         const std::string &directoryNameD = "depth",
                         const std::string &groundtruthFileName = "groundtruth.txt");
 
-        /*
+        /**
          * @param outPutDirectoryPath -- path to the Directory where associated data will be saved
          * @param maxTimeTreshold -- max time difference between rgb and depth frames to be matched
          * @param timeOffset -- time offset to be added to all depth timestamps
@@ -79,14 +76,13 @@ namespace gdr {
                 double timeOffset = 0.0);
 
         int exportAllInfoToDirectory(const std::string &outDirectory,
-                                     const std::set<int>& indicesToSample = {},
+                                     const std::set<int> &indicesToSample = {},
                                      bool exportGT = true,
                                      const std::string &shortNameRGBDir = "rgb",
                                      const std::string &shortNameDepthDir = "depth",
                                      const std::string &shortFilenameGT = "groundtruth",
                                      const std::string &extension = "txt"
         );
-
 
     };
 }

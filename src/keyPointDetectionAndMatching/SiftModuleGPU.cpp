@@ -122,8 +122,8 @@ namespace gdr {
         assert(num1 * 128 == descriptors1.size());
         assert(num2 * 128 == descriptors2.size());
 
-        matcher->SetDescriptors(0, num1, descriptors1.data()); //image 1
-        matcher->SetDescriptors(1, num2, descriptors2.data()); //image 2
+        matcher->SetDescriptors(0, num1, descriptors1.data());
+        matcher->SetDescriptors(1, num2, descriptors2.data());
 
 
         std::vector<std::pair<int, int>> matchingKeypoints;
@@ -280,9 +280,6 @@ namespace gdr {
                 keyPointsAndDescriptorsAllImages[imageNumber]
                         .first.emplace_back(KeyPoint2DAndDepth(siftKeyPoint.x, siftKeyPoint.y,
                                                                siftKeyPoint.s, siftKeyPoint.o));
-
-//                keyPointsAndDescriptorsAllImages[imageNumber]
-//                        .second.emplace_back(keyPointsAndDescriptorsOneImage.second[keyPointNumber]);
             }
 
             keyPointsAndDescriptorsAllImages[imageNumber].second = keyPointsDescriptorsSiftGPU[imageNumber].second;

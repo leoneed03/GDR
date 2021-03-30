@@ -7,7 +7,7 @@
 
 namespace gdr {
 
-    SE3::SE3(const Sophus::SE3d &newRelativePoseSE3): se3(newRelativePoseSE3) {}
+    SE3::SE3(const Sophus::SE3d &newRelativePoseSE3) : se3(newRelativePoseSE3) {}
 
     SE3::SE3(const Eigen::Matrix4d &poseMatrix4d) {
         se3 = Sophus::SE3d::fitToSE3(poseMatrix4d);
@@ -49,7 +49,7 @@ namespace gdr {
         return SE3(se3.inverse());
     }
 
-    SE3 operator *(const SE3 &lhs, const SE3 &rhs) {
+    SE3 operator*(const SE3 &lhs, const SE3 &rhs) {
         return SE3(lhs.getSE3() * rhs.getSE3());
     }
 }

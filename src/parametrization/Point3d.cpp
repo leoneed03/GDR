@@ -25,8 +25,6 @@ namespace gdr {
         resultEigenVector4d[1] = y;
         resultEigenVector4d[2] = z;
 
-        assert(abs(resultEigenVector4d[3] - 1) < 1e-10);
-
         return resultEigenVector4d;
     }
 

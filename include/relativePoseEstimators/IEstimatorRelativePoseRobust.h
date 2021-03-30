@@ -14,8 +14,8 @@ namespace gdr {
 
 
     /** Robust relative pose estimator for 2 given point clouds */
-
     class IEstimatorRelativePoseRobust {
+
     public:
         /**
          * Estimate SE3 transformation between point clouds observed by two different cameras

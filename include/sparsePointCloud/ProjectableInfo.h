@@ -19,22 +19,21 @@ namespace gdr {
         std::string pathD;
 
     public:
-
-        ProjectableInfo(const SE3& poseSE3,
-                        const CameraRGBD& camera,
+        ProjectableInfo(const SE3 &poseSE3,
+                        const CameraRGBD &camera,
                         int index,
-                        const std::string& pathRGB,
-                        const std::string& pathD);
+                        const std::string &pathRGB,
+                        const std::string &pathD);
 
         int getIndex() const;
 
-        const CameraRGBD& getCamera() const;
+        const CameraRGBD &getCamera() const;
 
-        const SE3& getPoseSE3() const;
+        const SE3 &getPoseSE3() const;
 
-        const std::string& getPathRGB() const;
+        const std::string &getPathRGB() const;
 
-        const std::string& getPathD() const;
+        const std::string &getPathD() const;
 
         void setPoseSE3(const SE3 &poseSE3);
 

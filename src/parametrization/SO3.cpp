@@ -4,6 +4,7 @@
 //
 
 #include "parametrization/SO3.h"
+
 #include <iomanip>
 
 namespace gdr {
@@ -26,43 +27,28 @@ namespace gdr {
         return rotationInner.unit_quaternion();
     }
 
-    std::vector<double> SO3::getUnitQuaternionRawVector() const {
-        Eigen::Quaterniond quat = rotationInner.unit_quaternion();
-        quat.normalize();
-
-        int dimQuat = 4;
-        std::vector<double> rawQuat;
-        rawQuat.reserve(dimQuat);
-        rawQuat.push_back(quat.x());
-        rawQuat.push_back(quat.y());
-        rawQuat.push_back(quat.z());
-        rawQuat.push_back(quat.w());
-
-        return rawQuat;
-    }
-
     const Sophus::SO3d &SO3::getRotationSophus() const {
         return rotationInner;
     }
 
     std::ostream &operator<<(std::ostream &os, const SO3 &rotation3D) {
-        const auto& quat = rotation3D.getUnitQuaternion();
+        const auto &quat = rotation3D.getUnitQuaternion();
         os << quat.x() << ' '
-        << quat.y() << ' '
-        << quat.z() << ' '
-        << quat.w();
+           << quat.y() << ' '
+           << quat.z() << ' '
+           << quat.w();
 
         return os;
     }
 
-    SO3 operator*(const SO3& lhs, const SO3 &rhs) {
+    SO3 operator*(const SO3 &lhs, const SO3 &rhs) {
         return SO3(lhs.getRotationSophus() * rhs.getRotationSophus());
     }
 
-    std::vector<SO3> operator*(const SO3& so3, const std::vector<SO3>& rotations) {
+    std::vector<SO3> operator*(const SO3 &so3, const std::vector<SO3> &rotations) {
         std::vector<SO3> resultOrientations;
 
-        for (const auto& rotation: rotations) {
+        for (const auto &rotation: rotations) {
             resultOrientations.emplace_back(so3 * rotation);
         }
 
@@ -100,7 +86,8 @@ namespace gdr {
 
     SO3::SO3(const Sophus::SO3d &rotationSophus) {
         rotationInner = rotationSophus;
-        assert(rotationInner.unit_quaternion().angularDistance(rotationSophus.unit_quaternion()) < std::numeric_limits<double>::epsilon());
+        assert(rotationInner.unit_quaternion().angularDistance(rotationSophus.unit_quaternion()) <
+               std::numeric_limits<double>::epsilon());
     }
 
     int SO3::getSpaceIO() const {

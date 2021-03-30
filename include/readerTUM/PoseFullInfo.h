@@ -7,9 +7,10 @@
 #define GDR_POSEFULLINFO_H
 
 #include <Eigen/Eigen>
-#include <sophus/se3.hpp>
 
 #include <iostream>
+
+#include "parametrization/SE3.h"
 
 namespace gdr {
 
@@ -17,13 +18,13 @@ namespace gdr {
 
         int elementsRaw = 8;
         double timestamp;
-        //TODO: use SE3 class
-        Eigen::Quaterniond orientationQuat;
-        Eigen::Vector3d coordinated3d;
-
+        SE3 poseSE3;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        PoseFullInfo(double newTimestamp,
+                     const SE3 &poseSE3ToSet);
 
         PoseFullInfo(double newTimestamp,
                      const Eigen::Quaterniond &newOrientationQuat,

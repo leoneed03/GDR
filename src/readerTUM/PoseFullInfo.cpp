@@ -1,15 +1,20 @@
 //
-// Created by leoneed on 1/16/21.
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
 #include "readerTUM/PoseFullInfo.h"
+
 #include <iomanip>
 
 namespace gdr {
-    PoseFullInfo::PoseFullInfo(double newTimestamp, const Eigen::Quaterniond &newOrientationQuat,
-                               const Eigen::Vector3d &newCoordinates) : timestamp(newTimestamp),
-                                                                orientationQuat(newOrientationQuat),
-                                                                coordinated3d(newCoordinates) {}
+
+    PoseFullInfo::PoseFullInfo(double newTimestamp,
+                               const Eigen::Quaterniond &orientationQuat,
+                               const Eigen::Vector3d &coordinates) : timestamp(newTimestamp) {
+        poseSE3.setTranslation(coordinates);
+        poseSE3.setRotation(Sophus::SO3d(orientationQuat));
+    }
 
     PoseFullInfo::PoseFullInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation) {
         assert(rawPoseInfoTimestampTranslationOrientation.size() == elementsRaw);
@@ -18,17 +23,18 @@ namespace gdr {
         int translationPosStart = 1;
         int orientationQuatPosStart = 4;
 
+        std::vector<double> rawTranslation;
         for (int i = 0; i < 3; ++i) {
-            coordinated3d[i] = rawPoseInfoTimestampTranslationOrientation[translationPosStart + i];
+            rawTranslation.emplace_back(rawPoseInfoTimestampTranslationOrientation[translationPosStart + i]);
         }
+        poseSE3.setTranslation(Eigen::Map<Eigen::Vector3d>(rawTranslation.data()));
 
         std::vector<double> rawQuat;
         for (int i = 0; i < 4; ++i) {
-            rawQuat.push_back(rawPoseInfoTimestampTranslationOrientation[orientationQuatPosStart + i]);
+            rawQuat.emplace_back(rawPoseInfoTimestampTranslationOrientation[orientationQuatPosStart + i]);
         }
 
-        orientationQuat = Eigen::Quaterniond(rawQuat.data());
-
+        poseSE3.setRotation(Sophus::SO3d(Eigen::Map<Eigen::Quaterniond>(rawQuat.data())));
 
     }
 
@@ -37,15 +43,17 @@ namespace gdr {
 
         os.precision(std::numeric_limits<double>::max_digits10);
         os << std::setw(2 * space) << timeTranslationOrientation.timestamp;
+
         os.precision(space - 1);
-        for (int i = 0; i < timeTranslationOrientation.coordinated3d.size(); ++i) {
-            os << std::setw(space) << timeTranslationOrientation.coordinated3d[i];
+        for (int i = 0; i < 3; ++i) {
+            os << std::setw(space) << timeTranslationOrientation.getTranslation()[i];
         }
 
-        os << std::setw(space) << timeTranslationOrientation.orientationQuat.x()
-           << std::setw(space) << timeTranslationOrientation.orientationQuat.y()
-           << std::setw(space) << timeTranslationOrientation.orientationQuat.z()
-           << std::setw(space) << timeTranslationOrientation.orientationQuat.w();
+        const auto &orientationQuat = timeTranslationOrientation.poseSE3.getRotationQuatd();
+        os << std::setw(space) << orientationQuat.x()
+           << std::setw(space) << orientationQuat.y()
+           << std::setw(space) << orientationQuat.z()
+           << std::setw(space) << orientationQuat.w();
         return os;
     }
 
@@ -53,19 +61,21 @@ namespace gdr {
     double PoseFullInfo::getTimestamp() const {
         return timestamp;
     }
+
     Eigen::Quaterniond PoseFullInfo::getOrientationQuat() const {
-        return orientationQuat;
+        return poseSE3.getRotationQuatd();
     }
 
     Eigen::Vector3d PoseFullInfo::getTranslation() const {
-        return coordinated3d;
+        return poseSE3.getTranslation();
     }
 
     Sophus::SE3d PoseFullInfo::getSophusPose() const {
-        Sophus::SE3d poseSE3;
-        poseSE3.setQuaternion(orientationQuat);
-        poseSE3.translation() = coordinated3d;
 
-        return poseSE3;
+        return poseSE3.getSE3();
     }
+
+    PoseFullInfo::PoseFullInfo(double newTimestamp, const SE3 &poseSE3ToSet) :
+            timestamp(newTimestamp),
+            poseSE3(poseSE3ToSet) {}
 }

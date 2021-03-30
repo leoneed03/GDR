@@ -4,6 +4,7 @@
 //
 
 #include <cassert>
+
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
 namespace gdr {

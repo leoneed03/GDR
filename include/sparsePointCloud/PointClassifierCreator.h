@@ -14,9 +14,7 @@ namespace gdr {
 
     class PointClassifierCreator {
 
-
     public:
-
         PointClassifierCreator() = delete;
 
         static std::unique_ptr<IPointClassifier> getPointClassifier();

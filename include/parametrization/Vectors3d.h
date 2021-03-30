@@ -8,24 +8,12 @@
 
 #include <Eigen/Eigen>
 
+#include "parametrization/SparseMatrixClass.h"
+
 namespace gdr {
 
+    class Vectors3d {
 
-    typedef Eigen::SparseMatrix<double> SparseMatrixd;
-    typedef Eigen::Triplet<double> Tripletd;
-
-    struct SparseMatrixClass {
-        Eigen::SparseMatrix<double> sparseMatrixInner;
-
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        SparseMatrixClass(const SparseMatrixd &sparseMatrixd);
-
-        const SparseMatrixd &getSparseMatrixd() const;
-    };
-
-    struct Vectors3d {
         size_t size = 0;
         static const int dim = 3;
         Eigen::VectorXd vectorsInner;

@@ -8,10 +8,8 @@
 #include <random>
 #include <fstream>
 
-#include <gtsam/base/timing.h>
 #include <gtsam/sfm/ShonanAveraging.h>
 #include <gtsam/slam/InitializePose.h>
-
 #include <gtsam/slam/dataset.h>
 
 namespace gdr {
@@ -37,7 +35,6 @@ namespace gdr {
             auto initial = shonan.initializeRandomly(rng);
             auto result = shonan.run(initial);
 
-            // Parse file again to set up translation problem, adding a prior
             boost::tie(inputGraph, posesInFile) = gtsam::load3D(inputFile);
             auto priorModel = gtsam::noiseModel::Unit::Create(6);
             inputGraph->addPrior(0, posesInFile->at<gtsam::Pose3>(0), priorModel);

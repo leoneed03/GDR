@@ -10,16 +10,18 @@
 
 namespace gdr {
 
-    struct Point3d {
+    class Point3d {
 
         int index = -1;
         double x;
         double y;
         double z;
 
+    public:
+
         Point3d() = delete;
 
-        Point3d(const Eigen::Vector3d& pointEigenVectorXYZ, int index);
+        Point3d(const Eigen::Vector3d &pointEigenVectorXYZ, int index);
 
         Point3d(double coordX, double coordY, double coordZ);
 
@@ -27,7 +29,7 @@ namespace gdr {
 
         void setNewCoordinates(double coordX, double coordY, double coordZ);
 
-        void setEigenVector3dPointXYZ(const Eigen::Vector3d& XYZ);
+        void setEigenVector3dPointXYZ(const Eigen::Vector3d &XYZ);
 
         Eigen::Vector4d getEigenVector4dPointXYZ1() const;
 
@@ -38,7 +40,6 @@ namespace gdr {
         std::vector<double> getVectorPointXYZ1() const;
 
         int getIndex() const;
-
 
     };
 }

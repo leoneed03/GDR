@@ -12,7 +12,9 @@
 #include "parametrization/SE3.h"
 
 namespace gdr {
+
     class Estimator3Points {
+
     public:
         virtual SE3
         getRt(const Eigen::Matrix4Xd &toBeTransormedPoints,

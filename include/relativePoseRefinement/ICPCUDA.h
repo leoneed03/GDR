@@ -7,8 +7,8 @@
 #define GDR_ICPCUDA_H
 
 #include "IRefinerRelativePose.h"
+
 #include "poseGraph/VertexCG.h"
-#include <Eigen/Eigen>
 
 namespace gdr {
 

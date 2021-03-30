@@ -14,7 +14,7 @@ namespace gdr {
                                                    const SE3 &umeyamaRt,
                                                    const ParamsRANSAC &paramsRansac) const {
 
-
+        //TODO: add L2 error for inlier detection
         double thresholdProjectionErrorPixels = paramsRansac.getMaxProjectionErrorPixels();
 
         assert(toBeTransformedPoints.cols() == destinationPoints.cols());
@@ -28,7 +28,8 @@ namespace gdr {
                     cameraIntr3x3Destination.getIntrinsicsMatrix3x3() *
                     pointsAfterTransformation.col(pointCounter).topLeftCorner<3, 1>();
             Eigen::Vector3d destinationPointProjection =
-                    cameraIntr3x3Destination.getIntrinsicsMatrix3x3() * destinationPoints.col(pointCounter).topLeftCorner<3, 1>();
+                    cameraIntr3x3Destination.getIntrinsicsMatrix3x3() *
+                    destinationPoints.col(pointCounter).topLeftCorner<3, 1>();
 
             for (int i = 0; i < 2; ++i) {
                 toBeTransformedProjection[i] /= toBeTransformedProjection[2];
@@ -36,7 +37,8 @@ namespace gdr {
             }
 
             // TODO: depth error can be also checked
-            Sophus::Vector2d projectionErrorPixels2d = (toBeTransformedProjection - destinationPointProjection).topLeftCorner<2, 1>();
+            Sophus::Vector2d projectionErrorPixels2d = (toBeTransformedProjection -
+                                                        destinationPointProjection).topLeftCorner<2, 1>();
 
             double errorProjectionLp = 0;
 

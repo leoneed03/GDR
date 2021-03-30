@@ -8,30 +8,31 @@
 
 namespace gdr {
 
-    // locally optimized ransac parameters
+    /** Locally optimized ransac parameters */
     struct ParamsRANSAC {
+
     private:
-        // min proportion of inliers between matches
+        /** min proportion of inliers between matches */
         double minInlierCoefficient = 0.5;
-        // min number of inliers between matches
+        /** min number of inliers between matches */
         int minInliersNumber = 15;
 
         int numIterations = 100;
 
-        // max L_{pMetric} error between keypoints on the image to be counted as an inlier
+        /** max L_{pMetric} error between keypoints on the image to be counted as an inlier */
         double maxProjectionErrorPixels = 2.0;
         int pMetric = 2;
 
-        // max L2 error in meters to be counted as an inlier
+        /** max L2 error in meters to be counted as an inlier */
         double max3DError = 0.05;
 
-        // use reprojection L_p error for inlier detection
+        /** true if should use reprojection L_p error for inlier detection */
         bool useProjectionError = true;
 
-        // max number of threads to use (automatic detection by default)
+        /** max number of threads to use (automatic detection by default) */
         int maxNumberOfThreads = -1;
-    public:
 
+    public:
         double getInlierCoeff() const;
 
         void setInlierCoeff(double minInlierCoeff);

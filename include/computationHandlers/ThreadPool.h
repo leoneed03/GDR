@@ -11,14 +11,12 @@
 
 namespace gdr {
 
-    struct ThreadPool {
+    class ThreadPool {
 
         tbb::task_scheduler_init sheduler;
-        tbb::task_group tasks;
-
+    public:
         ThreadPool(int numOfThreads);
 
-        tbb::task_group &getTaskGroup();
     };
 }
 

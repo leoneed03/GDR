@@ -9,7 +9,9 @@
 #include <limits>
 
 namespace gdr {
+
     class KeyPoint2DAndDepth {
+
         static constexpr double defValue = (std::numeric_limits<double>::lowest() / 2.0);
         double x, y;
         double scale = defValue;

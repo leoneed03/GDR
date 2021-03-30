@@ -7,6 +7,7 @@
 #define GDR_GRAPHTRAVERSER_H
 
 #include <vector>
+
 #include "poseGraph/CorrespondenceGraph.h"
 #include "poseGraph/ConnectedComponent.h"
 

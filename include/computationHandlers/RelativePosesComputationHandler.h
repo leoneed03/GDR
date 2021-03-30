@@ -98,6 +98,7 @@ namespace gdr {
         bool getPrintInformationCout() const;
 
         void setPrintInformationCout(bool printProgressToCout);
+
         /**
          * @param pathToImageDirectoryRGB path to directory with N colour images
          * @param pathToImageDirectoryD path to directory with N depth images

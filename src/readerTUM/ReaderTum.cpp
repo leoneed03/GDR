@@ -1,11 +1,11 @@
 //
-// Created by leo on 3/19/21.
+// Copyright (c) Leonid Seniukov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
 #include <fstream>
 
 #include "readerTUM/ReaderTum.h"
-
 
 namespace gdr {
 

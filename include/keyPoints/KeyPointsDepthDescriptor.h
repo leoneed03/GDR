@@ -11,10 +11,13 @@
 
 namespace gdr {
 
-    struct keyPointsDepthDescriptor {
+    class keyPointsDepthDescriptor {
+
         std::vector<KeyPoint2DAndDepth> keypointsKnownDepth;
         std::vector<float> descriptorsKnownDepth;
         std::vector<double> depths;
+
+    public:
 
         keyPointsDepthDescriptor(const std::vector<KeyPoint2DAndDepth> &keypointsKnownDepth,
                                  const std::vector<float> &descriptorsKnownDepth,
@@ -31,4 +34,5 @@ namespace gdr {
                 const std::string &pathToDImage);
     };
 }
+
 #endif

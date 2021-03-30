@@ -6,17 +6,15 @@
 #include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
 
 namespace gdr {
+
     RotationMeasurement::RotationMeasurement(const SO3 &relativeRotationToSet,
                                              int newIndexFrom,
                                              int newIndexTo) : relativeRotationQuat(relativeRotationToSet),
                                                                indexFrom(newIndexFrom),
                                                                indexTo(newIndexTo) {}
-    Eigen::Quaterniond RotationMeasurement::getRotationQuat() const {
-        return relativeRotationQuat.getUnitQuaternion();
-    }
 
 
-    const SO3& RotationMeasurement::getRotation3d() const {
+    const SO3 &RotationMeasurement::getRotationSO3() const {
         return relativeRotationQuat;
     }
 
@@ -24,6 +22,7 @@ namespace gdr {
     int RotationMeasurement::getIndexFromToBeTransformed() const {
         return indexFrom;
     }
+
     int RotationMeasurement::getIndexToDestination() const {
         return indexTo;
     }

@@ -6,8 +6,9 @@
 #ifndef GDR_KEYPOINTINFO_H
 #define GDR_KEYPOINTINFO_H
 
-#include "KeyPoint2DAndDepth.h"
 #include <limits>
+
+#include "KeyPoint2DAndDepth.h"
 
 namespace gdr {
 
@@ -15,13 +16,13 @@ namespace gdr {
 
         KeyPoint2DAndDepth keyPoint2D;
 
-        int observingPoseNumber;
-        int initialObservingPoseNumber;
+        int observingPoseNumber = -1;
+        int initialObservingPoseNumber = -1;
 
         double epsilonD = 10 * std::numeric_limits<double>::epsilon();
 
     public:
-        KeyPointInfo();
+        KeyPointInfo() = default;
 
         KeyPointInfo(const KeyPoint2DAndDepth &keyPointToSet,
                      int observingPoseNumberToSet);

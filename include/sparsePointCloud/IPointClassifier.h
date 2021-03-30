@@ -7,6 +7,7 @@
 #define GDR_IPOINTCLASSIFIER_H
 
 namespace gdr {
+
     class IPointClassifier {
 
     public:
@@ -16,7 +17,7 @@ namespace gdr {
          */
         virtual std::vector<int> assignPointClasses() = 0;
 
-        // point format: first -- pose number, second -- local keypoint index
+        /** Point paired format: first -- pose number, second -- local keypoint index */
         virtual void insertPointsWithNewClasses(const std::vector<std::pair<int, int>> &pointsOneClass) = 0;
 
         virtual std::pair<int, int> getPoseNumberAndLocalIndex(int globalIndex) const = 0;

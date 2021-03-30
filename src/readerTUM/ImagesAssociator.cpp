@@ -3,14 +3,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "readerTUM/ImagesAssociator.h"
-
 #include "boost/filesystem.hpp"
+
 #include <iostream>
 #include <unordered_set>
 
-#include <fstream>
-#include <sstream>
+#include "readerTUM/ImagesAssociator.h"
+
 
 namespace gdr {
 
@@ -333,13 +332,11 @@ namespace gdr {
             assert(std::abs(timestamp - closestMatch->second.getTimestamp()) < maxTimeTreshold);
             foundTimestamps.insert(timestamp);
             absolutePosesFoundByTimestamps.emplace_back(closestMatch->second);
-//            poseInfoByTimestamps.erase(closestMatch);
         }
 
         std::cout << " GT found poses size is " << absolutePosesFoundByTimestamps.size()
                   << " timestamps size is " << timestamps.size() << std::endl;
         std::cout << "did not find matches for " << notFoundCounter << std::endl;
-//        assert(absolutePosesFoundByTimestamps.size() == timestamps.size());
 
         double maxTimeDiff = -1;
 
@@ -364,7 +361,7 @@ namespace gdr {
     }
 
     int ImageAssociator::exportAllInfoToDirectory(const std::string &outDirectory,
-                                                  const std::set<int>& indicesToSampleConst,
+                                                  const std::set<int> &indicesToSampleConst,
                                                   bool exportGT,
                                                   const std::string &shortNameRGBDir,
                                                   const std::string &shortNameDepthDir,
@@ -406,7 +403,7 @@ namespace gdr {
                 continue;
             }
 
-            const auto& imagesRGBAndDToBeExported = associatedImagesRGBAndDepth[i];
+            const auto &imagesRGBAndDToBeExported = associatedImagesRGBAndDepth[i];
             fs::path imageRGB(pathToDatasetRoot);
             imageRGB.append(imagesRGBAndDToBeExported.first);
             fs::path imageRGBToSave = outRGB;
@@ -438,7 +435,7 @@ namespace gdr {
                 continue;
             }
 
-            const auto& absolutePose = associatedGroundTruthInfo[indexGT];
+            const auto &absolutePose = associatedGroundTruthInfo[indexGT];
             groundtruthFile.precision(std::numeric_limits<double>::max_digits10);
             groundtruthFile << absolutePose << std::endl;
         }

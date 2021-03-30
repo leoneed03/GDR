@@ -3,10 +3,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
+#include "boost/filesystem.hpp"
+
 #include "sparsePointCloud/CloudProjector.h"
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
-#include "boost/filesystem.hpp"
 
 namespace gdr {
 
@@ -61,7 +62,7 @@ namespace gdr {
         indexedPoints = {};
         indexedPoints.reserve(maxPointIndex + 1);
         for (int i = 0; i < maxPointIndex + 1; ++i) {
-            indexedPoints.push_back(Point3d(-1, -1, -1, i));
+            indexedPoints.emplace_back(Point3d(-1, -1, -1, i));
         }
         int pointsSize = indexedPoints.size();
         assert(pointsSize > 0);

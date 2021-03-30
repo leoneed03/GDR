@@ -16,11 +16,14 @@ namespace gdr {
     class EstimatorRelativePoseRobustCreator {
 
     public:
-
         EstimatorRelativePoseRobustCreator() = delete;
 
-        enum class EstimatorMinimal {UMEYAMA};
-        enum class EstimatorScalable {UMEYAMA};
+        enum class EstimatorMinimal {
+            UMEYAMA
+        };
+        enum class EstimatorScalable {
+            UMEYAMA
+        };
 
         static std::unique_ptr<IEstimatorRelativePoseRobust> getEstimator(const InlierCounter &inlierCounterToSet,
                                                                           const ParamsRANSAC &paramsRansac,

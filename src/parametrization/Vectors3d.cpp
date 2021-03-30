@@ -4,9 +4,11 @@
 //
 
 #include "parametrization/Vectors3d.h"
+
 #include <iostream>
 
 namespace gdr {
+
     Vectors3d::Vectors3d(const std::vector<Eigen::Vector3d> &vectors3d) {
         vectorsInner = Eigen::VectorXd(dim * vectors3d.size());
         size = vectors3d.size();
@@ -95,13 +97,6 @@ namespace gdr {
     Eigen::Vector3d Vectors3d::operator[](size_t index) {
         Eigen::Vector3d translationByIndex = getVectorRaw().block<dim, 1>(index * dim, 0);
         return translationByIndex;
-    }
-
-    SparseMatrixClass::SparseMatrixClass(const SparseMatrixd &sparseMatrixd) : sparseMatrixInner(sparseMatrixd) {}
-
-
-    const SparseMatrixd &SparseMatrixClass::getSparseMatrixd() const {
-        return sparseMatrixInner;
     }
 }
 

@@ -76,23 +76,22 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/ICPCUDA.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationMeasurement.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationAverager.h
-        include/readerTUM/PoseFullInfo.h
+        ${PROJECT_SOURCE_DIR}/include/readerTUM/PoseFullInfo.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationMeasurement.h
-        include/parametrization/Vectors3d.h
+        ${PROJECT_SOURCE_DIR}/include/parametrization/Vectors3d.h
         ${PROJECT_SOURCE_DIR}/include/parametrization/SO3.h
         ${PROJECT_SOURCE_DIR}/include/parametrization/Point3d.h
         ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h
-    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjector.h
+        ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjector.h
         ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointInfo.h
         ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/PointClassifier.h
         ${PROJECT_SOURCE_DIR}/include/visualization/2D/ImageDrawer.h
         ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleAdjuster.h
-        include/visualization/3D/SmoothPointCloud.h
-        include/computationHandlers/ThreadPool.h
+        ${PROJECT_SOURCE_DIR}/include/visualization/3D/SmoothPointCloud.h
+        ${PROJECT_SOURCE_DIR}/include/computationHandlers/ThreadPool.h
         ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointsDepthDescriptor.h
         ${PROJECT_SOURCE_DIR}/include/poseGraph/ConnectedComponent.h
         ${PROJECT_SOURCE_DIR}/include/readerTUM/ImagesAssociator.h
-        ${PROJECT_SOURCE_DIR}/include/optimization/lossFunctions/LossHuber.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/Estimator3Points.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/InlierCounter.h
         ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/IEstimatorRelativePoseRobust.h
@@ -117,7 +116,14 @@ set(GDR_HEADER_FILES
         ${PROJECT_SOURCE_DIR}/include/computationHandlers/AbsolutePosesComputationHandler.h
         ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/Match.h
         ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/ProjectableInfo.h
-        include/absolutePoseEstimation/rotationAveraging/IRotationRobustOptimizer.h)
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/IRotationRobustOptimizer.h
+        ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorRelativePoseRobustCreator.h
+        ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/RefinerRelativePoseCreator.h
+        ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleAdjusterCreator.h
+        ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjectorCreator.h
+        ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/PointClassifierCreator.h
+        ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h
+        ${PROJECT_SOURCE_DIR}/include/parametrization/SparseMatrixClass.h)
 
 set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/directoryTraversing/DirectoryReader.cpp
@@ -130,10 +136,10 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/relativePoseRefinement/ICPCUDA.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationAverager.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationMeasurement.cpp
-        src/readerTUM/PoseFullInfo.cpp
+        ${PROJECT_SOURCE_DIR}/src/readerTUM/PoseFullInfo.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
-        src/parametrization/Vectors3d.cpp
-        src/computationHandlers/ThreadPool.cpp
+        ${PROJECT_SOURCE_DIR}/src/parametrization/Vectors3d.cpp
+        ${PROJECT_SOURCE_DIR}/src/computationHandlers/ThreadPool.cpp
         ${PROJECT_SOURCE_DIR}/src/parametrization/SO3.cpp
         ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.cpp
         ${PROJECT_SOURCE_DIR}/src/parametrization/Point3d.cpp
@@ -142,7 +148,7 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifier.cpp
         ${PROJECT_SOURCE_DIR}/src/visualization/2D/ImageDrawer.cpp
         ${PROJECT_SOURCE_DIR}/src/bundleAdjustment/BundleAdjuster.cpp
-        src/visualization/3D/SmoothPointCloud.cpp
+        ${PROJECT_SOURCE_DIR}/src/visualization/3D/SmoothPointCloud.cpp
         ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointsDepthDescriptor.cpp
         ${PROJECT_SOURCE_DIR}/src/poseGraph/ConnectedComponent.cpp
         ${PROJECT_SOURCE_DIR}/src/readerTUM/ImagesAssociator.cpp
@@ -162,10 +168,16 @@ set(GDR_SOURCE_FILES
         ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/ProjectableInfo.cpp
         ${PROJECT_SOURCE_DIR}/src/computationHandlers/RelativePosesComputationHandler.cpp
         ${PROJECT_SOURCE_DIR}/src/poseGraph/graphAlgorithms/GraphTraverser.cpp
-        ${PROJECT_SOURCE_DIR}/src/computationHandlers/AbsolutePosesComputationHandler.cpp src/bundleAdjustment/BundleAdjusterCreator.cpp include/bundleAdjustment/BundleAdjusterCreator.h src/relativePoseEstimators/EstimatorRelativePoseRobustCreator.cpp include/relativePoseEstimators/EstimatorRelativePoseRobustCreator.h src/relativePoseRefinement/RefinerRelativePoseCreator.cpp include/relativePoseRefinement/RefinerRelativePoseCreator.h src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.cpp include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h src/sparsePointCloud/CloudProjectorCreator.cpp include/sparsePointCloud/CloudProjectorCreator.h src/sparsePointCloud/PointClassifierCreator.cpp include/sparsePointCloud/PointClassifierCreator.h)
+        ${PROJECT_SOURCE_DIR}/src/computationHandlers/AbsolutePosesComputationHandler.cpp
+        ${PROJECT_SOURCE_DIR}/src/bundleAdjustment/BundleAdjusterCreator.cpp
+        ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/EstimatorRelativePoseRobustCreator.cpp
+        ${PROJECT_SOURCE_DIR}/src/relativePoseRefinement/RefinerRelativePoseCreator.cpp
+        ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.cpp
+        ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/CloudProjectorCreator.cpp
+        ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifierCreator.cpp
+        ${PROJECT_SOURCE_DIR}/src/parametrization/SparseMatrixClass.cpp src/absolutePoseEstimation/rotationAveraging/RelativeRotationError.cpp include/absolutePoseEstimation/rotationAveraging/RelativeRotationError.h)
 
 add_subdirectory(lib)
-
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 

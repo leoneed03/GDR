@@ -3,11 +3,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "relativePoseRefinement/ICPCUDA.h"
 #include "ICPOdometry.h"
 
 #include <pangolin/image/image_io.h>
 
+#include "relativePoseRefinement/ICPCUDA.h"
 
 namespace gdr {
 
@@ -40,16 +40,16 @@ namespace gdr {
                                      SE3 &initTransformationSE3) {
 
         const CameraRGBD &cameraRgbdToBeTransformed = poseToBeTransformedICP.getCameraRGB();
-        CameraIntrinsics cameraIntrinsicsToBeTransformed(cameraIntrinsicsToBeTransformed.getFx(),
-                                                         cameraIntrinsicsToBeTransformed.getCx(),
-                                                         cameraIntrinsicsToBeTransformed.getFy(),
-                                                         cameraIntrinsicsToBeTransformed.getCy());
+        CameraIntrinsics cameraIntrinsicsToBeTransformed(cameraRgbdToBeTransformed.getFx(),
+                                                         cameraRgbdToBeTransformed.getCx(),
+                                                         cameraRgbdToBeTransformed.getFy(),
+                                                         cameraRgbdToBeTransformed.getCy());
 
         const CameraRGBD &cameraRgbdDestination = poseDestinationICPModel.getCameraRGB();
-        CameraIntrinsics cameraIntrinsicsDestination(cameraIntrinsicsDestination.getFx(),
-                                                     cameraIntrinsicsDestination.getCx(),
-                                                     cameraIntrinsicsDestination.getFy(),
-                                                     cameraIntrinsicsDestination.getCy());
+        CameraIntrinsics cameraIntrinsicsDestination(cameraRgbdDestination.getFx(),
+                                                     cameraRgbdDestination.getCx(),
+                                                     cameraRgbdDestination.getFy(),
+                                                     cameraRgbdDestination.getCy());
 
         int height = poseToBeTransformedICP.getImagePixelHeight();
         int width = poseToBeTransformedICP.getImagePixelWidth();
@@ -66,7 +66,6 @@ namespace gdr {
 
         int threads = 224;
         int blocks = 96;
-
 
         pangolin::ManagedImage<unsigned short> firstData(width, height);
         pangolin::ManagedImage<unsigned short> secondData(width, height);

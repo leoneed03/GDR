@@ -11,11 +11,11 @@ namespace gdr {
     MatchableInfo::MatchableInfo(const std::string &pathRGB,
                                  const std::string &pathD,
                                  const std::vector<KeyPoint2DAndDepth> &keyPoints2DToSet,
-                                 const CameraRGBD & cameraRGB) :
-                                 pathImageRGB(pathRGB),
-                                 pathImageD(pathD),
-                                 keyPoints2D(keyPoints2DToSet),
-                                 cameraRGB(cameraRGB) {}
+                                 const CameraRGBD &cameraRGB) :
+            pathImageRGB(pathRGB),
+            pathImageD(pathD),
+            keyPoints2D(keyPoints2DToSet),
+            cameraRGB(cameraRGB) {}
 
     const std::string &MatchableInfo::getPathImageRGB() const {
         return pathImageRGB;
@@ -29,7 +29,7 @@ namespace gdr {
         return keyPoints2D;
     }
 
-    const CameraRGBD& MatchableInfo::getCameraRGB() const {
+    const CameraRGBD &MatchableInfo::getCameraRGB() const {
         return cameraRGB;
     }
 

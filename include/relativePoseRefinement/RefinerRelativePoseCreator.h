@@ -16,7 +16,6 @@ namespace gdr {
     class RefinerRelativePoseCreator {
 
     public:
-
         RefinerRelativePoseCreator() = delete;
 
         enum class RefinerType {

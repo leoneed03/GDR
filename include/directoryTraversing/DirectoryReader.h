@@ -3,17 +3,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_FILES_H
-#define GDR_FILES_H
+#ifndef GDR_DIRECTORY_READER_H
+#define GDR_DIRECTORY_READER_H
 
-#include <iostream>
 #include <vector>
-#include <dirent.h>
-#include <memory>
-#include <boost/timer.hpp>
-
-#include <cassert>
-
+#include <string>
 
 namespace gdr {
 

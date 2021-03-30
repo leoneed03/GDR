@@ -10,6 +10,7 @@
 #include "parametrization/cameraRGBD.h"
 
 namespace gdr {
+
     class EstimatorNPoints {
 
     public:

@@ -6,14 +6,6 @@
 #ifndef GDR_SMOOTHPOINTCLOUD_H
 #define GDR_SMOOTHPOINTCLOUD_H
 
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-
-#include <pcl/registration/ndt.h>
-#include <pcl/filters/approximate_voxel_grid.h>
-
-#include <pcl/visualization/pcl_visualizer.h>
-
 #include "poseGraph/VertexCG.h"
 
 namespace gdr {

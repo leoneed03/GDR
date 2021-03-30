@@ -10,7 +10,6 @@
 
 namespace gdr {
 
-
     double RobustEstimators::getMedian(const std::vector<double> &values,
                                        double quantile) {
         std::vector<double> valuesToSort = values;

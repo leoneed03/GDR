@@ -4,9 +4,11 @@
 //
 
 #include <vector>
+
 #include "keyPointDetectionAndMatching/Match.h"
 
 namespace gdr {
+
     int Match::getFrameNumber() const {
         return frameNumber;
     }

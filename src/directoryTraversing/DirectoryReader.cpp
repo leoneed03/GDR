@@ -3,18 +3,16 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-
+#include <algorithm>
 #include "boost/filesystem.hpp"
 
 #include "directoryTraversing/DirectoryReader.h"
-
-#include <algorithm>
 
 namespace gdr {
 
     namespace fs = boost::filesystem;
 
-    std::vector<std::string> DirectoryReader::readPathsToImagesFromDirectory(const std::string& pathToDirectory) {
+    std::vector<std::string> DirectoryReader::readPathsToImagesFromDirectory(const std::string &pathToDirectory) {
 
         std::vector<std::string> images;
         fs::path imagesDirectory(pathToDirectory);

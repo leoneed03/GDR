@@ -7,6 +7,7 @@
 #define GDR_INLIERCOUNTER_H
 
 #include <vector>
+
 #include "Eigen/Eigen"
 
 #include "parametrization/cameraRGBD.h"
@@ -14,10 +15,9 @@
 #include "ParamsRANSAC.h"
 
 namespace gdr {
+
     class InlierCounter {
 
-        // return vector of pairs for each inlier:
-        // {errorInPixelsAfterTransformationAndProjection, columnNumber in Original Matrix toBeTransformedPoints}
     public:
         /** Calculate reprojection errors for alignment
          * @param toBeTransformedPoints point cloud to be aligned

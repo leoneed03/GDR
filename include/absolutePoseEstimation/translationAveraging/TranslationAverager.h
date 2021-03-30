@@ -17,7 +17,7 @@
 #include "parametrization/Vectors3d.h"
 
 namespace gdr {
-    
+
     class TranslationAverager {
 
         static SparseMatrixd constructSparseMatrix(const std::vector<TranslationMeasurement> &relativeTranslations,
@@ -42,7 +42,7 @@ namespace gdr {
         IRLS(const SparseMatrixd &systemMatrix,
              const Vectors3d &b,
              SparseMatrixd &weightDiagonalMatrix,
-             const Vectors3d& translationsGuess,
+             const Vectors3d &translationsGuess,
              bool &success,
              int numOfIterations,
              double epsilonIRLS);
@@ -52,7 +52,7 @@ namespace gdr {
         static Vectors3d
         recoverTranslationsIRLS(const std::vector<TranslationMeasurement> &relativeTranslations,
                                 std::vector<SE3> &absolutePoses,
-                                const Vectors3d& absoluteTranslations,
+                                const Vectors3d &absoluteTranslations,
                                 bool &successIRLS,
                                 int numOfIterations = 5,
                                 double epsilonIRLS = 1e-6);

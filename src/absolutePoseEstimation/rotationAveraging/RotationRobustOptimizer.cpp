@@ -3,46 +3,41 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-
-
 #include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
 
 namespace gdr {
 
-//    RotationRobustOptimizer::RotationRobustOptimizer(const std::vector<SO3> &newOrientations,
-//                                                     const std::vector<RotationMeasurement> &pairWiseRotationsVector) :
-//            orientations(newOrientations),
-//            relativeRotations(pairWiseRotationsVector) {
-//    }
-
-    std::vector<SO3> RotationRobustOptimizer::getOptimizedOrientation(const std::vector<SO3>& orientationsToSet,
-                                                                      const std::vector<RotationMeasurement>& pairWiseRotationsToSet,
+    std::vector<SO3> RotationRobustOptimizer::getOptimizedOrientation(const std::vector<SO3> &orientationsToSet,
+                                                                      const std::vector<RotationMeasurement> &pairWiseRotationsToSet,
                                                                       int indexFixed) {
 
         orientations = orientationsToSet;
         relativeRotations = pairWiseRotationsToSet;
+
         int dim = 4;
         std::vector<std::vector<double>> result(orientations.size());
+
         for (int i = 0; i < orientations.size(); ++i) {
             Eigen::Quaterniond quat = orientations[i].getUnitQuaternion();
             result[i] = {quat.x(), quat.y(), quat.z(), quat.w()};
         }
 
         ceres::Problem problem;
-        ceres::LocalParameterization* quaternion_local_parameterization =
+        ceres::LocalParameterization *quaternion_local_parameterization =
                 new ceres::EigenQuaternionParameterization;
+
         for (const auto &relativeRotObservation: relativeRotations) {
 
-            Eigen::Quaterniond quat = relativeRotObservation.getRotationQuat();
-            std::vector<double> quatVector = {quat.x(), quat.y(), quat.z(), quat.w()};
             assert(result[relativeRotObservation.getIndexToDestination()].size() == dim);
-            ceres::CostFunction *cost_function = relativeRotationError::Create(quatVector);
+            ceres::CostFunction *cost_function = RelativeRotationError::Create(relativeRotObservation.getRotationSO3());
+
             int indexFrom = relativeRotObservation.getIndexFromToBeTransformed();
             int indexTo = relativeRotObservation.getIndexToDestination();
+
             assert(indexFrom >= 0 && indexFrom < result.size() && indexTo >= 0 && indexTo < result.size());
             assert(result[indexFrom].size() == dim && result[indexTo].size() == dim);
 
-            // TODO: fix loss function
+            // TODO: choose proper loss function threshold
             problem.AddResidualBlock(cost_function,
                                      new ceres::CauchyLoss(0.5),
                                      result[indexFrom].data(),
@@ -67,7 +62,7 @@ namespace gdr {
         assert(summary.IsSolutionUsable());
 
         std::vector<SO3> optimizedOrientations;
-        for (const auto& orientationVectorRaw: result) {
+        for (const auto &orientationVectorRaw: result) {
             auto quat = Eigen::Quaterniond(orientationVectorRaw.data());
             optimizedOrientations.emplace_back(SO3(quat.normalized()));
         }

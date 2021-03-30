@@ -6,6 +6,7 @@
 #include <mutex>
 
 #include <tbb/parallel_for.h>
+#include <tbb/concurrent_vector.h>
 
 #include "keyPoints/KeyPointsDepthDescriptor.h"
 #include "keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.h"
@@ -115,51 +116,30 @@ namespace gdr {
     std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::findTransformationRtMatrices(
             std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &allInlierKeyPointMatches) const {
 
-        std::mutex output;
         int numberOfVertices = getNumberOfVertices();
         tbb::concurrent_vector<tbb::concurrent_vector<RelativeSE3>> transformationMatricesConcurrent(numberOfVertices);
 
         tbb::concurrent_vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> allInlierKeyPointMatchesTBB;
 
-        int matchFromIndex = 0;
-        std::mutex indexFromMutex;
-
         const auto &vertices = correspondenceGraph->getVertices();
         const auto &keyPointMatches = correspondenceGraph->getKeyPointMatches();
+
         assert(keyPointMatches.size() == numberOfVertices);
         assert(numberOfVertices == vertices.size());
 
         tbb::parallel_for(0, static_cast<int>(numberOfVertices),
-                          [&numberOfVertices, &matchFromIndex, &indexFromMutex, this, &allInlierKeyPointMatchesTBB,
+                          [this, &allInlierKeyPointMatchesTBB,
                                   &keyPointMatches, &vertices,
-                                  &transformationMatricesConcurrent, &output](int vertexNumberFrom) {
-                              int i = -1;
-                              {
-                                  std::unique_lock<std::mutex> lockCounterFrom(indexFromMutex);
-                                  i = matchFromIndex;
-                                  assert(matchFromIndex >= 0 && matchFromIndex < numberOfVertices);
-                                  ++matchFromIndex;
-                              }
-                              int matchToIndex = 0;
-                              std::mutex indexToMutex;
+                                  &transformationMatricesConcurrent](int vertexNumberFrom) {
 
+                              int i = vertexNumberFrom;
                               tbb::parallel_for(0, static_cast<int>(keyPointMatches[i].size()),
-                                                [&matchToIndex, &indexToMutex, i,
-                                                        &transformationMatricesConcurrent, this,
+                                                [i, &transformationMatricesConcurrent, this,
                                                         &keyPointMatches, &vertices,
-                                                        &allInlierKeyPointMatchesTBB,
-                                                        &output](int) {
+                                                        &allInlierKeyPointMatchesTBB](int vertexNumberTo) {
 
-                                                    int jPos = -1;
-                                                    {
-                                                        //TODO: use tbb incrementer
-                                                        std::unique_lock<std::mutex> lockCounterTo(indexToMutex);
-                                                        jPos = matchToIndex;
-                                                        assert(matchToIndex >= 0 &&
-                                                               matchToIndex < keyPointMatches[i].size());
-                                                        ++matchToIndex;
-                                                    }
-                                                    int j = jPos;
+                                                    int j = vertexNumberTo;
+
                                                     const auto &match = keyPointMatches[i][j];
                                                     const auto &frameFromDestination = vertices[i];
                                                     const auto &frameToToBeTransformed = vertices[match.getFrameNumber()];
@@ -167,13 +147,11 @@ namespace gdr {
                                                     assert(frameToToBeTransformed.getIndex() >
                                                            frameFromDestination.getIndex());
                                                     bool success = true;
-                                                    bool successICP = true;
                                                     std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierKeyPointMatches;
                                                     auto cameraMotion = getTransformationRtMatrixTwoImages(i,
                                                                                                            j,
                                                                                                            inlierKeyPointMatches,
                                                                                                            success);
-
 
                                                     if (success) {
 
@@ -193,7 +171,6 @@ namespace gdr {
                                                                         frameToToBeTransformed.getIndex(),
                                                                         frameFromDestination.getIndex(),
                                                                         cameraMotion.inverse()));
-
                                                     } else {}
                                                 });
                           });
@@ -205,6 +182,7 @@ namespace gdr {
                 pairwiseTransformations[i].emplace_back(transformation);
             }
         }
+
         allInlierKeyPointMatches.clear();
         allInlierKeyPointMatches.reserve(allInlierKeyPointMatchesTBB.size());
         for (const auto &matchPair: allInlierKeyPointMatchesTBB) {
@@ -293,6 +271,7 @@ namespace gdr {
 
         const auto &cameraToBeTransformed = vertices[vertexFromDestDestination].getCamera();
         const auto &cameraDest = vertices[match.getFrameNumber()].getCamera();
+
         std::vector<int> inliersAgain;
         SE3 relativePoseLoRANSAC = relativePoseEstimatorRobust->estimateRelativePose(toBeTransformedPoints,
                                                                                      destinationPoints,
@@ -457,7 +436,6 @@ namespace gdr {
         for (const auto &inlierErrorAndIndex: reprojectionInlierErrors) {
             int inlierNumber = inlierErrorAndIndex.second;
             assert(inlierNumber >= 0 && inlierNumber < correspondencesBetweenTwoImages.size());
-            //TODO: debug
             inlierCorrespondences.emplace_back(correspondencesBetweenTwoImages[inlierNumber]);
         }
 

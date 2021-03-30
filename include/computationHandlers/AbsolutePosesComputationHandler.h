@@ -7,6 +7,7 @@
 #define GDR_ABSOLUTEPOSESCOMPUTATIONHANDLER_H
 
 #include <memory>
+
 #include "poseGraph/ConnectedComponent.h"
 
 namespace gdr {
@@ -40,8 +41,6 @@ namespace gdr {
         std::set<int> initialIndices() const;
 
         const std::vector<VertexCG> &getVertices() const;
-
-    public:
 
         std::vector<SO3> performRotationAveraging();
 

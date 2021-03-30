@@ -68,7 +68,7 @@ namespace gdr {
     CameraRGBD::getCoordinatesBeforeProjectionXYZ1(double xHorizontal, double yVertical, double depth) const {
         Eigen::Vector4d coordinates4;
         coordinates4.setOnes();
-        coordinates4.topLeftCorner<3,1>() = getCoordinates3D(xHorizontal, yVertical, depth);
+        coordinates4.topLeftCorner<3, 1>() = getCoordinates3D(xHorizontal, yVertical, depth);
 
         return coordinates4;
     }
@@ -78,7 +78,7 @@ namespace gdr {
         Eigen::Matrix4Xd points3D(4, pointsFromImageXYZ.size());
 
         for (int i = 0; i < pointsFromImageXYZ.size(); ++i) {
-            const auto& point = pointsFromImageXYZ[i];
+            const auto &point = pointsFromImageXYZ[i];
             points3D.col(i) = getCoordinatesXYZ1BeforeProjectionXYZ1(point.getEigenVector4dPointXYZ1());
         }
 

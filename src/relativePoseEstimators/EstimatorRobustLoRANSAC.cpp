@@ -19,9 +19,6 @@ namespace gdr {
 
         int numIterationsRansac = paramsLoRansac.getNumIterations();
         double inlierCoeff = paramsLoRansac.getInlierCoeff();
-        double max3DError = paramsLoRansac.getMax3DError();
-        double maxProjectionErrorPixels = paramsLoRansac.getMaxProjectionErrorPixels();
-        bool useProjection = paramsLoRansac.getProjectionUsage();
 
         estimationSuccess = true;
         int dim = 3;
@@ -38,7 +35,7 @@ namespace gdr {
         assert(toBeTransformedPoints.cols() >= minPointNumberEstimator);
         assert(toBeTransformedPoints.cols() == destinationPoints.cols());
 
-        SE3 optimal_cR_t_umeyama_transformation;
+        SE3 optimalSE3Transformation;
 
         std::random_device randomDevice;
         std::mt19937 randomNumberGenerator(randomDevice());
@@ -89,7 +86,7 @@ namespace gdr {
                               << " vs old " << totalNumberInliers << std::endl;
                 }
 
-                optimal_cR_t_umeyama_transformation = cR_t_umeyama_3_points;
+                optimalSE3Transformation = cR_t_umeyama_3_points;
                 totalNumberInliers = numInliers;
                 Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
                 Eigen::Matrix4Xd destInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
@@ -120,22 +117,22 @@ namespace gdr {
                 }
 
                 if (projectionErrorsAndInlierIndicesAfterLocalOptimization.size() >= totalNumberInliers) {
-                    optimal_cR_t_umeyama_transformation = inlier_optimal_cR_t_umeyama_transformation;
+                    optimalSE3Transformation = inlier_optimal_cR_t_umeyama_transformation;
                     totalNumberInliers = projectionErrorsAndInlierIndicesAfterLocalOptimization.size();
                 }
             }
         }
-
 
         std::vector<std::pair<double, int>> totalProjectionErrorsAndInlierIndices =
                 inlierCounter.calculateInlierProjectionErrors(
                         toBeTransformedPoints,
                         destinationPoints,
                         cameraIntrDestination,
-                        optimal_cR_t_umeyama_transformation,
+                        optimalSE3Transformation,
                         paramsLoRansac);
 
         int numberInliersOptimal = totalProjectionErrorsAndInlierIndices.size();
+        //TODO: try to optimize on inliers again
         estimationSuccess = numberInliersOptimal > inlierCoeff * toBeTransformedPoints.cols();
 
         std::string logs;
@@ -148,7 +145,7 @@ namespace gdr {
         }
 
         std::swap(inlierIndices, inlierIndicesToReturn);
-        return optimal_cR_t_umeyama_transformation;
+        return optimalSE3Transformation;
     }
 
     SE3 EstimatorRobustLoRANSAC::estimateRelativePose(const Eigen::Matrix4Xd &toBeTransformedPoints,

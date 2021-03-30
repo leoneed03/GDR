@@ -3,7 +3,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-
 #ifndef GDR_SE3_H
 #define GDR_SE3_H
 
@@ -14,10 +13,11 @@
 
 namespace gdr {
 
-
     class SE3 {
+
     private:
         Sophus::SE3d se3;
+
     public:
         SE3() = default;
 
@@ -27,9 +27,9 @@ namespace gdr {
 
         void setRotation(const SO3 &orientationToSet);
 
-        void setRotation(const Sophus::SO3d& orientationToSet);
+        void setRotation(const Sophus::SO3d &orientationToSet);
 
-        void setTranslation(const Eigen::Vector3d& translationToSet);
+        void setTranslation(const Eigen::Vector3d &translationToSet);
 
         Sophus::SE3d getSE3Constructed() const;
 
@@ -43,7 +43,7 @@ namespace gdr {
 
         SE3 inverse() const;
 
-        friend SE3 operator *(const SE3 &lhs, const SE3 &rhs);
+        friend SE3 operator*(const SE3 &lhs, const SE3 &rhs);
     };
 }
 

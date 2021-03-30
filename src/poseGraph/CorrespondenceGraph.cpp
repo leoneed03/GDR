@@ -48,6 +48,7 @@ namespace gdr {
                 std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
                 file << s1 + s2;
             }
+
             for (int i = 0; i < transformationRtMatrices.size(); ++i) {
                 for (int j = 0; j < transformationRtMatrices[i].size(); ++j) {
                     if (i >= transformationRtMatrices[i][j].getIndexTo()) {
@@ -77,8 +78,7 @@ namespace gdr {
 
     CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirectoryRGB,
                                              const std::string &newPathToImageDirectoryD,
-                                             const CameraRGBD &cameraDefaultToSet,
-                                             int numOfThreadsCpu) :
+                                             const CameraRGBD &cameraDefaultToSet) :
             cameraDefault(cameraDefaultToSet),
             pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
             pathToImageDirectoryD(newPathToImageDirectoryD) {
@@ -138,12 +138,11 @@ namespace gdr {
             const auto &transformationsValuesToSet = pairwiseRelativePoses[i];
             auto &transformationsWhereToSet = transformationRtMatrices[i];
 
-            for (int j = 0; j < transformationsValuesToSet.size(); ++j) {
-                transformationRtMatrices[i].emplace_back(transformationsValuesToSet[j]);
+            for (const auto &transformation :transformationsValuesToSet) {
+                transformationRtMatrices[i].emplace_back(transformation);
             }
             assert(transformationsWhereToSet.size() == transformationsValuesToSet.size());
         }
-
     }
 
     void CorrespondenceGraph::setInlierPointMatches(
@@ -196,7 +195,8 @@ namespace gdr {
                                                int indexInMatchListToBeTransformedCanBeComputed) const {
         assert(indexFromDestination >= 0 && indexFromDestination < matches.size());
         const auto &matchList = matches[indexFromDestination];
-        assert(indexInMatchListToBeTransformedCanBeComputed >= 0 && indexInMatchListToBeTransformedCanBeComputed < matchList.size());
+        assert(indexInMatchListToBeTransformedCanBeComputed >= 0 &&
+               indexInMatchListToBeTransformedCanBeComputed < matchList.size());
 
         return matchList[indexInMatchListToBeTransformedCanBeComputed];
     }

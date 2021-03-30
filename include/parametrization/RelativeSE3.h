@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_ESSENTIALMATRIX_H
-#define GDR_ESSENTIALMATRIX_H
+#ifndef GDR_RELATIVE_SE3_H
+#define GDR_RELATIVE_SE3_H
 
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>

@@ -6,7 +6,6 @@
 #include "sparsePointCloud/PointClassifier.h"
 #include "sparsePointCloud/PointClassifierCreator.h"
 
-
 namespace gdr {
 
     std::unique_ptr<IPointClassifier> PointClassifierCreator::getPointClassifier() {

@@ -4,7 +4,6 @@
 //
 
 #include "relativePoseEstimators/Estimator3Points.h"
-#include <iostream>
 
 #include <Eigen/Eigen>
 

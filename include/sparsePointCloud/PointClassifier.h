@@ -9,23 +9,17 @@
 #include <vector>
 #include <unordered_map>
 
-#include "IPointClassifier.h"
+#include "sparsePointCloud/IPointClassifier.h"
 
 namespace gdr {
 
     class PointClassifier : public IPointClassifier {
 
     public:
-
         void setNumberOfPoses(int numberOfPoses) override;
 
-        /** Compute unique class for each observed point
-         *      (some keypoints are observed by multiple cameras but represent same 3D point)
-         * @returns vector of unique classes for each point
-         */
         std::vector<int> assignPointClasses() override;
 
-        // point format: first -- pose number, second -- local keypoint index
         void insertPointsWithNewClasses(const std::vector<std::pair<int, int>> &pointsOneClass) override;
 
         std::pair<int, int> getPoseNumberAndLocalIndex(int globalIndex) const override;

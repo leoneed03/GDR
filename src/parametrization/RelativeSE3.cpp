@@ -28,13 +28,13 @@ namespace gdr {
         return relativePose.getSE3();
     }
 
-    const SE3& RelativeSE3::getRelativePose() const {
+    const SE3 &RelativeSE3::getRelativePose() const {
         return relativePose;
     }
 
     RelativeSE3::RelativeSE3(int indexFromDestinationToSet,
                              int indexToToBeTransformedToSet,
-                             const SE3 &se3):
+                             const SE3 &se3) :
             indexFromDestination(indexFromDestinationToSet),
             indexToToBeTransformed(indexToToBeTransformedToSet),
             relativePose(se3) {}

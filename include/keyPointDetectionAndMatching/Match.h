@@ -12,6 +12,7 @@ namespace gdr {
     struct Match {
     private:
 
+        //kept for debug purposes
         int frameNumber;
 
         /** each pair contains keypoint index on "destination" image

@@ -5,7 +5,10 @@
 
 #include "visualization/3D/SmoothPointCloud.h"
 
-
+#include <pcl/point_types.h>
+#include <pcl/registration/ndt.h>
+#include <pcl/filters/approximate_voxel_grid.h>
+#include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <opencv2/opencv.hpp>
 
@@ -52,7 +55,8 @@ namespace gdr {
                 const auto &rgbInfo = rgbImage.at<cv::Vec3b>(y, x);
 
                 if (currentKeypointDepth != 0) {
-                    points.emplace_back(PointXYZRGBdouble(globalX, globalY, globalZ, rgbInfo[2], rgbInfo[1], rgbInfo[0]));
+                    points.emplace_back(
+                            PointXYZRGBdouble(globalX, globalY, globalZ, rgbInfo[2], rgbInfo[1], rgbInfo[0]));
                 }
             }
         }

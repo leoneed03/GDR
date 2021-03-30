@@ -3,15 +3,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
+#include <cmath>
+#include <cassert>
 
 #include "keyPoints/KeyPointInfo.h"
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
-#include <iostream>
-#include <cmath>
-#include <cassert>
 
 namespace gdr {
+
     KeyPointInfo::KeyPointInfo(const KeyPoint2DAndDepth &keyPointToSet,
                                int observingPoseNumberToSet) : keyPoint2D(keyPointToSet),
                                                                observingPoseNumber(observingPoseNumberToSet),
@@ -39,34 +39,9 @@ namespace gdr {
     }
 
     int KeyPointInfo::getObservingPoseNumber() const {
+        assert(observingPoseNumber >= 0);
         return observingPoseNumber;
     }
-//
-//    KeyPointInfo::KeyPointInfo(const KeyPointInfo &newKeypoint) :
-//            x(newKeypoint.getX()),
-//            y(newKeypoint.getY()),
-//            scale(newKeypoint.getScale()),
-//            orientation(newKeypoint.getOrientation()),
-//            depth(newKeypoint.getDepth()),
-//            observingPoseNumber(newKeypoint.getObservingPoseNumber()),
-//            initialObservingPoseNumber(newKeypoint.getObservingPoseNumber()) {}
-//
-//    KeyPointInfo &KeyPointInfo::operator=(const KeyPointInfo &newKeypoint) {
-//
-//        std::cout << "DEBUG = " << std::endl;
-//        if (this == &newKeypoint) {
-//            return *this;
-//        }
-//
-//        x = newKeypoint.getX();
-//        y = newKeypoint.getY();
-//        scale = newKeypoint.getScale();
-//        orientation = newKeypoint.getOrientation();
-//        depth = newKeypoint.getDepth();
-//        observingPoseNumber = newKeypoint.getObservingPoseNumber();
-//
-//        return *this;
-//    }
 
     bool KeyPointInfo::operator==(const KeyPointInfo &right) {
 
@@ -80,11 +55,6 @@ namespace gdr {
         } else {
             return true;
         }
-    }
-
-    KeyPointInfo::KeyPointInfo() {
-        observingPoseNumber = getDefValue();
-        initialObservingPoseNumber = observingPoseNumber;
     }
 
     double KeyPointInfo::getDefValue() const {
@@ -110,6 +80,7 @@ namespace gdr {
     }
 
     int KeyPointInfo::getInitObservingPoseNumber() const {
+        assert(initialObservingPoseNumber >= 0);
         return initialObservingPoseNumber;
     }
 }

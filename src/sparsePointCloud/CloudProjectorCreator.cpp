@@ -6,7 +6,6 @@
 #include "sparsePointCloud/CloudProjector.h"
 #include "sparsePointCloud/CloudProjectorCreator.h"
 
-
 namespace gdr {
 
     std::unique_ptr<ICloudProjector>

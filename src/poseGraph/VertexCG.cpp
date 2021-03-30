@@ -77,7 +77,7 @@ namespace gdr {
     }
 
 
-    const std::vector<KeyPoint2DAndDepth>& VertexCG::getKeyPoints2D() const {
+    const std::vector<KeyPoint2DAndDepth> &VertexCG::getKeyPoints2D() const {
         return keypoints;
     }
 

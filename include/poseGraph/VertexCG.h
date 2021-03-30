@@ -7,23 +7,16 @@
 #define GDR_VERTEXCG_H
 
 #include <vector>
-#include <iostream>
 
 #include <Eigen/Eigen>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
-#include <Eigen/LU>
-#include <Eigen/SVD>
-
-#include <sophus/se3.hpp>
 
 #include "keyPoints/KeyPointInfo.h"
+
 #include "parametrization/SE3.h"
 #include "parametrization/SO3.h"
 #include "parametrization/cameraRGBD.h"
-#include "keyPoints/KeyPointsDepthDescriptor.h"
 
+#include "keyPoints/KeyPointsDepthDescriptor.h"
 
 namespace gdr {
 
@@ -32,7 +25,9 @@ namespace gdr {
         CameraRGBD cameraRgbd;
         int index;
         int initialIndex;
+
         SE3 absolutePose;
+
         std::vector<KeyPoint2DAndDepth> keypoints;
         std::vector<float> descriptors;
         std::vector<double> depths;
@@ -60,13 +55,13 @@ namespace gdr {
 
         void setAbsolutePoseSE3(const SE3 &absolutePose);
 
-        const std::vector<KeyPoint2DAndDepth>& getKeyPoints() const;
+        const std::vector<KeyPoint2DAndDepth> &getKeyPoints() const;
 
-        const std::vector<float>& getDescriptors() const;
+        const std::vector<float> &getDescriptors() const;
 
-        const std::vector<double>& getDepths() const;
+        const std::vector<double> &getDepths() const;
 
-        const std::vector<KeyPoint2DAndDepth>& getKeyPoints2D() const;
+        const std::vector<KeyPoint2DAndDepth> &getKeyPoints2D() const;
 
         Eigen::Quaterniond getRotationQuat() const;
 
@@ -74,11 +69,11 @@ namespace gdr {
 
         Sophus::SE3d getAbsolutePoseSophus() const;
 
-        const SE3& getAbsolutePoseSE3() const;
+        const SE3 &getAbsolutePoseSE3() const;
 
         VertexCG(int newIndex,
                  const CameraRGBD &newCameraRgbd,
-                 const keyPointsDepthDescriptor& keyPointsDepthDescriptor,
+                 const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
                  const std::string &newPathRGB,
                  const std::string &newPathD);
 

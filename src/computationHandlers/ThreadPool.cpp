@@ -7,11 +7,5 @@
 
 namespace gdr {
 
-    ThreadPool::ThreadPool(int numOfThreads): sheduler(numOfThreads) {
-
-    }
-
-    tbb::task_group &ThreadPool::getTaskGroup() {
-        return tasks;
-    }
+    ThreadPool::ThreadPool(int numOfThreads) : sheduler(numOfThreads) {}
 }

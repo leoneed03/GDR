@@ -6,7 +6,6 @@
 #ifndef GDR_SO3_H
 #define GDR_SO3_H
 
-
 #include <sophus/so3.hpp>
 #include <iostream>
 
@@ -22,7 +21,6 @@ namespace gdr {
         int getSpaceIO() const;
 
     public:
-
         SO3 inverse() const;
 
         SO3() = default;
@@ -36,8 +34,6 @@ namespace gdr {
         Eigen::Vector3d getLog() const;
 
         Eigen::Quaterniond getUnitQuaternion() const;
-
-        std::vector<double> getUnitQuaternionRawVector() const;
 
         const Sophus::SO3d &getRotationSophus() const;
 

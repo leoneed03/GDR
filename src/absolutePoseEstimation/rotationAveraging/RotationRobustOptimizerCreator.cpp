@@ -4,7 +4,6 @@
 //
 
 #include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h"
-
 #include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
 
 namespace gdr {

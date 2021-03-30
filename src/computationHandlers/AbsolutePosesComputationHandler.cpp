@@ -172,7 +172,6 @@ namespace gdr {
         bool successIRLS = true;
 
         // Now run IRLS with PCG answer as init solution
-
         optimizedAbsoluteTranslationsIRLS = TranslationAverager::recoverTranslationsIRLS(
                 relativeTranslations,
                 absolutePoses,
