@@ -22,6 +22,7 @@ namespace gdr {
 
         std::vector<std::pair<double, int>> projectionErrorsInliers;
         assert(toBeTransformedPoints.cols() == pointsAfterTransformation.cols());
+        Eigen::Matrix4Xd residues = pointsAfterTransformation - toBeTransformedPoints;
 
         for (int pointCounter = 0; pointCounter < pointsAfterTransformation.cols(); ++pointCounter) {
             Eigen::Vector3d toBeTransformedProjection =
@@ -50,7 +51,8 @@ namespace gdr {
                 assert(false && "only p=1 and p=2 L_p norms for reprojection error can be used");
             }
 
-            if (errorProjectionLp < thresholdProjectionErrorPixels) {
+            if (errorProjectionLp < thresholdProjectionErrorPixels //&& std::abs(residues.col(pointCounter)[2]) < 0.05
+            ) {
                 projectionErrorsInliers.emplace_back(std::make_pair(errorProjectionLp, pointCounter));
             }
         }

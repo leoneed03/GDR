@@ -19,9 +19,15 @@ namespace gdr {
         float cx = 319.5;
         float cy = 239.5;
 
+        double depthPixelDivider = 5000.0;
+
     public:
 
         CameraRGBD() = default;
+
+        double getDepthPixelDivider() const;
+
+        void setDepthPixelDivider(double divider);
 
         CameraRGBD(float fx, float cx, float fy, float cy);
 

@@ -32,15 +32,13 @@ namespace gdr {
         const std::string absoluteRotationsFileG2o = "absoluteRotations.txt";
         std::vector<std::string> imagesRgb;
         std::vector<std::string> imagesD;
-        std::string pathToImageDirectoryRGB;
-        std::string pathToImageDirectoryD;
 
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
 
     public:
 
-        CorrespondenceGraph(const std::string &pathToImageDirectoryRGB,
-                            const std::string &pathToImageDirectoryD,
+        CorrespondenceGraph(const std::vector<std::string> &associatedImagesRGB,
+                            const std::vector<std::string> &associatedImagesD,
                             const CameraRGBD &cameraDefault);
 
         const Match &getMatch(int indexFromDestDestination, int indexInMatchListToBeTransformedCanBeComputed) const;

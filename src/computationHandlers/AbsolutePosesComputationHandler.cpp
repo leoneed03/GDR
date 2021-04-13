@@ -335,4 +335,31 @@ namespace gdr {
         printProgressToConsole = printProgress;
     }
 
+    std::vector<double> AbsolutePosesComputationHandler::getPosesTimestamps() const {
+        std::vector<double> timestampsToReturn;
+
+        const auto& vertices = getVertices();
+
+        for (const auto& vertex: vertices) {
+            timestampsToReturn.emplace_back(vertex.getTimestamp());
+        }
+
+        assert(timestampsToReturn.size() == getNumberOfPoses());
+        assert(!timestampsToReturn.empty());
+
+        return timestampsToReturn;
+    }
+
+    std::vector<SE3> AbsolutePosesComputationHandler::getPosesSE3() const {
+        std::vector<SE3> posesSE3;
+
+        for (const auto& vertex: getVertices()) {
+            posesSE3.emplace_back(vertex.getAbsolutePoseSE3());
+        }
+
+        assert(posesSE3.size() == getNumberOfPoses());
+        return posesSE3;
+    }
+
+
 }

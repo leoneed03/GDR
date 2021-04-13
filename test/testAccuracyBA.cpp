@@ -10,7 +10,7 @@
 #include <vector>
 #include <chrono>
 
-#include "readerTUM/ReaderTum.h"
+#include "readerDataset/readerTUM/ReaderTum.h"
 
 #include "computationHandlers/RelativePosesComputationHandler.h"
 #include "visualization/3D/SmoothPointCloud.h"
@@ -23,12 +23,14 @@ void testReconstruction(
         double errorTresholdT,
         const gdr::CameraRGBD &cameraDefault = gdr::CameraRGBD(),
         const gdr::ParamsRANSAC &paramsRansac = gdr::ParamsRANSAC(),
+        const std::string &assocFile = "",
         int numberOfIterations = 1,
         bool printToConsole = false,
         bool showVisualization3D = false,
         double minCoefficientOfBiggestComponent = 0.5,
         double coefficientR = 1.8,
-        double coefficientT = 1.8) {
+        double coefficientT = 1.8,
+        double timeDiffThreshold = 0.02) {
 
     for (int iteration = 0; iteration < numberOfIterations; ++iteration) {
         std::string numberOfPosesString = std::to_string(numberOfPosesInDataset);
@@ -36,16 +38,26 @@ void testReconstruction(
         std::string datasetName = shortDatasetName + "_sampled_" + numberOfPosesString + "_" + frequency;
         std::cout << "Running test on " << datasetName << std::endl;
 
-        std::string pathRGB = "../../data/" + datasetName + "/rgb";
-        std::string pathD = "../../data/" + datasetName + "/depth";
-        gdr::RelativePosesComputationHandler cgHandler(pathRGB, pathD, gdr::ParamsRANSAC(), cameraDefault);
+        std::string pathRelativeToData = "../../data/";
+        std::string pathRGB = pathRelativeToData + datasetName + "/rgb";
+        std::string pathD = pathRelativeToData + datasetName + "/depth";
 
+        std::string pathAssoc = (assocFile != "") ? (pathRelativeToData + datasetName + "/" + assocFile) : (assocFile);
+        gdr::RelativePosesComputationHandler cgHandler(pathRGB,
+                                                       pathD,
+                                                       pathAssoc,
+                                                       gdr::ParamsRANSAC(),
+                                                       cameraDefault);
+
+        std::cout << "start computing relative poses" << std::endl;
         cgHandler.computeRelativePoses();
         cgHandler.bfsDrawToFile(
                 "../../tools/data/temp/" + shortDatasetName + "_connectedComponents_" + numberOfPosesString + ".dot");
         std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph =
                 cgHandler.splitGraphToConnectedComponents();
 
+        std::cout << "Biggest component of size "
+                  << connectedComponentsPoseGraph[0]->getNumberOfPoses() << std::endl;
         if (printToConsole) {
             for (int componentNumber = 0; componentNumber < connectedComponentsPoseGraph.size(); ++componentNumber) {
                 std::cout << " #component index by increment " << componentNumber << " of size "
@@ -55,31 +67,62 @@ void testReconstruction(
 
         auto &biggestComponent = connectedComponentsPoseGraph[0];
 
+        std::cout << "perform rotation averaging" << std::endl;
         std::vector<gdr::SO3> computedAbsoluteOrientationsNoRobust = biggestComponent->performRotationAveraging();
+
+        std::cout << "perform rotation robust optimization" << std::endl;
         std::vector<gdr::SO3> computedAbsoluteOrientationsRobust = biggestComponent->performRotationRobustOptimization();
+
+        std::cout << "perform translation averaging" << std::endl;
         std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent->performTranslationAveraging();
-        std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
+        std::vector<gdr::SE3> irlsPoses = biggestComponent->getPosesSE3();
+
+        {
+
+//            gdr::SmoothPointCloud smoothCloud;
+//            smoothCloud.registerPointCloudFromImage(biggestComponent->getVertices());
+        }
+
+
+
+        std::vector<gdr::SE3> bundleAdjustedPoses;
+//        bundleAdjustedPoses = biggestComponent->getPosesSE3();
+
+//TODO: profile with time
+        std::cout << "perform Bundle Adjustment" << std::endl;
+        bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
         std::string absolutePoses = "../../data/" + datasetName + "/" + "groundtruth.txt";
         std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
                 absolutePoses);
 
-        if (printToConsole) {
-            std::cout << "read poses GT: " << posesInfoFull.size() << std::endl;
+        std::vector<double> timestampsToFind = biggestComponent->getPosesTimestamps();
+        posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientationByMatches(posesInfoFull,
+                                                                                       timestampsToFind,
+                                                                                       timeDiffThreshold);
+
+        {
+            std::cout << "found poses in groundtruth file: " << posesInfoFull.size() << std::endl;
         }
-        assert(posesInfoFull.size() == numberOfPosesInDataset);
+        assert(!posesInfoFull.empty());
+//        assert(posesInfoFull.size() == numberOfPosesInDataset);
         std::set<int> indicesOfBiggestComponent = biggestComponent->initialIndices();
+
         std::vector<gdr::PoseFullInfo> posesInfo;
 
         for (int poseIndex = 0; poseIndex < posesInfoFull.size(); ++poseIndex) {
-            if (indicesOfBiggestComponent.find(poseIndex) != indicesOfBiggestComponent.end()) {
+            //TODO
+//            if (indicesOfBiggestComponent.find(poseIndex) != indicesOfBiggestComponent.end()) {
                 posesInfo.emplace_back(posesInfoFull[poseIndex]);
-            }
+//            }
         }
         if (printToConsole) {
             std::cout << "sampled GT poses size: " << posesInfo.size() << std::endl;
         }
-        assert(posesInfo.size() == biggestComponent->getNumberOfPoses());
+        //TODO: rgb and depth images are matched if they have time difference < 0.02 sec
+        //TODO: groundtruth file contains measurements at timestamps with some frequency,
+        //TODO: so some poses might not be found there -- it is okay
+//        assert(posesInfo.size() == biggestComponent->getNumberOfPoses());
 
         // compute absolute poses IRLS
         std::vector<Sophus::SE3d> posesIRLS;
@@ -257,12 +300,58 @@ void testReconstruction(
     }
 }
 
+#include "readerDataset/readerTUM/ImagesAssociator.h"
+
+void readDataset() {
+    std::set<int> indices;
+    for (int i = 0; i < 3000; i += 6) {
+        indices.insert(i);
+    }
+    std::string pathToDataset = "/home/leoneed/Desktop/datasets/rgbd_dataset_freiburg1_desk";
+    gdr::ImageAssociator imageAssociator(pathToDataset);
+
+    imageAssociator.associateImagePairs();
+    imageAssociator.exportAllInfoToDirectory("../../data/desk1_sampled_98_6",
+                                             indices);
+}
+
 
 TEST(testBAOptimized, visualizationDesk98) {
 
-    testReconstruction("plant", 19, 3,
+    gdr::ParamsRANSAC paramsRansacDefault;
+    gdr::CameraRGBD structureIoCamera(583, 320, 583, 240);
+    structureIoCamera.setDepthPixelDivider(1000.0);
+
+    gdr::CameraRGBD kinectCamera(517.3, 318.6, 516.5, 255.3);
+    kinectCamera.setDepthPixelDivider(5000.0);
+
+
+    std::string assocFile = "assoc.txt";
+
+    testReconstruction("fr1_desk_full", 573, 1,
                        0.04, 0.04,
-                       gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));
+                       kinectCamera,
+                       paramsRansacDefault,
+                       assocFile);
+
+
+//    testReconstruction("fr1_desk_short", 4,
+//                       1,0.04, 0.04,
+//                       kinectCamera,paramsRansacDefault, assocFile);
+
+//    testReconstruction("copyroom_multiplied_by_5", 20, 1,
+//                       0.04, 0.04,
+//                       structureIoCamera);
+
+
+
+//    testReconstruction("plant", 19, 3,
+//                       0.04, 0.04,
+//                       kinectCamera);
+
+//    testReconstruction("desk1", 98, 6,
+//                       0.04, 0.04,
+//                       gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));
 }
 
 int main(int argc, char *argv[]) {

@@ -259,7 +259,7 @@ namespace gdr {
         //TODO: make these parameters customizable
         options.linear_solver_type = ceres::SPARSE_SCHUR;
         options.minimizer_progress_to_stdout = getPrintProgressToCout();
-        options.max_num_iterations = 100;
+        options.max_num_iterations = 50;
         options.num_threads = 6;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);

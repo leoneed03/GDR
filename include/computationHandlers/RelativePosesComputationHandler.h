@@ -20,6 +20,7 @@ namespace gdr {
         bool printInformationConsole = false;
         int numberOfThreadsCPU = 1;
 
+        std::vector<std::pair<double, double>> timestampsRgbDepthAssociated;
         std::unique_ptr<IFeatureDetectorMatcher> siftModule;
         std::unique_ptr<IEstimatorRelativePoseRobust> relativePoseEstimatorRobust;
         std::unique_ptr<IRefinerRelativePose> relativePoseRefiner;
@@ -31,6 +32,7 @@ namespace gdr {
 
         std::unique_ptr<CorrespondenceGraph> correspondenceGraph;
 
+        std::unordered_map<int, double> depthPixelDividerByPoseNumber;
         std::string relativePoseFileG2o = "relativeRotations.txt";
 
     private:
@@ -106,6 +108,7 @@ namespace gdr {
          */
         RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
                                         const std::string &pathToImageDirectoryD,
+                                        const std::string &rgbToDassociationFile = "",
                                         const ParamsRANSAC &paramsRansac = ParamsRANSAC(),
                                         const CameraRGBD &cameraDefault = CameraRGBD());
 

@@ -64,6 +64,8 @@ namespace gdr {
 
         void setTranslation(int poseIndex, const Eigen::Vector3d &translation);
 
+        std::vector<SE3> getAbsolutePoses() const;
+
         const std::vector<RelativeSE3> &getConnectionsFromVertex(int vertexNumber) const;
 
         const std::vector<VertexCG> &getVertices() const;

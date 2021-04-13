@@ -168,4 +168,15 @@ namespace gdr {
 
         return componentNumber;
     }
+
+    std::vector<SE3> ConnectedComponentPoseGraph::getAbsolutePoses() const {
+        std::vector<SE3> absolutePosesToReturn;
+        absolutePosesToReturn.reserve(getNumberOfPoses());
+
+        for (const auto& vertex: absolutePoses) {
+            absolutePosesToReturn.emplace_back(vertex.getAbsolutePoseSE3());
+        }
+
+        return absolutePosesToReturn;
+    }
 }

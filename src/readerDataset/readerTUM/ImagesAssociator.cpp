@@ -8,7 +8,8 @@
 #include <iostream>
 #include <unordered_set>
 
-#include "readerTUM/ImagesAssociator.h"
+#include "readerDataset/readerTUM/ImagesAssociator.h"
+#include "readerDataset/readerTUM/ClosestMatchFinder.h"
 
 
 namespace gdr {
@@ -65,33 +66,6 @@ namespace gdr {
         assert(imagesPathsD.size() == numberImagesD && "check that depth directory is not empty");
     }
 
-    template<class K, class V>
-    typename std::map<K, V>::iterator findClosestKeyMatch(std::map<K, V> &collection,
-                                                          K keyToFind) {
-        if (collection.empty()) {
-            return collection.end();
-        }
-        auto lowerBoundIterator = collection.lower_bound(keyToFind);
-
-        if (lowerBoundIterator == collection.begin()) {
-            return lowerBoundIterator;
-        }
-
-        if (lowerBoundIterator == collection.end()) {
-            return std::prev(lowerBoundIterator);
-        }
-
-        auto prevLowerBoundIterator = std::prev(lowerBoundIterator);
-
-        K foundValue = lowerBoundIterator->first;
-        K prevToFoundValue = prevLowerBoundIterator->first;
-
-        if (std::abs(foundValue - keyToFind) < std::abs(prevToFoundValue - keyToFind)) {
-            return lowerBoundIterator;
-        } else {
-            return prevLowerBoundIterator;
-        }
-    }
 
     int ImageAssociator::associateImagePairs(double maxTimeTreshold,
                                              double timeOffset,
@@ -124,10 +98,10 @@ namespace gdr {
             assert(numberImagesD == imageNamByTimestampD.size());
 
             double timestampToLookFor = shortNameRGBAndTime.second;
-            auto closestMatchImageDepth = findClosestKeyMatch<double, std::string>(
+            auto closestMatchImageDepth = ClosestMatchFinder::findClosestKeyMatch<double, std::string>(
                     imageNamByTimestampD,
                     timestampToLookFor);
-            auto exactMatchImageRGB = findClosestKeyMatch<double, std::string>(
+            auto exactMatchImageRGB = ClosestMatchFinder::findClosestKeyMatch<double, std::string>(
                     imageNamByTimestampRGB,
                     timestampToLookFor
             );
@@ -315,7 +289,7 @@ namespace gdr {
         }
 
         for (const auto &timestamp: timestamps) {
-            auto closestMatch = findClosestKeyMatch<double, PoseFullInfo>(poseInfoByTimestamps,
+            auto closestMatch = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(poseInfoByTimestamps,
                                                                           timestamp);
             if (closestMatch == poseInfoByTimestamps.end()) {
                 std::cout << " did not find timestamp [FOUND END ?!] " << timestamp << std::endl;
@@ -381,7 +355,7 @@ namespace gdr {
         pathD.append(shortNameDepthDir);
         fs::create_directory(pathD);
 
-        std::set indicesToSample = indicesToSampleConst;
+        auto indicesToSample = indicesToSampleConst;
 
         if (indicesToSample.empty()) {
             for (int i = 0; i < checkSize(); ++i) {

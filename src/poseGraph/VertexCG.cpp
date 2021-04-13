@@ -94,14 +94,16 @@ namespace gdr {
                        const CameraRGBD &newCameraRgbd,
                        const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
                        const std::string &newPathRGB,
-                       const std::string &newPathD) : index(newIndex),
-                                                      initialIndex(newIndex),
-                                                      cameraRgbd(newCameraRgbd),
-                                                      keypoints(keyPointsDepthDescriptor.getKeyPointsKnownDepth()),
-                                                      descriptors(keyPointsDepthDescriptor.getDescriptorsKnownDepth()),
-                                                      depths(keyPointsDepthDescriptor.getDepths()),
-                                                      pathToRGBimage(newPathRGB),
-                                                      pathToDimage(newPathD) {}
+                       const std::string &newPathD,
+                       double timestampToSet) : index(newIndex),
+                                                initialIndex(newIndex),
+                                                cameraRgbd(newCameraRgbd),
+                                                keypoints(keyPointsDepthDescriptor.getKeyPointsKnownDepth()),
+                                                descriptors(keyPointsDepthDescriptor.getDescriptorsKnownDepth()),
+                                                depths(keyPointsDepthDescriptor.getDepths()),
+                                                pathToRGBimage(newPathRGB),
+                                                pathToDimage(newPathD),
+                                                timestamp(timestampToSet) {}
 
     void VertexCG::setIndex(int newIndex) {
         index = newIndex;
@@ -143,5 +145,9 @@ namespace gdr {
         assert(keyPointIndexIsValid(keyPointIndex));
 
         return depths[keyPointIndex];
+    }
+
+    double VertexCG::getTimestamp() const {
+        return timestamp;
     }
 }

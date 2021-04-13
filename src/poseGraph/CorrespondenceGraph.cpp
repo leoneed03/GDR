@@ -76,15 +76,18 @@ namespace gdr {
     }
 
 
-    CorrespondenceGraph::CorrespondenceGraph(const std::string &newPathToImageDirectoryRGB,
-                                             const std::string &newPathToImageDirectoryD,
+    CorrespondenceGraph::CorrespondenceGraph(const std::vector<std::string> &associatedImagesRGB,
+                                             const std::vector<std::string> &associatedImagesD,
                                              const CameraRGBD &cameraDefaultToSet) :
-            cameraDefault(cameraDefaultToSet),
-            pathToImageDirectoryRGB(newPathToImageDirectoryRGB),
-            pathToImageDirectoryD(newPathToImageDirectoryD) {
+            cameraDefault(cameraDefaultToSet) {
 
-        imagesRgb = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryRGB);
-        imagesD = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryD);
+        assert(!associatedImagesRGB.empty());
+        assert(associatedImagesD.size() == associatedImagesRGB.size());
+
+        imagesRgb = associatedImagesRGB;
+        imagesD = associatedImagesD;
+//        imagesRgb = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryRGB);
+//        imagesD = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryD);
 
         std::sort(imagesRgb.begin(), imagesRgb.end());
         std::sort(imagesD.begin(), imagesD.end());

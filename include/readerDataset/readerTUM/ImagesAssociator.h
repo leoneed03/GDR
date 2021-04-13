@@ -12,7 +12,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <readerTUM/PoseFullInfo.h>
+#include <readerDataset/readerTUM/PoseFullInfo.h>
 
 namespace gdr {
 
@@ -83,6 +83,7 @@ namespace gdr {
                                      const std::string &shortFilenameGT = "groundtruth",
                                      const std::string &extension = "txt"
         );
+
 
     };
 }

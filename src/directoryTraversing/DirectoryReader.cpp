@@ -12,7 +12,7 @@ namespace gdr {
 
     namespace fs = boost::filesystem;
 
-    std::vector<std::string> DirectoryReader::readPathsToImagesFromDirectory(const std::string &pathToDirectory) {
+    std::vector<std::string> DirectoryReader::readPathsToImagesFromDirectorySorted(const std::string &pathToDirectory) {
 
         std::vector<std::string> images;
         fs::path imagesDirectory(pathToDirectory);

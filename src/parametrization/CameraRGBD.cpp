@@ -89,4 +89,13 @@ namespace gdr {
         return getCoordinatesBeforeProjectionXYZ1(pointXYZ1[0], pointXYZ1[1], pointXYZ1[2]);
     }
 
+    double CameraRGBD::getDepthPixelDivider() const {
+//        assert(depthPixelDivider == 1000.0);
+        return depthPixelDivider;
+    }
+
+    void CameraRGBD::setDepthPixelDivider(double divider) {
+        depthPixelDivider = divider;
+    }
+
 }

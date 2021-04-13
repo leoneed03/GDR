@@ -24,7 +24,8 @@ namespace gdr {
     };
 
     std::vector<PointXYZRGBdouble> getPointCloudXYZRGBFromPose(const VertexCG &poseToBeRegistered) {
-        double coeffDepth = 5000.0;
+        double coeffDepth = poseToBeRegistered.getCamera().getDepthPixelDivider();
+
         cv::Mat depthImage = cv::imread(poseToBeRegistered.getPathDImage(), cv::IMREAD_ANYDEPTH);
         cv::Mat rgbImage = cv::imread(poseToBeRegistered.getPathRGBImage(), cv::IMREAD_ANYCOLOR);
         std::vector<PointXYZRGBdouble> points;

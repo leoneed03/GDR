@@ -4,9 +4,13 @@
 //
 
 #include <mutex>
+#include "boost/filesystem.hpp"
 
 #include <tbb/parallel_for.h>
 #include <tbb/concurrent_vector.h>
+
+#include "readerDataset/readerTUM/ReaderTum.h"
+#include <directoryTraversing/DirectoryReader.h>
 
 #include "keyPoints/KeyPointsDepthDescriptor.h"
 #include "keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.h"
@@ -17,15 +21,102 @@
 
 namespace gdr {
 
+    namespace fs = boost::filesystem;
+
     RelativePosesComputationHandler::RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
                                                                      const std::string &pathToImageDirectoryD,
+                                                                     const std::string &rgbToDassociationFile,
                                                                      const ParamsRANSAC &paramsRansacToSet,
                                                                      const CameraRGBD &cameraDefaultToSet) :
             paramsRansac(paramsRansacToSet),
             cameraDefault(cameraDefaultToSet) {
 
-        correspondenceGraph = std::make_unique<CorrespondenceGraph>(pathToImageDirectoryRGB,
-                                                                    pathToImageDirectoryD,
+        auto rgbImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(pathToImageDirectoryRGB);
+        auto depthImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(pathToImageDirectoryD);
+
+        assert(!rgbImagesAll.empty());
+        assert(!depthImagesAll.empty());
+
+        std::vector<std::pair<double, double>> timeStampsRgbDepth;
+
+        if (rgbToDassociationFile.empty()) {
+            assert(rgbImagesAll.size() == depthImagesAll.size()
+                   && "without assoc.txt file number of RGB and D frames should be equal");
+
+            for (int timeStep = 0; timeStep < rgbImagesAll.size(); ++timeStep) {
+                timeStampsRgbDepth.emplace_back(
+                        std::make_pair(static_cast<double>(timeStep), static_cast<double>(timeStep)));
+            }
+
+        } else {
+
+            AssociatedImages associatedImages = ReaderTUM::readAssocShortFilenameRgbToD(rgbToDassociationFile);
+
+            const auto &rgbSet = associatedImages.timeAndPairedDepthByRgb;
+            const auto &depthSet = associatedImages.timeAndPairedRgbByDepth;
+
+            std::cout << "sets are rgb, d: " << rgbSet.size() << ' ' << depthSet.size() << std::endl;
+            assert(!rgbSet.empty());
+            assert(depthSet.size() == depthSet.size());
+
+            auto iteratorByRgb = rgbSet.begin();
+            auto iteratorByDepth = depthSet.begin();
+
+            while (iteratorByRgb != rgbSet.end()
+                   && iteratorByDepth != depthSet.end()) {
+                const std::string &rgbShortName = iteratorByRgb->first;
+                const std::string &depthShortName = iteratorByDepth->first;
+
+                assert(rgbShortName == iteratorByDepth->second.second);
+                assert(depthShortName == iteratorByRgb->second.second);
+
+                double timeRgb = iteratorByRgb->second.first;
+                double timeD = iteratorByDepth->second.first;
+                timeStampsRgbDepth.emplace_back(std::make_pair(timeRgb, timeD));
+
+                ++iteratorByDepth;
+                ++iteratorByRgb;
+            }
+
+            std::vector<std::string> rgbImagesAssociated;
+            std::vector<std::string> depthImagesAssociated;
+
+            for (const auto &rgbFrame: rgbImagesAll) {
+                fs::path rgbPath(rgbFrame);
+                std::string nameToFind = rgbPath.filename().string();
+
+                if (rgbSet.find(nameToFind) != rgbSet.end()) {
+                    rgbImagesAssociated.emplace_back(rgbPath.string());
+                }
+            }
+
+            for (const auto &depthFrame: depthImagesAll) {
+                fs::path depthPath(depthFrame);
+
+                if (depthSet.find(depthPath.filename().string()) != depthSet.end()) {
+                    depthImagesAssociated.emplace_back(depthPath.string());
+                }
+            }
+
+            std::cout << "sizes timestamps, rgb, depth "
+                      << timeStampsRgbDepth.size() << ' '
+                      << rgbImagesAssociated.size() << ' '
+                      << depthImagesAssociated.size() << std::endl;
+            assert(timeStampsRgbDepth.size() == rgbImagesAssociated.size());
+            assert(rgbImagesAssociated.size() == depthImagesAssociated.size());
+            assert(!rgbImagesAssociated.empty());
+
+            rgbImagesAll = rgbImagesAssociated;
+            depthImagesAll = depthImagesAssociated;
+        }
+
+        timestampsRgbDepthAssociated = timeStampsRgbDepth;
+        assert(!rgbImagesAll.empty());
+        assert(rgbImagesAll.size() == depthImagesAll.size());
+        assert(rgbImagesAll.size() == timestampsRgbDepthAssociated.size());
+
+        correspondenceGraph = std::make_unique<CorrespondenceGraph>(rgbImagesAll,
+                                                                    depthImagesAll,
                                                                     cameraDefault);
 
         siftModule = FeatureDetectorMatcherCreator::getFeatureDetector(
@@ -66,12 +157,21 @@ namespace gdr {
         for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
 
             keyPointsDepthDescriptor keyPointsDepthDescriptor = keyPointsDepthDescriptor::filterKeypointsByKnownDepth(
-                    keysDescriptorsAll[currentImage], imagesD[currentImage]);
+                    keysDescriptorsAll[currentImage],
+                    imagesD[currentImage],
+                    cameraDefault.getDepthPixelDivider());
+
+            double timeRgb = timestampsRgbDepthAssociated[currentImage].first;
+            double timeD = timestampsRgbDepthAssociated[currentImage].second;
+
+            assert(std::abs(timeRgb - timeD) < 0.02);
+
             VertexCG currentVertex(currentImage,
                                    correspondenceGraph->getCameraDefault(),
                                    keyPointsDepthDescriptor,
                                    imagesRgb[currentImage],
-                                   imagesD[currentImage]);
+                                   imagesD[currentImage],
+                                   timeD);
 
             correspondenceGraph->addVertex(currentVertex);
         }
@@ -279,6 +379,7 @@ namespace gdr {
                                                                                      cameraDest,
                                                                                      success,
                                                                                      inliersAgain);
+
         if (!success) {
             return cR_t_umeyama;
         }

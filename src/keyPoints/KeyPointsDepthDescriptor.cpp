@@ -45,10 +45,11 @@ namespace gdr {
     }
 
     keyPointsDepthDescriptor keyPointsDepthDescriptor::filterKeypointsByKnownDepth(
-            const std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>> &keypointAndDescriptor,
-            const std::string &pathToDImage) {
+            const std::pair<std::vector<KeyPoint2DAndDepth>,
+                    std::vector<float>> &keypointAndDescriptor,
+            const std::string &pathToDImage,
+            double depthCoefficient) {
 
-        double depthCoefficient = 5000.0;
         const std::vector<KeyPoint2DAndDepth> &keypoints = keypointAndDescriptor.first;
         const std::vector<float> &descriptors = keypointAndDescriptor.second;
         std::vector<KeyPoint2DAndDepth> keypointsKnownDepth;
@@ -59,7 +60,7 @@ namespace gdr {
 
         for (int i = 0; i < keypoints.size(); ++i) {
             int posInDescriptorVector = 128 * i;
-            int maxDepthValue = 65536;
+            int maxDepthValue = 65535;
             auto coordY = keypoints[i].getY();
             auto coordX = keypoints[i].getX();
 

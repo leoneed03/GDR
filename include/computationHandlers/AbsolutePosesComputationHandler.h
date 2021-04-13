@@ -42,6 +42,8 @@ namespace gdr {
 
         const std::vector<VertexCG> &getVertices() const;
 
+        std::vector<double> getPosesTimestamps() const;
+
         std::vector<SO3> performRotationAveraging();
 
         std::vector<SO3> performRotationRobustOptimization();
@@ -49,6 +51,8 @@ namespace gdr {
         std::vector<Eigen::Vector3d> performTranslationAveraging(int indexFixedToZero = 0);
 
         std::vector<SE3> performBundleAdjustmentUsingDepth(int indexFixedToZero = 0);
+
+        std::vector<SE3> getPosesSE3() const;
     };
 }
 

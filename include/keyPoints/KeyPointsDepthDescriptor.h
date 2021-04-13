@@ -31,7 +31,8 @@ namespace gdr {
 
         static keyPointsDepthDescriptor filterKeypointsByKnownDepth(
                 const std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>> &keypointAndDescriptor,
-                const std::string &pathToDImage);
+                const std::string &pathToDImage,
+                double depthCoefficient);
     };
 }
 

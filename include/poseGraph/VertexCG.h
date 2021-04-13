@@ -33,6 +33,7 @@ namespace gdr {
         std::vector<double> depths;
         std::string pathToRGBimage;
         std::string pathToDimage;
+        double timestamp;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -71,11 +72,14 @@ namespace gdr {
 
         const SE3 &getAbsolutePoseSE3() const;
 
-        VertexCG(int newIndex,
-                 const CameraRGBD &newCameraRgbd,
+        VertexCG(int index,
+                 const CameraRGBD &cameraRgbd,
                  const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
-                 const std::string &newPathRGB,
-                 const std::string &newPathD);
+                 const std::string &pathRGB,
+                 const std::string &pathD,
+                 double timestamp);
+
+        double getTimestamp() const;
 
         std::string getPathRGBImage() const;
 

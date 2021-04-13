@@ -13,7 +13,7 @@ namespace gdr {
 
     class DirectoryReader {
     public:
-        static std::vector<std::string> readPathsToImagesFromDirectory(const std::string &pathToDirectory);
+        static std::vector<std::string> readPathsToImagesFromDirectorySorted(const std::string &pathToDirectory);
     };
 }
 
