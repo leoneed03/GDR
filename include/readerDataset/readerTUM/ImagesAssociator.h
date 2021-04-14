@@ -84,6 +84,9 @@ namespace gdr {
                                      const std::string &extension = "txt"
         );
 
+        static std::vector<PoseFullInfo> getGroundtruthForGivenTimestamps(const std::vector<double> &timestamps,
+                                                                          const std::vector<PoseFullInfo> &posesGT,
+                                                                          double maxTimeDiff);
 
     };
 }

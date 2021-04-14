@@ -290,7 +290,7 @@ namespace gdr {
 
         for (const auto &timestamp: timestamps) {
             auto closestMatch = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(poseInfoByTimestamps,
-                                                                          timestamp);
+                                                                                              timestamp);
             if (closestMatch == poseInfoByTimestamps.end()) {
                 std::cout << " did not find timestamp [FOUND END ?!] " << timestamp << std::endl;
                 ++notFoundCounter;
@@ -423,5 +423,35 @@ namespace gdr {
         assert(associatedGroundTruthInfo.size() == associatedImagesRGBAndDepth.size());
 
         return associatedGroundTruthInfo.size();
+    }
+
+    std::vector<PoseFullInfo> ImageAssociator::getGroundtruthForGivenTimestamps(const std::vector<double> &timestamps,
+                                                                                const std::vector<PoseFullInfo> &posesGT,
+                                                                                double maxTimeDiff) {
+
+        assert(std::is_sorted(timestamps.begin(), timestamps.end()));
+        std::vector<PoseFullInfo> posesToReturn;
+        std::map<double, PoseFullInfo> setOfPosesGT;
+
+        for (const auto &poseGT: posesGT) {
+            setOfPosesGT.insert(std::make_pair(poseGT.getTimestamp(), poseGT));
+        }
+
+        assert(!setOfPosesGT.empty());
+
+        for (const auto &timestamp: timestamps) {
+            auto foundPoseGT = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(
+                    setOfPosesGT, timestamp);
+
+            assert(foundPoseGT != setOfPosesGT.end());
+            assert(std::abs(timestamp - foundPoseGT->first) < maxTimeDiff
+                   && "no ground truth pose was found for this timestamp");
+
+            posesToReturn.emplace_back(foundPoseGT->second);
+        }
+
+        assert(posesToReturn.size() == timestamps.size());
+
+        return posesToReturn;
     }
 }
