@@ -165,4 +165,9 @@ namespace gdr {
 
         return absolutePosesToReturn;
     }
+
+
+    int ConnectedComponentPoseGraph::getPoseIndexWithMaxConnectivity() const {
+        return poseGraph.getPoseIndexWithMaxConnectivity();
+    }
 }

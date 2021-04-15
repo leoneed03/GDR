@@ -53,6 +53,8 @@ namespace gdr {
 
         void setTranslationV3(int poseVertexIndex, const Eigen::Vector3d &translation);
 
+        int getPoseIndexWithMaxConnectivity() const;
+
     };
 }
 

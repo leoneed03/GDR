@@ -147,10 +147,12 @@ namespace gdr {
 
     }
 
-    std::vector<Eigen::Vector3d> AbsolutePosesComputationHandler::performTranslationAveraging(int indexFixedToZero) {
+    std::vector<Eigen::Vector3d> AbsolutePosesComputationHandler::performTranslationAveraging() {
 
         std::vector<TranslationMeasurement> relativeTranslations;
         std::vector<SE3> absolutePoses = connectedComponent->getPoses();
+        int indexFixedToZero = connectedComponent->getPoseIndexWithMaxConnectivity();
+        std::cout << "index Fixed is " << indexFixedToZero << std::endl;
 
         for (int indexFrom = 0; indexFrom < getNumberOfPoses(); ++indexFrom) {
             for (const auto &knownRelativePose: connectedComponent->getConnectionsFromVertex(indexFrom)) {
@@ -193,9 +195,11 @@ namespace gdr {
         return optimizedAbsoluteTranslationsIRLS;
     }
 
-    std::vector<SE3> AbsolutePosesComputationHandler::performBundleAdjustmentUsingDepth(int indexFixedToZero) {
+    std::vector<SE3> AbsolutePosesComputationHandler::performBundleAdjustmentUsingDepth() {
         int maxNumberOfPointsToShow = -1;
         computePointClasses();
+
+        int indexFixedToZero = connectedComponent->getPoseIndexWithMaxConnectivity();
         std::vector<Point3d> observedPoints = cloudProjector->computedPointsGlobalCoordinates();
         std::vector<std::pair<SE3, CameraRGBD>> posesAndCameraParams;
 

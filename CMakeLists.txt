@@ -190,7 +190,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifierCreator.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/SparseMatrixClass.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativeRotationError.cpp
-        src/readerDataset/readerBundleFusion/ReaderBundleFusion.cpp include/readerDataset/readerBundleFusion/ReaderBundleFusion.h src/readerDataset/readerTUM/ClosestMatchFinder.cpp include/readerDataset/readerTUM/ClosestMatchFinder.h src/keyPoints/KeyPointMatches.cpp include/keyPoints/KeyPointMatches.h src/cameraModel/MeasurementErrorDeviationEstimators.cpp include/cameraModel/MeasurementErrorDeviationEstimators.h include/poseGraph/PoseGraph.cpp include/poseGraph/PoseGraph.h)
+        src/readerDataset/readerBundleFusion/ReaderBundleFusion.cpp include/readerDataset/readerBundleFusion/ReaderBundleFusion.h src/readerDataset/readerTUM/ClosestMatchFinder.cpp include/readerDataset/readerTUM/ClosestMatchFinder.h src/keyPoints/KeyPointMatches.cpp include/keyPoints/KeyPointMatches.h src/cameraModel/MeasurementErrorDeviationEstimators.cpp include/cameraModel/MeasurementErrorDeviationEstimators.h src/poseGraph/PoseGraph.cpp include/poseGraph/PoseGraph.h)
 
 add_subdirectory(lib)
 

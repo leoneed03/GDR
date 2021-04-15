@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "PoseGraph.h"
+#include "poseGraph/PoseGraph.h"
 
 namespace gdr {
 
@@ -23,7 +23,7 @@ namespace gdr {
 
     bool PoseGraph::empty() const {
 
-        return size() > 0;
+        return size() == 0;
     }
 
     void PoseGraph::setCamera(int poseIndex,
@@ -112,6 +112,21 @@ namespace gdr {
         assert(poseVertexIndex >= 0 && poseVertexIndex < absolutePoses.size());
 
         absolutePoses[poseVertexIndex].setTranslation(translation);
+    }
+
+    int PoseGraph::getPoseIndexWithMaxConnectivity() const {
+
+        assert(!empty());
+
+        int maxAdjacencyNumber = -1;
+
+        for (int poseIndex = 0; poseIndex < absolutePoses.size(); ++poseIndex) {
+            maxAdjacencyNumber = std::max(maxAdjacencyNumber, getNumberOfAdjacentVertices(poseIndex));
+        }
+
+        assert(maxAdjacencyNumber >= 0);
+
+        return maxAdjacencyNumber;
     }
 
 }

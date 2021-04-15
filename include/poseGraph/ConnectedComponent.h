@@ -74,6 +74,8 @@ namespace gdr {
         const KeyPointMatches &getInlierObservedPoints() const;
 
         int printRelativeRotationsToFile(const std::string &pathToFileRelativeRotations) const;
+
+        int getPoseIndexWithMaxConnectivity() const;
     };
 
 }
