@@ -31,7 +31,7 @@ namespace gdr {
 
         Vectors3d(const Eigen::VectorXd &vectors3d);
 
-        std::vector<Eigen::Vector3d> toVectorOfVectors(int indexFixedToZero = 0) const;
+        std::vector<Eigen::Vector3d> toVectorOfVectors() const;
 
         const Eigen::VectorXd &getVectorRaw() const;
 

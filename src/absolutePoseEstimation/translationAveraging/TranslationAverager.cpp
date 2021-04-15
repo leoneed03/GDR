@@ -69,44 +69,33 @@ namespace gdr {
 
         success = true;
         int dim = 3;
+
         assert(dim * resultVector_b.getSize() == anyMatrixA.rows());
+
+        Eigen::LeastSquaresConjugateGradient<Eigen::SparseMatrix<double>> lscg;
+
+        lscg.compute(weightDiagonalMatrix * anyMatrixA);
+
+        Eigen::VectorXd solutionL2;
 
         if (useInitialGuess) {
             assert(dim * initialGuessX.getSize() == anyMatrixA.cols());
-        }
-        const Eigen::VectorXd &guessRaw = initialGuessX.getVectorRaw();
 
+            const Eigen::VectorXd &guessRaw = initialGuessX.getVectorRaw();
+            solutionL2 = lscg.solveWithGuess(weightDiagonalMatrix * resultVector_b.getVectorRaw(), guessRaw);
 
-        //TODO: multiply be preconditioner
-        auto SymMatrix = anyMatrixA.transpose() * weightDiagonalMatrix * anyMatrixA;
-
-        Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower | Eigen::Upper> cg;
-        cg.compute(SymMatrix);
-        if (cg.info() != Eigen::Success) {
-            success = false;
-        }
-        assert(cg.info() == Eigen::Success);
-        const Eigen::VectorXd &b = resultVector_b.getVectorRaw();
-
-        Eigen::VectorXd freeTermToSolveB = anyMatrixA.transpose() * weightDiagonalMatrix * b;
-
-        Eigen::VectorXd x;
-
-        if (!useInitialGuess) {
-            x = cg.solve(freeTermToSolveB);
         } else {
-            x = cg.solveWithGuess(freeTermToSolveB, guessRaw);
+            solutionL2 = lscg.solve(weightDiagonalMatrix * resultVector_b.getVectorRaw());
         }
 
-        //TODO: catch unsuccessful steps
-        if (cg.info() != Eigen::Success) {
+
+        if (lscg.info() != Eigen::Success) {
             success = false;
+            std::cout << "NOT SUCCESS" << std::endl;
         }
 
-        assert(x.rows() % 3 == 0);
-        Vectors3d solution(x);
 
-        return solution;
+        return Vectors3d(solutionL2);
 
     }
 
@@ -142,89 +131,115 @@ namespace gdr {
                               int numOfIterations,
                               double epsilonIRLS) {
 
-        Vectors3d currentSolutionAbsoluteTranslations = translationsGuess;
+        success = false;
+
+        Vectors3d bestSolutionAbsoluteTranslations(translationsGuess);
+        Vectors3d prevResiduals = b - (SparseMatrixClass(systemMatrix) * translationsGuess);
 
         for (int iteration = 0; iteration < numOfIterations; ++iteration) {
 
             bool successCurrentIteration = true;
-            currentSolutionAbsoluteTranslations =
+            Vectors3d currentSolutionAbsoluteTranslations =
                     findLeastSquaresSolution(systemMatrix,
                                              b,
                                              successCurrentIteration,
                                              weightDiagonalMatrix,
                                              true,
-                                             currentSolutionAbsoluteTranslations);
-            Vectors3d residuals = b - (SparseMatrixClass(systemMatrix) * currentSolutionAbsoluteTranslations);
+                                             bestSolutionAbsoluteTranslations);
+
+            if (!successCurrentIteration) {
+
+                return bestSolutionAbsoluteTranslations;
+            }
+
+            success = true;
+            std::swap(bestSolutionAbsoluteTranslations, currentSolutionAbsoluteTranslations);
+
+            Vectors3d residuals = b - (SparseMatrixClass(systemMatrix) * bestSolutionAbsoluteTranslations);
+
+            if ((residuals.getVectorRaw() - prevResiduals.getVectorRaw()).isZero()) {
+                std::cout << "IRLS CONVERGED, iteration: " << iteration << std::endl;
+
+                return bestSolutionAbsoluteTranslations;
+            }
             weightDiagonalMatrix = getWeightMatrixRaw(residuals.getVectorOfNorms(), epsilonIRLS);
+
+            std::swap(prevResiduals, residuals);
         }
 
-        return currentSolutionAbsoluteTranslations;
+        return bestSolutionAbsoluteTranslations;
+    }
+
+    std::vector<TranslationMeasurement> TranslationAverager::getInversedTranslationMeasurements(
+            const std::vector<TranslationMeasurement> &relativeTranslations,
+            const std::vector<SE3> &absolutePoses) {
+
+        std::vector<TranslationMeasurement> relativeTranslationsInversed;
+
+        for (const auto &relativeTranslation: relativeTranslations) {
+            int indexFrom = relativeTranslation.getIndexFromToBeTransformed();
+            int indexTo = relativeTranslation.getIndexToDestination();
+            assert(indexFrom < indexTo);
+
+            Sophus::SE3d relativePoseFromTo;
+            Sophus::SO3d relRot = absolutePoses[indexFrom].getSO3().inverse() *
+                                  absolutePoses[indexTo].getSO3();
+
+            relativePoseFromTo.setQuaternion(relRot.unit_quaternion());
+            relativePoseFromTo.translation() = relativeTranslation.getTranslation();
+            relativePoseFromTo = relativePoseFromTo.inverse();
+
+            relativeTranslationsInversed.emplace_back(
+                    TranslationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
+        }
+
+        return relativeTranslationsInversed;
     }
 
 
     Vectors3d
     TranslationAverager::recoverTranslationsIRLS(const std::vector<TranslationMeasurement> &relativeTranslations,
-                                                 std::vector<SE3> &absolutePosesGuess,
+                                                 const std::vector<SE3> &absolutePoses,
                                                  const Vectors3d &absoluteTranslations,
                                                  bool &successIRLS,
                                                  int numOfIterations,
-                                                 double epsilonIRLS) {
+                                                 double epsilonWeightIRLS) {
 
-        std::vector<TranslationMeasurement> newRelativeTranslations;
+        std::vector<TranslationMeasurement> relativeTranslationsInversed = getInversedTranslationMeasurements(
+                relativeTranslations,
+                absolutePoses);
 
-        for (int i = 0; i < relativeTranslations.size(); ++i) {
-            int indexFrom = relativeTranslations[i].getIndexFromToBeTransformed();
-            int indexTo = relativeTranslations[i].getIndexToDestination();
-
-            assert(indexFrom < indexTo);
-            Sophus::SE3d relativePoseFromTo;
-            Sophus::SO3d relRot = absolutePosesGuess[indexFrom].getSO3().inverse() *
-                                  absolutePosesGuess[indexTo].getSO3();
-            relativePoseFromTo.setQuaternion(relRot.unit_quaternion());
-            relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
-            relativePoseFromTo = relativePoseFromTo.inverse();
-            newRelativeTranslations.emplace_back(
-                    TranslationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
-        }
-
-        SparseMatrixd systemMatrix = constructSparseMatrix(newRelativeTranslations, absolutePosesGuess);
-        Vectors3d b = constructColumnTermB(newRelativeTranslations, absolutePosesGuess);
+        SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslationsInversed, absolutePoses);
+        Vectors3d b = constructColumnTermB(relativeTranslationsInversed, absolutePoses);
 
         successIRLS = true;
         std::vector<double> weightsId(b.getSize(), 1.0);
-        SparseMatrixd weightMatrixSparse = getWeightMatrixRaw(weightsId, epsilonIRLS);
-        return IRLS(systemMatrix, b, weightMatrixSparse, absoluteTranslations, successIRLS, numOfIterations,
-                    epsilonIRLS);
+        SparseMatrixd weightMatrixSparse = getWeightMatrixRaw(weightsId, epsilonWeightIRLS);
+
+        return IRLS(systemMatrix, b,
+                    weightMatrixSparse,
+                    absoluteTranslations,
+                    successIRLS,
+                    numOfIterations, epsilonWeightIRLS);
     }
 
     Vectors3d
     TranslationAverager::recoverTranslations(const std::vector<TranslationMeasurement> &relativeTranslations,
-                                             const std::vector<SE3> &absolutePoses,
-                                             double epsilonIRLSWeightMin) {
+                                             const std::vector<SE3> &absolutePoses) {
 
-        std::vector<TranslationMeasurement> newRelativeTranslations;
+        std::vector<TranslationMeasurement> relativeTranslationsInversed = getInversedTranslationMeasurements(
+                relativeTranslations,
+                absolutePoses);
 
-        for (int i = 0; i < relativeTranslations.size(); ++i) {
-
-            int indexFrom = relativeTranslations[i].getIndexFromToBeTransformed();
-            int indexTo = relativeTranslations[i].getIndexToDestination();
-            assert(indexFrom < indexTo);
-            Sophus::SE3d relativePoseFromTo;
-            Sophus::SO3d relRot = absolutePoses[indexFrom].getSO3().inverse() *
-                                  absolutePoses[indexTo].getSO3();
-            relativePoseFromTo.setQuaternion(relRot.unit_quaternion());
-            relativePoseFromTo.translation() = relativeTranslations[i].getTranslation();
-            relativePoseFromTo = relativePoseFromTo.inverse();
-
-            newRelativeTranslations.emplace_back(
-                    TranslationMeasurement(relativePoseFromTo.translation(), indexFrom, indexTo));
-        }
-
-        SparseMatrixd systemMatrix = constructSparseMatrix(newRelativeTranslations, absolutePoses);
-        Vectors3d b = constructColumnTermB(newRelativeTranslations, absolutePoses);
+        SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslationsInversed, absolutePoses);
+        Vectors3d b = constructColumnTermB(relativeTranslationsInversed, absolutePoses);
         bool success = true;
         std::vector<double> weightsId(b.getSize(), 1.0);
 
-        return findLeastSquaresSolution(systemMatrix, b, success, getWeightMatrixRaw(weightsId, epsilonIRLSWeightMin));
+        // weight 1e016 is not used here because each weight is zero
+        return findLeastSquaresSolution(systemMatrix, b,
+                                        success,
+                                        getWeightMatrixRaw(weightsId,
+                                                           1e-6));
     }
 }

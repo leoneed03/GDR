@@ -7,7 +7,46 @@
 
 namespace gdr {
 
-    SE3 EstimatorRobustLoRANSAC::getTransformationMatrixUmeyamaLoRANSACProjectiveError(
+    SE3 EstimatorRobustLoRANSAC::optimizeOnInliers(
+            const EstimatorNPoints &estimatorNp,
+            const Eigen::Matrix4Xd &toBeTransformedPoints,
+            const Eigen::Matrix4Xd &destinationPoints,
+            const CameraRGBD &cameraIntrToBeTransformed,
+            const CameraRGBD &cameraIntrDestination,
+            const std::vector<std::pair<double, int>> &errorsAndInlierIndices,
+            std::vector<std::pair<double, int>> &errorsAndInliersIndicesLocallyOptimized) const {
+
+        int dim = 3;
+        int numInliers = errorsAndInlierIndices.size();
+
+        Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
+        Eigen::Matrix4Xd destInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
+
+        for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
+            int index = errorsAndInlierIndices[currentIndex].second;
+
+            toBeTransformedInlierPoints.col(currentIndex) = toBeTransformedPoints.col(index);
+            destInlierPoints.col(currentIndex) = destinationPoints.col(index);
+        }
+        auto inlier_optimal_cR_t_umeyama_transformation = estimatorNp.getRt(
+                toBeTransformedInlierPoints,
+                destInlierPoints,
+                cameraIntrToBeTransformed,
+                cameraIntrDestination);
+
+        errorsAndInliersIndicesLocallyOptimized =
+                inlierCounter.calculateInlierProjectionErrors(
+                        toBeTransformedPoints,
+                        destinationPoints,
+                        cameraIntrDestination,
+                        inlier_optimal_cR_t_umeyama_transformation,
+                        paramsLoRansac);
+
+
+        return inlier_optimal_cR_t_umeyama_transformation;
+    }
+
+    SE3 EstimatorRobustLoRANSAC::getTransformationMatrixUmeyamaLoRANSAC(
             const Estimator3Points &estimator3p,
             const EstimatorNPoints &estimatorNp,
             const Eigen::Matrix4Xd &toBeTransformedPoints,
@@ -15,7 +54,7 @@ namespace gdr {
             const CameraRGBD &cameraIntrToBeTransformed,
             const CameraRGBD &cameraIntrDestination,
             bool &estimationSuccess,
-            std::vector<int> &inlierIndicesToReturn) const {
+            std::vector<int> &inlierIndices) const {
 
         int numIterationsRansac = paramsLoRansac.getNumIterations();
         double inlierCoeff = paramsLoRansac.getInlierCoeff();
@@ -42,6 +81,7 @@ namespace gdr {
         int numOfPoints = toBeTransformedPoints.cols();
         std::uniform_int_distribution<> distrib(0, numOfPoints - 1);
 
+        std::cout << "-----------------------------------NEW UMEYAMA--------------------------" << std::endl;
 
         for (int i = 0; i < numIterationsRansac; ++i) {
             std::vector<int> p(dim, 0);
@@ -88,37 +128,56 @@ namespace gdr {
 
                 optimalSE3Transformation = cR_t_umeyama_3_points;
                 totalNumberInliers = numInliers;
-                Eigen::Matrix4Xd toBeTransformedInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
-                Eigen::Matrix4Xd destInlierPoints = Eigen::Matrix4Xd(dim + 1, numInliers);
 
-                for (int currentIndex = 0; currentIndex < numInliers; ++currentIndex) {
-                    int index = projectionErrorsAndInlierIndices[currentIndex].second;
-                    toBeTransformedInlierPoints.col(currentIndex) = toBeTransformedPoints.col(index);
-                    destInlierPoints.col(currentIndex) = destinationPoints.col(index);
-                }
-                auto inlier_optimal_cR_t_umeyama_transformation = estimatorNp.getRt(
-                        toBeTransformedInlierPoints,
-                        destInlierPoints,
-                        cameraIntrToBeTransformed,
-                        cameraIntrDestination);
+                std::vector<std::pair<double, int>> errorsInliersLocOpt;
 
-                std::vector<std::pair<double, int>> projectionErrorsAndInlierIndicesAfterLocalOptimization =
-                        inlierCounter.calculateInlierProjectionErrors(
-                                toBeTransformedPoints,
-                                destinationPoints,
-                                cameraIntrDestination,
-                                inlier_optimal_cR_t_umeyama_transformation,
-                                paramsLoRansac);
+                auto locallyOptimizedRt =
+                        optimizeOnInliers(estimatorNp,
+                                          toBeTransformedPoints,
+                                          destinationPoints,
+                                          cameraIntrToBeTransformed,
+                                          cameraIntrDestination,
+                                          projectionErrorsAndInlierIndices,
+                                          errorsInliersLocOpt);
 
-                if (getPrintProgressToCout()) {
-                    std::cout << "         NEW after LO number Of Inliers is "
-                              << projectionErrorsAndInlierIndicesAfterLocalOptimization.size()
-                              << " vs " << totalNumberInliers << std::endl;
-                }
+                int numberInliersLocallyOptimized = errorsInliersLocOpt.size();
 
-                if (projectionErrorsAndInlierIndicesAfterLocalOptimization.size() >= totalNumberInliers) {
-                    optimalSE3Transformation = inlier_optimal_cR_t_umeyama_transformation;
-                    totalNumberInliers = projectionErrorsAndInlierIndicesAfterLocalOptimization.size();
+                if (numberInliersLocallyOptimized >= totalNumberInliers) {
+
+                    if (getPrintProgressToCout()) {
+                        std::cout << "    LOCALLY optimized on inliers " <<
+                                  numberInliersLocallyOptimized << " vs " << totalNumberInliers
+                                  << std::endl;
+                    }
+
+                    optimalSE3Transformation = locallyOptimizedRt;
+                    totalNumberInliers = numberInliersLocallyOptimized;
+
+                    std::vector<std::pair<double, int>> errorsInliersLocOptTwice;
+
+
+                    auto twiceLocallyOptimizedRt =
+                            optimizeOnInliers(estimatorNp,
+                                              toBeTransformedPoints,
+                                              destinationPoints,
+                                              cameraIntrToBeTransformed,
+                                              cameraIntrDestination,
+                                              errorsInliersLocOpt,
+                                              errorsInliersLocOptTwice);
+
+                    int numberInliersTwiceLocallyOptimizedTwice = errorsInliersLocOptTwice.size();
+
+                    if (numberInliersTwiceLocallyOptimizedTwice > totalNumberInliers) {
+                        if (getPrintProgressToCout()) {
+                            std::cout << "                   TWICE optimized on inliers " <<
+                                      numberInliersTwiceLocallyOptimizedTwice << " vs " << totalNumberInliers
+                                      << std::endl;
+                        }
+
+                        optimalSE3Transformation = twiceLocallyOptimizedRt;
+                        totalNumberInliers = numberInliersTwiceLocallyOptimizedTwice;
+
+                    }
                 }
             }
         }
@@ -132,19 +191,17 @@ namespace gdr {
                         paramsLoRansac);
 
         int numberInliersOptimal = totalProjectionErrorsAndInlierIndices.size();
-        //TODO: try to optimize on inliers again
+
         estimationSuccess = numberInliersOptimal > inlierCoeff * toBeTransformedPoints.cols();
 
-        std::string logs;
-
-        std::vector<int> inlierIndices;
+        inlierIndices.clear();
         inlierIndices.reserve(totalProjectionErrorsAndInlierIndices.size());
 
         for (const auto &inlierErrorAndIndex: totalProjectionErrorsAndInlierIndices) {
             inlierIndices.emplace_back(inlierErrorAndIndex.second);
         }
 
-        std::swap(inlierIndices, inlierIndicesToReturn);
+        std::swap(inlierIndices, inlierIndices);
         return optimalSE3Transformation;
     }
 
@@ -154,7 +211,7 @@ namespace gdr {
                                                       const CameraRGBD &cameraIntrDestination,
                                                       bool &estimationSuccess,
                                                       std::vector<int> &inlierIndices) {
-        return getTransformationMatrixUmeyamaLoRANSACProjectiveError(
+        return getTransformationMatrixUmeyamaLoRANSAC(
                 Estimator3Points(),
                 EstimatorNPoints(),
                 toBeTransformedPoints,

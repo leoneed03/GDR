@@ -46,7 +46,7 @@ void testReconstruction(
         gdr::RelativePosesComputationHandler cgHandler(pathRGB,
                                                        pathD,
                                                        pathAssoc,
-                                                       gdr::ParamsRANSAC(),
+                                                       paramsRansac,
                                                        cameraDefault);
 
 
@@ -330,6 +330,8 @@ void readDataset() {
 TEST(testBAOptimized, visualizationDesk98) {
 
     gdr::ParamsRANSAC paramsRansacDefault;
+    paramsRansacDefault.setProjectionUsage(false);
+
     gdr::CameraRGBD structureIoCamera(583, 320, 583, 240);
     structureIoCamera.setDepthPixelDivider(1000.0);
 

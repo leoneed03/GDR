@@ -11,9 +11,10 @@ namespace gdr {
     /** Locally optimized ransac parameters */
     struct ParamsRANSAC {
 
-    private:
+    public:
         /** min proportion of inliers between matches */
         double minInlierCoefficient = 0.5;
+
         /** min number of inliers between matches */
         int minInliersNumber = 15;
 
@@ -24,7 +25,7 @@ namespace gdr {
         int pMetric = 2;
 
         /** max L2 error in meters to be counted as an inlier */
-        double max3DError = 0.05;
+        double maxL2ErrorMeters = 0.02;
 
         /** true if should use reprojection L_p error for inlier detection */
         bool useProjectionError = true;
@@ -57,13 +58,17 @@ namespace gdr {
 
         void setMax3DError(double max3DError);
 
-        bool getProjectionUsage() const;
+        bool useProjection() const;
+
+        bool useErrorL2() const;
 
         void setProjectionUsage(bool useProjection);
 
         int getMaxNumberOfThreads() const;
 
         void setMaxNumberOfThreads(int maxNumberOfThreads);
+
+        double getAutoThreshold() const;
     };
 }
 

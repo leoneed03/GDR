@@ -48,7 +48,7 @@ namespace gdr {
     }
 
 
-    std::vector<Eigen::Vector3d> Vectors3d::toVectorOfVectors(int indexFixedToZero) const {
+    std::vector<Eigen::Vector3d> Vectors3d::toVectorOfVectors() const {
 
         std::vector<Eigen::Vector3d> resultVectorOfVectors;
         resultVectorOfVectors.reserve(getSize());

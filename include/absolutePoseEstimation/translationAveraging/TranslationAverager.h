@@ -47,20 +47,44 @@ namespace gdr {
              int numOfIterations,
              double epsilonIRLS);
 
+        static std::vector<TranslationMeasurement> getInversedTranslationMeasurements(
+                const std::vector<TranslationMeasurement> &relativeTranslations,
+                const std::vector<SE3> &absolutePoses);
+
     public:
 
+        /**
+         * Compute IRLS solution for sparse linear system
+         *
+         * @param relativeTranslations contains given relative translations between poses
+         * @param absolutePoses contains precomputed SE3 poses where SO3 rotations are already fixed
+         *      and translations are not currently utilized
+         * @param absoluteTranslations initial solution guess
+         * @param successIRLS[out] is true if IRLS did converge
+         * @param numOfIterations max number of iterations
+         * @param epsilonWeightIRLS is a value w such that all weights in weight matrix are less than 1/w
+         * @returns IRLS solution
+         */
         static Vectors3d
         recoverTranslationsIRLS(const std::vector<TranslationMeasurement> &relativeTranslations,
-                                std::vector<SE3> &absolutePoses,
+                                const std::vector<SE3> &absolutePoses,
                                 const Vectors3d &absoluteTranslations,
                                 bool &successIRLS,
                                 int numOfIterations = 5,
-                                double epsilonIRLS = 1e-6);
+                                double epsilonWeightIRLS = 1e-6);
 
+        /**
+         * Compute L2-solution for sparse linear problem
+         *
+         * @param relativeTranslations contains given relative translations between poses
+         * @param absolutePoses contains precomputed SE3 poses where SO3 rotations are already fixed
+         *      and translations are not currently utilized
+         *
+         * @returns L2 solution
+         */
         static Vectors3d
         recoverTranslations(const std::vector<TranslationMeasurement> &relativeTranslations,
-                            const std::vector<SE3> &absolutePoses,
-                            double epsilonIRLSWeightMin = 1e-6);
+                            const std::vector<SE3> &absolutePoses);
     };
 }
 

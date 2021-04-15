@@ -14,17 +14,39 @@ namespace gdr {
                                                    const SE3 &umeyamaRt,
                                                    const ParamsRANSAC &paramsRansac) const {
 
-        //TODO: add L2 error for inlier detection
         double thresholdProjectionErrorPixels = paramsRansac.getMaxProjectionErrorPixels();
 
         assert(toBeTransformedPoints.cols() == destinationPoints.cols());
         Eigen::Matrix4Xd pointsAfterTransformation = umeyamaRt.getSE3().matrix() * toBeTransformedPoints;
 
         std::vector<std::pair<double, int>> projectionErrorsInliers;
+
         assert(toBeTransformedPoints.cols() == pointsAfterTransformation.cols());
-        Eigen::Matrix4Xd residues = pointsAfterTransformation - toBeTransformedPoints;
+
+        Eigen::Matrix4Xd residues;
+        if (paramsRansac.useErrorL2()) {
+            residues = pointsAfterTransformation - destinationPoints;
+        }
 
         for (int pointCounter = 0; pointCounter < pointsAfterTransformation.cols(); ++pointCounter) {
+
+
+            if (paramsRansac.useErrorL2()) {
+
+                assert(residues.cols() == toBeTransformedPoints.cols());
+
+                double errorL2 = residues.col(pointCounter).norm();
+                assert(paramsRansac.getMax3DError() == paramsRansac.getAutoThreshold());
+
+                if (errorL2 < paramsRansac.getMax3DError()) {
+
+                    projectionErrorsInliers.emplace_back(std::make_pair(errorL2, pointCounter));
+                }
+                continue;
+            }
+
+            assert(paramsRansac.getMaxProjectionErrorPixels() == paramsRansac.getAutoThreshold());
+
             Eigen::Vector3d toBeTransformedProjection =
                     cameraIntr3x3Destination.getIntrinsicsMatrix3x3() *
                     pointsAfterTransformation.col(pointCounter).topLeftCorner<3, 1>();
@@ -37,7 +59,6 @@ namespace gdr {
                 destinationPointProjection[i] /= destinationPointProjection[2];
             }
 
-            // TODO: depth error can be also checked
             Sophus::Vector2d projectionErrorPixels2d = (toBeTransformedProjection -
                                                         destinationPointProjection).topLeftCorner<2, 1>();
 
@@ -51,8 +72,7 @@ namespace gdr {
                 assert(false && "only p=1 and p=2 L_p norms for reprojection error can be used");
             }
 
-            if (errorProjectionLp < thresholdProjectionErrorPixels //&& std::abs(residues.col(pointCounter)[2]) < 0.05
-            ) {
+            if (errorProjectionLp < thresholdProjectionErrorPixels) {
                 projectionErrorsInliers.emplace_back(std::make_pair(errorProjectionLp, pointCounter));
             }
         }

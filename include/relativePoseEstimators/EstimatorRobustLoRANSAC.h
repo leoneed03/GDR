@@ -15,10 +15,19 @@ namespace gdr {
 
     class EstimatorRobustLoRANSAC : public IEstimatorRelativePoseRobust {
 
-        bool printProgressToCout = false;
+        bool printProgressToCout = true;
 
         InlierCounter inlierCounter;
         ParamsRANSAC paramsLoRansac;
+
+        SE3 optimizeOnInliers(
+                const EstimatorNPoints &estimatorNp,
+                const Eigen::Matrix4Xd &toBeTransformedPoints,
+                const Eigen::Matrix4Xd &destinationPoints,
+                const CameraRGBD &cameraIntrToBeTransformed,
+                const CameraRGBD &cameraIntrDestination,
+                const std::vector<std::pair<double, int>> &errorsAndInlierIndices,
+                std::vector<std::pair<double, int>> &errorsAndInlierIndicesLocallyOptimized) const;
 
     public:
         EstimatorRobustLoRANSAC(const InlierCounter &inlierCounterToSet,
@@ -37,7 +46,7 @@ namespace gdr {
                 std::vector<int> &inlierIndices) override;
 
         virtual SE3
-        getTransformationMatrixUmeyamaLoRANSACProjectiveError(
+        getTransformationMatrixUmeyamaLoRANSAC(
                 const Estimator3Points &estimator3p,
                 const EstimatorNPoints &estimatorNp,
                 const Eigen::Matrix4Xd &toBeTransformedPoints,

@@ -48,14 +48,14 @@ namespace gdr {
     }
 
     double ParamsRANSAC::getMax3DError() const {
-        return max3DError;
+        return maxL2ErrorMeters;
     }
 
     void ParamsRANSAC::setMax3DError(double newMax3DError) {
-        max3DError = newMax3DError;
+        maxL2ErrorMeters = newMax3DError;
     }
 
-    bool ParamsRANSAC::getProjectionUsage() const {
+    bool ParamsRANSAC::useProjection() const {
         return useProjectionError;
     }
 
@@ -69,6 +69,18 @@ namespace gdr {
 
     void ParamsRANSAC::setMaxNumberOfThreads(int newNumberOfThreads) {
         maxNumberOfThreads = newNumberOfThreads;
+    }
+
+    bool ParamsRANSAC::useErrorL2() const {
+        return !useProjection();
+    }
+
+    double ParamsRANSAC::getAutoThreshold() const {
+        if (useProjection()) {
+            return maxProjectionErrorPixels;
+        }
+
+        return maxL2ErrorMeters;
     }
 }
 
