@@ -31,6 +31,9 @@ namespace gdr {
                 const std::vector<double> &timestamps,
                 double timeDifTreshold
         );
+
+        static void createRgbOrDepthTxt(const std::string &pathToImages,
+                                        const std::string &pathToCreatedFileDirectory);
     };
 }
 

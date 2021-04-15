@@ -29,6 +29,25 @@ namespace gdr {
             }
         }
     };
+
+    class LossFunctionTukey {
+    public:
+        template<class T>
+        static T evaluate(T value, T threshold) {
+            T valueNorm(value);
+            assert(valueNorm >= T(0.0));
+
+            T c2_6 = threshold * threshold / T(6.0);
+            T ri_c2 = (valueNorm / threshold) * (valueNorm / threshold);
+            T one_ri_c2_3 = (T(1) - ri_c2) * (T(1) - ri_c2) * (T(1) - ri_c2);
+
+            if (valueNorm < threshold) {
+                return c2_6 * (T(1) - one_ri_c2_3);
+            } else {
+                return c2_6;
+            }
+        }
+    };
 }
 
 #endif

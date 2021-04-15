@@ -8,7 +8,7 @@
 
 #include "ParamsRANSAC.h"
 #include "parametrization/SE3.h"
-#include "parametrization/CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 
 namespace gdr {
 

@@ -146,6 +146,7 @@ namespace gdr {
             std::cout << "start computing descriptors" << std::endl;
         }
 
+        //sift detect
         std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
                 keysDescriptorsAll = siftModule->getKeypoints2DDescriptorsAllImages(
                 correspondenceGraph->getPathsRGB(),
@@ -190,12 +191,13 @@ namespace gdr {
         }
 
         assert(keyPointsDescriptorsToBeMatched.size() == vertices.size());
+        //Sift match
         correspondenceGraph->setPointMatchesRGB(siftModule->findCorrespondences(keyPointsDescriptorsToBeMatched));
 
         correspondenceGraph->decreaseDensity();
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> allInlierKeyPointMatches;
+        KeyPointMatches allInlierKeyPointMatches;
         auto relativePoses = findTransformationRtMatrices(allInlierKeyPointMatches);
-        assert(!allInlierKeyPointMatches.empty());
+        assert(!allInlierKeyPointMatches.getKeyPointMatchesVector().empty());
         correspondenceGraph->setInlierPointMatches(allInlierKeyPointMatches);
 
         correspondenceGraph->setRelativePoses(relativePoses);
@@ -214,7 +216,7 @@ namespace gdr {
     }
 
     std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::findTransformationRtMatrices(
-            std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &allInlierKeyPointMatches) const {
+            KeyPointMatches &allInlierKeyPointMatches) const {
 
         int numberOfVertices = getNumberOfVertices();
         tbb::concurrent_vector<tbb::concurrent_vector<RelativeSE3>> transformationMatricesConcurrent(numberOfVertices);
@@ -247,7 +249,7 @@ namespace gdr {
                                                     assert(frameToToBeTransformed.getIndex() >
                                                            frameFromDestination.getIndex());
                                                     bool success = true;
-                                                    std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierKeyPointMatches;
+                                                    KeyPointMatches inlierKeyPointMatches;
                                                     auto cameraMotion = getTransformationRtMatrixTwoImages(i,
                                                                                                            j,
                                                                                                            inlierKeyPointMatches,
@@ -255,7 +257,7 @@ namespace gdr {
 
                                                     if (success) {
 
-                                                        for (const auto &matchPair: inlierKeyPointMatches) {
+                                                        for (const auto &matchPair: inlierKeyPointMatches.getKeyPointMatchesVector()) {
                                                             allInlierKeyPointMatchesTBB.emplace_back(matchPair);
                                                         }
 
@@ -283,12 +285,17 @@ namespace gdr {
             }
         }
 
-        allInlierKeyPointMatches.clear();
-        allInlierKeyPointMatches.reserve(allInlierKeyPointMatchesTBB.size());
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> allKeyPointsToSet;
+
+        allKeyPointsToSet.reserve(allInlierKeyPointMatchesTBB.size());
         for (const auto &matchPair: allInlierKeyPointMatchesTBB) {
-            allInlierKeyPointMatches.emplace_back(matchPair);
+            allKeyPointsToSet.emplace_back(matchPair);
         }
-        assert(allInlierKeyPointMatchesTBB.size() == allInlierKeyPointMatches.size());
+        assert(allInlierKeyPointMatchesTBB.size() == allKeyPointsToSet.size());
+
+        allInlierKeyPointMatches.setKeyPointMatches(allKeyPointsToSet);
+
+        assert(allInlierKeyPointMatches.getKeyPointMatchesVector().size() == allInlierKeyPointMatchesTBB.size());
 
         return pairwiseTransformations;
     }
@@ -300,7 +307,7 @@ namespace gdr {
     SE3 RelativePosesComputationHandler::getTransformationRtMatrixTwoImages(
             int vertexFromDestDestination,
             int vertexInListToBeTransformedCanBeComputed,
-            std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &keyPointMatches,
+            KeyPointMatches &keyPointMatches,
             bool &success,
             bool showMatchesOnImages) const {
 
@@ -394,6 +401,7 @@ namespace gdr {
         SE3 refinedByICPRelativePose = relativePoseLoRANSAC;
         refineRelativePose(vertices[vertexToBeTransformed],
                            vertices[vertexFromDestDestination],
+                           KeyPointMatches(keyPointMatches),
                            refinedByICPRelativePose,
                            successRefine);
 
@@ -457,7 +465,7 @@ namespace gdr {
         return errorsReprojection;
     }
 
-    std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
+    KeyPointMatches
     RelativePosesComputationHandler::findInlierPointCorrespondences(int vertexFrom,
                                                                     int vertexInList,
                                                                     const SE3 &transformation) const {
@@ -508,6 +516,7 @@ namespace gdr {
             std::pair<std::pair<int, int>, KeyPointInfo> infoToBeTransformedKeyPoint = {
                     {vertexToBeTransformed, localIndexToBeTransformed},
                     KeyPointInfo(siftKeyPointToBeTransformed, vertexToBeTransformed)};
+            //TODO: use light structure and not vector here
             correspondencesBetweenTwoImages.push_back({infoDestinationKeyPoint, infoToBeTransformedKeyPoint});
 
         }
@@ -542,11 +551,12 @@ namespace gdr {
 
         assert(reprojectionInlierErrors.size() == inlierCorrespondences.size());
 
-        return inlierCorrespondences;
+        return KeyPointMatches(inlierCorrespondences);
     }
 
     int RelativePosesComputationHandler::refineRelativePose(const VertexCG &vertexToBeTransformed,
                                                             const VertexCG &vertexDestination,
+                                                            const KeyPointMatches &keyPointMatches,
                                                             SE3 &initEstimationRelPos,
                                                             bool &refinementSuccess) const {
 
@@ -561,6 +571,7 @@ namespace gdr {
                                       vertexDestination.getCamera());
         refinementSuccess = relativePoseRefiner->refineRelativePose(poseToBeTransformed,
                                                                     poseDestination,
+                                                                    KeyPointMatches(),
                                                                     initEstimationRelPos);
         assert(refinementSuccess);
 

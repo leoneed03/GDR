@@ -7,7 +7,7 @@
 #define GDR_ESTIMATORNPOINTS_H
 
 #include "parametrization/SE3.h"
-#include "parametrization/CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 
 namespace gdr {
 

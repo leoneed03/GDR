@@ -25,8 +25,8 @@ void testReconstruction(
         const gdr::ParamsRANSAC &paramsRansac = gdr::ParamsRANSAC(),
         const std::string &assocFile = "",
         int numberOfIterations = 1,
-        bool printToConsole = false,
-        bool showVisualization3D = false,
+        bool printToConsole = true,
+        bool showVisualization3D = true,
         double minCoefficientOfBiggestComponent = 0.5,
         double coefficientR = 1.8,
         double coefficientT = 1.8,
@@ -99,6 +99,7 @@ void testReconstruction(
                 absolutePoses);
 
         std::vector<double> timestampsToFind = biggestComponent->getPosesTimestamps();
+
         posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientationByMatches(posesInfoFull,
                                                                                        timestampsToFind,
                                                                                        timeDiffThreshold);
@@ -107,9 +108,8 @@ void testReconstruction(
             std::cout << "found poses in groundtruth file: " << posesInfoFull.size() << std::endl;
         }
         std::cout << "number of timestamps " << timestampsToFind.size() << std::endl;
-        if (false) {
-            //TODO: delete
-            assert(timestampsToFind.size() == 19);
+        if (true) {
+
             assert(!posesInfoFull.empty());
 //        assert(posesInfoFull.size() == numberOfPosesInDataset);
             std::set<int> indicesOfBiggestComponent = biggestComponent->initialIndices();
@@ -125,9 +125,6 @@ void testReconstruction(
             if (printToConsole) {
                 std::cout << "sampled GT poses size: " << posesInfo.size() << std::endl;
             }
-            //TODO: rgb and depth images are matched if they have time difference < 0.02 sec
-            //TODO: groundtruth file contains measurements at timestamps with some frequency,
-            //TODO: so some poses might not be found there -- it is okay
 //        assert(posesInfo.size() == biggestComponent->getNumberOfPoses());
 
             // compute absolute poses IRLS
@@ -185,10 +182,10 @@ void testReconstruction(
                         ".txt";
                 std::ofstream computedPoses(outputName);
                 for (int i = 0; i < posesInfo.size(); ++i) {
-                    Sophus::SE3d poseSE3 = posesInfo[0].getSophusPose() * posesIRLS[i];
+                    Sophus::SE3d poseSE3 = posesInfo[0].getSophusPose() * posesIRLS[0].inverse() * posesIRLS[i];
 
                     computedPoses.precision(std::numeric_limits<double>::max_digits10);
-                    computedPoses << posesInfo[i].getTimestamp() << ' ';
+                    computedPoses << timestampsToFind[i] << ' ';
                     const auto to = poseSE3.translation();
                     for (int j = 0; j < 3; ++j) {
                         computedPoses << to[j] << ' ';
@@ -207,10 +204,11 @@ void testReconstruction(
                         ".txt";
                 std::ofstream computedPoses(outputName);
                 for (int i = 0; i < posesInfo.size(); ++i) {
-                    Sophus::SE3d poseSE3 = posesInfo[0].getSophusPose() * bundleAdjustedPoses[i].getSE3();
+                    Sophus::SE3d poseSE3 = posesInfo[0].getSophusPose() *
+                            bundleAdjustedPoses[0].getSE3().inverse() * bundleAdjustedPoses[i].getSE3();
 
                     computedPoses.precision(std::numeric_limits<double>::max_digits10);
-                    computedPoses << posesInfo[i].getTimestamp() << ' ';
+                    computedPoses << timestampsToFind[i] << ' ';
                     const auto to = poseSE3.translation();
                     for (int j = 0; j < 3; ++j) {
                         computedPoses << to[j] << ' ';
@@ -279,6 +277,8 @@ void testReconstruction(
             double meanErrorR_IRLS_angDist = sumErrorR_IRLS / posesGT.size();
 
             {
+
+                //TODO: compare only matched by timediff poses
                 std::cout << "__________IRLS test report " + shortDatasetName + " poses_____________" << std::endl;
                 std::cout << "mean error translation: " << meanErrorT_IRLS_L2 << std::endl;
                 std::cout << "mean error rotation: " << meanErrorR_IRLS_angDist << std::endl;
@@ -295,6 +295,7 @@ void testReconstruction(
                 smoothCloud.registerPointCloudFromImage(biggestComponent->getVertices());
             }
 
+            //fails on desk1
             assert(posesGT.size() == bundleAdjustedPoses.size());
             assert(posesGT.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);
 
@@ -345,9 +346,9 @@ TEST(testBAOptimized, visualizationDesk98) {
 //                       assocFile);
 
 
-    testReconstruction("fr1_desk_short", 4,
-                       1, 0.04, 0.04,
-                       kinectCamera, paramsRansacDefault, assocFile);
+//    testReconstruction("fr1_desk_short", 4,
+//                       1, 0.04, 0.04,
+//                       kinectCamera, paramsRansacDefault, assocFile);
 
 //    testReconstruction("copyroom_multiplied_by_5", 20, 1,
 //                       0.04, 0.04,
@@ -357,11 +358,16 @@ TEST(testBAOptimized, visualizationDesk98) {
 
 //    testReconstruction("plant", 19, 3,
 //                       0.04, 0.04,
-//                       kinectCamera);
+//                       kinectCamera,
+//                       paramsRansacDefault,
+//                       assocFile);
 
-//    testReconstruction("desk1", 98, 6,
-//                       0.04, 0.04,
-//                       gdr::CameraRGBD(517.3, 318.6, 516.5, 255.3));
+
+    testReconstruction("desk1", 98, 6,
+                       0.04, 0.04,
+                       kinectCamera,
+                       paramsRansacDefault,
+                       assocFile);
 }
 
 int main(int argc, char *argv[]) {
@@ -369,4 +375,6 @@ int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
+
 

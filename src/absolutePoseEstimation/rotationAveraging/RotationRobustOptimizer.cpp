@@ -3,6 +3,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
+#include <cmath>
+#include "boost/math/constants/constants.hpp"
+
 #include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
 
 namespace gdr {
@@ -37,11 +40,15 @@ namespace gdr {
             assert(indexFrom >= 0 && indexFrom < result.size() && indexTo >= 0 && indexTo < result.size());
             assert(result[indexFrom].size() == dim && result[indexTo].size() == dim);
 
+            double pi = boost::math::constants::pi<double>();
+            double thresholdRotationError = pi / 180;
+            thresholdRotationError = 0.5;
             // TODO: choose proper loss function threshold
             problem.AddResidualBlock(cost_function,
-                                     new ceres::CauchyLoss(0.5),
+                                     new ceres::CauchyLoss(thresholdRotationError),
                                      result[indexFrom].data(),
                                      result[indexTo].data());
+
             problem.SetParameterization(result[indexFrom].data(), quaternion_local_parameterization);
             problem.SetParameterization(result[indexTo].data(), quaternion_local_parameterization);
         }

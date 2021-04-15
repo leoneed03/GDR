@@ -22,7 +22,7 @@ namespace gdr {
 
         std::vector<SO3> orientations;
         std::vector<RotationMeasurement> relativeRotations;
-        bool printProgressToConsole = false;
+        bool printProgressToConsole = true;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW

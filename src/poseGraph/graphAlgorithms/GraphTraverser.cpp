@@ -103,7 +103,7 @@ namespace gdr {
         std::vector<std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>>
                 inlierCorrespondencesPointsInsideComponentByComponentNumber(components.size());
 
-        for (const auto &pairOfMatchedKeyPoints: correspondenceGraph.getInlierObservedPoints()) {
+        for (const auto &pairOfMatchedKeyPoints: correspondenceGraph.getInlierObservedPoints().getKeyPointMatchesVector()) {
             assert(pairOfMatchedKeyPoints.size() == 2);
             int globalPoseIndexFirst = pairOfMatchedKeyPoints[0].first.first;
             int globalPoseIndexSecond = pairOfMatchedKeyPoints[1].first.first;

@@ -8,6 +8,7 @@
 
 #include "IRefinerRelativePose.h"
 
+#include "keyPoints/KeyPointMatches.h"
 #include "poseGraph/VertexCG.h"
 
 namespace gdr {
@@ -15,8 +16,10 @@ namespace gdr {
     class ICPCUDA : public IRefinerRelativePose {
 
     public:
+
         bool refineRelativePose(const MatchableInfo &poseToBeTransformedICP,
                                 const MatchableInfo &poseDestinationICPModel,
+                                const KeyPointMatches &keyPointMatches,
                                 SE3 &initTransformationSE3) override;
     };
 }

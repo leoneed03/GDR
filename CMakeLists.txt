@@ -81,7 +81,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/poseGraph/VertexCG.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/CorrespondenceGraph.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/RelativeSE3.h
-    ${PROJECT_SOURCE_DIR}/include/parametrization/CameraRGBD.h
+        include/cameraModel/CameraRGBD.h
     ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/SiftModuleGPU.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationAverager.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/ICPCUDA.h
@@ -143,7 +143,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseGraph/VertexCG.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/CorrespondenceGraph.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/RelativeSE3.cpp
-    ${PROJECT_SOURCE_DIR}/src/parametrization/CameraRGBD.cpp
+        src/cameraModel/CameraRGBD.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/SiftModuleGPU.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationAverager.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePoseRefinement/ICPCUDA.cpp
@@ -190,7 +190,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifierCreator.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/SparseMatrixClass.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativeRotationError.cpp
-        include/readerDataset/readerBundleFusion/ReaderBundleFusion.cpp include/readerDataset/readerBundleFusion/ReaderBundleFusion.h src/readerDataset/readerTUM/ClosestMatchFinder.cpp include/readerDataset/readerTUM/ClosestMatchFinder.h)
+        include/readerDataset/readerBundleFusion/ReaderBundleFusion.cpp include/readerDataset/readerBundleFusion/ReaderBundleFusion.h src/readerDataset/readerTUM/ClosestMatchFinder.cpp include/readerDataset/readerTUM/ClosestMatchFinder.h src/keyPoints/KeyPointMatches.cpp include/keyPoints/KeyPointMatches.h src/cameraModel/MeasurementErrorDeviationEstimators.cpp include/cameraModel/MeasurementErrorDeviationEstimators.h)
 
 add_subdirectory(lib)
 

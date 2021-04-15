@@ -8,7 +8,8 @@
 
 #include <Eigen/Eigen>
 
-#include "Point3d.h"
+#include "cameraModel/MeasurementErrorDeviationEstimators.h"
+#include "parametrization/Point3d.h"
 
 namespace gdr {
 
@@ -19,9 +20,17 @@ namespace gdr {
         float cx = 319.5;
         float cy = 239.5;
 
+        //TODO: use custom std::function for depth dividing
         double depthPixelDivider = 5000.0;
 
+        MeasurementErrorDeviationEstimators measurementErrorDeviationEstimators;
+
+
     public:
+
+        void setMeasurementErrorDeviationEstimators(const MeasurementErrorDeviationEstimators &estimators);
+
+        const MeasurementErrorDeviationEstimators &getMeasurementErrorDeviationEstimators() const;
 
         CameraRGBD() = default;
 

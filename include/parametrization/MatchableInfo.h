@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "keyPoints/KeyPoint2DAndDepth.h"
-#include "CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 
 
 namespace gdr {
@@ -45,6 +45,8 @@ namespace gdr {
         int getImagePixelHeight() const;
 
         int getImagePixelWidth() const;
+
+        double getDepthDivider() const;
 
         void setImagePixelHeightWidth(int pixelsHeight, int pixelsWidth);
 

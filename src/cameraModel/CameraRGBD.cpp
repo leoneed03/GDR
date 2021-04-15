@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "parametrization/CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 
 namespace gdr {
 
@@ -96,6 +96,14 @@ namespace gdr {
 
     void CameraRGBD::setDepthPixelDivider(double divider) {
         depthPixelDivider = divider;
+    }
+
+    void CameraRGBD::setMeasurementErrorDeviationEstimators(const MeasurementErrorDeviationEstimators &estimators) {
+        measurementErrorDeviationEstimators = estimators;
+    }
+
+    const MeasurementErrorDeviationEstimators &CameraRGBD::getMeasurementErrorDeviationEstimators() const {
+        return measurementErrorDeviationEstimators;
     }
 
 }

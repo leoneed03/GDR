@@ -11,7 +11,6 @@ namespace gdr {
 
     std::pair<std::vector<double>, std::vector<double>>
     BundleAdjuster::getNormalizedErrorsReprojectionAndDepth(bool performNormalizing) {
-
         std::vector<double> errorsReprojectionXY;
         std::vector<double> errorsDepth;
 
@@ -40,24 +39,37 @@ namespace gdr {
                 double errorX = std::abs(computedX - keyPointInfo.getX());
                 double errorY = std::abs(computedY - keyPointInfo.getY());
 
+                const auto &measurementEstimators = camera.getMeasurementErrorDeviationEstimators();
+
                 Sophus::Vector2d errorReproj(errorX, errorY);
-                double normalizedReprojError =
-                        reprojectionErrorNormalizer(errorReproj.lpNorm<2>(),
-                                                    keyPointInfo.getScale(),
-                                                    defaultLinearParameterNoiseModelReprojectionBA);
+
+                const auto &dividerReproj = camera.getMeasurementErrorDeviationEstimators().getDividerReprojectionEstimator();
+                double normalizedReprojError = errorReproj.lpNorm<2>() /
+                                               (dividerReproj)(keyPointInfo.getScale(),
+                                                               measurementEstimators.getParameterNoiseModelReprojection());
+
                 double rawReprojError = errorReproj.lpNorm<2>();
                 double reprojErrorToUse = performNormalizing ? normalizedReprojError : rawReprojError;
+
+                //TODO: delete this assert
+                assert(std::abs(normalizedReprojError -
+                                rawReprojError / (0.987 * keyPointInfo.getScale())) <
+                       10 * std::numeric_limits<double>::epsilon());
+
                 errorsReprojectionXY.emplace_back(reprojErrorToUse);
 
                 double depthError = std::abs(computedDepth - keyPointInfo.getDepth());
-                double normalizedErrorDepth = depthErrorNormalizer(depthError,
-                                                                   keyPointInfo.getDepth(),
-                                                                   defaultQuadraticParameterNoiseModelDepth);
+                const auto &dividerDepth = camera.getMeasurementErrorDeviationEstimators().getDividerDepthErrorEstimator();
+                double normalizedErrorDepth = depthError /
+                                              (dividerDepth)(keyPointInfo.getDepth(),
+                                                             measurementEstimators.getParameterNoiseModelDepth());
                 double depthErrorToUse = performNormalizing ? normalizedErrorDepth : depthError;
 
+                //TODO: delete this assert
                 assert(std::abs(normalizedErrorDepth -
                                 depthError / (0.003331 * (keyPointInfo.getDepth() * keyPointInfo.getDepth()))) <
                        10 * std::numeric_limits<double>::epsilon());
+
                 errorsDepth.emplace_back(depthErrorToUse);
             }
         }
@@ -154,10 +166,10 @@ namespace gdr {
 
     std::vector<SE3> BundleAdjuster::optimizePointsAndPoses(const std::vector<Point3d> &points,
                                                             const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
-                                                            const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo,
+                                                            const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfos,
                                                             int indexFixed) {
 
-        setPosesAndPoints(points, absolutePoses, keyPointInfo);
+        setPosesAndPoints(points, absolutePoses, keyPointInfos);
 
         if (getPrintProgressToCout()) {
             std::cout << "entered BA depth optimization" << std::endl;
@@ -231,10 +243,27 @@ namespace gdr {
                 assert(observedX > 0 && observedX < widthAssert);
                 assert(observedY > 0 && observedY < heightAssert);
 
-                double deviationEstReprojByScale = dividerReprojectionError(keyPointInfo.getScale(),
-                                                                            defaultLinearParameterNoiseModelReprojectionBA);
-                double deviationEstDepthByDepth = dividerDepthError(keyPointInfo.getDepth(),
-                                                                    defaultQuadraticParameterNoiseModelDepth);
+                const auto &camera = cameraModelByPoseNumber[poseIndex];
+
+                const auto &measurementEstimators = camera.getMeasurementErrorDeviationEstimators();
+                const auto &dividerReproj = measurementEstimators.getDividerReprojectionEstimator();
+
+                double deviationEstReprojByScale = (dividerReproj)(keyPointInfo.getScale(),
+                                                                   measurementEstimators.getParameterNoiseModelReprojection());
+
+
+                //TODO: delete this assert
+                assert(std::abs(deviationEstReprojByScale - (0.987 * keyPointInfo.getScale())) <
+                       10 * std::numeric_limits<double>::epsilon());
+
+                const auto &dividerDepth = measurementEstimators.getDividerDepthErrorEstimator();
+                double deviationEstDepthByDepth = (dividerDepth)(keyPointInfo.getDepth(),
+                                                                 measurementEstimators.getParameterNoiseModelDepth());
+
+                //TODO: delete this assert
+                assert(std::abs(
+                        deviationEstDepthByDepth - (0.003331 * (keyPointInfo.getDepth() * keyPointInfo.getDepth()))) <
+                       10 * std::numeric_limits<double>::epsilon());
 
                 ceres::CostFunction *cost_function =
                         ReprojectionWithDepthError::Create(observedX, observedY, keyPointInfo.getDepth(),
@@ -256,11 +285,11 @@ namespace gdr {
 
 
         ceres::Solver::Options options;
-        //TODO: make these parameters customizable
         options.linear_solver_type = ceres::SPARSE_SCHUR;
         options.minimizer_progress_to_stdout = getPrintProgressToCout();
-        options.max_num_iterations = 50;
-        options.num_threads = 6;
+        options.max_num_iterations = getMaxNumberIterations();
+        options.num_threads = getMaxNumberThreads();
+
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
         if (getPrintProgressToCout()) {
@@ -544,6 +573,23 @@ namespace gdr {
         assert(pointsXYZbyIndex.size() == points.size());
         assert(keyPointInfo.size() == keyPointInfoByPoseNumberAndPointNumber.size());
         assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
+    }
+
+    int BundleAdjuster::getMaxNumberIterations() const {
+        return iterations;
+    }
+
+    int BundleAdjuster::getMaxNumberThreads() const {
+        return maxNumberTreadsCeres;
+    }
+
+    void BundleAdjuster::setMaxNumberIterations(int iterationsNumber) {
+        assert(iterationsNumber >= 0);
+        iterations = iterationsNumber;
+    }
+
+    void BundleAdjuster::setMaxNumberThreads(int maxNumberThreadsToUse) {
+        maxNumberTreadsCeres = maxNumberThreadsToUse;
     }
 
     ceres::CostFunction *BundleAdjuster::ReprojectionWithDepthError::Create(double newObservedX, double newObservedY,

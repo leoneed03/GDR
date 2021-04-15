@@ -143,4 +143,35 @@ namespace gdr {
         return matchingGroundTruthPoses;
     }
 
+    void ReaderTUM::createRgbOrDepthTxt(const std::string &pathToImagesRgb,
+                                        const std::string &pathToCreatedFile) {
+        const fs::path imageDir(pathToImagesRgb);
+
+        std::string imageType = imageDir.filename().string();
+        fs::path toSave(pathToCreatedFile);
+
+        assert(imageType == "depth" || imageType == "rgb");
+
+        toSave.append(imageType + ".txt");
+        std::ofstream outputFile(toSave.string());
+
+        std::set<std::string> timestamps;
+        std::set<std::string> names;
+
+        for (fs::directory_iterator end_dir_it, it(imageDir); it != end_dir_it; ++it) {
+            auto filename = it->path().filename().string();
+
+            names.insert(filename);
+        }
+
+        for (const auto& name: names) {
+
+            fs::path path(imageType);
+            path.append(name);
+
+            auto timeString = name.substr(0, name.length() - 4);
+            outputFile << timeString << ' ' << path.string() << std::endl;
+        }
+    }
+
 }

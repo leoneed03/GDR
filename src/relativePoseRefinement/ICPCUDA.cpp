@@ -13,6 +13,7 @@ namespace gdr {
 
     int loadDepth(pangolin::Image<unsigned short> &imageDepth,
                   const std::string &filename,
+                  double depthDivider,
                   int width,
                   int height) {
 
@@ -23,9 +24,10 @@ namespace gdr {
                 (unsigned short *) depthRawImage.ptr, depthRawImage.w, depthRawImage.h,
                 depthRawImage.w * sizeof(unsigned short));
 
+        int depthDividerMm = static_cast<int>(depthDivider) / 1000;
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                imageDepth.RowPtr(y)[x] = depthRaw16(x, y) / 5;
+                imageDepth.RowPtr(y)[x] = depthRaw16(x, y) / depthDividerMm;
             }
         }
 
@@ -37,6 +39,7 @@ namespace gdr {
 
     bool ICPCUDA::refineRelativePose(const MatchableInfo &poseToBeTransformedICP,
                                      const MatchableInfo &poseDestinationICPModel,
+                                     const KeyPointMatches &keyPointMatches,
                                      SE3 &initTransformationSE3) {
 
         const CameraRGBD &cameraRgbdToBeTransformed = poseToBeTransformedICP.getCameraRGB();
@@ -77,8 +80,12 @@ namespace gdr {
                                                       secondData.pitch,
                                                       (unsigned short *) secondData.ptr);
 
-        loadDepth(imageICPModel, poseDestinationICPModel.getPathImageD(), width, height);
-        loadDepth(imageICP, poseToBeTransformedICP.getPathImageD(), width, height);
+        loadDepth(imageICPModel, poseDestinationICPModel.getPathImageD(),
+                  cameraRgbdDestination.getDepthPixelDivider(),
+                  width, height);
+        loadDepth(imageICP, poseToBeTransformedICP.getPathImageD(),
+                  cameraRgbdOfToBeTransformed.getDepthPixelDivider(),
+                  width, height);
 
         icpOdom.initICPModel(imageICPModel.ptr, cameraIntrinsicsDestination);
         icpOdom.initICP(imageICP.ptr, cameraIntrinsicsToBeTransformed);

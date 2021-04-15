@@ -14,7 +14,7 @@
 
 #include "IBundleAdjuster.h"
 #include "keyPoints/KeyPointInfo.h"
-#include "parametrization/CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 #include "parametrization/SE3.h"
 #include "parametrization/Point3d.h"
 #include "readerDataset/readerTUM/PoseFullInfo.h"
@@ -25,7 +25,7 @@ namespace gdr {
 
     class BundleAdjuster : public IBundleAdjuster {
 
-        bool printProgressToCout = false;
+        bool printProgressToCout = true;
 
         void setPosesAndPoints(const std::vector<Point3d> &points,
                                const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
@@ -68,27 +68,8 @@ namespace gdr {
 
         constexpr static const double factor = 1.4826;
 
-        std::function<double(double, double)> dividerReprojectionError =
-                [](double scale, double linearParameterNoiseModelReprojection) {
-                    return linearParameterNoiseModelReprojection * scale;
-                };
-
-        std::function<double(double, double)> dividerDepthError =
-                [](double depth, double quadraticParameterNoiseModelDepth) {
-                    double squaredDepth = std::pow(depth, 2.0);
-                    return quadraticParameterNoiseModelDepth * squaredDepth;
-                };
-
-        std::function<double(double, double, double)> reprojectionErrorNormalizer =
-                [this](double reprojectionError, double keyPointScale, double linearParameterNoiseModelReprojection) {
-                    return reprojectionError /
-                           dividerReprojectionError(keyPointScale, linearParameterNoiseModelReprojection);
-                };
-
-        std::function<double(double, double, double)> depthErrorNormalizer =
-                [this](double depthError, double keyPointDepth, double quadraticParameterNoiseModelDepth) {
-                    return depthError / dividerDepthError(keyPointDepth, quadraticParameterNoiseModelDepth);
-                };
+        int maxNumberTreadsCeres = 6;
+        int iterations = 50;
 
         std::function<double(double)> computeInitialScaleByMedian =
                 [this](double medianError) {
@@ -101,9 +82,6 @@ namespace gdr {
                     return factor * multiplier * std::abs(medianError);
 
                 };
-
-        double defaultQuadraticParameterNoiseModelDepth = 3.331e-3;
-        double defaultLinearParameterNoiseModelReprojectionBA = 0.987;
 
         // size of each vector is 3
         // x, y, z
@@ -233,7 +211,9 @@ namespace gdr {
                 // depth error computation (noise modeled as sigma = a * depth^2 [meters])
                 {
                     T normResidual = ceres::abs(T(observedDepth) - computedDepth);
-                    normResidual = LossFunctionHuber::evaluate<T>(normResidual / T(deviationDividerDepth),
+//                    normResidual = LossFunctionHuber::evaluate<T>(normResidual / T(deviationDividerDepth),
+//                                                                  T(deviationEstimationNormalizedDepth));
+                    normResidual = LossFunctionTukey::evaluate<T>(normResidual / T(deviationDividerDepth),
                                                                   T(deviationEstimationNormalizedDepth));
                     residuals[1] = ceres::sqrt(normResidual);
                 }
@@ -273,6 +253,13 @@ namespace gdr {
 
 
         };
+
+    public:
+        int getMaxNumberIterations() const;
+        int getMaxNumberThreads() const;
+
+        void setMaxNumberIterations(int iterationsNumber);
+        void setMaxNumberThreads(int numberOfThreads);
 
     };
 }

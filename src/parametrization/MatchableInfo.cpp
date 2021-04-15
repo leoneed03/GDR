@@ -46,4 +46,8 @@ namespace gdr {
         imagePixelHeight = pixelsHeight;
         imagePixelWidght = pixelsWidth;
     }
+
+    double MatchableInfo::getDepthDivider() const {
+        return cameraRGB.getDepthPixelDivider();
+    }
 }

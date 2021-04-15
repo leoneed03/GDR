@@ -51,23 +51,25 @@ namespace gdr {
          * @param vertexFrom is a vertex number relative transformation from is computed
          * @param vertexInList is a vertex number in vertexFrom's adjacency list (transformation "destination" vertex)
          * @param transformation is relative SE3 transformation between poses
-         * @returns list of vectors each vector size is 2: for keypoint on the first image and the second
-         *      pair is {{observingPoseNumber, keyPointLocalIndexOnTheImage}, KeyPointInfo}
+         * @returns information about matched keypoints
          */
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>
+        KeyPointMatches
         findInlierPointCorrespondences(int vertexFrom,
                                        int vertexInList,
                                        const SE3 &transformation) const;
 
         /** Refine relative pose estimation with ICP-like dense clouds alignment
          * @param[in] vertexToBeTransformed pose which is transformed by SE3 transformation
-         * @param[in] vertexDestination static pose
+         * @param[in] vertexDestination static destination pose
+         * @param[in] keyPointMatches represents information about matched keyPoint
+         *      first stored point is from transformed image and second from destination image
          * @param[in, out] initEstimationRelPos represents initial robust relative pose estimation,
          *      also stores refined estimation
          * @param[out] refinementSuccess true if refinement was successful
          */
         int refineRelativePose(const VertexCG &vertexToBeTransformed,
                                const VertexCG &vertexDestination,
+                               const KeyPointMatches &keyPointMatches,
                                SE3 &initEstimationRelPos,
                                bool &refinementSuccess) const;
 
@@ -83,7 +85,7 @@ namespace gdr {
         SE3
         getTransformationRtMatrixTwoImages(int vertexFromDestOrigin,
                                            int vertexInListToBeTransformedCanBeComputed,
-                                           std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &keyPointMatches,
+                                           KeyPointMatches &keyPointMatches,
                                            bool &success,
                                            bool showMatchesOnImages = false) const;
 
@@ -94,7 +96,7 @@ namespace gdr {
          * @returns N vectors where i-th vector contains all successfully estimated transformations from i-th pose
          */
         std::vector<std::vector<RelativeSE3>> findTransformationRtMatrices(
-                std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &allInlierKeyPointMatches) const;
+                KeyPointMatches &allInlierKeyPointMatches) const;
 
     public:
         bool getPrintInformationCout() const;

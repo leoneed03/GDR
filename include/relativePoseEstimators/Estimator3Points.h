@@ -8,7 +8,7 @@
 
 #include <Eigen/Eigen>
 
-#include "parametrization/CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 #include "parametrization/SE3.h"
 
 namespace gdr {

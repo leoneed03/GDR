@@ -14,7 +14,7 @@
 
 #include "parametrization/SE3.h"
 #include "parametrization/SO3.h"
-#include "parametrization/CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 
 #include "keyPoints/KeyPointsDepthDescriptor.h"
 
@@ -84,6 +84,10 @@ namespace gdr {
         std::string getPathRGBImage() const;
 
         std::string getPathDImage() const;
+
+        std::string getFilenameRGBImage() const;
+
+        std::string getFilenameDImage() const;
 
         const CameraRGBD &getCamera() const;
 

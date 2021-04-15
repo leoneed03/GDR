@@ -29,7 +29,7 @@ TEST(testDatasetReaderBundleFusion, copyroom) {
 
     for (boost::filesystem::directory_iterator end_dir_it, it(depth); it != end_dir_it; ++it)  {
         std::string name = it->path().filename().string();
-        timestamps.emplace_back(std::stod(name.substr(0, name.length() - 3)));
+        timestamps.emplace_back(std::stod(name.substr(0, name.length() - 4)));
     }
     std::sort(timestamps.begin(), timestamps.end());
     auto posesAssoc = gdr::ImageAssociator::getGroundtruthForGivenTimestamps(timestamps, posesGT, 0.02);
@@ -45,6 +45,10 @@ TEST(testDatasetReaderBundleFusion, copyroom) {
 
 int main(int argc, char *argv[]) {
 
+//    gdr::ReaderTUM::createRgbOrDepthTxt("/home/leoneed/CLionProjects/GDR/data/desk1_sampled_98_6/depth",
+//                                        "/home/leoneed/CLionProjects/GDR/data/desk1_sampled_98_6");
+//    gdr::ReaderTUM::createRgbOrDepthTxt("/home/leoneed/CLionProjects/GDR/data/desk1_sampled_98_6/rgb",
+//                                        "/home/leoneed/CLionProjects/GDR/data/desk1_sampled_98_6");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

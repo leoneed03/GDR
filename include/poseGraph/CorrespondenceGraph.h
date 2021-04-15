@@ -9,7 +9,7 @@
 #include "sparsePointCloud/CloudProjector.h"
 #include "VertexCG.h"
 #include "parametrization/RelativeSE3.h"
-#include "parametrization/CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 #include "keyPointDetectionAndMatching/IFeatureDetectorMatcher.h"
 #include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
 #include "parametrization/Vectors3d.h"
@@ -33,7 +33,7 @@ namespace gdr {
         std::vector<std::string> imagesRgb;
         std::vector<std::string> imagesD;
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondencesPoints;
+        KeyPointMatches inlierCorrespondencesPoints;
 
     public:
 
@@ -48,7 +48,7 @@ namespace gdr {
         void setRelativePoses(const std::vector<std::vector<RelativeSE3>> &pairwiseRelativePoses);
 
         void setInlierPointMatches(
-                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointMatches);
+                const KeyPointMatches &inlierPointMatches);
 
         void setPointMatchesRGB(const std::vector<std::vector<Match>> &pointMatchesRGB);
 
@@ -56,15 +56,13 @@ namespace gdr {
 
         void addVertex(const VertexCG &vertex);
 
-        //TODO: bool addEdge(const RelativeSE3&)
-
     public:
 
         const std::string &getPathRelativePoseFile() const;
 
         const std::string &getPathAbsoluteRotationsFile() const;
 
-        const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getInlierObservedPoints() const;
+        const KeyPointMatches &getInlierObservedPoints() const;
 
         const VertexCG &getVertex(int vertexNumber) const;
 

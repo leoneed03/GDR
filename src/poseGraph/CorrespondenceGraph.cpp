@@ -149,7 +149,7 @@ namespace gdr {
     }
 
     void CorrespondenceGraph::setInlierPointMatches(
-            const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointMatches) {
+            const KeyPointMatches &inlierPointMatches) {
         inlierCorrespondencesPoints = inlierPointMatches;
     }
 
@@ -220,7 +220,7 @@ namespace gdr {
         return verticesOfCorrespondence[vertexNumber];
     }
 
-    const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &
+    const KeyPointMatches &
     CorrespondenceGraph::getInlierObservedPoints() const {
         return inlierCorrespondencesPoints;
     }

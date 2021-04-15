@@ -38,9 +38,10 @@ namespace gdr {
             std::vector<char *> siftGpuArgs;
 
             for (auto &stringArg: siftGpuArgsStrings) {
-                siftGpuArgs.push_back(stringArg.data());
+                siftGpuArgs.push_back((char *) stringArg.data());
             }
             detector->ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
+
             auto contextVerified = detector->VerifyContextGL();
             if (contextVerified == 0) {
                 std::cout << "_____________________________________________________detection context not verified"
@@ -161,6 +162,7 @@ namespace gdr {
 
         for (int i = 0; i < matchDevicesNumbers.size(); ++i) {
             matchers.push_back(std::make_unique<SiftMatchGPU>(maxSift));
+            matchers[i]->SetLanguage(SiftMatchGPU::SIFTMATCH_CUDA + matchDevicesNumbers[0]);
             auto contextVerified = matchers[i]->VerifyContextGL();
             assert(contextVerified != 0);
         }

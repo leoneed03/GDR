@@ -8,7 +8,7 @@
 
 #include "parametrization/SE3.h"
 #include "parametrization/Point3d.h"
-#include "parametrization/CameraRGBD.h"
+#include "cameraModel/CameraRGBD.h"
 #include "keyPoints/KeyPointInfo.h"
 #include <unordered_map>
 

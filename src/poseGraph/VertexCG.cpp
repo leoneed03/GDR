@@ -3,6 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
+#include "boost/filesystem.hpp"
+
 #include "poseGraph/VertexCG.h"
 
 namespace gdr {
@@ -23,8 +25,20 @@ namespace gdr {
         return pathToRGBimage;
     }
 
+    std::string VertexCG::getFilenameRGBImage() const {
+        boost::filesystem::path path(getPathRGBImage());
+
+        return path.filename().string();
+    }
+
     std::string VertexCG::getPathDImage() const {
         return pathToDimage;
+    }
+
+    std::string VertexCG::getFilenameDImage() const {
+        boost::filesystem::path path(getPathDImage());
+
+        return path.filename().string();
     }
 
     const CameraRGBD &VertexCG::getCamera() const {
