@@ -7,6 +7,7 @@
 #define GDR_CONNECTEDCOMPONENT_H
 
 #include "VertexCG.h"
+#include "poseGraph/PoseGraph.h"
 
 #include "parametrization/RelativeSE3.h"
 #include "cameraModel/CameraRGBD.h"
@@ -16,6 +17,7 @@
 #include "sparsePointCloud/IPointClassifier.h"
 #include "sparsePointCloud/ICloudProjector.h"
 
+#include "keyPoints/KeyPointMatches.h"
 #include <vector>
 
 namespace gdr {
@@ -23,29 +25,20 @@ namespace gdr {
     class ConnectedComponentPoseGraph {
 
         int componentNumber;
-        // indexing for absolute poses is from 0 to component.size() - 1 including
-        std::vector<VertexCG> absolutePoses;
-        std::vector<std::vector<RelativeSE3>> relativePoses;
 
-        CameraRGBD cameraRgbd;
+        PoseGraph poseGraph;
+
         std::string relativeRotationsFile;
         std::string absoluteRotationsFile;
 
-        /*
-         * each pair is poseNumber and point's local index in pose's list of detected keypoints
-         *  paired with its KeyPointInfo
-         *  pairs are grouped in one vector if they represent same global point
-         */
-
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierPointCorrespondences;
+        KeyPointMatches inlierPointCorrespondences;
 
     public:
 
         ConnectedComponentPoseGraph(
                 const std::vector<VertexCG> &absolutePoses,
                 const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
-                const CameraRGBD &defaultCamera,
-                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &inlierPointCorrespondences,
+                const KeyPointMatches &inlierPointCorrespondences,
                 const std::string &RelativeRotationsFile,
                 const std::string &absoluteRotationsFile,
                 int componentNumber);
@@ -78,7 +71,7 @@ namespace gdr {
 
         int getNumberOfPoses() const;
 
-        const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getInlierObservedPoints() const;
+        const KeyPointMatches &getInlierObservedPoints() const;
 
         int printRelativeRotationsToFile(const std::string &pathToFileRelativeRotations) const;
     };

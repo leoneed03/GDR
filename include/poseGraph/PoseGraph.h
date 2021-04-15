@@ -47,6 +47,12 @@ namespace gdr {
 
         void setRelativePoses(const std::vector<std::vector<RelativeSE3>> &relativePosesToSet);
 
+        void setRotationSO3(int poseVertexIndex, const SO3 &orientationSO3);
+
+        void setPoseSE3(int poseVertexIndex, const SE3 &poseSE3);
+
+        void setTranslationV3(int poseVertexIndex, const Eigen::Vector3d &translation);
+
     };
 }
 

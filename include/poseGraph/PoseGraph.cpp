@@ -96,4 +96,22 @@ namespace gdr {
         relativePoses = relativePosesToSet;
     }
 
+    void PoseGraph::setRotationSO3(int poseVertexIndex, const SO3 &orientationSO3) {
+        assert(poseVertexIndex >= 0 && poseVertexIndex < absolutePoses.size());
+
+        absolutePoses[poseVertexIndex].setRotation(orientationSO3);
+    }
+
+    void PoseGraph::setPoseSE3(int poseVertexIndex, const SE3 &poseSE3) {
+        assert(poseVertexIndex >= 0 && poseVertexIndex < absolutePoses.size());
+
+        absolutePoses[poseVertexIndex].setAbsolutePoseSE3(poseSE3);
+    }
+
+    void PoseGraph::setTranslationV3(int poseVertexIndex, const Eigen::Vector3d &translation) {
+        assert(poseVertexIndex >= 0 && poseVertexIndex < absolutePoses.size());
+
+        absolutePoses[poseVertexIndex].setTranslation(translation);
+    }
+
 }

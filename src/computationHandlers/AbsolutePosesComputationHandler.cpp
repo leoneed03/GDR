@@ -42,7 +42,7 @@ namespace gdr {
         cloudProjector->setCameraPoses(posesForCloudProjector);
 
         const auto &matchesBetweenPoints = connectedComponent->getInlierObservedPoints();
-        for (const auto &vectorOfMatches: matchesBetweenPoints) {
+        for (const auto &vectorOfMatches: matchesBetweenPoints.getKeyPointMatchesVector()) {
 
             std::vector<std::pair<int, int>> poseAndLocalIndices;
             for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
@@ -57,7 +57,7 @@ namespace gdr {
                 keyPointInfoByPoseNumAndLocalInd(pointMatcher->getNumberOfPoses());
 
 
-        for (const auto &vectorOfMatches: matchesBetweenPoints) {
+        for (const auto &vectorOfMatches: matchesBetweenPoints.getKeyPointMatchesVector()) {
 
             for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
                 const auto &poseNumAndLocalInd = fullPointInfo.first;

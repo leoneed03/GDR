@@ -158,7 +158,6 @@ namespace gdr {
             connectedComponents.emplace_back(std::make_unique<
                     ConnectedComponentPoseGraph>(connectedComponentsVertices[componentNumber],
                                                  edgesOfComponentsByComponentsNumber[componentNumber],
-                                                 correspondenceGraph.getCameraDefault(),
                                                  inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber],
                                                  namePrefix + correspondenceGraph.getPathRelativePoseFile(),
                                                  namePrefix + correspondenceGraph.getPathAbsoluteRotationsFile(),
