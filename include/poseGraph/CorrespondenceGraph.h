@@ -6,6 +6,8 @@
 #ifndef GDR_CORRESPONDENCE_GRAPH_H
 #define GDR_CORRESPONDENCE_GRAPH_H
 
+#include "poseGraph/PoseGraph.h"
+
 #include "sparsePointCloud/CloudProjector.h"
 #include "VertexCG.h"
 #include "parametrization/RelativeSE3.h"
@@ -15,6 +17,7 @@
 #include "parametrization/Vectors3d.h"
 #include "computationHandlers/ThreadPool.h"
 #include "ConnectedComponent.h"
+
 #include "relativePoseEstimators/IEstimatorRelativePoseRobust.h"
 #include "relativePoseRefinement/IRefinerRelativePose.h"
 
@@ -23,10 +26,10 @@ namespace gdr {
     class CorrespondenceGraph {
 
         CameraRGBD cameraDefault;
-        std::vector<VertexCG> verticesOfCorrespondence;
+
+        PoseGraph poseGraph;
 
         std::vector<std::vector<Match>> matches;
-        std::vector<std::vector<RelativeSE3>> transformationRtMatrices;
 
         const std::string relativePosesFileG2o = "relativeRotations.txt";
         const std::string absoluteRotationsFileG2o = "absoluteRotations.txt";
@@ -55,8 +58,6 @@ namespace gdr {
         void setVertexCamera(int vertexIndex, const CameraRGBD &camera);
 
         void addVertex(const VertexCG &vertex);
-
-    public:
 
         const std::string &getPathRelativePoseFile() const;
 

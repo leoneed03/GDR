@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "ReaderBundleFusion.h"
+#include "readerDataset/readerBundleFusion/ReaderBundleFusion.h"
 #include <fstream>
 #include <string>
 #include <opencv2/opencv.hpp>

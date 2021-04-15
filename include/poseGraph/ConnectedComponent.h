@@ -23,10 +23,10 @@ namespace gdr {
     class ConnectedComponentPoseGraph {
 
         int componentNumber;
-        std::vector<VertexCG> absolutePoses;
-
         // indexing for absolute poses is from 0 to component.size() - 1 including
+        std::vector<VertexCG> absolutePoses;
         std::vector<std::vector<RelativeSE3>> relativePoses;
+
         CameraRGBD cameraRgbd;
         std::string relativeRotationsFile;
         std::string absoluteRotationsFile;

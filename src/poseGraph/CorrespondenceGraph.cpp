@@ -3,10 +3,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "directoryTraversing/DirectoryReader.h"
 #include "poseGraph/CorrespondenceGraph.h"
+
 #include "relativePoseRefinement/ICPCUDA.h"
-#include "visualization/2D/ImageDrawer.h"
 #include "keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.h"
 #include "relativePoseEstimators/EstimatorRobustLoRANSAC.h"
 
@@ -17,7 +16,7 @@
 #include <opencv2/opencv.hpp>
 #include <absolutePoseEstimation/translationAveraging/TranslationAverager.h>
 
-#include <boost/graph/graphviz.hpp>
+#include "boost/graph/graphviz.hpp"
 
 namespace gdr {
 
@@ -42,30 +41,34 @@ namespace gdr {
         std::ofstream file(pathOutRelativePoseFile);
 
         if (file.is_open()) {
-            int numPoses = transformationRtMatrices.size();
+            int numPoses = poseGraph.size();
+
             for (int i = 0; i < numPoses; ++i) {
                 std::string s1 = "VERTEX_SE3:QUAT ";
                 std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
                 file << s1 + s2;
             }
 
-            for (int i = 0; i < transformationRtMatrices.size(); ++i) {
-                for (int j = 0; j < transformationRtMatrices[i].size(); ++j) {
-                    if (i >= transformationRtMatrices[i][j].getIndexTo()) {
+            for (int i = 0; i < numPoses; ++i) {
+                for (int j = 0; j < poseGraph.getNumberOfAdjacentVertices(i); ++j) {
+
+                    int indexTo = poseGraph.getRelativePose(i, j).getIndexTo();
+
+                    const auto &relativePose = poseGraph.getRelativePose(i, j);
+                    if (i >= relativePose.getIndexTo()) {
                         continue;
                     }
                     std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
 
-                    int indexTo = transformationRtMatrices[i][j].getIndexTo();
                     int indexFrom = i;
                     //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)
 
                     file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
-                    auto translationVector = transformationRtMatrices[i][j].getRelativeTranslation();
+                    auto translationVector = relativePose.getRelativeTranslation();
                     file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
                          << std::to_string(translationVector.col(0)[1]) << ' '
                          << std::to_string(translationVector.col(0)[2]) << ' ';
-                    const auto &qR = transformationRtMatrices[i][j].getRelativeRotation();
+                    const auto &qR = relativePose.getRelativeRotation();
 
                     file << qR << ' ' << noise << '\n';
                 }
@@ -86,16 +89,10 @@ namespace gdr {
 
         imagesRgb = associatedImagesRGB;
         imagesD = associatedImagesD;
-//        imagesRgb = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryRGB);
-//        imagesD = DirectoryReader::readPathsToImagesFromDirectory(pathToImageDirectoryD);
 
         std::sort(imagesRgb.begin(), imagesRgb.end());
         std::sort(imagesD.begin(), imagesD.end());
         assert(imagesRgb.size() == imagesD.size());
-
-        int numberOfPosesRead = imagesRgb.size();
-        transformationRtMatrices = std::vector<std::vector<RelativeSE3>>(imagesD.size());
-        verticesOfCorrespondence.reserve(numberOfPosesRead);
 
     }
 
@@ -105,47 +102,32 @@ namespace gdr {
         int counterSquared = 0;
         os << "EDGES of the Correspondence Graph:" << std::endl;
 
-        for (int i = 0; i < transformationRtMatrices.size(); ++i) {
+        int sizePoseGraph = poseGraph.size();
+        for (int i = 0; i < sizePoseGraph; ++i) {
 
             os << std::setw(space / 5) << i << ":";
 
-            counter += transformationRtMatrices[i].size();
-            counterSquared += transformationRtMatrices[i].size() * transformationRtMatrices[i].size();
+            int adjacentNumber = poseGraph.getNumberOfAdjacentVertices(i);
+            counter += adjacentNumber;
+            counterSquared += adjacentNumber * adjacentNumber;
 
-            for (int j = 0; j < transformationRtMatrices[i].size(); ++j) {
-                const RelativeSE3 &e = transformationRtMatrices[i][j];
+            for (int j = 0; j < poseGraph.getNumberOfAdjacentVertices(i); ++j) {
+                const RelativeSE3 &e = poseGraph.getRelativePose(i, j);
                 assert(i == e.getIndexFrom());
                 os << std::setw(space / 2) << e.getIndexTo() << ",";
             }
             os << std::endl;
         }
-        os << "average number of edges " << counter / transformationRtMatrices.size() << std::endl;
+        os << "average number of edges " << counter / sizePoseGraph << std::endl;
 
-        os << "sq D " << sqrt(counterSquared * 1.0 / transformationRtMatrices.size() -
-                              pow(counter * 1.0 / transformationRtMatrices.size(), 2)) << std::endl;
+        os << "sq D " << sqrt(counterSquared * 1.0 / sizePoseGraph -
+                              pow(counter * 1.0 / sizePoseGraph, 2)) << std::endl;
 
     }
 
     void CorrespondenceGraph::setRelativePoses(const std::vector<std::vector<RelativeSE3>> &pairwiseRelativePoses) {
-        assert(!transformationRtMatrices.empty());
-        assert(transformationRtMatrices.size() == pairwiseRelativePoses.size());
 
-        for (auto &transformations: transformationRtMatrices) {
-            transformations.clear();
-            assert(transformations.empty());
-        }
-
-        assert(transformationRtMatrices.size() == pairwiseRelativePoses.size());
-
-        for (int i = 0; i < pairwiseRelativePoses.size(); ++i) {
-            const auto &transformationsValuesToSet = pairwiseRelativePoses[i];
-            auto &transformationsWhereToSet = transformationRtMatrices[i];
-
-            for (const auto &transformation :transformationsValuesToSet) {
-                transformationRtMatrices[i].emplace_back(transformation);
-            }
-            assert(transformationsWhereToSet.size() == transformationsValuesToSet.size());
-        }
+        poseGraph.setRelativePoses(pairwiseRelativePoses);
     }
 
     void CorrespondenceGraph::setInlierPointMatches(
@@ -163,11 +145,10 @@ namespace gdr {
 
     int CorrespondenceGraph::getNumberOfPoses() const {
 
-        int numberOfPoses = verticesOfCorrespondence.size();
+        int numberOfPoses = poseGraph.size();
 
         assert(numberOfPoses == imagesRgb.size());
         assert(numberOfPoses == imagesD.size());
-        assert(numberOfPoses == transformationRtMatrices.size());
 
         return numberOfPoses;
     }
@@ -177,13 +158,13 @@ namespace gdr {
     }
 
     void CorrespondenceGraph::addVertex(const VertexCG &vertex) {
-        verticesOfCorrespondence.emplace_back(vertex);
+
+        poseGraph.addPoseVertex(vertex);
     }
 
     const std::vector<VertexCG> &CorrespondenceGraph::getVertices() const {
-        assert(!verticesOfCorrespondence.empty());
 
-        return verticesOfCorrespondence;
+        return poseGraph.getPoseVertices();
     }
 
     void CorrespondenceGraph::setPointMatchesRGB(const std::vector<std::vector<Match>> &pointMatchesRGB) {
@@ -205,19 +186,17 @@ namespace gdr {
     }
 
     void CorrespondenceGraph::setVertexCamera(int vertexIndex, const CameraRGBD &camera) {
-        assert(vertexIndex >= 0 && vertexIndex < verticesOfCorrespondence.size());
-        verticesOfCorrespondence[vertexIndex].setCamera(camera);
+
+        poseGraph.setCamera(vertexIndex, camera);
     }
 
     const std::vector<RelativeSE3> &CorrespondenceGraph::getConnectionsFromVertex(int vertexNumber) const {
-        assert(transformationRtMatrices.size() == getNumberOfPoses());
-        assert(vertexNumber >= 0 && vertexNumber < getNumberOfPoses());
 
-        return transformationRtMatrices[vertexNumber];
+        return poseGraph.getRelativePosesFrom(vertexNumber);
     }
 
     const VertexCG &CorrespondenceGraph::getVertex(int vertexNumber) const {
-        return verticesOfCorrespondence[vertexNumber];
+        return poseGraph.getPoseVertex(vertexNumber);
     }
 
     const KeyPointMatches &
