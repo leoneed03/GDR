@@ -88,9 +88,6 @@ namespace gdr {
                 input_cloud->push_back(pointToBeAdded);
             }
 
-            std::cout << "Loaded _" << i << "_ " << input_cloud->size() << " data points from pose no "
-                      << posesToBeRegistered[i].getIndex()
-                      << std::endl;
 
             if (i == posesToBeRegistered.size() - 1 || i % 5 == 0) {
                 pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -99,8 +96,6 @@ namespace gdr {
                 approximate_voxel_filter.setInputCloud(input_cloud);
                 approximate_voxel_filter.filter(*filtered_cloud);
 
-                std::cout << "                  Filtered cloud contains " << filtered_cloud->size()
-                          << " data points from pose " << posesToBeRegistered[i].getIndex() << std::endl;
                 std::swap(filtered_cloud, input_cloud);
             }
         }

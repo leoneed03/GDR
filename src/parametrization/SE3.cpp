@@ -52,5 +52,16 @@ namespace gdr {
     SE3 operator*(const SE3 &lhs, const SE3 &rhs) {
         return SE3(lhs.getSE3() * rhs.getSE3());
     }
+
+    std::pair<double, double> SE3::getRotationTranslationErrors(const SE3 &otherSe3) {
+
+        double errorL2 = 0;
+        double errorAngle = 0;
+
+        errorAngle = getRotationQuatd().angularDistance(otherSe3.getRotationQuatd());
+        errorL2 = (getTranslation() - otherSe3.getTranslation()).norm();
+
+        return {errorAngle, errorL2};
+    }
 }
 

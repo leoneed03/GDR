@@ -81,7 +81,6 @@ namespace gdr {
         int numOfPoints = toBeTransformedPoints.cols();
         std::uniform_int_distribution<> distrib(0, numOfPoints - 1);
 
-        std::cout << "-----------------------------------NEW UMEYAMA--------------------------" << std::endl;
 
         for (int i = 0; i < numIterationsRansac; ++i) {
             std::vector<int> p(dim, 0);

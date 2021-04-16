@@ -15,7 +15,7 @@ namespace gdr {
 
     class EstimatorRobustLoRANSAC : public IEstimatorRelativePoseRobust {
 
-        bool printProgressToCout = true;
+        bool printProgressToCout = false;
 
         InlierCounter inlierCounter;
         ParamsRANSAC paramsLoRansac;

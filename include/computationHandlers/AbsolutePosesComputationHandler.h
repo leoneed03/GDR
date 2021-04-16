@@ -55,6 +55,8 @@ namespace gdr {
         std::vector<SE3> getPosesSE3() const;
 
         const PoseGraph &getPoseGraph() const;
+
+        int getIndexFixedPose() const;
     };
 }
 

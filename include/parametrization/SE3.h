@@ -43,6 +43,8 @@ namespace gdr {
 
         SE3 inverse() const;
 
+        std::pair<double, double> getRotationTranslationErrors(const SE3 &otherSe3);
+
         friend SE3 operator*(const SE3 &lhs, const SE3 &rhs);
     };
 }
