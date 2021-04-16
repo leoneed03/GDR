@@ -28,7 +28,7 @@ void testReconstruction(
         const std::string &assocFile = "",
         int numberOfIterations = 1,
         bool printToConsole = false,
-        bool showVisualization3D = true,
+        bool showVisualization3D = false,
         bool savePointCloudPly = false,
         double minCoefficientOfBiggestComponent = 0.5,
         double coefficientR = 1.2,
