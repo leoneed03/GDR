@@ -81,13 +81,13 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/poseGraph/VertexCG.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/CorrespondenceGraph.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/RelativeSE3.h
-        include/cameraModel/CameraRGBD.h
+    ${PROJECT_SOURCE_DIR}/include/cameraModel/CameraRGBD.h
     ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/SiftModuleGPU.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationAverager.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/ICPCUDA.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationMeasurement.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationAverager.h
-        include/readerDataset/readerTUM/PoseFullInfo.h
+    ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/PoseFullInfo.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationMeasurement.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/Vectors3d.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/SO3.h
@@ -102,7 +102,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/computationHandlers/ThreadPool.h
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointsDepthDescriptor.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/ConnectedComponent.h
-        include/readerDataset/readerTUM/ImagesAssociator.h
+    ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/ImagesAssociator.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/Estimator3Points.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/InlierCounter.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/IEstimatorRelativePoseRobust.h
@@ -119,7 +119,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorRobustLoRANSAC.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/SE3.h
     ${PROJECT_SOURCE_DIR}/include/statistics/RobustEstimators.h
-        include/readerDataset/readerTUM/ReaderTum.h
+    ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/ReaderTum.h
     ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.h
     ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/KeyPointsAndDescriptors.h
     ${PROJECT_SOURCE_DIR}/include/computationHandlers/RelativePosesComputationHandler.h
@@ -136,20 +136,27 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/SparseMatrixClass.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RelativeRotationError.h
-)
+    ${PROJECT_SOURCE_DIR}/include/readerDataset/readerBundleFusion/ReaderBundleFusion.h
+    ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/ClosestMatchFinder.h
+    ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointMatches.h
+    ${PROJECT_SOURCE_DIR}/include/cameraModel/MeasurementErrorDeviationEstimators.h
+    ${PROJECT_SOURCE_DIR}/include/poseGraph/PoseGraph.h
+    ${PROJECT_SOURCE_DIR}/include/datasetDescriber/DatasetDescriber.h
+    ${PROJECT_SOURCE_DIR}/include/computationHandlers/ModelCreationHandler.h
+    ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/Evaluator.h)
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/directoryTraversing/DirectoryReader.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/VertexCG.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/CorrespondenceGraph.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/RelativeSE3.cpp
-        src/cameraModel/CameraRGBD.cpp
+    ${PROJECT_SOURCE_DIR}/src/cameraModel/CameraRGBD.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/SiftModuleGPU.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationAverager.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePoseRefinement/ICPCUDA.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationAverager.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationMeasurement.cpp
-        src/readerDataset/readerTUM/PoseFullInfo.cpp
+    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/PoseFullInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/Vectors3d.cpp
     ${PROJECT_SOURCE_DIR}/src/computationHandlers/ThreadPool.cpp
@@ -164,7 +171,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/visualization/3D/SmoothPointCloud.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointsDepthDescriptor.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/ConnectedComponent.cpp
-        src/readerDataset/readerTUM/ImagesAssociator.cpp
+    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/ImagesAssociator.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPoint2DAndDepth.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/Estimator3Points.cpp
     ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/EstimatorNPoints.cpp
@@ -174,7 +181,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/relativePoseEstimators/ParamsRANSAC.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/MatchableInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/statistics/RobustEstimators.cpp
-        src/readerDataset/readerTUM/ReaderTum.cpp
+    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/ReaderTum.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/FeatureDetectorMatcherCreator.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/KeyPointsAndDescriptors.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPointDetectionAndMatching/Match.cpp
@@ -190,7 +197,14 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifierCreator.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/SparseMatrixClass.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativeRotationError.cpp
-        src/readerDataset/readerBundleFusion/ReaderBundleFusion.cpp include/readerDataset/readerBundleFusion/ReaderBundleFusion.h src/readerDataset/readerTUM/ClosestMatchFinder.cpp include/readerDataset/readerTUM/ClosestMatchFinder.h src/keyPoints/KeyPointMatches.cpp include/keyPoints/KeyPointMatches.h src/cameraModel/MeasurementErrorDeviationEstimators.cpp include/cameraModel/MeasurementErrorDeviationEstimators.h src/poseGraph/PoseGraph.cpp include/poseGraph/PoseGraph.h src/datasetDescriber/DatasetDescriber.cpp include/datasetDescriber/DatasetDescriber.h src/computationHandlers/ModelCreationHandler.cpp include/computationHandlers/ModelCreationHandler.h include/readerDataset/readerTUM/Evaluator.cpp include/readerDataset/readerTUM/Evaluator.h)
+    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerBundleFusion/ReaderBundleFusion.cpp
+    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/ClosestMatchFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointMatches.cpp
+    ${PROJECT_SOURCE_DIR}/src/cameraModel/MeasurementErrorDeviationEstimators.cpp
+    ${PROJECT_SOURCE_DIR}/src/poseGraph/PoseGraph.cpp
+    ${PROJECT_SOURCE_DIR}/src/datasetDescriber/DatasetDescriber.cpp
+    ${PROJECT_SOURCE_DIR}/src/computationHandlers/ModelCreationHandler.cpp
+    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/Evaluator.cpp)
 
 add_subdirectory(lib)
 

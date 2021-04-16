@@ -25,7 +25,7 @@ namespace gdr {
 
     class BundleAdjuster : public IBundleAdjuster {
 
-        bool printProgressToCout = true;
+        bool printProgressToCout = false;
 
         void setPosesAndPoints(const std::vector<Point3d> &points,
                                const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,

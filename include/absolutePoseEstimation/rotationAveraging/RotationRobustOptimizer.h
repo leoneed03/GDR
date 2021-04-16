@@ -7,6 +7,7 @@
 #define GDR_ROTATIONROBUSTOPTIMIZER_H
 
 #include <map>
+
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
@@ -22,7 +23,7 @@ namespace gdr {
 
         std::vector<SO3> orientations;
         std::vector<RotationMeasurement> relativeRotations;
-        bool printProgressToConsole = true;
+        bool printProgressToConsole = false;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW

@@ -18,9 +18,7 @@
 #include "readerDataset/readerTUM/Evaluator.h"
 
 void testReconstruction(
-        const std::string &shortDatasetName,
-        int numberOfPosesInDataset,
-        int subsamplingPeriodFrames,
+        const std::string &datasetName,
         double errorTresholdR,
         double errorTresholdT,
         const gdr::CameraRGBD &cameraDefault = gdr::CameraRGBD(),
@@ -35,10 +33,9 @@ void testReconstruction(
         double timeDiffThreshold = 0.02) {
 
     for (int iteration = 0; iteration < numberOfIterations; ++iteration) {
-        std::string numberOfPosesString = std::to_string(numberOfPosesInDataset);
-        std::string frequency = std::to_string(subsamplingPeriodFrames);
-        std::string datasetName = shortDatasetName;
+
         std::cout << "Running test on " << datasetName << std::endl;
+
         std::string pathRelativeToData = "../../data/";
         std::string pathRGB = pathRelativeToData + datasetName + "/rgb";
         std::string pathD = pathRelativeToData + datasetName + "/depth";
@@ -54,14 +51,19 @@ void testReconstruction(
         std::cout << "start computing relative poses" << std::endl;
         cgHandler.computeRelativePoses();
 
+        int numberOfPosesInDataset = cgHandler.getNumberOfVertices();
+
         cgHandler.bfsDrawToFile(
-                "../../tools/data/temp/" + shortDatasetName + "_connectedComponents_" + numberOfPosesString + ".dot");
+                "../../tools/data/temp/" + datasetName + "_connectedComponents.dot");
         std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph =
                 cgHandler.splitGraphToConnectedComponents();
 
-        std::cout << "Biggest component of size "
-                  << connectedComponentsPoseGraph[0]->getNumberOfPoses() << std::endl;
+
         if (printToConsole) {
+
+            std::cout << "Biggest component of size "
+                      << connectedComponentsPoseGraph[0]->getNumberOfPoses() << std::endl;
+
             for (int componentNumber = 0; componentNumber < connectedComponentsPoseGraph.size(); ++componentNumber) {
                 std::cout << " #component index by increment " << componentNumber << " of size "
                           << connectedComponentsPoseGraph[componentNumber]->getNumberOfPoses() << std::endl;
@@ -80,12 +82,9 @@ void testReconstruction(
         std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent->performTranslationAveraging();
         std::vector<gdr::SE3> irlsPoses = biggestComponent->getPosesSE3();
 
-
-
-
-
         std::vector<gdr::SE3> bundleAdjustedPoses;
         std::cout << "perform Bundle Adjustment" << std::endl;
+
         bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
         std::string absolutePosesGroundTruth = "../../data/" + datasetName + "/" + "groundtruth.txt";
@@ -116,23 +115,9 @@ void testReconstruction(
                                                                                        timestampsToFind,
                                                                                        timeDiffThreshold);
 
-        if (true) {
-
+        {
             assert(!posesInfoFull.empty());
             std::set<int> indicesOfBiggestComponent = biggestComponent->initialIndices();
-
-            std::vector<gdr::PoseFullInfo> posesInfo;
-
-            for (int poseIndex = 0; poseIndex < posesInfoFull.size(); ++poseIndex) {
-                //TODO
-//            if (indicesOfBiggestComponent.find(poseIndex) != indicesOfBiggestComponent.end()) {
-                posesInfo.emplace_back(posesInfoFull[poseIndex]);
-//            }
-            }
-            if (printToConsole) {
-                std::cout << "sampled GT poses size: " << posesInfo.size() << std::endl;
-            }
-//        assert(posesInfo.size() == biggestComponent->getNumberOfPoses());
 
             // compute absolute poses IRLS
             std::vector<Sophus::SE3d> posesIRLS;
@@ -160,16 +145,14 @@ void testReconstruction(
             {
                 // print ground truth poses to file
                 std::string outputName =
-                        "../../tools/data/temp/" + shortDatasetName + "_posesBiggestComponent_GT_" +
-                        numberOfPosesString +
-                        ".txt";
+                        "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_GT.txt";
                 std::ofstream computedPoses(outputName);
 
-                for (int i = 0; i < posesInfo.size(); ++i) {
-                    Sophus::SE3d poseSE3 = posesInfo[i].getSophusPose();
+                for (int i = 0; i < posesInfoFull.size(); ++i) {
+                    Sophus::SE3d poseSE3 = posesInfoFull[i].getSophusPose();
 
                     computedPoses.precision(std::numeric_limits<double>::max_digits10);
-                    computedPoses << posesInfo[i].getTimestamp() << ' ';
+                    computedPoses << posesInfoFull[i].getTimestamp() << ' ';
                     const auto to = poseSE3.translation();
                     for (int j = 0; j < 3; ++j) {
                         computedPoses << to[j] << ' ';
@@ -184,12 +167,10 @@ void testReconstruction(
             {
                 // print poses IRLS to file
                 std::string outputName =
-                        "../../tools/data/temp/" + shortDatasetName + "_posesBiggestComponent_IRLS_" +
-                        numberOfPosesString +
-                        ".txt";
+                        "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_IRLS.txt";
                 std::ofstream computedPoses(outputName);
-                for (int i = 0; i < posesInfo.size(); ++i) {
-                    Sophus::SE3d poseSE3 = posesInfo[0].getSophusPose() * posesIRLS[0].inverse() * posesIRLS[i];
+                for (int i = 0; i < posesInfoFull.size(); ++i) {
+                    Sophus::SE3d poseSE3 = posesInfoFull[0].getSophusPose() * posesIRLS[0].inverse() * posesIRLS[i];
 
                     computedPoses.precision(std::numeric_limits<double>::max_digits10);
                     computedPoses << timestampsToFind[i] << ' ';
@@ -206,16 +187,16 @@ void testReconstruction(
             {
                 // print poses BA depth to file
                 std::string outputName =
-                        "../../tools/data/temp/" + shortDatasetName + "_posesBiggestComponent_BA_" +
-                        numberOfPosesString +
-                        ".txt";
+                        "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_BA.txt";
                 std::ofstream computedPoses(outputName);
-                for (int i = 0; i < posesInfo.size(); ++i) {
-                    Sophus::SE3d poseSE3 = posesInfo[0].getSophusPose() *
-                                           bundleAdjustedPoses[0].getSE3().inverse() * bundleAdjustedPoses[i].getSE3();
+                for (int i = 0; i < posesInfoFull.size(); ++i) {
+                    Sophus::SE3d poseSE3 = posesInfoFull[0].getSophusPose()
+                                           * bundleAdjustedPoses[0].getSE3().inverse()
+                                           * bundleAdjustedPoses[i].getSE3();
 
                     computedPoses.precision(std::numeric_limits<double>::max_digits10);
                     computedPoses << timestampsToFind[i] << ' ';
+
                     const auto to = poseSE3.translation();
                     for (int j = 0; j < 3; ++j) {
                         computedPoses << to[j] << ' ';
@@ -236,34 +217,30 @@ void testReconstruction(
             double meanErrorL2IRLS = 0;
 
             {
+                assert(!posesFullInfoBA.empty());
+                auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
+                                                                      biggestComponent->getIndexFixedPose());
+                std::cout << "========================BA report:=========================" << std::endl;
+                std::cout << informationErrors.rotationError << "------------------------------------" << std::endl;
+                std::cout << informationErrors.translationError << std::endl;
 
-                {
-
-                    assert(!posesFullInfoBA.empty());
-                    auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
-                                                                          biggestComponent->getIndexFixedPose());
-                    std::cout << "========================BA report:=========================" << std::endl;
-                    std::cout << informationErrors.rotationError << "------------------------------------" << std::endl;
-                    std::cout << informationErrors.translationError << std::endl;
-
-                    meanErrorRotBA = informationErrors.rotationError.MEAN;
-                    meanErrorL2BA = informationErrors.translationError.MEAN;
-                }
-                {
-
-                    assert(!posesFullInfoIRLS.empty());
-                    auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoIRLS,
-                                                                          biggestComponent->getIndexFixedPose());
-
-                    std::cout << "========================IRLS report:=========================" << std::endl;
-                    std::cout << informationErrors.rotationError << "------------------------------------" << std::endl;
-                    std::cout << informationErrors.translationError << std::endl;
-
-                    meanErrorL2IRLS = informationErrors.translationError.MEAN;
-                    meanErrorRotIRLS = informationErrors.rotationError.MEAN;
-                }
-
+                meanErrorRotBA = informationErrors.rotationError.MEAN;
+                meanErrorL2BA = informationErrors.translationError.MEAN;
             }
+            {
+
+                assert(!posesFullInfoIRLS.empty());
+                auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoIRLS,
+                                                                      biggestComponent->getIndexFixedPose());
+
+                std::cout << "========================IRLS report:=========================" << std::endl;
+                std::cout << informationErrors.rotationError << "------------------------------------" << std::endl;
+                std::cout << informationErrors.translationError << std::endl;
+
+                meanErrorL2IRLS = informationErrors.translationError.MEAN;
+                meanErrorRotIRLS = informationErrors.rotationError.MEAN;
+            }
+
 
             if (showVisualization3D) {
                 gdr::ModelCreationHandler modelCreationHandler(biggestComponent->getPoseGraph());
@@ -273,10 +250,11 @@ void testReconstruction(
 
             assert(bundleAdjustedPoses.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);
 
-            ASSERT_LE(meanErrorRotBA, errorTresholdR);
             ASSERT_LE(meanErrorL2BA, errorTresholdT);
+            ASSERT_LE(meanErrorL2IRLS, errorTresholdT);
+//            ASSERT_LE(meanErrorRotBA, errorTresholdR);
 
-            ASSERT_LE(meanErrorRotBA, meanErrorRotIRLS * coefficientR);
+//            ASSERT_LE(meanErrorRotBA, meanErrorRotIRLS * coefficientR);
             ASSERT_LE(meanErrorL2BA, meanErrorL2IRLS * coefficientT);
 
         }
@@ -298,35 +276,12 @@ TEST(testBAOptimized, visualizationDesk98) {
 
     std::string assocFile = "assoc.txt";
 
-//    testReconstruction("fr1_desk_full", 573, 1,
-//                       0.04, 0.04,
-//                       kinectCamera,
-//                       paramsRansacDefault,
-//                       assocFile);
-
-
-//    testReconstruction("fr1_desk_short", 4,
-//                       1, 0.04, 0.04,
-//                       kinectCamera, paramsRansacDefault, assocFile);
-
-//    testReconstruction("copyroom_multiplied_by_5", 20, 1,
-//                       0.04, 0.04,
-//                       structureIoCamera);
-
-
-
-//    testReconstruction("plant_sampled_19_3", 19, 3,
-//                       0.04, 0.04,
-//                       kinectCamera,
-//                       paramsRansacDefault,
-//                       assocFile);
-
-
-    testReconstruction("desk1_sampled_98_6", 98, 6,
+    testReconstruction("plant_sampled_19_3",
                        0.04, 0.04,
                        kinectCamera,
                        paramsRansacDefault,
                        assocFile);
+
 }
 
 int main(int argc, char *argv[]) {

@@ -3,9 +3,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "Evaluator.h"
-#include "ReaderTum.h"
-#include "ClosestMatchFinder.h"
+#include "readerDataset/readerTUM/Evaluator.h"
+#include "readerDataset/readerTUM/ReaderTum.h"
+#include "readerDataset/readerTUM/ClosestMatchFinder.h"
 
 #include <algorithm>
 
@@ -106,9 +106,9 @@ namespace gdr {
         SE3 transformation(Eigen::umeyama(pointsGroundTruth, pointsTrajectory));
 
         for (auto &pose: posesMatchedGroundTruth) {
-            SE3 alignedGroundtruthPose(transformation * pose.getSophusPose());
+            SE3 alignedGroundTruthPose(transformation * pose.getSophusPose());
 
-            pose = PoseFullInfo(pose.getTimestamp(), alignedGroundtruthPose);
+            pose = PoseFullInfo(pose.getTimestamp(), alignedGroundTruthPose);
         }
 
         for (int pose = 0; pose < posesMatchedGroundTruth.size(); ++pose) {
