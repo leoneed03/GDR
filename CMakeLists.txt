@@ -210,7 +210,8 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/computationHandlers/ModelCreationHandler.cpp
     ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/Evaluator.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PosesForEvaluation.cpp
-    ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.cpp)
+    ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.cpp
+)
 
 add_subdirectory(lib)
 
