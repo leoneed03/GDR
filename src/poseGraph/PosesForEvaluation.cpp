@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "PosesForEvaluation.h"
+#include "poseGraph/PosesForEvaluation.h"
 
 namespace gdr {
 

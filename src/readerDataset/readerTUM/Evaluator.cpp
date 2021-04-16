@@ -200,7 +200,10 @@ namespace gdr {
         std::sort(values.begin(), values.end());
     }
 
-    double Evaluator::median(const std::vector<double> &values) {
+    double Evaluator::median(const std::vector<double> &valuesNotSorted) {
+
+        auto values(valuesNotSorted);
+        std::sort(values.begin(), values.end());
         assert(std::is_sorted(values.begin(), values.end()));
 
         assert(!values.empty());

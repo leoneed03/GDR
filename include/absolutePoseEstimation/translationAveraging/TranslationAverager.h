@@ -45,7 +45,8 @@ namespace gdr {
              const Vectors3d &translationsGuess,
              bool &success,
              int numOfIterations,
-             double epsilonIRLS);
+             double epsilonIRLS,
+             bool printProgressToCout);
 
         static std::vector<TranslationMeasurement> getInversedTranslationMeasurements(
                 const std::vector<TranslationMeasurement> &relativeTranslations,
@@ -71,7 +72,8 @@ namespace gdr {
                                 const Vectors3d &absoluteTranslations,
                                 bool &successIRLS,
                                 int numOfIterations = 5,
-                                double epsilonWeightIRLS = 1e-6);
+                                double epsilonWeightIRLS = 1e-6,
+                                bool printProgressToCout = false);
 
         /**
          * Compute L2-solution for sparse linear problem

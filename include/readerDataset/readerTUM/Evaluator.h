@@ -62,11 +62,11 @@ namespace gdr {
 
         void initFromPosesVector(const std::vector<PoseFullInfo> &poses);
 
+    public:
         static double median(const std::vector<double> &values);
 
         static void sort(std::vector<double> &values);
 
-    public:
         Evaluator(const std::string &groundtruthFile);
 
         Evaluator(const std::vector<PoseFullInfo> &poses);

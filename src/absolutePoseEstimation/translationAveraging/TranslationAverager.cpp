@@ -129,7 +129,8 @@ namespace gdr {
                               const Vectors3d &translationsGuess,
                               bool &success,
                               int numOfIterations,
-                              double epsilonIRLS) {
+                              double epsilonIRLS,
+                              bool printProgressToCout) {
 
         success = false;
 
@@ -157,8 +158,12 @@ namespace gdr {
 
             Vectors3d residuals = b - (SparseMatrixClass(systemMatrix) * bestSolutionAbsoluteTranslations);
 
-            if ((residuals.getVectorRaw() - prevResiduals.getVectorRaw()).isZero()) {
-                std::cout << "IRLS CONVERGED, iteration: " << iteration << std::endl;
+            if ((residuals.getVectorRaw() - prevResiduals.getVectorRaw()).norm() <
+                std::numeric_limits<double>::epsilon()) {
+
+                if (printProgressToCout) {
+                    std::cout << "IRLS CONVERGED, iteration: " << iteration << std::endl;
+                }
 
                 return bestSolutionAbsoluteTranslations;
             }
@@ -203,7 +208,8 @@ namespace gdr {
                                                  const Vectors3d &absoluteTranslations,
                                                  bool &successIRLS,
                                                  int numOfIterations,
-                                                 double epsilonWeightIRLS) {
+                                                 double epsilonWeightIRLS,
+                                                 bool printProgressToCout) {
 
         std::vector<TranslationMeasurement> relativeTranslationsInversed = getInversedTranslationMeasurements(
                 relativeTranslations,
@@ -220,7 +226,9 @@ namespace gdr {
                     weightMatrixSparse,
                     absoluteTranslations,
                     successIRLS,
-                    numOfIterations, epsilonWeightIRLS);
+                    numOfIterations,
+                    epsilonWeightIRLS,
+                    printProgressToCout);
     }
 
     Vectors3d
