@@ -35,11 +35,11 @@ namespace gdr {
     std::ostream &operator<<(const std::ostream &os, const ErrorInformation &info) {
 
         std::cout << info.nameError << ".rmse   " << info.RMSE << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".mean   " << info.MEAN << " " << info.typeOfMeasurement  << std::endl;
-        std::cout << info.nameError << ".median " << info.MEDIAN << " " << info.typeOfMeasurement  << std::endl;
-        std::cout << info.nameError << ".std    " << info.STD << " " << info.typeOfMeasurement  << std::endl;
-        std::cout << info.nameError << ".min    " << info.MINERR << " " << info.typeOfMeasurement  << std::endl;
-        std::cout << info.nameError << ".max    " << info.MAXERR << " " << info.typeOfMeasurement  << std::endl;
+        std::cout << info.nameError << ".mean   " << info.MEAN << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".median " << info.MEDIAN << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".std    " << info.STD << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".min    " << info.MINERR << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".max    " << info.MAXERR << " " << info.typeOfMeasurement << std::endl;
     }
 
     struct ErrorRotationTranslation {

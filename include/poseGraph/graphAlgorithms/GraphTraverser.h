@@ -14,7 +14,7 @@
 namespace gdr {
     class GraphTraverser {
     public:
-        // TODO: depend on same interface for ConnectedComponent and CorrespondenceGraph:
+        // TODO: depend on same class PoseGraph
         // getNumberOfPoses()
         // getConnectionsFromVertex(indexFromDestination)
         // getVertex(poseGlobalIndex)

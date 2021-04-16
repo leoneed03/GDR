@@ -211,8 +211,6 @@ namespace gdr {
                 // depth error computation (noise modeled as sigma = a * depth^2 [meters])
                 {
                     T normResidual = ceres::abs(T(observedDepth) - computedDepth);
-//                    normResidual = LossFunctionHuber::evaluate<T>(normResidual / T(deviationDividerDepth),
-//                                                                  T(deviationEstimationNormalizedDepth));
                     normResidual = LossFunctionTukey::evaluate<T>(normResidual / T(deviationDividerDepth),
                                                                   T(deviationEstimationNormalizedDepth));
                     residuals[1] = ceres::sqrt(normResidual);
@@ -256,9 +254,11 @@ namespace gdr {
 
     public:
         int getMaxNumberIterations() const;
+
         int getMaxNumberThreads() const;
 
         void setMaxNumberIterations(int iterationsNumber);
+
         void setMaxNumberThreads(int numberOfThreads);
 
     };

@@ -78,7 +78,7 @@ set(GTSAM_INCLUDE_DIRS
 
 set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/directoryTraversing/DirectoryReader.h
-    ${PROJECT_SOURCE_DIR}/include/poseGraph/VertexCG.h
+    ${PROJECT_SOURCE_DIR}/include/poseGraph/VertexPose.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/CorrespondenceGraph.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/RelativeSE3.h
     ${PROJECT_SOURCE_DIR}/include/cameraModel/CameraRGBD.h
@@ -152,7 +152,7 @@ set(GDR_HEADER_FILES
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/directoryTraversing/DirectoryReader.cpp
-    ${PROJECT_SOURCE_DIR}/src/poseGraph/VertexCG.cpp
+    ${PROJECT_SOURCE_DIR}/src/poseGraph/VertexPose.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/CorrespondenceGraph.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/RelativeSE3.cpp
     ${PROJECT_SOURCE_DIR}/src/cameraModel/CameraRGBD.cpp
@@ -203,7 +203,6 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/parametrization/SparseMatrixClass.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativeRotationError.cpp
     ${PROJECT_SOURCE_DIR}/src/readerDataset/readerBundleFusion/ReaderBundleFusion.cpp
-    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/ClosestMatchFinder.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointMatches.cpp
     ${PROJECT_SOURCE_DIR}/src/cameraModel/MeasurementErrorDeviationEstimators.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PoseGraph.cpp

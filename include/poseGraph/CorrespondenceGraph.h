@@ -9,7 +9,7 @@
 #include "poseGraph/PoseGraph.h"
 
 #include "sparsePointCloud/CloudProjector.h"
-#include "VertexCG.h"
+#include "VertexPose.h"
 #include "parametrization/RelativeSE3.h"
 #include "cameraModel/CameraRGBD.h"
 #include "keyPointDetectionAndMatching/IFeatureDetectorMatcher.h"
@@ -31,8 +31,6 @@ namespace gdr {
 
         std::vector<std::vector<Match>> matches;
 
-        const std::string relativePosesFileG2o = "relativeRotations.txt";
-        const std::string absoluteRotationsFileG2o = "absoluteRotations.txt";
         std::vector<std::string> imagesRgb;
         std::vector<std::string> imagesD;
 
@@ -44,7 +42,8 @@ namespace gdr {
                             const std::vector<std::string> &associatedImagesD,
                             const CameraRGBD &cameraDefault);
 
-        const Match &getMatch(int indexFromDestDestination, int indexInMatchListToBeTransformedCanBeComputed) const;
+        const Match &getMatch(int indexFromDestDestination,
+                              int indexInMatchListToBeTransformedCanBeComputed) const;
 
         void decreaseDensity(int maxVertexDegree = 80);
 
@@ -57,21 +56,17 @@ namespace gdr {
 
         void setVertexCamera(int vertexIndex, const CameraRGBD &camera);
 
-        void addVertex(const VertexCG &vertex);
-
-        const std::string &getPathRelativePoseFile() const;
-
-        const std::string &getPathAbsoluteRotationsFile() const;
+        void addVertex(const VertexPose &vertex);
 
         const KeyPointMatches &getInlierObservedPoints() const;
 
-        const VertexCG &getVertex(int vertexNumber) const;
+        const VertexPose &getVertex(int vertexNumber) const;
 
         const std::vector<RelativeSE3> &getConnectionsFromVertex(int vertexNumber) const;
 
         const std::vector<std::vector<Match>> &getKeyPointMatches() const;
 
-        const std::vector<VertexCG> &getVertices() const;
+        const std::vector<VertexPose> &getVertices() const;
 
         const CameraRGBD &getCameraDefault() const;
 

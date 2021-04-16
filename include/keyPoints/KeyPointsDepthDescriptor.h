@@ -7,6 +7,7 @@
 #define GDR_KEYPOINTSDEPTHDESCRIPTOR_H
 
 #include "KeyPoint2DAndDepth.h"
+
 #include <vector>
 
 namespace gdr {

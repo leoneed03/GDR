@@ -34,7 +34,7 @@ namespace gdr {
         // so they are locally sequentially packed [0.. component.size() - 1]
 
         // components container
-        std::vector<std::vector<VertexCG>> connectedComponentsVertices(components.size());
+        std::vector<std::vector<VertexPose>> connectedComponentsVertices(components.size());
 
         // relative poses SE3 containers
         // each vector element represents one connected component connection (edges)
@@ -52,7 +52,7 @@ namespace gdr {
 
         for (int poseGlobalIndex = 0; poseGlobalIndex < numberOfVerticesCG; ++poseGlobalIndex) {
 
-            VertexCG poseInsideConnectedComponent(correspondenceGraph.getVertex(poseGlobalIndex));
+            VertexPose poseInsideConnectedComponent(correspondenceGraph.getVertex(poseGlobalIndex));
 
             int componentNumber = componentNumberByPose[poseGlobalIndex];
             int localIndexInsideComponent = connectedComponentsVertices[componentNumber].size();

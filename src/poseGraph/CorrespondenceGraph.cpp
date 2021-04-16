@@ -114,12 +114,12 @@ namespace gdr {
         return cameraDefault;
     }
 
-    void CorrespondenceGraph::addVertex(const VertexCG &vertex) {
+    void CorrespondenceGraph::addVertex(const VertexPose &vertex) {
 
         poseGraph.addPoseVertex(vertex);
     }
 
-    const std::vector<VertexCG> &CorrespondenceGraph::getVertices() const {
+    const std::vector<VertexPose> &CorrespondenceGraph::getVertices() const {
 
         return poseGraph.getPoseVertices();
     }
@@ -152,20 +152,12 @@ namespace gdr {
         return poseGraph.getRelativePosesFrom(vertexNumber);
     }
 
-    const VertexCG &CorrespondenceGraph::getVertex(int vertexNumber) const {
+    const VertexPose &CorrespondenceGraph::getVertex(int vertexNumber) const {
         return poseGraph.getPoseVertex(vertexNumber);
     }
 
     const KeyPointMatches &
     CorrespondenceGraph::getInlierObservedPoints() const {
         return inlierCorrespondencesPoints;
-    }
-
-    const std::string &CorrespondenceGraph::getPathRelativePoseFile() const {
-        return relativePosesFileG2o;
-    }
-
-    const std::string &CorrespondenceGraph::getPathAbsoluteRotationsFile() const {
-        return absoluteRotationsFileG2o;
     }
 }

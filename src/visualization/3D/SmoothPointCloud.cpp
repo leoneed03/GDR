@@ -19,7 +19,8 @@
 namespace gdr {
 
 
-    std::vector<PointXYZRGBfloatUchar> SmoothPointCloud::getPointCloudXYZRGBFromPose(const VertexCG &poseToBeRegistered) {
+    std::vector<PointXYZRGBfloatUchar>
+    SmoothPointCloud::getPointCloudXYZRGBFromPose(const VertexPose &poseToBeRegistered) {
         double coeffDepth = poseToBeRegistered.getCamera().getDepthPixelDivider();
 
         cv::Mat depthImage = cv::imread(poseToBeRegistered.getPathDImage(), cv::IMREAD_ANYDEPTH);
@@ -62,7 +63,7 @@ namespace gdr {
     }
 
 
-    int SmoothPointCloud::registerPointCloudFromImages(const std::vector<VertexCG> &posesToBeRegistered,
+    int SmoothPointCloud::registerPointCloudFromImages(const std::vector<VertexPose> &posesToBeRegistered,
                                                        bool showVisualization,
                                                        float voxelSizeX,
                                                        float voxelSizeY,

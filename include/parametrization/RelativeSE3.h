@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
 
-#include "poseGraph/VertexCG.h"
+#include "poseGraph/VertexPose.h"
 
 namespace gdr {
 

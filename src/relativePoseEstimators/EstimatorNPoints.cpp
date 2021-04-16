@@ -11,7 +11,6 @@ namespace gdr {
                                 const Eigen::Matrix4Xd &destinationPoints,
                                 const CameraRGBD &cameraIntrToBeTransformed,
                                 const CameraRGBD &cameraIntrDestination) const {
-
         int dim = 3;
         int numPoints = toBeTransformedPoints.cols();
         int minNumPoints = 3;

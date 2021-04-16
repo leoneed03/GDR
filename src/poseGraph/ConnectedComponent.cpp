@@ -7,27 +7,21 @@
 #include "poseGraph/ConnectedComponent.h"
 #include "parametrization/RelativeSE3.h"
 #include "parametrization/Point3d.h"
-#include "bundleAdjustment/IBundleAdjuster.h"
-#include "bundleAdjustment/BundleAdjuster.h"
 #include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
-#include "absolutePoseEstimation/translationAveraging/TranslationMeasurement.h"
 #include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 
 #include <fstream>
 #include <boost/filesystem.hpp>
 
-#include "sparsePointCloud/CloudProjector.h"
-
 namespace gdr {
 
     ConnectedComponentPoseGraph::ConnectedComponentPoseGraph(
-            const std::vector<VertexCG> &absolutePosesToSet,
+            const std::vector<VertexPose> &absolutePosesToSet,
             const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
             const KeyPointMatches &newInlierPointCorrespondences,
-            int componentNumberToSet
-    ) :
-        inlierPointCorrespondences(newInlierPointCorrespondences),
-        componentNumber(componentNumberToSet) {
+            int componentNumberToSet) :
+            inlierPointCorrespondences(newInlierPointCorrespondences),
+            componentNumber(componentNumberToSet) {
 
         poseGraph = PoseGraph(absolutePosesToSet, edgesLocalIndicesRelativePoses);
         assert(getNumberOfPoses() > 0);
@@ -108,7 +102,7 @@ namespace gdr {
         return inlierPointCorrespondences;
     }
 
-    const VertexCG &ConnectedComponentPoseGraph::getVertex(int vertexNumber) const {
+    const VertexPose &ConnectedComponentPoseGraph::getVertex(int vertexNumber) const {
         return poseGraph.getPoseVertex(vertexNumber);
     }
 
@@ -116,7 +110,7 @@ namespace gdr {
         poseGraph.setRotationSO3(poseIndex, rotationSO3);
     }
 
-    const std::vector<VertexCG> &ConnectedComponentPoseGraph::getVertices() const {
+    const std::vector<VertexPose> &ConnectedComponentPoseGraph::getVertices() const {
         return poseGraph.getPoseVertices();
     }
 
@@ -150,7 +144,7 @@ namespace gdr {
         std::vector<SE3> absolutePosesToReturn;
         absolutePosesToReturn.reserve(getNumberOfPoses());
 
-        for (const auto& vertex: poseGraph.getPoseVertices()) {
+        for (const auto &vertex: poseGraph.getPoseVertices()) {
             absolutePosesToReturn.emplace_back(vertex.getAbsolutePoseSE3());
         }
 

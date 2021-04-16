@@ -12,6 +12,7 @@
 
 namespace gdr {
     namespace fs = boost::filesystem;
+
     class ReaderBundleFusion {
         std::string pathToBundleFusionDataset;
         std::string pathToSaveLikeTumDataset;
@@ -19,7 +20,9 @@ namespace gdr {
         std::string depthDir = "depth";
     public:
 
-        enum class IMAGE_TYPES {RGB, DEPTH, POSE, OTHER};
+        enum class IMAGE_TYPES {
+            RGB, DEPTH, POSE, OTHER
+        };
 
         IMAGE_TYPES getImageType(const std::string &fullPath);
 

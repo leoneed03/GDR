@@ -32,7 +32,8 @@ namespace gdr {
 
         std::vector<Point3d> computedPointsGlobalCoordinates() override;
 
-        const std::vector<std::unordered_map<int, KeyPointInfo>> &getKeyPointInfoByPoseNumberAndPointClass() const override;
+        const std::vector<std::unordered_map<int, KeyPointInfo>> &
+        getKeyPointInfoByPoseNumberAndPointClass() const override;
 
         //TODO: class wrapper for cv::Mat
         std::vector<cv::Mat> showPointsReprojectionError(const std::vector<Point3d> &pointsGlobalCoordinates,
@@ -43,7 +44,7 @@ namespace gdr {
                                                          bool drawCirclesKeyPoints = false,
                                                          double quantil = 0.5) const override;
 
-        void setPoses(const std::vector<SE3>& poses) override;
+        void setPoses(const std::vector<SE3> &poses) override;
 
         void setPoints(const std::vector<Point3d> &points) override;
 

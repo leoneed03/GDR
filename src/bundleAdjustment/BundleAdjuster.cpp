@@ -24,8 +24,10 @@ namespace gdr {
                 const auto &camera = cameraModelByPoseNumber[currPose];
                 const auto poseTransformation = getSE3TransformationMatrixByPoseNumber(currPose);
                 const auto point3d = getPointVector4dByPointGlobalIndex(currPoint);
+
                 Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation.inverse().matrix3x4() * point3d;
                 Eigen::Vector3d imageCoordinates = camera.getIntrinsicsMatrix3x3() * localCameraCoordinatesOfPoint;
+
                 double computedX = imageCoordinates[0] / imageCoordinates[2];
                 double computedY = imageCoordinates[1] / imageCoordinates[2];
                 double computedDepth = localCameraCoordinatesOfPoint[2];
@@ -51,11 +53,6 @@ namespace gdr {
                 double rawReprojError = errorReproj.lpNorm<2>();
                 double reprojErrorToUse = performNormalizing ? normalizedReprojError : rawReprojError;
 
-                //TODO: delete this assert
-                assert(std::abs(normalizedReprojError -
-                                rawReprojError / (0.987 * keyPointInfo.getScale())) <
-                       10 * std::numeric_limits<double>::epsilon());
-
                 errorsReprojectionXY.emplace_back(reprojErrorToUse);
 
                 double depthError = std::abs(computedDepth - keyPointInfo.getDepth());
@@ -64,11 +61,6 @@ namespace gdr {
                                               (dividerDepth)(keyPointInfo.getDepth(),
                                                              measurementEstimators.getParameterNoiseModelDepth());
                 double depthErrorToUse = performNormalizing ? normalizedErrorDepth : depthError;
-
-                //TODO: delete this assert
-                assert(std::abs(normalizedErrorDepth -
-                                depthError / (0.003331 * (keyPointInfo.getDepth() * keyPointInfo.getDepth()))) <
-                       10 * std::numeric_limits<double>::epsilon());
 
                 errorsDepth.emplace_back(depthErrorToUse);
             }
@@ -252,18 +244,9 @@ namespace gdr {
                                                                    measurementEstimators.getParameterNoiseModelReprojection());
 
 
-                //TODO: delete this assert
-                assert(std::abs(deviationEstReprojByScale - (0.987 * keyPointInfo.getScale())) <
-                       10 * std::numeric_limits<double>::epsilon());
-
                 const auto &dividerDepth = measurementEstimators.getDividerDepthErrorEstimator();
                 double deviationEstDepthByDepth = (dividerDepth)(keyPointInfo.getDepth(),
                                                                  measurementEstimators.getParameterNoiseModelDepth());
-
-                //TODO: delete this assert
-                assert(std::abs(
-                        deviationEstDepthByDepth - (0.003331 * (keyPointInfo.getDepth() * keyPointInfo.getDepth()))) <
-                       10 * std::numeric_limits<double>::epsilon());
 
                 ceres::CostFunction *cost_function =
                         ReprojectionWithDepthError::Create(observedX, observedY, keyPointInfo.getDepth(),

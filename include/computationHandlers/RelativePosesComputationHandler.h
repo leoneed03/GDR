@@ -72,8 +72,8 @@ namespace gdr {
          *      also stores refined estimation
          * @param[out] refinementSuccess true if refinement was successful
          */
-        int refineRelativePose(const VertexCG &vertexToBeTransformed,
-                               const VertexCG &vertexDestination,
+        int refineRelativePose(const VertexPose &vertexToBeTransformed,
+                               const VertexPose &vertexDestination,
                                const KeyPointMatches &keyPointMatches,
                                SE3 &initEstimationRelPos,
                                bool &refinementSuccess) const;

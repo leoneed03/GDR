@@ -48,7 +48,7 @@ namespace gdr {
 
         std::set<int> initialIndices() const;
 
-        const std::vector<VertexCG> &getVertices() const;
+        const std::vector<VertexPose> &getVertices() const;
 
         std::vector<double> getPosesTimestamps() const;
 

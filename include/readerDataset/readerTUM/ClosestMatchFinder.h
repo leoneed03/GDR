@@ -9,6 +9,7 @@
 #include <map>
 
 namespace gdr {
+
     class ClosestMatchFinder {
     public:
         template<class K, class V>

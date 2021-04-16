@@ -11,7 +11,6 @@
 #include "readerDataset/readerTUM/ImagesAssociator.h"
 #include "readerDataset/readerTUM/ClosestMatchFinder.h"
 
-
 namespace gdr {
 
     namespace fs = boost::filesystem;

@@ -3,8 +3,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-
-
 #ifndef GDR_IMAGEDRAWER_H
 #define GDR_IMAGEDRAWER_H
 

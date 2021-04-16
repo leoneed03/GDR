@@ -113,7 +113,8 @@ namespace gdr {
 
         std::vector<SO3> absoluteRotations = RotationAverager::shanonAveraging(
                 getRelativeRotationsVector(),
-                getPathRelativePoseFile());
+                getPathRelativePoseFile(),
+                getIndexFixedPose());
 
         for (int i = 0; i < getNumberOfPoses(); ++i) {
             connectedComponent->setRotation(i, SO3(absoluteRotations[i].getRotationSophus()));
@@ -153,8 +154,10 @@ namespace gdr {
                 RotationRobustOptimizerCreator::getRefiner(
                         RotationRobustOptimizerCreator::RobustParameterType::DEFAULT);
 
-        std::vector<SO3> optimizedPosesRobust = rotationOptimizer->getOptimizedOrientation(shonanOptimizedAbsolutePoses,
-                                                                                           relativeRotationsAfterICP);
+        std::vector<SO3> optimizedPosesRobust =
+                rotationOptimizer->getOptimizedOrientation(shonanOptimizedAbsolutePoses,
+                                                           relativeRotationsAfterICP,
+                                                           connectedComponent->getPoseIndexWithMaxConnectivity());
 
         assert(getNumberOfPoses() == optimizedPosesRobust.size());
 
@@ -337,7 +340,7 @@ namespace gdr {
         return connectedComponent->initialIndices();
     }
 
-    const std::vector<VertexCG> &AbsolutePosesComputationHandler::getVertices() const {
+    const std::vector<VertexPose> &AbsolutePosesComputationHandler::getVertices() const {
         return connectedComponent->getVertices();
     }
 
@@ -406,6 +409,7 @@ namespace gdr {
     void AbsolutePosesComputationHandler::setRelativePosesFilePath(const std::string &pathRelPoses) {
         pathRelativePosesFile = pathRelPoses;
     }
+
     std::string AbsolutePosesComputationHandler::getPathRelativePoseFile() const {
         return pathRelativePosesFile;
     }

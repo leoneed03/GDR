@@ -30,7 +30,7 @@ namespace gdr {
 
         std::vector<SO3> getOptimizedOrientation(const std::vector<SO3> &orientations,
                                                  const std::vector<RotationMeasurement> &pairWiseRotations,
-                                                 int indexFixed = 0) override;
+                                                 int indexFixed) override;
 
         bool getPrintToConsole() const;
 

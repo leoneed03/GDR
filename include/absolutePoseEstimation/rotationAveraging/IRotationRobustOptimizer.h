@@ -13,11 +13,19 @@ namespace gdr {
 
     class IRotationRobustOptimizer {
     public:
-
+        /**
+         * Use robust kernel to optimize orientations using results of global averaging as initestimation
+         *
+         * @param orientations contains information about globally optimal "averaged" orientations
+         * @param pairwiseRelRotations relative rotations
+         * @param indexFixedPose pose which orientation is Id
+         *
+         * @returns vector of optimized orientations
+         */
         virtual std::vector<SO3> getOptimizedOrientation(
                 const std::vector<SO3> &orientations,
                 const std::vector<RotationMeasurement> &pairwiseRelRotations,
-                int indexFixedPose = 0) = 0;
+                int indexFixedPose) = 0;
 
         virtual ~IRotationRobustOptimizer() = default;
     };

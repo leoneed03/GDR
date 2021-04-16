@@ -10,7 +10,7 @@
 
 #include "parametrization/PoseFullInfo.h"
 
-#include "poseGraph/VertexCG.h"
+#include "poseGraph/VertexPose.h"
 
 namespace gdr {
 
@@ -18,14 +18,15 @@ namespace gdr {
 
         std::vector<PoseFullInfo> poses;
 
-        void initFromShift(const std::vector<VertexCG> &poses, const SE3 &applyFromRight);
+        void initFromShift(const std::vector<VertexPose> &poses, const SE3 &applyFromRight);
 
         void initFromShift(const std::vector<PoseFullInfo> &poses, const SE3 &applyFromRight);
+
     public:
 
         PosesForEvaluation(const std::vector<PoseFullInfo> &poses, const SE3 &applyFromRight);
 
-        PosesForEvaluation(const std::vector<VertexCG> &poses, const SE3 &applyFromRight);
+        PosesForEvaluation(const std::vector<VertexPose> &poses, const SE3 &applyFromRight);
 
         friend std::ostream &operator<<(std::ostream &os, const PosesForEvaluation &poses);
     };

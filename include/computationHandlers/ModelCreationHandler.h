@@ -10,8 +10,6 @@
 
 #include "visualization/3D/SmoothPointCloud.h"
 
-
-
 namespace gdr {
 
     class ModelCreationHandler {

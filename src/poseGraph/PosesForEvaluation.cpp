@@ -7,8 +7,7 @@
 
 namespace gdr {
 
-
-    void PosesForEvaluation::initFromShift(const std::vector<VertexCG> &posesToSet, const SE3 &applyFromRight) {
+    void PosesForEvaluation::initFromShift(const std::vector<VertexPose> &posesToSet, const SE3 &applyFromRight) {
 
         assert(!posesToSet.empty());
         for (const auto &poseToSet: posesToSet) {
@@ -19,7 +18,7 @@ namespace gdr {
         assert(posesToSet.size() == poses.size());
     }
 
-    PosesForEvaluation::PosesForEvaluation(const std::vector<VertexCG> &posesToSet, const SE3 &applyFromRight) {
+    PosesForEvaluation::PosesForEvaluation(const std::vector<VertexPose> &posesToSet, const SE3 &applyFromRight) {
 
         assert(!posesToSet.empty());
 

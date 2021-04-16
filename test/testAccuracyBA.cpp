@@ -28,7 +28,7 @@ void testReconstruction(
         const std::string &assocFile = "",
         int numberOfIterations = 1,
         bool printToConsole = false,
-        bool showVisualization3D = false,
+        bool showVisualization3D = true,
         bool savePointCloudPly = false,
         double minCoefficientOfBiggestComponent = 0.5,
         double coefficientR = 1.2,
@@ -215,7 +215,6 @@ void testReconstruction(
         }
 
 
-
         ASSERT_GE(bundleAdjustedPoses.size(), numberOfPosesInDataset * minCoefficientOfBiggestComponent);
 
         ASSERT_LE(meanErrorL2BA, errorTresholdT);
@@ -239,7 +238,6 @@ TEST(testBAOptimized, visualizationDesk98) {
 
     gdr::CameraRGBD kinectCamera(517.3, 318.6, 516.5, 255.3);
     kinectCamera.setDepthPixelDivider(5000.0);
-
 
     std::string assocFile = "assoc.txt";
 

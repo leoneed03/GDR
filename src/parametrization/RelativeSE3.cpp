@@ -5,7 +5,6 @@
 
 #include "parametrization/RelativeSE3.h"
 
-
 namespace gdr {
 
     int RelativeSE3::getIndexTo() const {

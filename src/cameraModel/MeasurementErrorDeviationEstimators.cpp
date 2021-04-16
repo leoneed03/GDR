@@ -13,11 +13,13 @@ namespace gdr {
             dividerReprojectionError(dividerReprojectionErrorEstimator),
             dividerDepthError(dividerDepthErrorEstimator) {}
 
-    const std::function<double(double, double)> &MeasurementErrorDeviationEstimators::getDividerDepthErrorEstimator() const {
+    const std::function<double(double, double)> &
+    MeasurementErrorDeviationEstimators::getDividerDepthErrorEstimator() const {
         return dividerDepthError;
     }
 
-    const std::function<double(double, double)> &MeasurementErrorDeviationEstimators::getDividerReprojectionEstimator() const {
+    const std::function<double(double, double)> &
+    MeasurementErrorDeviationEstimators::getDividerReprojectionEstimator() const {
         return dividerReprojectionError;
     }
 

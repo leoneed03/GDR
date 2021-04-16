@@ -9,6 +9,7 @@
 
 namespace gdr {
 
+    /** These methods are only used for degub purposes and will be removed in the future */
     int ImageDrawer::showKeyPointOnImage(const std::string &pathToRGBImage, const KeyPointInfo &keyPointInfo,
                                          int pointIndex, std::string pathToSave, std::string nameToSave) {
 
@@ -18,8 +19,6 @@ namespace gdr {
         cv::Mat imageWithKeyPoint = cv::imread(pathToRGBImage, cv::IMREAD_COLOR);
         cv::drawKeypoints(imageNoKeyPoint, {keyPointToShow}, imageWithKeyPoint);
 
-
-//        cv::namedWindow( );
         cv::imshow("Showing " + pathToRGBImage + " " + std::to_string(pointIndex), imageWithKeyPoint);
         cv::waitKey(0);
         return 0;
@@ -50,9 +49,6 @@ namespace gdr {
 
             int currentIndexKeyPoint = pairedIndexAndInfo.first;
 
-            if (currentIndexKeyPoint > maxIndexKeyPointToShow) {
-//                continue;
-            }
             keyPointsToShow.push_back(keyPointToShow);
             cv::putText(imageWithKeyPoint, //target image
                         std::to_string(currentIndexKeyPoint), //text
@@ -72,9 +68,6 @@ namespace gdr {
             double y = keyPointInfo.getY();
             int currentIndexKeyPoint = pairedIndexAndInfo.first;
 
-            if (currentIndexKeyPoint > maxIndexKeyPointToShow) {
-//                continue;
-            }
             cv::putText(imageWithKeyPoint, //target image
                         std::to_string(currentIndexKeyPoint), //text
                         cv::Point(x, y), //top-left position
@@ -84,9 +77,6 @@ namespace gdr {
                         1);
 
         }
-
-//        cv::imshow( "Showing " + pathToRGBImage + " ", imageWithKeyPoint);
-//        cv::waitKey(0);
 
         if (pathToSave.empty()) {
             return 0;
@@ -107,19 +97,19 @@ namespace gdr {
         // first image with keypoints
         cv::Mat imageNoKeyPointFirst = cv::imread(pathToRGBImageFirst, cv::IMREAD_COLOR);
         std::vector<cv::KeyPoint> keyPointsToShowFirst;
-        for (const auto& keyPointInfo: keyPointInfosFirstImage) {
+        for (const auto &keyPointInfo: keyPointInfosFirstImage) {
             cv::KeyPoint keyPointToShow(keyPointInfo.getX(), keyPointInfo.getY(), keyPointInfo.getScale());
             keyPointsToShowFirst.emplace_back(keyPointToShow);
         }
         // second image and keypoints
         cv::Mat imageNoKeyPointSecond = cv::imread(pathToRGBImageSecond, cv::IMREAD_COLOR);
         std::vector<cv::KeyPoint> keyPointsToShowSecond;
-        for (const auto& keyPointInfo: keyPointInfosSecondImage) {
+        for (const auto &keyPointInfo: keyPointInfosSecondImage) {
             cv::KeyPoint keyPointToShow(keyPointInfo.getX(), keyPointInfo.getY(), keyPointInfo.getScale());
             keyPointsToShowSecond.emplace_back(keyPointToShow);
         }
         std::vector<cv::DMatch> matches1to2;
-        for (const auto& match: matchesKeypoints) {
+        for (const auto &match: matchesKeypoints) {
             matches1to2.push_back(cv::DMatch(match.first, match.second, 0.01));
         }
 
@@ -130,7 +120,7 @@ namespace gdr {
                         outputImage);
 
 
-        cv::imshow( "Showing matches", outputImage);
+        cv::imshow("Showing matches", outputImage);
         cv::waitKey(0);
         return 0;
     }

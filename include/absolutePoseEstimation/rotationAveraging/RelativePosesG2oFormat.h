@@ -13,9 +13,9 @@
 namespace gdr {
 
     class RelativePosesG2oFormat {
-        std::vector <RotationMeasurement> relativeRotations;
+        std::vector<RotationMeasurement> relativeRotations;
     public:
-        RelativePosesG2oFormat(const std::vector <RotationMeasurement> &relativeRotationsToSet);
+        RelativePosesG2oFormat(const std::vector<RotationMeasurement> &relativeRotationsToSet);
 
         friend std::ostream &operator<<(std::ostream &os, const RelativePosesG2oFormat &rotationsG2o);
     };

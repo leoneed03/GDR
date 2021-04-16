@@ -125,7 +125,8 @@ namespace gdr {
             fs::path depthImagePath(depthImagePathString);
             bool found = true;
 
-            camerasDepthByPoseIndex.emplace_back(datasetDescriber.findCameraDepth(depthImagePath.filename().string(), found));
+            camerasDepthByPoseIndex.emplace_back(
+                    datasetDescriber.findCameraDepth(depthImagePath.filename().string(), found));
         }
 
         timestampsRgbDepthAssociated = timeStampsRgbDepth;
@@ -189,7 +190,7 @@ namespace gdr {
 
             assert(currentImage < camerasDepthByPoseIndex.size());
 
-            VertexCG currentVertex(currentImage,
+            VertexPose currentVertex(currentImage,
                                    camerasDepthByPoseIndex[currentImage],
                                    keyPointsDepthDescriptor,
                                    imagesRgb[currentImage],
@@ -576,8 +577,8 @@ namespace gdr {
         return KeyPointMatches(inlierCorrespondences);
     }
 
-    int RelativePosesComputationHandler::refineRelativePose(const VertexCG &vertexToBeTransformed,
-                                                            const VertexCG &vertexDestination,
+    int RelativePosesComputationHandler::refineRelativePose(const VertexPose &vertexToBeTransformed,
+                                                            const VertexPose &vertexDestination,
                                                             const KeyPointMatches &keyPointMatches,
                                                             SE3 &initEstimationRelPos,
                                                             bool &refinementSuccess) const {

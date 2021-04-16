@@ -14,7 +14,6 @@
 
 namespace gdr {
 
-
     keyPointsDepthDescriptor::keyPointsDepthDescriptor(const std::vector<KeyPoint2DAndDepth> &newKeypointsKnownDepth,
                                                        const std::vector<float> &newDescriptorsKnownDepth,
                                                        const std::vector<double> &newDepths) :

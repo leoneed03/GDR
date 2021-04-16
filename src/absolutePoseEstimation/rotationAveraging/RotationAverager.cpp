@@ -17,6 +17,7 @@ namespace gdr {
     std::vector<SO3> RotationAverager::shanonAveraging(
             const std::vector<RotationMeasurement> &relativeRotations,
             const std::string &pathToRelativeRotationsOut,
+            int indexPoseFixed,
             int maxDimension,
             bool printProgressToConsole) {
 
@@ -40,7 +41,7 @@ namespace gdr {
             gtsam::ShonanAveraging3 shonan(pathToRelativeRotationsOut);
             auto initial = shonan.initializeRandomly(rng);
 
-            auto result = shonan.run(initial);
+            auto result = shonan.run(initial, 3, maxDimension);
 
             boost::tie(inputGraph, posesInFile) = gtsam::load3D(pathToRelativeRotationsOut);
             auto priorModel = gtsam::noiseModel::Unit::Create(6);
@@ -58,6 +59,14 @@ namespace gdr {
             const gtsam::Pose3 &pose = p->value();
             const auto q = pose.rotation().toQuaternion();
             absoluteRotationsSO3.emplace_back(SO3(q));
+        }
+
+        assert(indexPoseFixed >= 0 && indexPoseFixed < absoluteRotationsSO3.size());
+
+        auto orientationZeroInversed = absoluteRotationsSO3[indexPoseFixed].inverse();
+
+        for (auto &orientation: absoluteRotationsSO3) {
+            orientation = orientationZeroInversed * orientation;
         }
 
         return absoluteRotationsSO3;

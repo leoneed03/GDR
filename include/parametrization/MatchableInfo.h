@@ -12,7 +12,6 @@
 #include "keyPoints/KeyPoint2DAndDepth.h"
 #include "cameraModel/CameraRGBD.h"
 
-
 namespace gdr {
 
     class MatchableInfo {
@@ -40,7 +39,7 @@ namespace gdr {
 
         const std::vector<KeyPoint2DAndDepth> getKeyPoints2D() const;
 
-        const CameraRGBD& getCameraRGB() const;
+        const CameraRGBD &getCameraRGB() const;
 
         int getImagePixelHeight() const;
 

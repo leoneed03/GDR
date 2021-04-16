@@ -8,20 +8,12 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-
 namespace gdr {
-
 
     ReaderBundleFusion::ReaderBundleFusion(const std::string &pathToBundleFusionDatasetToSet,
                                            const std::string &pathToSaveLikeTumToSet) :
             pathToBundleFusionDataset(pathToBundleFusionDatasetToSet),
-            pathToSaveLikeTumDataset(pathToSaveLikeTumToSet) {
-
-//        fs::path path(pathToBundleFusionDatasetToSet);
-//        for (fs::directory_iterator end_dir_it, it(path); it != end_dir_it; ++it) {
-//            std::cout << it->path().filename().string() << std::endl;
-//        }
-    }
+            pathToSaveLikeTumDataset(pathToSaveLikeTumToSet) {}
 
     ReaderBundleFusion::IMAGE_TYPES ReaderBundleFusion::getImageType(const std::string &fullPath) {
         const fs::path file(fullPath);
@@ -45,7 +37,6 @@ namespace gdr {
     }
 
 
-
     void ReaderBundleFusion::save(int maxNumberOfImages) {
 
         const fs::path directoryToSave(pathToSaveLikeTumDataset);
@@ -64,10 +55,6 @@ namespace gdr {
         std::vector<std::string> pathsToRGB;
         std::vector<std::string> pathsToD;
         std::vector<std::string> pathsToPoses;
-
-        int counterRgb = 0;
-        int counterD = 0;
-
 
         fs::path groundTruthFile = directoryToSave;
         groundTruthFile.append("groundtruth.txt");
@@ -96,7 +83,7 @@ namespace gdr {
         pathsToD.resize(maxNumberOfImages);
         pathsToPoses.resize(maxNumberOfImages);
 
-        for (const auto& pathToPoseInfo: pathsToPoses) {
+        for (const auto &pathToPoseInfo: pathsToPoses) {
             SE3 poseInfoSE3 = getGroundTruthPose(pathToPoseInfo);
             std::string timestamp = getTime(pathToPoseInfo);
             int timestampInt = std::stoi(timestamp);

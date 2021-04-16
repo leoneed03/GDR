@@ -10,7 +10,6 @@
 #include "keyPointDetectionAndMatching/KeyPointsAndDescriptors.h"
 #include "keyPointDetectionAndMatching/SiftModuleGPU.h"
 
-
 namespace gdr {
 
     void SiftModuleGPU::siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs) {

@@ -5,106 +5,106 @@
 
 #include "boost/filesystem.hpp"
 
-#include "poseGraph/VertexCG.h"
+#include "poseGraph/VertexPose.h"
 
 namespace gdr {
 
-    const std::vector<KeyPoint2DAndDepth> &VertexCG::getKeyPoints() const {
+    const std::vector<KeyPoint2DAndDepth> &VertexPose::getKeyPoints() const {
         return keypoints;
     }
 
-    const std::vector<float> &VertexCG::getDescriptors() const {
+    const std::vector<float> &VertexPose::getDescriptors() const {
         return descriptors;
     }
 
-    const std::vector<double> &VertexCG::getDepths() const {
+    const std::vector<double> &VertexPose::getDepths() const {
         return depths;
     }
 
-    std::string VertexCG::getPathRGBImage() const {
+    std::string VertexPose::getPathRGBImage() const {
         return pathToRGBimage;
     }
 
-    std::string VertexCG::getFilenameRGBImage() const {
+    std::string VertexPose::getFilenameRGBImage() const {
         boost::filesystem::path path(getPathRGBImage());
 
         return path.filename().string();
     }
 
-    std::string VertexCG::getPathDImage() const {
+    std::string VertexPose::getPathDImage() const {
         return pathToDimage;
     }
 
-    std::string VertexCG::getFilenameDImage() const {
+    std::string VertexPose::getFilenameDImage() const {
         boost::filesystem::path path(getPathDImage());
 
         return path.filename().string();
     }
 
-    const CameraRGBD &VertexCG::getCamera() const {
+    const CameraRGBD &VertexPose::getCamera() const {
         return cameraRgbd;
     }
 
-    int VertexCG::getIndex() const {
+    int VertexPose::getIndex() const {
         return index;
     }
 
 
-    void VertexCG::setRotation(const Sophus::SO3d &rotation) {
+    void VertexPose::setRotation(const Sophus::SO3d &rotation) {
         absolutePose.setRotation(rotation);
     }
 
-    void VertexCG::setRotation(const SO3 &rotation) {
+    void VertexPose::setRotation(const SO3 &rotation) {
         absolutePose.setRotation(rotation);
     }
 
-    void VertexCG::setRotation(const Eigen::Matrix3d &rotation) {
+    void VertexPose::setRotation(const Eigen::Matrix3d &rotation) {
         Eigen::Quaterniond quatRotation(rotation);
         absolutePose.setRotation(Sophus::SO3d(quatRotation.normalized()));
     }
 
-    void VertexCG::setRotation(const Eigen::Quaterniond &rotationQuatd) {
+    void VertexPose::setRotation(const Eigen::Quaterniond &rotationQuatd) {
         absolutePose.setRotation(Sophus::SO3d(rotationQuatd.normalized()));
     }
 
-    void VertexCG::setTranslation(const Eigen::Vector3d &translationToSet) {
+    void VertexPose::setTranslation(const Eigen::Vector3d &translationToSet) {
         absolutePose.setTranslation(translationToSet);
         double error = (absolutePose.getTranslation() - translationToSet).norm();
         int coeffForEps = 100;
         assert(error < coeffForEps * std::numeric_limits<double>::epsilon());
     }
 
-    void VertexCG::setRotationTranslation(const Eigen::Matrix4d &eigenRt) {
+    void VertexPose::setRotationTranslation(const Eigen::Matrix4d &eigenRt) {
         absolutePose = SE3(Sophus::SE3d::fitToSE3(eigenRt));
     }
 
-    void VertexCG::setRotationTranslation(const Sophus::SE3d &sophusRt) {
+    void VertexPose::setRotationTranslation(const Sophus::SE3d &sophusRt) {
         absolutePose = SE3(sophusRt);
     }
 
-    Eigen::Matrix4d VertexCG::getEigenMatrixAbsolutePose4d() const {
+    Eigen::Matrix4d VertexPose::getEigenMatrixAbsolutePose4d() const {
         return absolutePose.getSE3().matrix();
     }
 
-    const SE3 &VertexCG::getAbsolutePoseSE3() const {
+    const SE3 &VertexPose::getAbsolutePoseSE3() const {
         return absolutePose;
     }
 
 
-    const std::vector<KeyPoint2DAndDepth> &VertexCG::getKeyPoints2D() const {
+    const std::vector<KeyPoint2DAndDepth> &VertexPose::getKeyPoints2D() const {
         return keypoints;
     }
 
-    Eigen::Quaterniond VertexCG::getRotationQuat() const {
+    Eigen::Quaterniond VertexPose::getRotationQuat() const {
         return absolutePose.getSE3().unit_quaternion();
     }
 
 
-    Sophus::SE3d VertexCG::getAbsolutePoseSophus() const {
+    Sophus::SE3d VertexPose::getAbsolutePoseSophus() const {
         return absolutePose.getSE3();
     }
 
-    VertexCG::VertexCG(int newIndex,
+    VertexPose::VertexPose(int newIndex,
                        const CameraRGBD &newCameraRgbd,
                        const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
                        const std::string &newPathRGB,
@@ -119,33 +119,33 @@ namespace gdr {
                                                 pathToDimage(newPathD),
                                                 timestamp(timestampToSet) {}
 
-    void VertexCG::setIndex(int newIndex) {
+    void VertexPose::setIndex(int newIndex) {
         index = newIndex;
     }
 
-    void VertexCG::setAbsolutePoseSE3(const SE3 &absolutePoseToSet) {
+    void VertexPose::setAbsolutePoseSE3(const SE3 &absolutePoseToSet) {
         absolutePose = absolutePoseToSet;
     }
 
-    void VertexCG::setCamera(const CameraRGBD &camera) {
+    void VertexPose::setCamera(const CameraRGBD &camera) {
         cameraRgbd = camera;
     }
 
-    int VertexCG::getInitialIndex() const {
+    int VertexPose::getInitialIndex() const {
         return initialIndex;
     }
 
-    int VertexCG::getKeyPointsNumber() const {
+    int VertexPose::getKeyPointsNumber() const {
         return keypoints.size();
     }
 
-    const KeyPoint2DAndDepth &VertexCG::getKeyPoint(int keyPointIndex) const {
+    const KeyPoint2DAndDepth &VertexPose::getKeyPoint(int keyPointIndex) const {
         assert(keyPointIndexIsValid(keyPointIndex));
 
         return keypoints[keyPointIndex];
     }
 
-    bool VertexCG::keyPointIndexIsValid(int keyPointIndex) const {
+    bool VertexPose::keyPointIndexIsValid(int keyPointIndex) const {
         assert(keyPointIndex >= 0);
         assert(keyPointIndex < keypoints.size());
         int keyPointsNum = keypoints.size();
@@ -155,13 +155,13 @@ namespace gdr {
         return true;
     }
 
-    double VertexCG::getKeyPointDepth(int keyPointIndex) const {
+    double VertexPose::getKeyPointDepth(int keyPointIndex) const {
         assert(keyPointIndexIsValid(keyPointIndex));
 
         return depths[keyPointIndex];
     }
 
-    double VertexCG::getTimestamp() const {
+    double VertexPose::getTimestamp() const {
         return timestamp;
     }
 }

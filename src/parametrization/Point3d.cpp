@@ -7,7 +7,6 @@
 
 namespace gdr {
 
-
     Point3d::Point3d(const Eigen::Vector3d &pointEigenVectorXYZ, int newIndex) : x(pointEigenVectorXYZ[0]),
                                                                                  y(pointEigenVectorXYZ[1]),
                                                                                  z(pointEigenVectorXYZ[2]),

@@ -15,7 +15,6 @@ namespace gdr {
 
     namespace fs = boost::filesystem;
 
-
     std::vector<PoseFullInfo>
     ReaderTUM::getPoseInfoTimeTranslationOrientation(const std::string &pathToGroundTruthFile) {
 

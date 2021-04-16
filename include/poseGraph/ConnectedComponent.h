@@ -6,7 +6,7 @@
 #ifndef GDR_CONNECTEDCOMPONENT_H
 #define GDR_CONNECTEDCOMPONENT_H
 
-#include "VertexCG.h"
+#include "VertexPose.h"
 #include "poseGraph/PoseGraph.h"
 #include "poseGraph/PosesForEvaluation.h"
 
@@ -34,7 +34,7 @@ namespace gdr {
     public:
 
         ConnectedComponentPoseGraph(
-                const std::vector<VertexCG> &absolutePoses,
+                const std::vector<VertexPose> &absolutePoses,
                 const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
                 const KeyPointMatches &inlierPointCorrespondences,
                 int componentNumber);
@@ -57,9 +57,9 @@ namespace gdr {
 
         const std::vector<RelativeSE3> &getConnectionsFromVertex(int vertexNumber) const;
 
-        const std::vector<VertexCG> &getVertices() const;
+        const std::vector<VertexPose> &getVertices() const;
 
-        const VertexCG &getVertex(int vertexNumber) const;
+        const VertexPose &getVertex(int vertexNumber) const;
 
         int getNumberOfPoses() const;
 

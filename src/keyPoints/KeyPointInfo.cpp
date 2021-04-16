@@ -9,7 +9,6 @@
 #include "keyPoints/KeyPointInfo.h"
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
-
 namespace gdr {
 
     KeyPointInfo::KeyPointInfo(const KeyPoint2DAndDepth &keyPointToSet,

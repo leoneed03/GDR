@@ -8,21 +8,21 @@
 
 #include <vector>
 
-#include <poseGraph/VertexCG.h>
+#include <poseGraph/VertexPose.h>
 #include <parametrization/RelativeSE3.h>
 
 namespace gdr {
 
     class PoseGraph {
 
-        std::vector<VertexCG> absolutePoses;
+        std::vector<VertexPose> absolutePoses;
         std::vector<std::vector<RelativeSE3>> relativePoses;
 
     public:
 
         PoseGraph() = default;
 
-        PoseGraph(const std::vector<VertexCG> &poseVertices,
+        PoseGraph(const std::vector<VertexPose> &poseVertices,
                   const std::vector<std::vector<RelativeSE3>> &poseRelativeFactors);
 
         int size() const;
@@ -31,15 +31,15 @@ namespace gdr {
 
         void setCamera(int poseIndex, const CameraRGBD &cameraRgbd);
 
-        const VertexCG &getPoseVertex(int poseIndex) const;
+        const VertexPose &getPoseVertex(int poseIndex) const;
 
-        void addPoseVertex(const VertexCG &poseVertex);
+        void addPoseVertex(const VertexPose &poseVertex);
 
         void addFactorRelativePose(const RelativeSE3 &relativePose);
 
         const RelativeSE3 &getRelativePose(int indexFromDestination, int indexInAdjacencyList) const;
 
-        const std::vector<VertexCG> &getPoseVertices() const;
+        const std::vector<VertexPose> &getPoseVertices() const;
 
         const std::vector<RelativeSE3> &getRelativePosesFrom(int indexFromDestination) const;
 

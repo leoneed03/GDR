@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_VERTEXCG_H
-#define GDR_VERTEXCG_H
+#ifndef GDR_VERTEXPOSE_H
+#define GDR_VERTEXPOSE_H
 
 #include <vector>
 
@@ -20,7 +20,7 @@
 
 namespace gdr {
 
-    class VertexCG {
+    class VertexPose {
 
         CameraRGBD cameraRgbd;
         int index;
@@ -72,7 +72,7 @@ namespace gdr {
 
         const SE3 &getAbsolutePoseSE3() const;
 
-        VertexCG(int index,
+        VertexPose(int index,
                  const CameraRGBD &cameraRgbd,
                  const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
                  const std::string &pathRGB,

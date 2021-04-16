@@ -9,7 +9,7 @@
 #include "IRefinerRelativePose.h"
 
 #include "keyPoints/KeyPointMatches.h"
-#include "poseGraph/VertexCG.h"
+#include "poseGraph/VertexPose.h"
 
 namespace gdr {
 

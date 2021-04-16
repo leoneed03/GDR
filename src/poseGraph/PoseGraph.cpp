@@ -7,7 +7,7 @@
 
 namespace gdr {
 
-    PoseGraph::PoseGraph(const std::vector<VertexCG> &poseVertices,
+    PoseGraph::PoseGraph(const std::vector<VertexPose> &poseVertices,
                          const std::vector<std::vector<RelativeSE3>> &poseRelativeFactors) :
             absolutePoses(poseVertices),
             relativePoses(poseRelativeFactors) {
@@ -34,14 +34,14 @@ namespace gdr {
         absolutePoses[poseIndex].setCamera(cameraRgbd);
     }
 
-    const VertexCG &PoseGraph::getPoseVertex(int poseIndex) const {
+    const VertexPose &PoseGraph::getPoseVertex(int poseIndex) const {
         assert(poseIndex >= 0 && poseIndex < absolutePoses.size());
         assert(absolutePoses.size() == relativePoses.size());
 
         return absolutePoses[poseIndex];
     }
 
-    void PoseGraph::addPoseVertex(const VertexCG &poseVertex) {
+    void PoseGraph::addPoseVertex(const VertexPose &poseVertex) {
         absolutePoses.emplace_back(poseVertex);
 
         relativePoses.push_back({});
@@ -71,7 +71,7 @@ namespace gdr {
         return relativePoses[indexFromDestination][indexInAdjacencyList];
     }
 
-    const std::vector<VertexCG> &PoseGraph::getPoseVertices() const {
+    const std::vector<VertexPose> &PoseGraph::getPoseVertices() const {
         return absolutePoses;
     }
 

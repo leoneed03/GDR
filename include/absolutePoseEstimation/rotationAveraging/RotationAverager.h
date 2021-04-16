@@ -22,6 +22,7 @@ namespace gdr {
         shanonAveraging(
                 const std::vector<RotationMeasurement> &relativeRotations,
                 const std::string &pathToRelativeRotationsOut,
+                int indexPoseFixed,
                 int maxDimension = 10,
                 bool printProgressToConsole = false);
 

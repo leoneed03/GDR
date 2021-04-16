@@ -44,6 +44,7 @@ namespace gdr {
 
             Sophus::SO3<T> quatErrorSophus(relRotRes.normalized().toRotationMatrix());
             Eigen::Map<Eigen::Matrix<T, 3, 1>> residualsM(residuals);
+
             auto logError = quatErrorSophus.log();
 
             residualsM.template block<3, 1>(0, 0) = T(2.0) * logError;
