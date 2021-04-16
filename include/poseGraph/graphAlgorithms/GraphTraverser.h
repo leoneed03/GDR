@@ -16,7 +16,7 @@ namespace gdr {
     public:
         // TODO: depend on same interface for ConnectedComponent and CorrespondenceGraph:
         // getNumberOfPoses()
-        // getConnectionsFromVertex(indexFrom)
+        // getConnectionsFromVertex(indexFromDestination)
         // getVertex(poseGlobalIndex)
 
         /**

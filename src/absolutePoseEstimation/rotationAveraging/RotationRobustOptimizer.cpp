@@ -31,11 +31,11 @@ namespace gdr {
 
         for (const auto &relativeRotObservation: relativeRotations) {
 
-            assert(result[relativeRotObservation.getIndexToDestination()].size() == dim);
+            assert(result[relativeRotObservation.getIndexToToBeTransformed()].size() == dim);
             ceres::CostFunction *cost_function = RelativeRotationError::Create(relativeRotObservation.getRotationSO3());
 
-            int indexFrom = relativeRotObservation.getIndexFromToBeTransformed();
-            int indexTo = relativeRotObservation.getIndexToDestination();
+            int indexFrom = relativeRotObservation.getIndexFromDestination();
+            int indexTo = relativeRotObservation.getIndexToToBeTransformed();
 
             assert(indexFrom >= 0 && indexFrom < result.size() && indexTo >= 0 && indexTo < result.size());
             assert(result[indexFrom].size() == dim && result[indexTo].size() == dim);

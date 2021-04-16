@@ -29,9 +29,6 @@ namespace gdr {
 
         PoseGraph poseGraph;
 
-        std::string relativeRotationsFile;
-        std::string absoluteRotationsFile;
-
         KeyPointMatches inlierPointCorrespondences;
 
     public:
@@ -40,8 +37,6 @@ namespace gdr {
                 const std::vector<VertexCG> &absolutePoses,
                 const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
                 const KeyPointMatches &inlierPointCorrespondences,
-                const std::string &RelativeRotationsFile,
-                const std::string &absoluteRotationsFile,
                 int componentNumber);
 
         int getComponentNumber() const;
@@ -63,10 +58,6 @@ namespace gdr {
         const std::vector<RelativeSE3> &getConnectionsFromVertex(int vertexNumber) const;
 
         const std::vector<VertexCG> &getVertices() const;
-
-        const std::string &getPathRelativePoseFile() const;
-
-        const std::string &getPathAbsoluteRotationsFile() const;
 
         const VertexCG &getVertex(int vertexNumber) const;
 

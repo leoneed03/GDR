@@ -16,21 +16,21 @@ namespace gdr {
 
         SO3 relativeRotationQuat;
 
-        int indexFrom;
-        int indexTo;
+        int indexFromDestination;
+        int indexToToBeTransformed;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         RotationMeasurement(const SO3 &relativeRotation,
-                            int indexFrom,
-                            int indexTo);
+                            int indexFromDestination,
+                            int indexToToBeTransformed);
 
         const SO3 &getRotationSO3() const;
 
-        int getIndexFromToBeTransformed() const;
+        int getIndexFromDestination() const;
 
-        int getIndexToDestination() const;
+        int getIndexToToBeTransformed() const;
 
     };
 }

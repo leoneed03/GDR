@@ -147,6 +147,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/datasetDescriber/DatasetDescriber.h
     ${PROJECT_SOURCE_DIR}/include/computationHandlers/ModelCreationHandler.h
     ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/Evaluator.h
+    ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/PosesForEvaluation.h)
 
 set(GDR_SOURCE_FILES
@@ -209,7 +210,8 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/datasetDescriber/DatasetDescriber.cpp
     ${PROJECT_SOURCE_DIR}/src/computationHandlers/ModelCreationHandler.cpp
     ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/Evaluator.cpp
-    ${PROJECT_SOURCE_DIR}/src/poseGraph/PosesForEvaluation.cpp)
+    ${PROJECT_SOURCE_DIR}/src/poseGraph/PosesForEvaluation.cpp
+    ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.cpp)
 
 add_subdirectory(lib)
 

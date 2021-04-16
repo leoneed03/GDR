@@ -4,7 +4,7 @@
 //
 
 #include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
-
+#include "absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.h"
 #include <random>
 #include <fstream>
 
@@ -14,11 +14,16 @@
 
 namespace gdr {
 
-    std::vector<SO3> RotationAverager::shanonAveraging(const std::string &pathToRelativeRotationsInput,
-                                                       const std::string &pathOut,
-                                                       bool printProgressToConsole) {
+    std::vector<SO3> RotationAverager::shanonAveraging(
+            const std::vector<RotationMeasurement> &relativeRotations,
+            const std::string &pathToRelativeRotationsOut,
+            int maxDimension,
+            bool printProgressToConsole) {
 
-        std::string inputFile = pathToRelativeRotationsInput;
+
+        std::ofstream outRelRotations(pathToRelativeRotationsOut);
+        outRelRotations << RelativePosesG2oFormat(relativeRotations);
+
         std::vector<SO3> absoluteRotationsSO3;
 
         int seed = 42;
@@ -29,24 +34,21 @@ namespace gdr {
         gtsam::Values poses;
         {
             if (printProgressToConsole) {
-                std::cout << "Shonan Averaging: " << inputFile << std::endl;
+                std::cout << "Shonan Averaging: " << pathToRelativeRotationsOut << std::endl;
             }
-            gtsam::ShonanAveraging3 shonan(inputFile);
+
+            gtsam::ShonanAveraging3 shonan(pathToRelativeRotationsOut);
             auto initial = shonan.initializeRandomly(rng);
+
             auto result = shonan.run(initial);
 
-            boost::tie(inputGraph, posesInFile) = gtsam::load3D(inputFile);
+            boost::tie(inputGraph, posesInFile) = gtsam::load3D(pathToRelativeRotationsOut);
             auto priorModel = gtsam::noiseModel::Unit::Create(6);
             inputGraph->addPrior(0, posesInFile->at<gtsam::Pose3>(0), priorModel);
 
             auto poseGraph = gtsam::initialize::buildPoseGraph<gtsam::Pose3>(*inputGraph);
             poses = gtsam::initialize::computePoses<gtsam::Pose3>(result.first, &poseGraph);
         }
-
-        if (printProgressToConsole) {
-            std::cout << "result to " << pathOut << std::endl;
-        }
-        writeG2o(gtsam::NonlinearFactorGraph(), poses, pathOut);
 
         for (const auto key_value : poses) {
             auto p = dynamic_cast<const gtsam::GenericValue<gtsam::Pose3> *>(&key_value.value);

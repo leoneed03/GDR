@@ -8,6 +8,8 @@
 
 #include <memory>
 
+#include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
+
 #include "poseGraph/ConnectedComponent.h"
 
 namespace gdr {
@@ -21,9 +23,13 @@ namespace gdr {
         std::unique_ptr<IPointClassifier> pointMatcher;
         std::unique_ptr<ICloudProjector> cloudProjector;
 
+        std::string pathRelativePosesFile = "relativePosesG2o.txt";
+
         void computePointClasses();
 
     public:
+
+        std::string getPathRelativePoseFile() const;
 
         bool getSaveDebugImages() const;
 
@@ -35,6 +41,8 @@ namespace gdr {
 
         explicit AbsolutePosesComputationHandler(
                 std::unique_ptr<ConnectedComponentPoseGraph> &connectedComponentPoseGraph);
+
+        void setRelativePosesFilePath(const std::string &relativePosesPathToSet);
 
         int getNumberOfPoses() const;
 
@@ -61,6 +69,8 @@ namespace gdr {
         PosesForEvaluation getPosesForEvaluation() const;
 
         PosesForEvaluation getPosesForEvaluation(const SE3 &fixedPose) const;
+
+        std::vector<RotationMeasurement> getRelativeRotationsVector() const;
     };
 }
 

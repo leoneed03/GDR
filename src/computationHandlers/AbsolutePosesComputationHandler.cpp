@@ -88,13 +88,32 @@ namespace gdr {
         return connectedComponent->getNumberOfPoses();
     }
 
+
+    std::vector<RotationMeasurement> AbsolutePosesComputationHandler::getRelativeRotationsVector() const {
+
+        std::vector<RotationMeasurement> relativeRotationsToReturn;
+
+        for (int indexFromDest = 0; indexFromDest < getPoseGraph().size(); ++indexFromDest) {
+            for (const auto &relativePose: getPoseGraph().getRelativePosesFrom(indexFromDest)) {
+
+                int indexToToBeTransformed = relativePose.getIndexTo();
+
+                assert(indexFromDest == relativePose.getIndexFrom());
+
+                relativeRotationsToReturn.emplace_back(RotationMeasurement(
+                        relativePose.getRelativeRotation(), indexFromDest, indexToToBeTransformed
+                ));
+            }
+        }
+
+        return relativeRotationsToReturn;
+    }
+
     std::vector<SO3> AbsolutePosesComputationHandler::performRotationAveraging() {
 
-        connectedComponent->printRelativeRotationsToFile(connectedComponent->getPathRelativePoseFile());
-
         std::vector<SO3> absoluteRotations = RotationAverager::shanonAveraging(
-                connectedComponent->getPathRelativePoseFile(),
-                connectedComponent->getPathAbsoluteRotationsFile());
+                getRelativeRotationsVector(),
+                getPathRelativePoseFile());
 
         for (int i = 0; i < getNumberOfPoses(); ++i) {
             connectedComponent->setRotation(i, SO3(absoluteRotations[i].getRotationSophus()));
@@ -152,7 +171,6 @@ namespace gdr {
         std::vector<TranslationMeasurement> relativeTranslations;
         std::vector<SE3> absolutePoses = connectedComponent->getPoses();
         int indexFixedToZero = connectedComponent->getPoseIndexWithMaxConnectivity();
-        std::cout << "index Fixed is " << indexFixedToZero << std::endl;
 
         for (int indexFrom = 0; indexFrom < getNumberOfPoses(); ++indexFrom) {
             for (const auto &knownRelativePose: connectedComponent->getConnectionsFromVertex(indexFrom)) {
@@ -342,9 +360,9 @@ namespace gdr {
     std::vector<double> AbsolutePosesComputationHandler::getPosesTimestamps() const {
         std::vector<double> timestampsToReturn;
 
-        const auto& vertices = getVertices();
+        const auto &vertices = getVertices();
 
-        for (const auto& vertex: vertices) {
+        for (const auto &vertex: vertices) {
             timestampsToReturn.emplace_back(vertex.getTimestamp());
         }
 
@@ -357,7 +375,7 @@ namespace gdr {
     std::vector<SE3> AbsolutePosesComputationHandler::getPosesSE3() const {
         std::vector<SE3> posesSE3;
 
-        for (const auto& vertex: getVertices()) {
+        for (const auto &vertex: getVertices()) {
             posesSE3.emplace_back(vertex.getAbsolutePoseSE3());
         }
 
@@ -382,5 +400,13 @@ namespace gdr {
 
     PosesForEvaluation AbsolutePosesComputationHandler::getPosesForEvaluation(const SE3 &poseFixedInversed) const {
         return connectedComponent->getPosesForEvaluation(poseFixedInversed);
+    }
+
+
+    void AbsolutePosesComputationHandler::setRelativePosesFilePath(const std::string &pathRelPoses) {
+        pathRelativePosesFile = pathRelPoses;
+    }
+    std::string AbsolutePosesComputationHandler::getPathRelativePoseFile() const {
+        return pathRelativePosesFile;
     }
 }

@@ -159,8 +159,6 @@ namespace gdr {
                     ConnectedComponentPoseGraph>(connectedComponentsVertices[componentNumber],
                                                  edgesOfComponentsByComponentsNumber[componentNumber],
                                                  inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber],
-                                                 namePrefix + correspondenceGraph.getPathRelativePoseFile(),
-                                                 namePrefix + correspondenceGraph.getPathAbsoluteRotationsFile(),
                                                  componentNumber));
         }
         assert(addedVertices == correspondenceGraph.getNumberOfPoses());

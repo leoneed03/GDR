@@ -24,13 +24,9 @@ namespace gdr {
             const std::vector<VertexCG> &absolutePosesToSet,
             const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
             const KeyPointMatches &newInlierPointCorrespondences,
-            const std::string &newRelativeRotationsFile,
-            const std::string &newAbsoluteRotationsFile,
             int componentNumberToSet
     ) :
         inlierPointCorrespondences(newInlierPointCorrespondences),
-        relativeRotationsFile(newRelativeRotationsFile),
-        absoluteRotationsFile(newAbsoluteRotationsFile),
         componentNumber(componentNumberToSet) {
 
         poseGraph = PoseGraph(absolutePosesToSet, edgesLocalIndicesRelativePoses);
@@ -56,12 +52,15 @@ namespace gdr {
         std::ofstream file(pathToFileRelativeRotations);
 
         if (file.is_open()) {
+
             int numPoses = getNumberOfPoses();
+
             for (int i = 0; i < numPoses; ++i) {
                 std::string s1 = "VERTEX_SE3:QUAT ";
                 std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
                 file << s1 + s2;
             }
+
             for (int i = 0; i < poseGraph.size(); ++i) {
                 for (int j = 0; j < poseGraph.getNumberOfAdjacentVertices(i); ++j) {
 
@@ -111,14 +110,6 @@ namespace gdr {
 
     const VertexCG &ConnectedComponentPoseGraph::getVertex(int vertexNumber) const {
         return poseGraph.getPoseVertex(vertexNumber);
-    }
-
-    const std::string &ConnectedComponentPoseGraph::getPathRelativePoseFile() const {
-        return relativeRotationsFile;
-    }
-
-    const std::string &ConnectedComponentPoseGraph::getPathAbsoluteRotationsFile() const {
-        return absoluteRotationsFile;
     }
 
     void ConnectedComponentPoseGraph::setRotation(int poseIndex, const SO3 &rotationSO3) {

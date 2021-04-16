@@ -74,6 +74,7 @@ void testReconstruction(
         }
 
         auto &biggestComponent = connectedComponentsPoseGraph[0];
+        biggestComponent->setRelativePosesFilePath("relativeRotationsFile_0.txt");
 
         const auto &poseFixed = biggestComponent->getVertices()[biggestComponent->getIndexFixedPose()];
         std::cout << "perform rotation averaging" << std::endl;

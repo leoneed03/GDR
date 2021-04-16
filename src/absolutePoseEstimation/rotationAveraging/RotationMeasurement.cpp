@@ -10,8 +10,8 @@ namespace gdr {
     RotationMeasurement::RotationMeasurement(const SO3 &relativeRotationToSet,
                                              int newIndexFrom,
                                              int newIndexTo) : relativeRotationQuat(relativeRotationToSet),
-                                                               indexFrom(newIndexFrom),
-                                                               indexTo(newIndexTo) {}
+                                                               indexFromDestination(newIndexFrom),
+                                                               indexToToBeTransformed(newIndexTo) {}
 
 
     const SO3 &RotationMeasurement::getRotationSO3() const {
@@ -19,11 +19,11 @@ namespace gdr {
     }
 
 
-    int RotationMeasurement::getIndexFromToBeTransformed() const {
-        return indexFrom;
+    int RotationMeasurement::getIndexFromDestination() const {
+        return indexFromDestination;
     }
 
-    int RotationMeasurement::getIndexToDestination() const {
-        return indexTo;
+    int RotationMeasurement::getIndexToToBeTransformed() const {
+        return indexToToBeTransformed;
     }
 }
