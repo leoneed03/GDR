@@ -76,6 +76,8 @@ namespace gdr {
         int printRelativeRotationsToFile(const std::string &pathToFileRelativeRotations) const;
 
         int getPoseIndexWithMaxConnectivity() const;
+
+        const PoseGraph &getPoseGraph() const;
     };
 
 }

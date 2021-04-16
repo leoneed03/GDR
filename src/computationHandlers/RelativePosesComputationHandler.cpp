@@ -25,11 +25,10 @@ namespace gdr {
 
     RelativePosesComputationHandler::RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
                                                                      const std::string &pathToImageDirectoryD,
-                                                                     const std::string &rgbToDassociationFile,
-                                                                     const ParamsRANSAC &paramsRansacToSet,
-                                                                     const CameraRGBD &cameraDefaultToSet) :
+                                                                     const DatasetDescriber &datasetDescriber,
+                                                                     const ParamsRANSAC &paramsRansacToSet) :
             paramsRansac(paramsRansacToSet),
-            cameraDefault(cameraDefaultToSet) {
+            cameraDefault(datasetDescriber.getDefaultCamera()) {
 
         auto rgbImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(pathToImageDirectoryRGB);
         auto depthImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(pathToImageDirectoryD);
@@ -38,6 +37,8 @@ namespace gdr {
         assert(!depthImagesAll.empty());
 
         std::vector<std::pair<double, double>> timeStampsRgbDepth;
+
+        const auto &rgbToDassociationFile = datasetDescriber.getAssociationRgbToDepthFile();
 
         if (rgbToDassociationFile.empty()) {
             assert(rgbImagesAll.size() == depthImagesAll.size()
@@ -110,10 +111,29 @@ namespace gdr {
             depthImagesAll = depthImagesAssociated;
         }
 
+        assert(std::is_sorted(rgbImagesAll.begin(), rgbImagesAll.end()));
+        assert(std::is_sorted(depthImagesAll.begin(), depthImagesAll.end()));
+
+        for (const auto &rgbImagePathString: rgbImagesAll) {
+            fs::path rgbImagePath(rgbImagePathString);
+            bool found = true;
+
+            camerasRgbByPoseIndex.emplace_back(datasetDescriber.findCameraRgb(rgbImagePath.filename().string(), found));
+        }
+
+        for (const auto &depthImagePathString: depthImagesAll) {
+            fs::path depthImagePath(depthImagePathString);
+            bool found = true;
+
+            camerasDepthByPoseIndex.emplace_back(datasetDescriber.findCameraDepth(depthImagePath.filename().string(), found));
+        }
+
         timestampsRgbDepthAssociated = timeStampsRgbDepth;
         assert(!rgbImagesAll.empty());
         assert(rgbImagesAll.size() == depthImagesAll.size());
         assert(rgbImagesAll.size() == timestampsRgbDepthAssociated.size());
+        assert(camerasRgbByPoseIndex.size() == camerasDepthByPoseIndex.size());
+        assert(rgbImagesAll.size() == camerasRgbByPoseIndex.size());
 
         correspondenceGraph = std::make_unique<CorrespondenceGraph>(rgbImagesAll,
                                                                     depthImagesAll,
@@ -167,8 +187,10 @@ namespace gdr {
 
             assert(std::abs(timeRgb - timeD) < 0.02);
 
+            assert(currentImage < camerasDepthByPoseIndex.size());
+
             VertexCG currentVertex(currentImage,
-                                   correspondenceGraph->getCameraDefault(),
+                                   camerasDepthByPoseIndex[currentImage],
                                    keyPointsDepthDescriptor,
                                    imagesRgb[currentImage],
                                    imagesD[currentImage],

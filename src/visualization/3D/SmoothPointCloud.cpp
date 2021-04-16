@@ -10,25 +10,21 @@
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/cloud_viewer.h>
+#include <pcl/conversions.h>
+#include <pcl/io/file_io.h>
+#include <pcl/io/ply_io.h>
+
 #include <opencv2/opencv.hpp>
 
 namespace gdr {
 
-    struct PointXYZRGBdouble {
-        double x, y, z;
-        int R, G, B;
 
-        PointXYZRGBdouble(double newX, double newY, double newZ, int newR, int newG, int newB) :
-                x(newX), y(newY), z(newZ),
-                R(newR), G(newG), B(newB) {};
-    };
-
-    std::vector<PointXYZRGBdouble> getPointCloudXYZRGBFromPose(const VertexCG &poseToBeRegistered) {
+    std::vector<PointXYZRGBfloatUchar> SmoothPointCloud::getPointCloudXYZRGBFromPose(const VertexCG &poseToBeRegistered) {
         double coeffDepth = poseToBeRegistered.getCamera().getDepthPixelDivider();
 
         cv::Mat depthImage = cv::imread(poseToBeRegistered.getPathDImage(), cv::IMREAD_ANYDEPTH);
         cv::Mat rgbImage = cv::imread(poseToBeRegistered.getPathRGBImage(), cv::IMREAD_ANYCOLOR);
-        std::vector<PointXYZRGBdouble> points;
+        std::vector<PointXYZRGBfloatUchar> points;
 
         Eigen::Matrix4d poseMatrix = poseToBeRegistered.getEigenMatrixAbsolutePose4d().inverse();
 
@@ -57,17 +53,21 @@ namespace gdr {
 
                 if (currentKeypointDepth != 0) {
                     points.emplace_back(
-                            PointXYZRGBdouble(globalX, globalY, globalZ, rgbInfo[2], rgbInfo[1], rgbInfo[0]));
+                            PointXYZRGBfloatUchar(globalX, globalY, globalZ,
+                                                  rgbInfo[2], rgbInfo[1], rgbInfo[0]));
                 }
             }
         }
         return points;
     }
 
-    void SmoothPointCloud::registerPointCloudFromImage(const std::vector<VertexCG> &posesToBeRegistered,
-                                                       double voxelSizeX,
-                                                       double voxelSizeY,
-                                                       double voxelSixeZ) {
+
+    int SmoothPointCloud::registerPointCloudFromImages(const std::vector<VertexCG> &posesToBeRegistered,
+                                                       bool showVisualization,
+                                                       float voxelSizeX,
+                                                       float voxelSizeY,
+                                                       float voxelSixeZ,
+                                                       const std::string &pathPlyToSave) {
 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -92,22 +92,37 @@ namespace gdr {
                       << posesToBeRegistered[i].getIndex()
                       << std::endl;
 
-            if (i == posesToBeRegistered.size() - 1) {
+            if (i == posesToBeRegistered.size() - 1 || i % 5 == 0) {
                 pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
                 pcl::ApproximateVoxelGrid<pcl::PointXYZRGB> approximate_voxel_filter;
                 approximate_voxel_filter.setLeafSize(voxelSizeX, voxelSizeY, voxelSixeZ);
                 approximate_voxel_filter.setInputCloud(input_cloud);
                 approximate_voxel_filter.filter(*filtered_cloud);
+
                 std::cout << "                  Filtered cloud contains " << filtered_cloud->size()
                           << " data points from pose " << posesToBeRegistered[i].getIndex() << std::endl;
                 std::swap(filtered_cloud, input_cloud);
             }
         }
-        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-        viewer.showCloud(input_cloud);
 
-        while (!viewer.wasStopped()) {
+
+        if (showVisualization) {
+            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+            viewer.showCloud(input_cloud);
+
+            while (!viewer.wasStopped()) {
+            }
         }
 
+
+        if (!pathPlyToSave.empty()) {
+            pcl::PLYWriter plyWriter;
+            pcl::PCLPointCloud2 readablePointCloud;
+            pcl::toPCLPointCloud2(*input_cloud, readablePointCloud);
+
+            ((pcl::FileWriter *) &plyWriter)->write(pathPlyToSave, readablePointCloud);
+        }
+
+        return 0;
     }
 }

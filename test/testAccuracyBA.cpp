@@ -13,7 +13,7 @@
 #include "readerDataset/readerTUM/ReaderTum.h"
 
 #include "computationHandlers/RelativePosesComputationHandler.h"
-#include "visualization/3D/SmoothPointCloud.h"
+#include "computationHandlers/ModelCreationHandler.h"
 
 void testReconstruction(
         const std::string &shortDatasetName,
@@ -45,9 +45,8 @@ void testReconstruction(
 
         gdr::RelativePosesComputationHandler cgHandler(pathRGB,
                                                        pathD,
-                                                       pathAssoc,
-                                                       paramsRansac,
-                                                       cameraDefault);
+                                                       gdr::DatasetDescriber(cameraDefault, pathAssoc),
+                                                       paramsRansac);
 
 
         std::cout << "start computing relative poses" << std::endl;
@@ -205,7 +204,7 @@ void testReconstruction(
                 std::ofstream computedPoses(outputName);
                 for (int i = 0; i < posesInfo.size(); ++i) {
                     Sophus::SE3d poseSE3 = posesInfo[0].getSophusPose() *
-                            bundleAdjustedPoses[0].getSE3().inverse() * bundleAdjustedPoses[i].getSE3();
+                                           bundleAdjustedPoses[0].getSE3().inverse() * bundleAdjustedPoses[i].getSE3();
 
                     computedPoses.precision(std::numeric_limits<double>::max_digits10);
                     computedPoses << timestampsToFind[i] << ' ';
@@ -291,8 +290,9 @@ void testReconstruction(
             }
 
             if (showVisualization3D) {
-                gdr::SmoothPointCloud smoothCloud;
-                smoothCloud.registerPointCloudFromImage(biggestComponent->getVertices());
+                gdr::ModelCreationHandler modelCreationHandler(biggestComponent->getPoseGraph());
+                modelCreationHandler.visualize();
+//                modelCreationHandler.saveAsPly("test.ply");
             }
 
             //fails on desk1
@@ -309,21 +309,6 @@ void testReconstruction(
 
         }
     }
-}
-
-#include "readerDataset/readerTUM/ImagesAssociator.h"
-
-void readDataset() {
-    std::set<int> indices;
-    for (int i = 0; i < 3000; i += 6) {
-        indices.insert(i);
-    }
-    std::string pathToDataset = "/home/leoneed/Desktop/datasets/rgbd_dataset_freiburg1_desk";
-    gdr::ImageAssociator imageAssociator(pathToDataset);
-
-    imageAssociator.associateImagePairs();
-    imageAssociator.exportAllInfoToDirectory("../../data/desk1_sampled_98_6",
-                                             indices);
 }
 
 
@@ -358,18 +343,18 @@ TEST(testBAOptimized, visualizationDesk98) {
 
 
 
-//    testReconstruction("plant", 19, 3,
-//                       0.04, 0.04,
-//                       kinectCamera,
-//                       paramsRansacDefault,
-//                       assocFile);
-
-
-    testReconstruction("desk1", 98, 6,
+    testReconstruction("plant", 19, 3,
                        0.04, 0.04,
                        kinectCamera,
                        paramsRansacDefault,
                        assocFile);
+
+
+//    testReconstruction("desk1", 98, 6,
+//                       0.04, 0.04,
+//                       kinectCamera,
+//                       paramsRansacDefault,
+//                       assocFile);
 }
 
 int main(int argc, char *argv[]) {

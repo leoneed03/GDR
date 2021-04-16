@@ -10,12 +10,26 @@
 
 namespace gdr {
 
+    struct PointXYZRGBfloatUchar {
+        float x, y, z;
+        unsigned char R, G, B;
+
+        PointXYZRGBfloatUchar(float X1, float Y1, float Z1,
+                              unsigned char R1, unsigned char G1, unsigned char B1) :
+                x(X1), y(Y1), z(Z1),
+                R(R1), G(G1), B(B1) {};
+    };
+
     struct SmoothPointCloud {
-        //TODO: export pointCloud as tree-like structure
-        void registerPointCloudFromImage(const std::vector<VertexCG> &posesToBeRegistered,
-                                         double voxelSizeX = 0.01,
-                                         double voxelSizeY = 0.01,
-                                         double voxelSixeZ = 0.01);
+        //TODO: store pointCloud as tree-like structure
+        static int registerPointCloudFromImages(const std::vector<VertexCG> &posesToBeRegistered,
+                                                bool showVisualization = false,
+                                                float voxelSizeX = 0.01,
+                                                float voxelSizeY = 0.01,
+                                                float voxelSixeZ = 0.01,
+                                                const std::string &pathPlyToSave = "");
+
+        static std::vector<PointXYZRGBfloatUchar> getPointCloudXYZRGBFromPose(const VertexCG &poseToBeRegistered);
     };
 }
 

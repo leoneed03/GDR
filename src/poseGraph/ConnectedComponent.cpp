@@ -170,4 +170,8 @@ namespace gdr {
     int ConnectedComponentPoseGraph::getPoseIndexWithMaxConnectivity() const {
         return poseGraph.getPoseIndexWithMaxConnectivity();
     }
+
+    const PoseGraph &ConnectedComponentPoseGraph::getPoseGraph() const {
+        return poseGraph;
+    }
 }

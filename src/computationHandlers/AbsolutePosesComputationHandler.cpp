@@ -366,4 +366,7 @@ namespace gdr {
     }
 
 
+    const PoseGraph &AbsolutePosesComputationHandler::getPoseGraph() const {
+        return connectedComponent->getPoseGraph();
+    }
 }

@@ -13,6 +13,8 @@
 
 #include "relativePoseEstimators/InlierCounter.h"
 
+#include "datasetDescriber/DatasetDescriber.h"
+
 namespace gdr {
 
     class RelativePosesComputationHandler {
@@ -27,12 +29,15 @@ namespace gdr {
         // unused right now
         std::unique_ptr<ThreadPool> threadPool;
         CameraRGBD cameraDefault;
+
+        std::vector<CameraRGBD> camerasRgbByPoseIndex;
+        std::vector<CameraRGBD> camerasDepthByPoseIndex;
+
         ParamsRANSAC paramsRansac;
         InlierCounter inlierCounter;
 
         std::unique_ptr<CorrespondenceGraph> correspondenceGraph;
 
-        std::unordered_map<int, double> depthPixelDividerByPoseNumber;
         std::string relativePoseFileG2o = "relativeRotations.txt";
 
     private:
@@ -110,9 +115,8 @@ namespace gdr {
          */
         RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
                                         const std::string &pathToImageDirectoryD,
-                                        const std::string &rgbToDassociationFile = "",
-                                        const ParamsRANSAC &paramsRansac = ParamsRANSAC(),
-                                        const CameraRGBD &cameraDefault = CameraRGBD());
+                                        const DatasetDescriber &datasetDescriber,
+                                        const ParamsRANSAC &paramsRansac = ParamsRANSAC());
 
         /** Compute SE3 relative poses between all poses with LoRANSAC keypoint based procedure
          *      and ICP dense alignment refinement
