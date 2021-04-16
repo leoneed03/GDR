@@ -63,5 +63,16 @@ namespace gdr {
 
         return {errorAngle, errorL2};
     }
+
+
+    std::ostream &operator<<(std::ostream &os, const SE3 &pose) {
+        const auto &translation = pose.getTranslation();
+
+        for (int i = 0; i < 3; ++i) {
+            os << translation[i] << ' ';
+        }
+
+        os << SO3(pose.getSO3());
+    }
 }
 

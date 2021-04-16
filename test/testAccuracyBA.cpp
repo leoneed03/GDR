@@ -17,6 +17,8 @@
 
 #include "readerDataset/readerTUM/Evaluator.h"
 
+#include "poseGraph/PosesForEvaluation.h"
+
 void testReconstruction(
         const std::string &datasetName,
         double errorTresholdR,
@@ -80,12 +82,27 @@ void testReconstruction(
 
         std::cout << "perform translation averaging" << std::endl;
         std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent->performTranslationAveraging();
-        std::vector<gdr::SE3> irlsPoses = biggestComponent->getPosesSE3();
 
-        std::vector<gdr::SE3> bundleAdjustedPoses;
+        {
+            std::string outputNameIRLS =
+                    "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_IRLS_matched.txt";
+            std::ofstream posesIRLS(outputNameIRLS);
+
+            posesIRLS << biggestComponent->getPosesForEvaluation();
+        }
+
         std::cout << "perform Bundle Adjustment" << std::endl;
 
-        bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
+
+        std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
+
+        {
+            std::string outputNameBA =
+                    "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_BA_matched.txt";
+            std::ofstream posesBA(outputNameBA);
+
+            posesBA << biggestComponent->getPosesForEvaluation();
+        }
 
         std::string absolutePosesGroundTruth = "../../data/" + datasetName + "/" + "groundtruth.txt";
         std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
@@ -93,19 +110,23 @@ void testReconstruction(
 
         std::vector<double> timestampsToFind = biggestComponent->getPosesTimestamps();
 
+        //fill information needed for evaluation
         std::vector<gdr::PoseFullInfo> posesFullInfoIRLS;
-
-        for (int i = 0; i < irlsPoses.size(); ++i) {
-            const auto &pose = irlsPoses[i];
-            posesFullInfoIRLS.emplace_back(gdr::PoseFullInfo(timestampsToFind[i], pose));
-        }
-
         std::vector<gdr::PoseFullInfo> posesFullInfoBA;
 
-        for (int i = 0; i < bundleAdjustedPoses.size(); ++i) {
-            const auto &pose = bundleAdjustedPoses[i];
-            posesFullInfoBA.emplace_back(gdr::PoseFullInfo(timestampsToFind[i], pose));
+        {
+            std::vector<gdr::SE3> irlsPoses = biggestComponent->getPosesSE3();
+            for (int i = 0; i < irlsPoses.size(); ++i) {
+                const auto &pose = irlsPoses[i];
+                posesFullInfoIRLS.emplace_back(gdr::PoseFullInfo(timestampsToFind[i], pose));
+            }
+
+            for (int i = 0; i < bundleAdjustedPoses.size(); ++i) {
+                const auto &pose = bundleAdjustedPoses[i];
+                posesFullInfoBA.emplace_back(gdr::PoseFullInfo(timestampsToFind[i], pose));
+            }
         }
+
 
         assert(posesFullInfoBA.size() == posesFullInfoIRLS.size());
         assert(!posesFullInfoIRLS.empty());
@@ -114,151 +135,70 @@ void testReconstruction(
         posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientationByMatches(posesInfoFull,
                                                                                        timestampsToFind,
                                                                                        timeDiffThreshold);
+        {
+            std::string outputNameGroundTruth =
+                    "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_GT_matched.txt";
+            std::ofstream groundTruthPoses(outputNameGroundTruth);
+            groundTruthPoses << gdr::PosesForEvaluation(
+                    posesInfoFull,
+                    posesInfoFull[biggestComponent->getIndexFixedPose()].getSophusPose().inverse());
+        }
+
+        gdr::Evaluator evaluator(absolutePosesGroundTruth);
+
+        double meanErrorRotBA = 0;
+        double meanErrorL2BA = 0;
+
+        double meanErrorRotIRLS = 0;
+        double meanErrorL2IRLS = 0;
 
         {
-            assert(!posesInfoFull.empty());
-            std::set<int> indicesOfBiggestComponent = biggestComponent->initialIndices();
+            assert(!posesFullInfoBA.empty());
+            auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
+                                                                  biggestComponent->getIndexFixedPose());
+            std::cout << "========================BA report:=========================" << std::endl;
+            std::cout << informationErrors.rotationError << "------------------------------------" << std::endl;
+            std::cout << informationErrors.translationError << std::endl;
 
-            // compute absolute poses IRLS
-            std::vector<Sophus::SE3d> posesIRLS;
-            {
-                for (int i = 0; i < computedAbsoluteTranslationsIRLS.size(); ++i) {
-                    Sophus::SE3d poseIRLS;
-                    poseIRLS.setQuaternion(computedAbsoluteOrientationsRobust[i].getUnitQuaternion());
-                    poseIRLS.translation() = computedAbsoluteTranslationsIRLS[i];
-                    posesIRLS.push_back(poseIRLS);
-                }
-                // set origin at zero pose [IRLS]
-                Sophus::SE3d poseIRLSzero = posesIRLS[0];
-                for (auto &poseIRLS: posesIRLS) {
-                    poseIRLS = poseIRLSzero.inverse() * poseIRLS;
-                }
-            }
-            {
-                // set origin at zero pose [BA]
-                gdr::SE3 poseBAzero = bundleAdjustedPoses[0];
-                for (auto &pose: bundleAdjustedPoses) {
-                    pose = poseBAzero.inverse() * pose;
-                }
-            }
-
-            {
-                // print ground truth poses to file
-                std::string outputName =
-                        "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_GT.txt";
-                std::ofstream computedPoses(outputName);
-
-                for (int i = 0; i < posesInfoFull.size(); ++i) {
-                    Sophus::SE3d poseSE3 = posesInfoFull[i].getSophusPose();
-
-                    computedPoses.precision(std::numeric_limits<double>::max_digits10);
-                    computedPoses << posesInfoFull[i].getTimestamp() << ' ';
-                    const auto to = poseSE3.translation();
-                    for (int j = 0; j < 3; ++j) {
-                        computedPoses << to[j] << ' ';
-                    }
-                    auto quatComputed = poseSE3.unit_quaternion();
-
-                    computedPoses << quatComputed.x() << ' ' << quatComputed.y() << ' ' << quatComputed.z() << ' '
-                                  << quatComputed.w() << std::endl;
-                }
-            }
-
-            {
-                // print poses IRLS to file
-                std::string outputName =
-                        "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_IRLS.txt";
-                std::ofstream computedPoses(outputName);
-                for (int i = 0; i < posesInfoFull.size(); ++i) {
-                    Sophus::SE3d poseSE3 = posesInfoFull[0].getSophusPose() * posesIRLS[0].inverse() * posesIRLS[i];
-
-                    computedPoses.precision(std::numeric_limits<double>::max_digits10);
-                    computedPoses << timestampsToFind[i] << ' ';
-                    const auto to = poseSE3.translation();
-                    for (int j = 0; j < 3; ++j) {
-                        computedPoses << to[j] << ' ';
-                    }
-                    auto quatComputed = poseSE3.unit_quaternion();
-
-                    computedPoses << quatComputed.x() << ' ' << quatComputed.y() << ' ' << quatComputed.z() << ' '
-                                  << quatComputed.w() << std::endl;
-                }
-            }
-            {
-                // print poses BA depth to file
-                std::string outputName =
-                        "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_BA.txt";
-                std::ofstream computedPoses(outputName);
-                for (int i = 0; i < posesInfoFull.size(); ++i) {
-                    Sophus::SE3d poseSE3 = posesInfoFull[0].getSophusPose()
-                                           * bundleAdjustedPoses[0].getSE3().inverse()
-                                           * bundleAdjustedPoses[i].getSE3();
-
-                    computedPoses.precision(std::numeric_limits<double>::max_digits10);
-                    computedPoses << timestampsToFind[i] << ' ';
-
-                    const auto to = poseSE3.translation();
-                    for (int j = 0; j < 3; ++j) {
-                        computedPoses << to[j] << ' ';
-                    }
-                    auto quatComputed = poseSE3.unit_quaternion();
-
-                    computedPoses << quatComputed.x() << ' ' << quatComputed.y() << ' ' << quatComputed.z() << ' '
-                                  << quatComputed.w() << std::endl;
-                }
-            }
-
-            gdr::Evaluator evaluator(absolutePosesGroundTruth);
-
-            double meanErrorRotBA = 0;
-            double meanErrorL2BA = 0;
-
-            double meanErrorRotIRLS = 0;
-            double meanErrorL2IRLS = 0;
-
-            {
-                assert(!posesFullInfoBA.empty());
-                auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
-                                                                      biggestComponent->getIndexFixedPose());
-                std::cout << "========================BA report:=========================" << std::endl;
-                std::cout << informationErrors.rotationError << "------------------------------------" << std::endl;
-                std::cout << informationErrors.translationError << std::endl;
-
-                meanErrorRotBA = informationErrors.rotationError.MEAN;
-                meanErrorL2BA = informationErrors.translationError.MEAN;
-            }
-            {
-
-                assert(!posesFullInfoIRLS.empty());
-                auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoIRLS,
-                                                                      biggestComponent->getIndexFixedPose());
-
-                std::cout << "========================IRLS report:=========================" << std::endl;
-                std::cout << informationErrors.rotationError << "------------------------------------" << std::endl;
-                std::cout << informationErrors.translationError << std::endl;
-
-                meanErrorL2IRLS = informationErrors.translationError.MEAN;
-                meanErrorRotIRLS = informationErrors.rotationError.MEAN;
-            }
-
-
-            if (showVisualization3D) {
-                gdr::ModelCreationHandler modelCreationHandler(biggestComponent->getPoseGraph());
-                modelCreationHandler.visualize();
-//                modelCreationHandler.saveAsPly("test.ply");
-            }
-
-            assert(bundleAdjustedPoses.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);
-
-            ASSERT_LE(meanErrorL2BA, errorTresholdT);
-            ASSERT_LE(meanErrorL2IRLS, errorTresholdT);
-//            ASSERT_LE(meanErrorRotBA, errorTresholdR);
-
-//            ASSERT_LE(meanErrorRotBA, meanErrorRotIRLS * coefficientR);
-            ASSERT_LE(meanErrorL2BA, meanErrorL2IRLS * coefficientT);
-
+            meanErrorRotBA = informationErrors.rotationError.MEAN;
+            meanErrorL2BA = informationErrors.translationError.MEAN;
         }
+        {
+
+            assert(!posesFullInfoIRLS.empty());
+            auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoIRLS,
+                                                                  biggestComponent->getIndexFixedPose());
+
+            std::cout << "========================IRLS report:=========================" << std::endl;
+            std::cout << informationErrors.rotationError << "------------------------------------" << std::endl;
+            std::cout << informationErrors.translationError << std::endl;
+
+            meanErrorL2IRLS = informationErrors.translationError.MEAN;
+            meanErrorRotIRLS = informationErrors.rotationError.MEAN;
+
+            std::cout << std::endl << "Trajectory estimated for: " << informationErrors.numberOfPosesTrajectory << "/"
+                      << numberOfPosesInDataset << " poses" << std::endl;
+            std::cout << "Compared with groundtruth: " << informationErrors.numberOfPosesEvaluated << "/"
+                      << informationErrors.numberOfPosesTrajectory << std::endl;
+        }
+
+
+        if (showVisualization3D) {
+            gdr::ModelCreationHandler modelCreationHandler(biggestComponent->getPoseGraph());
+            modelCreationHandler.visualize();
+//                modelCreationHandler.saveAsPly("test.ply");
+        }
+
+        assert(bundleAdjustedPoses.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);
+
+        ASSERT_LE(meanErrorL2BA, errorTresholdT);
+        ASSERT_LE(meanErrorL2IRLS, errorTresholdT);
+        ASSERT_LE(meanErrorRotBA, errorTresholdR);
+
+        ASSERT_LE(meanErrorRotBA, meanErrorRotIRLS * coefficientR);
+        ASSERT_LE(meanErrorL2BA, meanErrorL2IRLS * coefficientT);
     }
+
 }
 
 
@@ -281,6 +221,12 @@ TEST(testBAOptimized, visualizationDesk98) {
                        kinectCamera,
                        paramsRansacDefault,
                        assocFile);
+
+//    testReconstruction("desk1_sampled_98_6",
+//                       0.04, 0.04,
+//                       kinectCamera,
+//                       paramsRansacDefault,
+//                       assocFile);
 
 }
 

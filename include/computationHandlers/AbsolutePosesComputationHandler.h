@@ -57,6 +57,8 @@ namespace gdr {
         const PoseGraph &getPoseGraph() const;
 
         int getIndexFixedPose() const;
+
+        PosesForEvaluation getPosesForEvaluation() const;
     };
 }
 

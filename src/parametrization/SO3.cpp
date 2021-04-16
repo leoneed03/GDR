@@ -33,6 +33,7 @@ namespace gdr {
 
     std::ostream &operator<<(std::ostream &os, const SO3 &rotation3D) {
         const auto &quat = rotation3D.getUnitQuaternion();
+
         os << quat.x() << ' '
            << quat.y() << ' '
            << quat.z() << ' '

@@ -82,8 +82,6 @@ namespace gdr {
         const std::vector<std::string> &getPathsD() const;
 
         void printConnectionsRelative(std::ostream &os, int space = 10) const;
-
-        int printRelativePosesFile(const std::string &outPutFileRelativePoses) const;
     };
 }
 

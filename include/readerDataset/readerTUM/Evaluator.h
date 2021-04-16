@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include "readerDataset/readerTUM/PoseFullInfo.h"
+#include "parametrization/PoseFullInfo.h"
 
 namespace gdr {
 

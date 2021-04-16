@@ -13,8 +13,8 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+
 #include <opencv2/opencv.hpp>
-#include <absolutePoseEstimation/translationAveraging/TranslationAverager.h>
 
 #include "boost/graph/graphviz.hpp"
 
@@ -35,49 +35,6 @@ namespace gdr {
             }
         }
     }
-
-    int CorrespondenceGraph::printRelativePosesFile(const std::string &pathOutRelativePoseFile) const {
-
-        std::ofstream file(pathOutRelativePoseFile);
-
-        if (file.is_open()) {
-            int numPoses = poseGraph.size();
-
-            for (int i = 0; i < numPoses; ++i) {
-                std::string s1 = "VERTEX_SE3:QUAT ";
-                std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
-                file << s1 + s2;
-            }
-
-            for (int i = 0; i < numPoses; ++i) {
-                for (int j = 0; j < poseGraph.getNumberOfAdjacentVertices(i); ++j) {
-
-                    int indexTo = poseGraph.getRelativePose(i, j).getIndexTo();
-
-                    const auto &relativePose = poseGraph.getRelativePose(i, j);
-                    if (i >= relativePose.getIndexTo()) {
-                        continue;
-                    }
-                    std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
-
-                    int indexFrom = i;
-                    //order of vertices in the EDGE_SE3:QUAT representation is reversed (bigger_indexTo less_indexFrom)
-
-                    file << "EDGE_SE3:QUAT " << indexFrom << ' ' << indexTo << ' ';
-                    auto translationVector = relativePose.getRelativeTranslation();
-                    file << ' ' << std::to_string(translationVector.col(0)[0]) << ' '
-                         << std::to_string(translationVector.col(0)[1]) << ' '
-                         << std::to_string(translationVector.col(0)[2]) << ' ';
-                    const auto &qR = relativePose.getRelativeRotation();
-
-                    file << qR << ' ' << noise << '\n';
-                }
-            }
-        }
-
-        return 0;
-    }
-
 
     CorrespondenceGraph::CorrespondenceGraph(const std::vector<std::string> &associatedImagesRGB,
                                              const std::vector<std::string> &associatedImagesD,

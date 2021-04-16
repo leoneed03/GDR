@@ -224,7 +224,7 @@ namespace gdr {
 
         correspondenceGraph->setRelativePoses(relativePoses);
         std::string poseFile = getPathRelativePose();
-        correspondenceGraph->printRelativePosesFile(poseFile);
+//        correspondenceGraph->printRelativePosesFile(poseFile);
 
         return relativePoses;
     }

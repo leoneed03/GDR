@@ -87,7 +87,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/ICPCUDA.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationMeasurement.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/translationAveraging/TranslationAverager.h
-    ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/PoseFullInfo.h
+        include/parametrization/PoseFullInfo.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationMeasurement.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/Vectors3d.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/SO3.h
@@ -156,7 +156,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/relativePoseRefinement/ICPCUDA.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationAverager.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/translationAveraging/TranslationMeasurement.cpp
-    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/PoseFullInfo.cpp
+        src/parametrization/PoseFullInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/Vectors3d.cpp
     ${PROJECT_SOURCE_DIR}/src/computationHandlers/ThreadPool.cpp
@@ -204,7 +204,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PoseGraph.cpp
     ${PROJECT_SOURCE_DIR}/src/datasetDescriber/DatasetDescriber.cpp
     ${PROJECT_SOURCE_DIR}/src/computationHandlers/ModelCreationHandler.cpp
-    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/Evaluator.cpp)
+    ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/Evaluator.cpp include/poseGraph/PosesForEvaluation.cpp include/poseGraph/PosesForEvaluation.h)
 
 add_subdirectory(lib)
 

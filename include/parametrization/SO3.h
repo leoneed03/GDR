@@ -41,11 +41,12 @@ namespace gdr {
 
         static Eigen::Quaterniond getRandomUnitQuaternion();
 
-        friend std::ostream &operator<<(std::ostream &os, const SO3 &rotation3D);
 
         friend std::vector<SO3> operator*(const SO3& so3, const std::vector<SO3>& rotations);
 
         friend SO3 operator*(const SO3& lhs, const SO3 &rhs);
+
+        friend std::ostream &operator<<(std::ostream &os, const SO3 &rotation3D);
     };
 }
 #endif

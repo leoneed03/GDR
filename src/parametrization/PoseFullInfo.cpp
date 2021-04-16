@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "readerDataset/readerTUM/PoseFullInfo.h"
+#include "parametrization/PoseFullInfo.h"
 
 #include <iomanip>
 
@@ -44,16 +44,16 @@ namespace gdr {
         os.precision(std::numeric_limits<double>::max_digits10);
         os << std::setw(2 * space) << timeTranslationOrientation.timestamp << ' ';
 
-        os.precision(space - 1);
+        os.precision();
         for (int i = 0; i < 3; ++i) {
-            os << std::setw(space) << timeTranslationOrientation.getTranslation()[i] << ' ';
+            os << timeTranslationOrientation.getTranslation()[i] << ' ';
         }
 
         const auto &orientationQuat = timeTranslationOrientation.poseSE3.getRotationQuatd();
-        os << std::setw(space) << orientationQuat.x() << ' '
-           << std::setw(space) << orientationQuat.y() << ' '
-           << std::setw(space) << orientationQuat.z() << ' '
-           << std::setw(space) << orientationQuat.w();
+        os << orientationQuat.x() << ' '
+           << orientationQuat.y() << ' '
+           << orientationQuat.z() << ' '
+           << orientationQuat.w();
         return os;
     }
 

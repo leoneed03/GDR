@@ -374,4 +374,9 @@ namespace gdr {
     int AbsolutePosesComputationHandler::getIndexFixedPose() const {
         return connectedComponent->getPoseIndexWithMaxConnectivity();
     }
+
+
+    PosesForEvaluation AbsolutePosesComputationHandler::getPosesForEvaluation() const {
+        return connectedComponent->getPosesForEvaluation();
+    }
 }

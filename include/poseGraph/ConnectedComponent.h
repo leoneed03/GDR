@@ -8,6 +8,7 @@
 
 #include "VertexCG.h"
 #include "poseGraph/PoseGraph.h"
+#include "poseGraph/PosesForEvaluation.h"
 
 #include "parametrization/RelativeSE3.h"
 #include "cameraModel/CameraRGBD.h"
@@ -78,6 +79,8 @@ namespace gdr {
         int getPoseIndexWithMaxConnectivity() const;
 
         const PoseGraph &getPoseGraph() const;
+
+        PosesForEvaluation getPosesForEvaluation() const;
     };
 
 }

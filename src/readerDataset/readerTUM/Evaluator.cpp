@@ -43,7 +43,9 @@ namespace gdr {
 
         if (setOfPosesFromGroundTruth.empty()) {
             std::cout << "Provided ground thruth file is empty" << std::endl;
-            return ErrorRotationTranslation({"", "", 0, 0, 0, 0, 0, 0}, {"", "", 0, 0, 0, 0, 0, 0});
+            return ErrorRotationTranslation(
+                    {"", "", 0, 0, 0, 0, 0, 0},
+                    {"", "", 0, 0, 0, 0, 0, 0});
         }
 
         double sumErrorL2 = 0;
@@ -94,31 +96,36 @@ namespace gdr {
             posesMatchedTrajectory.emplace_back(poseTrajectory);
         }
 
-        Eigen::Matrix3Xd pointsGroundTruth(3, posesMatchedTrajectory.size());
-        Eigen::Matrix3Xd pointsTrajectory(3, posesMatchedGroundTruth.size());
+        {
 
-        for (int point = 0; point < posesMatchedGroundTruth.size(); ++point) {
-            pointsGroundTruth.col(point) = posesMatchedGroundTruth[point].getTranslation();
-            pointsTrajectory.col(point) = posesMatchedTrajectory[point].getTranslation();
+            // can also check ATE with this alignment:
+            Eigen::Matrix3Xd pointsGroundTruth(3, posesMatchedTrajectory.size());
+            Eigen::Matrix3Xd pointsTrajectory(3, posesMatchedGroundTruth.size());
+
+            for (int point = 0; point < posesMatchedGroundTruth.size(); ++point) {
+                pointsGroundTruth.col(point) = posesMatchedGroundTruth[point].getTranslation();
+                pointsTrajectory.col(point) = posesMatchedTrajectory[point].getTranslation();
+            }
+
+            //align trajectories using umeyama + fit (cR+t) to SE3
+            SE3 transformation(Eigen::umeyama(pointsGroundTruth, pointsTrajectory));
         }
 
-        //align trajectories using umeyama + fit (cR+t) to SE3
-        SE3 transformation(Eigen::umeyama(pointsGroundTruth, pointsTrajectory));
-
         for (auto &pose: posesMatchedGroundTruth) {
-            SE3 alignedGroundTruthPose(transformation * pose.getSophusPose());
+            SE3 alignedGroundTruthPose(fixedPoseGroundTruth.inverse() * pose.getSophusPose());
 
             pose = PoseFullInfo(pose.getTimestamp(), alignedGroundTruthPose);
         }
 
         for (int pose = 0; pose < posesMatchedGroundTruth.size(); ++pose) {
 
-            ++iteration;
-
+            //align both estimated trajectory and groundtruth so indexFixed elements are zeroes
             SE3 alignedGroundTruthPose(posesMatchedGroundTruth[pose].getSophusPose());
+            SE3 alignedTrajectoryPose(trajectory[indexFixed].getSophusPose().inverse()
+                                      * posesMatchedTrajectory[pose].getSophusPose());
 
             std::pair<double, double> errorRotationTranslation =
-                    alignedGroundTruthPose.getRotationTranslationErrors(posesMatchedTrajectory[pose].getSophusPose());
+                    alignedGroundTruthPose.getRotationTranslationErrors(alignedTrajectoryPose);
 
             double errorL2 = errorRotationTranslation.second;
             double errorRadian = errorRotationTranslation.first;
@@ -135,7 +142,6 @@ namespace gdr {
             sumErrorL2Squared += errorL2 * errorL2;
             sumErrorRadianSquared += errorRadian * errorRadian;
         }
-
 
         sort(errorsL2);
         sort(errorsRadians);

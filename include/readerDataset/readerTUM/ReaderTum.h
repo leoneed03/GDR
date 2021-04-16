@@ -10,7 +10,7 @@
 #include <vector>
 #include <map>
 
-#include "PoseFullInfo.h"
+#include "parametrization/PoseFullInfo.h"
 
 namespace gdr {
 

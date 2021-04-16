@@ -16,7 +16,7 @@
 #include "random"
 
 #include "readerDataset/readerTUM/ClosestMatchFinder.h"
-#include "readerDataset/readerTUM/PoseFullInfo.h"
+#include "parametrization/PoseFullInfo.h"
 #include "readerDataset/readerTUM/ReaderTum.h"
 
 TEST(testDatasetReaderBundleFusion, copyroom) {

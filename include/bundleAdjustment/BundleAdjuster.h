@@ -17,7 +17,7 @@
 #include "cameraModel/CameraRGBD.h"
 #include "parametrization/SE3.h"
 #include "parametrization/Point3d.h"
-#include "readerDataset/readerTUM/PoseFullInfo.h"
+#include "parametrization/PoseFullInfo.h"
 #include "optimization/lossFunctions/LossFunctions.h"
 #include "statistics/RobustEstimators.h"
 

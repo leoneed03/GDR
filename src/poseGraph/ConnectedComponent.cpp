@@ -174,4 +174,13 @@ namespace gdr {
     const PoseGraph &ConnectedComponentPoseGraph::getPoseGraph() const {
         return poseGraph;
     }
+
+    PosesForEvaluation ConnectedComponentPoseGraph::getPosesForEvaluation() const {
+
+        const auto &fixedToZeroPose = poseGraph.getPoseVertex(poseGraph.getPoseIndexWithMaxConnectivity());
+
+        assert(!getVertices().empty());
+
+        return PosesForEvaluation(getVertices(), fixedToZeroPose.getAbsolutePoseSE3().inverse());
+    }
 }

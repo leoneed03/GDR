@@ -12,7 +12,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <readerDataset/readerTUM/PoseFullInfo.h>
+#include <parametrization/PoseFullInfo.h>
 
 namespace gdr {
 
