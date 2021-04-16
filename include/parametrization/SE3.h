@@ -19,7 +19,13 @@ namespace gdr {
         Sophus::SE3d se3;
 
     public:
+
+        static SE3 getRandomSE3(double maxTranslation = 1.0);
+
         SE3() = default;
+
+        SE3(const Eigen::Quaterniond &rotation,
+            const Eigen::Vector3d &translation);
 
         SE3(const Sophus::SE3d &relativePoseSE3);
 

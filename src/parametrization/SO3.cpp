@@ -61,9 +61,9 @@ namespace gdr {
         int dim = 3;
         std::random_device randomDevice;
         std::mt19937 randomNumberGenerator(randomDevice());
-        double maxRotation = 30;
+        double maxRotation = 89;
 
-        std::uniform_real_distribution<> distrib(0, maxRotation);
+        std::uniform_real_distribution<> distrib(-maxRotation, maxRotation);
         Eigen::Matrix3d rotationMatrix;
 
         std::vector<double> angles;

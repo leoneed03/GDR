@@ -37,6 +37,17 @@ namespace gdr {
 
         void setPrintProgressToCout(bool printProgress);
 
+        /**
+         *
+         * @param toBeTransformedPoints represents point being transformed by SE3 pose
+         * @param destinationPoints represents destination point i.e. destination = se3 * tobeTransformed
+         * @param cameraIntrToBeTransformed contains camera intrinsics for pose being transformed
+         * @param cameraIntrDestination contains camera intrinsics for destination pose
+         * @param estimationSuccess is true if estimation was successful
+         * @param inlierIndices contains indices of inlier point's columns in each matrix
+         *
+         * @returns estimated SE3 pose
+         */
         SE3 estimateRelativePose(
                 const Eigen::Matrix4Xd &toBeTransformedPoints,
                 const Eigen::Matrix4Xd &destinationPoints,

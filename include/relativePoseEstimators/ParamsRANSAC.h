@@ -28,7 +28,7 @@ namespace gdr {
         double maxL2ErrorMeters = 0.02;
 
         /** true if should use reprojection L_p error for inlier detection */
-        bool useProjectionError = true;
+        bool useProjectionError = false;
 
         /** max number of threads to use (automatic detection by default) */
         int maxNumberOfThreads = -1;
