@@ -5,6 +5,7 @@
 
 #include "statistics/RobustEstimators.h"
 
+#include <cmath>
 #include <algorithm>
 #include <cassert>
 

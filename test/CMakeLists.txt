@@ -1,6 +1,5 @@
 set(TESTS
-    testAccuracyBA
-    testBundleFusionReader)
+    testAccuracyBA)
 
 foreach(TEST ${TESTS})
   add_executable(${TEST} ${TEST}.cpp)
