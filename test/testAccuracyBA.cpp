@@ -29,6 +29,7 @@ void testReconstruction(
         int numberOfIterations = 1,
         bool printToConsole = false,
         bool showVisualization3D = false,
+        bool savePointCloudPly = false,
         double minCoefficientOfBiggestComponent = 0.5,
         double coefficientR = 1.2,
         double coefficientT = 1.2,
@@ -74,6 +75,7 @@ void testReconstruction(
 
         auto &biggestComponent = connectedComponentsPoseGraph[0];
 
+        const auto &poseFixed = biggestComponent->getVertices()[biggestComponent->getIndexFixedPose()];
         std::cout << "perform rotation averaging" << std::endl;
         std::vector<gdr::SO3> computedAbsoluteOrientationsNoRobust = biggestComponent->performRotationAveraging();
 
@@ -108,6 +110,8 @@ void testReconstruction(
         std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
                 absolutePosesGroundTruth);
 
+        int indexFixedPose = biggestComponent->getIndexFixedPose();
+
         std::vector<double> timestampsToFind = biggestComponent->getPosesTimestamps();
 
         //fill information needed for evaluation
@@ -127,21 +131,37 @@ void testReconstruction(
             }
         }
 
-
         assert(posesFullInfoBA.size() == posesFullInfoIRLS.size());
         assert(!posesFullInfoIRLS.empty());
         assert(posesFullInfoIRLS.size() == timestampsToFind.size());
 
+        //sizes may be not equal with posesInfoFullBA!!!
         posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientationByMatches(posesInfoFull,
                                                                                        timestampsToFind,
                                                                                        timeDiffThreshold);
+        gdr::SE3 fixedPoseGroundTruth(posesInfoFull[0].getSophusPose());
+        double minTimeDiff = std::numeric_limits<double>::max();
+
+
+        for (const auto &poseGroundTruth: posesInfoFull) {
+
+            double currentTimeDiff = std::abs(poseGroundTruth.getTimestamp() - timestampsToFind[indexFixedPose]);
+
+            if (currentTimeDiff < minTimeDiff) {
+                fixedPoseGroundTruth = gdr::SE3(poseGroundTruth.getSophusPose());
+            }
+
+            minTimeDiff = std::min(minTimeDiff, currentTimeDiff);
+        }
+
+
         {
             std::string outputNameGroundTruth =
                     "../../tools/data/temp/" + datasetName + "_posesBiggestComponent_GT_matched.txt";
             std::ofstream groundTruthPoses(outputNameGroundTruth);
             groundTruthPoses << gdr::PosesForEvaluation(
                     posesInfoFull,
-                    posesInfoFull[biggestComponent->getIndexFixedPose()].getSophusPose().inverse());
+                    fixedPoseGroundTruth.inverse());
         }
 
         gdr::Evaluator evaluator(absolutePosesGroundTruth);
@@ -186,10 +206,16 @@ void testReconstruction(
         if (showVisualization3D) {
             gdr::ModelCreationHandler modelCreationHandler(biggestComponent->getPoseGraph());
             modelCreationHandler.visualize();
-//                modelCreationHandler.saveAsPly("test.ply");
         }
 
-        assert(bundleAdjustedPoses.size() >= numberOfPosesInDataset * minCoefficientOfBiggestComponent);
+        if (savePointCloudPly) {
+            gdr::ModelCreationHandler modelCreationHandler(biggestComponent->getPoseGraph());
+            modelCreationHandler.saveAsPly("test.ply");
+        }
+
+
+
+        ASSERT_GE(bundleAdjustedPoses.size(), numberOfPosesInDataset * minCoefficientOfBiggestComponent);
 
         ASSERT_LE(meanErrorL2BA, errorTresholdT);
         ASSERT_LE(meanErrorL2IRLS, errorTresholdT);

@@ -140,6 +140,12 @@ namespace gdr {
             }
         }
 
+        assert(std::is_sorted(matchingGroundTruthPoses.begin(), matchingGroundTruthPoses.end(),
+                              [](const PoseFullInfo &lhs, const PoseFullInfo &rhs) {
+                                  return lhs.getTimestamp() < rhs.getTimestamp();
+                              }
+
+        ));
         return matchingGroundTruthPoses;
     }
 
@@ -164,7 +170,7 @@ namespace gdr {
             names.insert(filename);
         }
 
-        for (const auto& name: names) {
+        for (const auto &name: names) {
 
             fs::path path(imageType);
             path.append(name);

@@ -181,6 +181,11 @@ namespace gdr {
 
         assert(!getVertices().empty());
 
-        return PosesForEvaluation(getVertices(), fixedToZeroPose.getAbsolutePoseSE3().inverse());
+        return getPosesForEvaluation(SE3(fixedToZeroPose.getAbsolutePoseSE3().inverse()));
+    }
+
+    PosesForEvaluation ConnectedComponentPoseGraph::getPosesForEvaluation(const SE3 &poseFixedZeroInversed) const {
+
+        return PosesForEvaluation(getVertices(), poseFixedZeroInversed);
     }
 }

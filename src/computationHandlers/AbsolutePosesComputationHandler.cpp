@@ -379,4 +379,8 @@ namespace gdr {
     PosesForEvaluation AbsolutePosesComputationHandler::getPosesForEvaluation() const {
         return connectedComponent->getPosesForEvaluation();
     }
+
+    PosesForEvaluation AbsolutePosesComputationHandler::getPosesForEvaluation(const SE3 &poseFixedInversed) const {
+        return connectedComponent->getPosesForEvaluation(poseFixedInversed);
+    }
 }
