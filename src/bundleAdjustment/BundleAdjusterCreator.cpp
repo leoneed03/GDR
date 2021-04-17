@@ -4,11 +4,11 @@
 //
 
 #include "bundleAdjustment/BundleAdjusterCreator.h"
-#include "bundleAdjustment/BundleAdjuster.h"
+#include "bundleAdjustment/BundleDepthAdjuster.h"
 
 namespace gdr {
 
-    std::unique_ptr<IBundleAdjuster>
+    std::unique_ptr<BundleAdjuster>
     BundleAdjusterCreator::getBundleAdjuster(const BundleAdjusterCreator::BundleAdjustmentType &bundleAdjustmentType) {
 
         if (bundleAdjustmentType == BundleAdjustmentType::USE_DEPTH_INFO) {
@@ -17,6 +17,6 @@ namespace gdr {
             std::cout << "only BA with depth info is implemented" << std::endl;
         }
 
-        return std::make_unique<BundleAdjuster>();
+        return std::make_unique<BundleDepthAdjuster>();
     }
 }

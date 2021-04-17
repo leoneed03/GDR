@@ -7,7 +7,7 @@
 #include "poseGraph/ConnectedComponent.h"
 #include "parametrization/RelativeSE3.h"
 #include "parametrization/Point3d.h"
-#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerLogSO3.h"
 #include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 
 #include <fstream>

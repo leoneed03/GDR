@@ -6,43 +6,27 @@
 #ifndef GDR_POINTCLASSIFIER_H
 #define GDR_POINTCLASSIFIER_H
 
-#include <vector>
-#include <unordered_map>
-
-#include "sparsePointCloud/IPointClassifier.h"
-
 namespace gdr {
 
-    class PointClassifier : public IPointClassifier {
+    class PointClassifier {
 
     public:
-        void setNumberOfPoses(int numberOfPoses) override;
+        /** Compute unique class for each observed point
+         *      (some keypoints are observed by multiple cameras but represent same 3D point)
+         * @returns vector of unique classes for each point
+         */
+        virtual std::vector<int> assignPointClasses() = 0;
 
-        std::vector<int> assignPointClasses() override;
+        /** Point paired format: first -- pose number, second -- local keypoint index */
+        virtual void insertPointsWithNewClasses(const std::vector<std::pair<int, int>> &pointsOneClass) = 0;
 
-        void insertPointsWithNewClasses(const std::vector<std::pair<int, int>> &pointsOneClass) override;
+        virtual std::pair<int, int> getPoseNumberAndLocalIndex(int globalIndex) const = 0;
 
-        std::pair<int, int> getPoseNumberAndLocalIndex(int globalIndex) const override;
+        virtual int getNumberOfPoses() const = 0;
 
-        int getNumberOfPoses() const override;
+        virtual void setNumberOfPoses(int numberOfPoses) = 0;
 
-    private:
-        int numClasses = 0;
-        std::unordered_map<int, std::vector<int>> edgesBetweenPointsByGlobalIndices;
-        std::vector<std::pair<int, int>> poseNumberAndPointLocalIndexByGlobalIndex;
-        std::vector<std::unordered_map<int, int>> pointGlobalIndexByPose;
-        std::vector<std::unordered_map<int, int>> pointClassesByPose;
-
-        static const int unknownClassIndex = -1;
-
-        int getGetGlobalIndex(int poseNumber, int localIndex) const;
-
-        int getNumberOfGlobalIndices() const;
-
-        int getUnknownClassIndex() const;
-
-        int getPointClass(int poseNumber, int keypointIndexLocal) const;
+        virtual ~PointClassifier() = default;
     };
 }
-
 #endif

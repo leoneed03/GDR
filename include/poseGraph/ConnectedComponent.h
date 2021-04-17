@@ -15,8 +15,8 @@
 
 #include "keyPoints/KeyPointInfo.h"
 
-#include "sparsePointCloud/IPointClassifier.h"
-#include "sparsePointCloud/ICloudProjector.h"
+#include "sparsePointCloud/PointClassifier.h"
+#include "sparsePointCloud/CloudProjector.h"
 
 #include "keyPoints/KeyPointMatches.h"
 #include <vector>

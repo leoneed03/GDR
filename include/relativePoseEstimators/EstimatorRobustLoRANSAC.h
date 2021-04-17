@@ -6,14 +6,14 @@
 #ifndef GDR_ESTIMATORROBUSTLORANSAC_H
 #define GDR_ESTIMATORROBUSTLORANSAC_H
 
-#include "IEstimatorRelativePoseRobust.h"
+#include "EstimatorRelativePoseRobust.h"
 #include "Estimator3Points.h"
 #include "EstimatorNPoints.h"
 #include "InlierCounter.h"
 
 namespace gdr {
 
-    class EstimatorRobustLoRANSAC : public IEstimatorRelativePoseRobust {
+    class EstimatorRobustLoRANSAC : public EstimatorRelativePoseRobust {
 
         bool printProgressToCout = false;
 

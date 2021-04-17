@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "sparsePointCloud/ICloudProjector.h"
+#include "sparsePointCloud/CloudProjector.h"
 #include "sparsePointCloud/ProjectableInfo.h"
 
 namespace gdr {
@@ -19,7 +19,7 @@ namespace gdr {
 
         CloudProjectorCreator() = delete;
 
-        static std::unique_ptr<ICloudProjector> getCloudProjector();
+        static std::unique_ptr<CloudProjector> getCloudProjector();
     };
 }
 

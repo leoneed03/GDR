@@ -9,7 +9,7 @@
 
 namespace gdr {
 
-    std::unique_ptr<IFeatureDetectorMatcher>
+    std::unique_ptr<FeatureDetectorMatcher>
     FeatureDetectorMatcherCreator::getFeatureDetector(const SiftDetectorMatcher &siftDetectorMatcher) {
 
         if (siftDetectorMatcher == SiftDetectorMatcher::SIFTGPU) {

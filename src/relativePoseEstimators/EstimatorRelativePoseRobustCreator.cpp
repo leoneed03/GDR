@@ -8,7 +8,7 @@
 
 namespace gdr {
 
-    std::unique_ptr<IEstimatorRelativePoseRobust>
+    std::unique_ptr<EstimatorRelativePoseRobust>
     EstimatorRelativePoseRobustCreator::getEstimator(const InlierCounter &inlierCounter,
                                                      const ParamsRANSAC &paramsRansac,
                                                      const EstimatorMinimal &estimatorMinimal,

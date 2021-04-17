@@ -23,9 +23,9 @@ namespace gdr {
         int numberOfThreadsCPU = 1;
 
         std::vector<std::pair<double, double>> timestampsRgbDepthAssociated;
-        std::unique_ptr<IFeatureDetectorMatcher> siftModule;
-        std::unique_ptr<IEstimatorRelativePoseRobust> relativePoseEstimatorRobust;
-        std::unique_ptr<IRefinerRelativePose> relativePoseRefiner;
+        std::unique_ptr<FeatureDetectorMatcher> siftModule;
+        std::unique_ptr<EstimatorRelativePoseRobust> relativePoseEstimatorRobust;
+        std::unique_ptr<RefinerRelativePose> relativePoseRefiner;
         // unused right now
         std::unique_ptr<ThreadPool> threadPool;
         CameraRGBD cameraDefault;

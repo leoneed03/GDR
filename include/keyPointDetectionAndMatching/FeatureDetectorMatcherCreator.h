@@ -7,7 +7,7 @@
 #define GDR_FEATUREDETECTORMATCHERCREATOR_H
 
 #include <memory>
-#include "IFeatureDetectorMatcher.h"
+#include "FeatureDetectorMatcher.h"
 
 namespace gdr {
 
@@ -20,7 +20,7 @@ namespace gdr {
             SIFTGPU
         };
 
-        static std::unique_ptr<IFeatureDetectorMatcher>
+        static std::unique_ptr<FeatureDetectorMatcher>
         getFeatureDetector(const SiftDetectorMatcher &siftDetectorMatcher);
     };
 }

@@ -6,68 +6,74 @@
 #ifndef GDR_CLOUDPROJECTOR_H
 #define GDR_CLOUDPROJECTOR_H
 
-#include "parametrization/Point3d.h"
-#include "keyPoints/KeyPointInfo.h"
-#include "sparsePointCloud/PointClassifier.h"
-#include "cameraModel/CameraRGBD.h"
-#include "ProjectableInfo.h"
-
-#include <unordered_map>
 #include <vector>
-//TODO: hide this opencv header
+#include <unordered_map>
+
+//TODO: hide this opencv header in wrapper
 #include <opencv2/opencv.hpp>
 
-#include "sparsePointCloud/ICloudProjector.h"
+#include "keyPoints/KeyPointInfo.h"
+#include "parametrization/Point3d.h"
+#include "sparsePointCloud/ProjectableInfo.h"
 
 namespace gdr {
 
-    class CloudProjector : public ICloudProjector {
+    class CloudProjector {
 
     public:
 
-        void setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) override;
-
-        int addPoint(int indexedPoint,
-                     const std::vector<KeyPointInfo> &poseNumberAndProjectedKeyPointInfo) override;
-
-        std::vector<Point3d> computedPointsGlobalCoordinates() override;
-
-        const std::vector<std::unordered_map<int, KeyPointInfo>> &
-        getKeyPointInfoByPoseNumberAndPointClass() const override;
-
-        //TODO: class wrapper for cv::Mat
-        std::vector<cv::Mat> showPointsReprojectionError(const std::vector<Point3d> &pointsGlobalCoordinates,
-                                                         const std::string &pathToRGBDirectoryToSave,
-                                                         std::vector<double> &totalL2Errors,
-                                                         const CameraRGBD &camerasFromTo,
-                                                         int maxPointsToShow = -1,
-                                                         bool drawCirclesKeyPoints = false,
-                                                         double quantil = 0.5) const override;
-
-        void setPoses(const std::vector<SE3> &poses) override;
-
-        void setPoints(const std::vector<Point3d> &points) override;
-
-    private:
-        int maxPointIndex = -1;
-        std::vector<Point3d> indexedPoints;
-        std::vector<ProjectableInfo> poses;
-
-        /** i-th unordered map maps from point's index (int) to struct containing information
-         * about keypoint (KeyPointInfo) -- point's observation by i-th camera
+        /**
+         * @param cameraPoses contains information about observing camera poses
          */
-        std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPose;
+        virtual void setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) = 0;
 
-        /** j-th vector contains pose numbers observing j-keypoint */
-        std::vector<std::vector<int>> numbersOfPosesObservingSpecificPoint;
+        /**
+         * @param indexedPoint is observed point number
+         * @param poseNumberAndProjectedKeyPointInfo contains information about
+         *      which poses observe specific point and Sift keypoint info like x, y, scale and orientation
+         */
+        virtual int addPoint(int indexedPoint,
+                             const std::vector<KeyPointInfo> &poseNumberAndProjectedKeyPointInfo) = 0;
 
-        const Point3d &getPointByIndex3d(int pointNumber3d) const;
+        /**
+         * Computes global coordinates for all the observed points
+         * @returns vector of computed points
+         */
+        virtual std::vector<Point3d> computedPointsGlobalCoordinates() = 0;
 
-        int getPoseNumber() const;
+        /**
+         * Gets information about all the observed points and cameras
+         * @returns vector of maps, where each map returns keypoint information by keypoint's class
+         */
+        virtual const std::vector<std::unordered_map<int, KeyPointInfo>> &
+        getKeyPointInfoByPoseNumberAndPointClass() const = 0;
 
-        std::vector<std::pair<int, KeyPointInfo>> getKeyPointsIndicesAndInfoByPose(int poseNumber) const;
 
+        // TODO: further methods should be in a separate class and cv::Mat wrapper
+        /**
+         * Shows where observed point are projected on images (for debug purposes)
+         */
+        virtual std::vector<cv::Mat> showPointsReprojectionError(const std::vector<Point3d> &pointsGlobalCoordinates,
+                                                                 const std::string &pathToRGBDirectoryToSave,
+                                                                 std::vector<double> &totalL2Errors,
+                                                                 const CameraRGBD &camerasFromTo,
+                                                                 int maxPointsToShow = -1,
+                                                                 bool drawCirclesKeyPoints = false,
+                                                                 double quantil = 0.5) const = 0;
+
+        /**
+         * Set new computed camera coordinates
+         */
+        virtual void setPoses(const std::vector<SE3> &poses) = 0;
+
+        /**
+        * Set new computed points coordinates
+        */
+        virtual void setPoints(const std::vector<Point3d> &points) = 0;
+
+        virtual ~CloudProjector() = default;
     };
+
 }
 
 #endif

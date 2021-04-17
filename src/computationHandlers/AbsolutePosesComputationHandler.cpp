@@ -10,7 +10,7 @@
 #include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
 #include "absolutePoseEstimation/translationAveraging/TranslationAverager.h"
 
-#include "bundleAdjustment/IBundleAdjuster.h"
+#include "bundleAdjustment/BundleAdjuster.h"
 #include "bundleAdjustment/BundleAdjusterCreator.h"
 
 #include "sparsePointCloud/CloudProjectorCreator.h"
@@ -150,7 +150,7 @@ namespace gdr {
             }
         }
 
-        std::unique_ptr<IRotationRobustOptimizer> rotationOptimizer =
+        std::unique_ptr<RotationRobustOptimizer> rotationOptimizer =
                 RotationRobustOptimizerCreator::getRefiner(
                         RotationRobustOptimizerCreator::RobustParameterType::DEFAULT);
 
@@ -242,7 +242,7 @@ namespace gdr {
                                                                                maxNumberOfPointsToShow);
         }
 
-        std::unique_ptr<IBundleAdjuster> bundleAdjuster =
+        std::unique_ptr<BundleAdjuster> bundleAdjuster =
                 BundleAdjusterCreator::getBundleAdjuster(BundleAdjusterCreator::BundleAdjustmentType::USE_DEPTH_INFO);
 
         std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPoses(observedPoints,

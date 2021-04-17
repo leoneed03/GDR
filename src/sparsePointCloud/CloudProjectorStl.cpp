@@ -5,14 +5,14 @@
 
 #include "boost/filesystem.hpp"
 
-#include "sparsePointCloud/CloudProjector.h"
+#include "sparsePointCloud/CloudProjectorStl.h"
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
 
 namespace gdr {
 
-    int CloudProjector::addPoint(int pointIndex,
-                                 const std::vector<KeyPointInfo> &poseNumbersAndProjectedKeyPointInfo) {
+    int CloudProjectorStl::addPoint(int pointIndex,
+                                    const std::vector<KeyPointInfo> &poseNumbersAndProjectedKeyPointInfo) {
 
         assert(getPoseNumber() > 0);
         maxPointIndex = std::max(pointIndex, maxPointIndex);
@@ -31,12 +31,12 @@ namespace gdr {
         return 0;
     }
 
-    const Point3d &CloudProjector::getPointByIndex3d(int pointNumber3d) const {
+    const Point3d &CloudProjectorStl::getPointByIndex3d(int pointNumber3d) const {
         assert(pointNumber3d >= 0 && pointNumber3d < indexedPoints.size());
         return indexedPoints[pointNumber3d];
     }
 
-    std::vector<std::pair<int, KeyPointInfo>> CloudProjector::getKeyPointsIndicesAndInfoByPose(int poseNumber) const {
+    std::vector<std::pair<int, KeyPointInfo>> CloudProjectorStl::getKeyPointsIndicesAndInfoByPose(int poseNumber) const {
 
         assert(poseNumber >= 0 && poseNumber < getPoseNumber());
 
@@ -51,11 +51,11 @@ namespace gdr {
         return resultKeyPointsObserved;
     }
 
-    int CloudProjector::getPoseNumber() const {
+    int CloudProjectorStl::getPoseNumber() const {
         return poses.size();
     }
 
-    std::vector<Point3d> CloudProjector::computedPointsGlobalCoordinates() {
+    std::vector<Point3d> CloudProjectorStl::computedPointsGlobalCoordinates() {
 
         assert(maxPointIndex >= 0);
         assert(indexedPoints.empty());
@@ -169,7 +169,7 @@ namespace gdr {
         return indexedPoints;
     }
 
-    std::vector<cv::Mat> CloudProjector::showPointsReprojectionError(
+    std::vector<cv::Mat> CloudProjectorStl::showPointsReprojectionError(
             const std::vector<Point3d> &pointsGlobalCoordinates,
             const std::string &pathToRGBDirectoryToSave,
             std::vector<double> &totalL2Errors,
@@ -328,11 +328,11 @@ namespace gdr {
     }
 
     const std::vector<std::unordered_map<int, KeyPointInfo>> &
-    CloudProjector::getKeyPointInfoByPoseNumberAndPointClass() const {
+    CloudProjectorStl::getKeyPointInfoByPoseNumberAndPointClass() const {
         return keyPointInfoByPose;
     }
 
-    void CloudProjector::setPoses(const std::vector<SE3> &posesSE3Refined) {
+    void CloudProjectorStl::setPoses(const std::vector<SE3> &posesSE3Refined) {
         assert(poses.size() == posesSE3Refined.size());
 
         for (int i = 0; i < posesSE3Refined.size(); ++i) {
@@ -340,12 +340,12 @@ namespace gdr {
         }
     }
 
-    void CloudProjector::setPoints(const std::vector<Point3d> &pointsRefined) {
+    void CloudProjectorStl::setPoints(const std::vector<Point3d> &pointsRefined) {
         assert(pointsRefined.size() == indexedPoints.size());
         indexedPoints = pointsRefined;
     }
 
-    void CloudProjector::setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) {
+    void CloudProjectorStl::setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) {
         poses = cameraPoses;
         keyPointInfoByPose = std::vector<std::unordered_map<int, KeyPointInfo>>(cameraPoses.size());
     }

@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "sparsePointCloud/IPointClassifier.h"
+#include "sparsePointCloud/PointClassifier.h"
 
 namespace gdr {
 
@@ -17,7 +17,7 @@ namespace gdr {
     public:
         PointClassifierCreator() = delete;
 
-        static std::unique_ptr<IPointClassifier> getPointClassifier();
+        static std::unique_ptr<PointClassifier> getPointClassifier();
     };
 }
 

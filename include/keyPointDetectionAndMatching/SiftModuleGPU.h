@@ -18,13 +18,13 @@
 
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
-#include "IFeatureDetectorMatcher.h"
+#include "FeatureDetectorMatcher.h"
 
 namespace gdr {
 
     using imageDescriptor = std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>;
 
-    class SiftModuleGPU : public IFeatureDetectorMatcher {
+    class SiftModuleGPU : public FeatureDetectorMatcher {
 
     public:
         enum class PrintDebug {

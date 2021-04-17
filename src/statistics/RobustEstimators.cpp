@@ -11,7 +11,7 @@
 
 namespace gdr {
 
-    double RobustEstimators::getMedian(const std::vector<double> &values,
+    double RobustEstimators::getQuantile(const std::vector<double> &values,
                                        double quantile) {
         std::vector<double> valuesToSort = values;
 
@@ -32,7 +32,7 @@ namespace gdr {
     double RobustEstimators::getMedianAbsoluteDeviationMultiplied(const std::vector<double> &values,
                                                                   double multiplier) {
 
-        double medianValue = getMedian(values);
+        double medianValue = getQuantile(values);
 
         std::vector<double> residuesMedian;
         residuesMedian.reserve(values.size());
@@ -43,7 +43,7 @@ namespace gdr {
 
         assert(residuesMedian.size() == values.size());
 
-        double medianAbsoluteDeviation = getMedian(residuesMedian);
+        double medianAbsoluteDeviation = getQuantile(residuesMedian);
 
         return medianAbsoluteDeviation * multiplier;
     }

@@ -8,7 +8,7 @@
 
 namespace gdr {
 
-    std::unique_ptr<IRefinerRelativePose> RefinerRelativePoseCreator::getRefiner(
+    std::unique_ptr<RefinerRelativePose> RefinerRelativePoseCreator::getRefiner(
             const RefinerRelativePoseCreator::RefinerType &refinerType) {
 
         if (refinerType == RefinerType::ICPCUDA) {

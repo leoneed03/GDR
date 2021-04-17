@@ -6,35 +6,28 @@
 #ifndef GDR_ROTATIONROBUSTOPTIMIZER_H
 #define GDR_ROTATIONROBUSTOPTIMIZER_H
 
-#include <map>
-
-#include <ceres/ceres.h>
-#include <ceres/rotation.h>
-
-#include "parametrization/SO3.h"
-
 #include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
-#include "absolutePoseEstimation/rotationAveraging/IRotationRobustOptimizer.h"
-#include "absolutePoseEstimation/rotationAveraging/RelativeRotationError.h"
+#include "parametrization/SO3.h"
 
 namespace gdr {
 
-    class RotationRobustOptimizer : public IRotationRobustOptimizer {
-
-        std::vector<SO3> orientations;
-        std::vector<RotationMeasurement> relativeRotations;
-        bool printProgressToConsole = false;
-
+    class RotationRobustOptimizer {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        /**
+         * Use robust kernel to optimize orientations using results of global averaging as initestimation
+         *
+         * @param orientations contains information about globally optimal "averaged" orientations
+         * @param pairwiseRelRotations relative rotations
+         * @param indexFixedPose pose which orientation is Id
+         *
+         * @returns vector of optimized orientations
+         */
+        virtual std::vector<SO3> getOptimizedOrientation(
+                const std::vector<SO3> &orientations,
+                const std::vector<RotationMeasurement> &pairwiseRelRotations,
+                int indexFixedPose) = 0;
 
-        std::vector<SO3> getOptimizedOrientation(const std::vector<SO3> &orientations,
-                                                 const std::vector<RotationMeasurement> &pairWiseRotations,
-                                                 int indexFixed) override;
-
-        bool getPrintToConsole() const;
-
-        void setPrintProgressToConsole(bool printToConsoleToSet);
+        virtual ~RotationRobustOptimizer() = default;
     };
 }
 

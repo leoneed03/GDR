@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "bundleAdjustment/IBundleAdjuster.h"
+#include "bundleAdjustment/BundleAdjuster.h"
 
 #include "cameraModel/CameraRGBD.h"
 #include "keyPoints/KeyPointInfo.h"
@@ -25,7 +25,7 @@ namespace gdr {
             USE_DEPTH_INFO
         };
 
-        static std::unique_ptr<IBundleAdjuster> getBundleAdjuster(const BundleAdjustmentType &bundleAdjustmentType);
+        static std::unique_ptr<BundleAdjuster> getBundleAdjuster(const BundleAdjustmentType &bundleAdjustmentType);
     };
 }
 

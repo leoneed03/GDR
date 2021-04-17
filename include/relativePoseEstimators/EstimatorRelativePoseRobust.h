@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_IESTIMATORRELATIVEPOSEROBUST_H
-#define GDR_IESTIMATORRELATIVEPOSEROBUST_H
+#ifndef GDR_ESTIMATORRELATIVEPOSEROBUST_H
+#define GDR_ESTIMATORRELATIVEPOSEROBUST_H
 
 #include "ParamsRANSAC.h"
 #include "parametrization/SE3.h"
@@ -14,7 +14,7 @@ namespace gdr {
 
 
     /** Robust relative pose estimator for 2 given point clouds */
-    class IEstimatorRelativePoseRobust {
+    class EstimatorRelativePoseRobust {
 
     public:
         /**
@@ -36,7 +36,7 @@ namespace gdr {
                 bool &estimationSuccess,
                 std::vector<int> &inlierIndices) = 0;
 
-        virtual ~IEstimatorRelativePoseRobust() = default;
+        virtual ~EstimatorRelativePoseRobust() = default;
     };
 }
 

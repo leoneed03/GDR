@@ -95,12 +95,12 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/parametrization/Vectors3d.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/SO3.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/Point3d.h
-    ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h
-    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjector.h
+    ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerLogSO3.h
+    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjectorStl.h
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointInfo.h
-    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/PointClassifier.h
+    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/PointClassifierStl.h
     ${PROJECT_SOURCE_DIR}/include/visualization/2D/ImageDrawer.h
-    ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleAdjuster.h
+    ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleDepthAdjuster.h
     ${PROJECT_SOURCE_DIR}/include/visualization/3D/SmoothPointCloud.h
     ${PROJECT_SOURCE_DIR}/include/computationHandlers/ThreadPool.h
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointsDepthDescriptor.h
@@ -108,16 +108,16 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/ImagesAssociator.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/Estimator3Points.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/InlierCounter.h
-    ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/IEstimatorRelativePoseRobust.h
+    ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorRelativePoseRobust.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/ParamsRANSAC.h
-    ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/IRefinerRelativePose.h
+    ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/RefinerRelativePose.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/MatchableInfo.h
-    ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/IBundleAdjuster.h
-    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/IPointClassifier.h
-    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/ICloudProjector.h
+    ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleAdjuster.h
+    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/PointClassifier.h
+    ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjector.h
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPoint2DAndDepth.h
     ${PROJECT_SOURCE_DIR}/include/optimization/lossFunctions/LossFunctions.h
-    ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/IFeatureDetectorMatcher.h
+    ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/FeatureDetectorMatcher.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorNPoints.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorRobustLoRANSAC.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/SE3.h
@@ -130,7 +130,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/computationHandlers/AbsolutePosesComputationHandler.h
     ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/Match.h
     ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/ProjectableInfo.h
-    ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/IRotationRobustOptimizer.h
+    ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorRelativePoseRobustCreator.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseRefinement/RefinerRelativePoseCreator.h
     ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleAdjusterCreator.h
@@ -166,13 +166,13 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/parametrization/Vectors3d.cpp
     ${PROJECT_SOURCE_DIR}/src/computationHandlers/ThreadPool.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/SO3.cpp
-    ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.cpp
+    ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerLogSO3.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/Point3d.cpp
-    ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/CloudProjector.cpp
+    ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/CloudProjectorStl.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointInfo.cpp
-    ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifier.cpp
+    ${PROJECT_SOURCE_DIR}/src/sparsePointCloud/PointClassifierStl.cpp
     ${PROJECT_SOURCE_DIR}/src/visualization/2D/ImageDrawer.cpp
-    ${PROJECT_SOURCE_DIR}/src/bundleAdjustment/BundleAdjuster.cpp
+    ${PROJECT_SOURCE_DIR}/src/bundleAdjustment/BundleDepthAdjuster.cpp
     ${PROJECT_SOURCE_DIR}/src/visualization/3D/SmoothPointCloud.cpp
     ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointsDepthDescriptor.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/ConnectedComponent.cpp

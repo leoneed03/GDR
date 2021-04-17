@@ -5,13 +5,13 @@
 
 #include "boost/math/constants/constants.hpp"
 
-#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerLogSO3.h"
 
 namespace gdr {
 
-    std::vector<SO3> RotationRobustOptimizer::getOptimizedOrientation(const std::vector<SO3> &orientationsToSet,
-                                                                      const std::vector<RotationMeasurement> &pairWiseRotationsToSet,
-                                                                      int indexFixed) {
+    std::vector<SO3> RotationRobustOptimizerLogSO3::getOptimizedOrientation(const std::vector<SO3> &orientationsToSet,
+                                                                            const std::vector<RotationMeasurement> &pairWiseRotationsToSet,
+                                                                            int indexFixed) {
 
         orientations = orientationsToSet;
         relativeRotations = pairWiseRotationsToSet;
@@ -75,11 +75,11 @@ namespace gdr {
         return optimizedOrientations;
     }
 
-    bool RotationRobustOptimizer::getPrintToConsole() const {
+    bool RotationRobustOptimizerLogSO3::getPrintToConsole() const {
         return printProgressToConsole;
     }
 
-    void RotationRobustOptimizer::setPrintProgressToConsole(bool printToConsoleToSet) {
+    void RotationRobustOptimizerLogSO3::setPrintProgressToConsole(bool printToConsoleToSet) {
         printProgressToConsole = printToConsoleToSet;
     }
 }

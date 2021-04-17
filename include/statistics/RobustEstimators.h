@@ -11,8 +11,8 @@
 namespace gdr {
 
     struct RobustEstimators {
-        static double getMedian(const std::vector<double> &values,
-                                double quantile = 0.5);
+        static double getQuantile(const std::vector<double> &values,
+                                  double quantile = 0.5);
 
         static double getMedianAbsoluteDeviationMultiplied(const std::vector<double> &values,
                                                            double multiplier = 1.4826);

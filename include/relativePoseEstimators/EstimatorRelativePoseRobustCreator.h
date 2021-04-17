@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "relativePoseEstimators/IEstimatorRelativePoseRobust.h"
+#include "relativePoseEstimators/EstimatorRelativePoseRobust.h"
 #include "relativePoseEstimators/InlierCounter.h"
 
 namespace gdr {
@@ -25,10 +25,10 @@ namespace gdr {
             UMEYAMA
         };
 
-        static std::unique_ptr<IEstimatorRelativePoseRobust> getEstimator(const InlierCounter &inlierCounterToSet,
-                                                                          const ParamsRANSAC &paramsRansac,
-                                                                          const EstimatorMinimal &estimatorMinimal,
-                                                                          const EstimatorScalable &estimatorScalable);
+        static std::unique_ptr<EstimatorRelativePoseRobust> getEstimator(const InlierCounter &inlierCounterToSet,
+                                                                         const ParamsRANSAC &paramsRansac,
+                                                                         const EstimatorMinimal &estimatorMinimal,
+                                                                         const EstimatorScalable &estimatorScalable);
     };
 }
 

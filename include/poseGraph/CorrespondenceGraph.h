@@ -8,18 +8,18 @@
 
 #include "poseGraph/PoseGraph.h"
 
-#include "sparsePointCloud/CloudProjector.h"
+#include "sparsePointCloud/CloudProjectorStl.h"
 #include "VertexPose.h"
 #include "parametrization/RelativeSE3.h"
 #include "cameraModel/CameraRGBD.h"
-#include "keyPointDetectionAndMatching/IFeatureDetectorMatcher.h"
+#include "keyPointDetectionAndMatching/FeatureDetectorMatcher.h"
 #include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
 #include "parametrization/Vectors3d.h"
 #include "computationHandlers/ThreadPool.h"
 #include "ConnectedComponent.h"
 
-#include "relativePoseEstimators/IEstimatorRelativePoseRobust.h"
-#include "relativePoseRefinement/IRefinerRelativePose.h"
+#include "relativePoseEstimators/EstimatorRelativePoseRobust.h"
+#include "relativePoseRefinement/RefinerRelativePose.h"
 
 namespace gdr {
 

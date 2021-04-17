@@ -247,6 +247,11 @@ TEST(testBAOptimized, visualizationDesk98) {
                        paramsRansacDefault,
                        assocFile);
 
+//    testReconstruction("desk1_sampled_98_6",
+//                       0.04, 0.04,
+//                       kinectCamera,
+//                       paramsRansacDefault,
+//                       assocFile);
 }
 
 int main(int argc, char *argv[]) {

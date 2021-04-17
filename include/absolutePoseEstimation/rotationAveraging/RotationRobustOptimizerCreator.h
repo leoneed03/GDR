@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "absolutePoseEstimation/rotationAveraging/IRotationRobustOptimizer.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
 #include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
 
 namespace gdr {
@@ -21,7 +21,7 @@ namespace gdr {
             DEFAULT
         };
 
-        static std::unique_ptr<IRotationRobustOptimizer> getRefiner(const RobustParameterType &robustParameterType);
+        static std::unique_ptr<RotationRobustOptimizer> getRefiner(const RobustParameterType &robustParameterType);
     };
 }
 #endif

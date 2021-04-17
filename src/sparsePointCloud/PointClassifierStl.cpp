@@ -3,14 +3,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "sparsePointCloud/PointClassifier.h"
+#include "sparsePointCloud/PointClassifierStl.h"
 
 #include <queue>
 #include <cassert>
 
 namespace gdr {
 
-    int PointClassifier::getPointClass(int poseNumber, int keypointIndexLocal) const {
+    int PointClassifierStl::getPointClass(int poseNumber, int keypointIndexLocal) const {
         assert(poseNumber < pointClassesByPose.size());
         assert(poseNumber >= 0);
 
@@ -24,7 +24,7 @@ namespace gdr {
         }
     }
 
-    void PointClassifier::insertPointsWithNewClasses(const std::vector<std::pair<int, int>> &points) {
+    void PointClassifierStl::insertPointsWithNewClasses(const std::vector<std::pair<int, int>> &points) {
 
         std::vector<int> insertedGlobalIndices;
 
@@ -70,11 +70,11 @@ namespace gdr {
         }
     }
 
-    int PointClassifier::getUnknownClassIndex() const {
+    int PointClassifierStl::getUnknownClassIndex() const {
         return unknownClassIndex;
     }
 
-    int PointClassifier::getNumberOfPoses() const {
+    int PointClassifierStl::getNumberOfPoses() const {
 
         assert(pointClassesByPose.size() == pointGlobalIndexByPose.size());
 //        assert(matchesGlobalIndicesByPose.size() == pointGlobalIndexByPose.size());
@@ -82,12 +82,12 @@ namespace gdr {
         return pointClassesByPose.size();
     }
 
-    int PointClassifier::getNumberOfGlobalIndices() const {
+    int PointClassifierStl::getNumberOfGlobalIndices() const {
 
         return poseNumberAndPointLocalIndexByGlobalIndex.size();
     }
 
-    std::vector<int> PointClassifier::assignPointClasses() {
+    std::vector<int> PointClassifierStl::assignPointClasses() {
         std::vector<bool> visitedGlobalIndices(getNumberOfGlobalIndices(), false);
         std::vector<int> classByGlobalIndex(getNumberOfGlobalIndices(), getUnknownClassIndex());
 
@@ -133,12 +133,12 @@ namespace gdr {
         return classByGlobalIndex;
     }
 
-    std::pair<int, int> PointClassifier::getPoseNumberAndLocalIndex(int globalIndex) const {
+    std::pair<int, int> PointClassifierStl::getPoseNumberAndLocalIndex(int globalIndex) const {
         assert(globalIndex < poseNumberAndPointLocalIndexByGlobalIndex.size());
         return poseNumberAndPointLocalIndexByGlobalIndex[globalIndex];
     }
 
-    int PointClassifier::getGetGlobalIndex(int poseNumber, int localIndex) const {
+    int PointClassifierStl::getGetGlobalIndex(int poseNumber, int localIndex) const {
 
         assert(poseNumber < pointGlobalIndexByPose.size());
         auto foundIt = pointGlobalIndexByPose[poseNumber].find(localIndex);
@@ -147,7 +147,7 @@ namespace gdr {
         return foundIt->second;
     }
 
-    void PointClassifier::setNumberOfPoses(int numberOfPoses) {
+    void PointClassifierStl::setNumberOfPoses(int numberOfPoses) {
 
         pointClassesByPose = std::vector<std::unordered_map<int, int>>(numberOfPoses);
         pointGlobalIndexByPose = std::vector<std::unordered_map<int, int>>(numberOfPoses);

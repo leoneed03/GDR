@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "RefinerRelativePoseCreator.h"
-#include "relativePoseRefinement/IRefinerRelativePose.h"
+#include "relativePoseRefinement/RefinerRelativePose.h"
 
 namespace gdr {
 
@@ -22,7 +22,7 @@ namespace gdr {
             ICPCUDA
         };
 
-        static std::unique_ptr<IRefinerRelativePose> getRefiner(const RefinerType &refinerType);
+        static std::unique_ptr<RefinerRelativePose> getRefiner(const RefinerType &refinerType);
     };
 }
 

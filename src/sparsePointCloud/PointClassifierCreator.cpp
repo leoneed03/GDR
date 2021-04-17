@@ -3,13 +3,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "sparsePointCloud/PointClassifier.h"
+#include "sparsePointCloud/PointClassifierStl.h"
 #include "sparsePointCloud/PointClassifierCreator.h"
 
 namespace gdr {
 
-    std::unique_ptr<IPointClassifier> PointClassifierCreator::getPointClassifier() {
+    std::unique_ptr<PointClassifier> PointClassifierCreator::getPointClassifier() {
 
-        return std::make_unique<PointClassifier>();
+        return std::make_unique<PointClassifierStl>();
     }
 }

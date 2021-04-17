@@ -6,14 +6,14 @@
 #ifndef GDR_ICPCUDA_H
 #define GDR_ICPCUDA_H
 
-#include "IRefinerRelativePose.h"
+#include "RefinerRelativePose.h"
 
 #include "keyPoints/KeyPointMatches.h"
 #include "poseGraph/VertexPose.h"
 
 namespace gdr {
 
-    class ICPCUDA : public IRefinerRelativePose {
+    class ICPCUDA : public RefinerRelativePose {
 
     public:
 

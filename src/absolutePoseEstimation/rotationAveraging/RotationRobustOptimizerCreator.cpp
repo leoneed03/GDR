@@ -4,11 +4,11 @@
 //
 
 #include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerCreator.h"
-#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizer.h"
+#include "absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerLogSO3.h"
 
 namespace gdr {
 
-    std::unique_ptr<IRotationRobustOptimizer> RotationRobustOptimizerCreator::getRefiner(
+    std::unique_ptr<RotationRobustOptimizer> RotationRobustOptimizerCreator::getRefiner(
             const RotationRobustOptimizerCreator::RobustParameterType &robustParameterType) {
 
         if (robustParameterType == RobustParameterType::DEFAULT) {
@@ -17,6 +17,6 @@ namespace gdr {
             std::cout << "only default ceres optimization is available at the moment" << std::endl;
         }
 
-        return std::make_unique<RotationRobustOptimizer>();
+        return std::make_unique<RotationRobustOptimizerLogSO3>();
     }
 }

@@ -3,14 +3,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "bundleAdjustment/BundleAdjuster.h"
+#include "bundleAdjustment/BundleDepthAdjuster.h"
 
 #include <ceres/ceres.h>
 
 namespace gdr {
 
     std::pair<std::vector<double>, std::vector<double>>
-    BundleAdjuster::getNormalizedErrorsReprojectionAndDepth(bool performNormalizing) {
+    BundleDepthAdjuster::getNormalizedErrorsReprojectionAndDepth(bool performNormalizing) {
         std::vector<double> errorsReprojectionXY;
         std::vector<double> errorsDepth;
 
@@ -72,7 +72,7 @@ namespace gdr {
         return {errorsReprojectionXY, errorsDepth};
     }
 
-    std::vector<Point3d> BundleAdjuster::getOptimizedPoints() const {
+    std::vector<Point3d> BundleDepthAdjuster::getOptimizedPoints() const {
         std::vector<Point3d> pointsOptimized;
 
         for (int i = 0; i < pointsXYZbyIndex.size(); ++i) {
@@ -88,7 +88,7 @@ namespace gdr {
     /** [DEBUG] Get median and 0.9 qunatile errors: reprojection OX and OY and Depth:
      *      [{OX, OY, Depth}_median, {OX, OY, Depth}_max, {OX, OY, Depth}_min]
      */
-    std::vector<double> BundleAdjuster::getMedianErrorsXYDepth() {
+    std::vector<double> BundleDepthAdjuster::getMedianErrorsXYDepth() {
 
         std::vector<double> errorsReprojectionX;
         std::vector<double> errorsReprojectionY;
@@ -156,10 +156,10 @@ namespace gdr {
                 medianErrorDepthquant90};
     }
 
-    std::vector<SE3> BundleAdjuster::optimizePointsAndPoses(const std::vector<Point3d> &points,
-                                                            const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
-                                                            const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfos,
-                                                            int indexFixed) {
+    std::vector<SE3> BundleDepthAdjuster::optimizePointsAndPoses(const std::vector<Point3d> &points,
+                                                                 const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                                                 const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfos,
+                                                                 int indexFixed) {
 
         setPosesAndPoints(points, absolutePoses, keyPointInfos);
 
@@ -194,10 +194,10 @@ namespace gdr {
         std::pair<std::vector<double>, std::vector<double>> errorsReprojDepthRaw =
                 getNormalizedErrorsReprojectionAndDepth(false);
 
-        double medianErrorReprojRaw = RobustEstimators::getMedian(errorsReprojDepthRaw.first);
-        double medianErrorDepthRaw = RobustEstimators::getMedian(errorsReprojDepthRaw.second);
+        double medianErrorReprojRaw = RobustEstimators::getQuantile(errorsReprojDepthRaw.first);
+        double medianErrorDepthRaw = RobustEstimators::getQuantile(errorsReprojDepthRaw.second);
         auto errors3DL2Raw = getL2Errors();
-        double medianErrorL2Raw = RobustEstimators::getMedian(errors3DL2Raw);
+        double medianErrorL2Raw = RobustEstimators::getQuantile(errors3DL2Raw);
 
         assert(errors3DL2Raw.size() == errorsReprojDepthRaw.first.size());
 
@@ -289,9 +289,9 @@ namespace gdr {
         std::pair<std::vector<double>, std::vector<double>> errorsReprojDepthRawAfter =
                 getNormalizedErrorsReprojectionAndDepth(false);
 
-        double medianErrorReprojRawAfter = RobustEstimators::getMedian(errorsReprojDepthRawAfter.first);
-        double medianErrorDepthRawAfter = RobustEstimators::getMedian(errorsReprojDepthRawAfter.second);
-        double medianErrorL2RawAfter = RobustEstimators::getMedian(getL2Errors());
+        double medianErrorReprojRawAfter = RobustEstimators::getQuantile(errorsReprojDepthRawAfter.first);
+        double medianErrorDepthRawAfter = RobustEstimators::getQuantile(errorsReprojDepthRawAfter.second);
+        double medianErrorL2RawAfter = RobustEstimators::getQuantile(getL2Errors());
 
         if (getPrintProgressToCout()) {
             std::cout << "-----------------------------------------------------" << std::endl;
@@ -352,7 +352,7 @@ namespace gdr {
         return posesOptimized;
     }
 
-    Sophus::SE3d BundleAdjuster::getSE3TransformationMatrixByPoseNumber(int poseNumber) const {
+    Sophus::SE3d BundleDepthAdjuster::getSE3TransformationMatrixByPoseNumber(int poseNumber) const {
 
         Sophus::SE3d pose;
         pose.setQuaternion(Eigen::Quaterniond(orientationsqxyzwByPoseNumber[poseNumber].data()));
@@ -361,11 +361,11 @@ namespace gdr {
         return pose;
     }
 
-    Eigen::Vector3d BundleAdjuster::getPointVector3dByPointGlobalIndex(int pointGlobalIndex) const {
+    Eigen::Vector3d BundleDepthAdjuster::getPointVector3dByPointGlobalIndex(int pointGlobalIndex) const {
         return Eigen::Vector3d(pointsXYZbyIndex[pointGlobalIndex].data());
     }
 
-    Eigen::Vector4d BundleAdjuster::getPointVector4dByPointGlobalIndex(int pointGlobalIndex) const {
+    Eigen::Vector4d BundleDepthAdjuster::getPointVector4dByPointGlobalIndex(int pointGlobalIndex) const {
         Eigen::Vector4d point4d;
         point4d.setOnes();
         for (int i = 0; i < 3; ++i) {
@@ -374,9 +374,9 @@ namespace gdr {
         return point4d;
     }
 
-    std::vector<double> BundleAdjuster::getInlierErrors(const std::vector<double> &r_n,
-                                                        double s_0,
-                                                        double thresholdInlier) {
+    std::vector<double> BundleDepthAdjuster::getInlierErrors(const std::vector<double> &r_n,
+                                                             double s_0,
+                                                             double thresholdInlier) {
         std::vector<double> inliers;
 
         assert(!r_n.empty());
@@ -394,7 +394,7 @@ namespace gdr {
     }
 
     std::pair<std::vector<double>, std::vector<double>>
-    BundleAdjuster::getInlierNormalizedErrorsReprojectionAndDepth(double thresholdInlier) {
+    BundleDepthAdjuster::getInlierNormalizedErrorsReprojectionAndDepth(double thresholdInlier) {
 
         std::vector<double> inlierErrorsReprojection;
         std::vector<double> inlierErrorsDepth;
@@ -411,8 +411,8 @@ namespace gdr {
         assert(!errorsNormalizedReproj.empty());
         assert(errorsNormalizedReproj.size() == errorsNormalizedDepth.size());
 
-        double medianNormalizedReprojection = RobustEstimators::getMedian(errorsNormalizedReproj);
-        double medianNormalizedDepth = RobustEstimators::getMedian(errorsNormalizedDepth);
+        double medianNormalizedReprojection = RobustEstimators::getQuantile(errorsNormalizedReproj);
+        double medianNormalizedDepth = RobustEstimators::getQuantile(errorsNormalizedDepth);
 
         double initScaleReproj = computeInitialScaleByMedian(medianNormalizedReprojection);
         double initScaleDepth = computeInitialScaleByMedian(medianNormalizedDepth);
@@ -461,7 +461,7 @@ namespace gdr {
         return std::sqrt(sumErrorSquared);
     }
 
-    std::pair<double, double> BundleAdjuster::getSigmaReprojectionAndDepth(double threshold) {
+    std::pair<double, double> BundleDepthAdjuster::getSigmaReprojectionAndDepth(double threshold) {
         int pToSubstract = (p > 0) ? (p) : (0);
 
         std::pair<std::vector<double>, std::vector<double>> inlierErrorsReprojAndDepth =
@@ -484,7 +484,7 @@ namespace gdr {
         return {sigmaReproj, sigmaDepth};
     }
 
-    std::vector<double> BundleAdjuster::getL2Errors() {
+    std::vector<double> BundleDepthAdjuster::getL2Errors() {
         std::vector<double> errorsL2;
 
         for (int currPose = 0; currPose < poseTxTyTzByPoseNumber.size(); ++currPose) {
@@ -512,17 +512,17 @@ namespace gdr {
         return errorsL2;
     }
 
-    bool BundleAdjuster::getPrintProgressToCout() const {
+    bool BundleDepthAdjuster::getPrintProgressToCout() const {
         return printProgressToCout;
     }
 
-    void BundleAdjuster::setPrintProgressToCout(bool printProgress) {
+    void BundleDepthAdjuster::setPrintProgressToCout(bool printProgress) {
         printProgressToCout = printProgress;
     }
 
-    void BundleAdjuster::setPosesAndPoints(const std::vector<Point3d> &points,
-                                           const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
-                                           const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo) {
+    void BundleDepthAdjuster::setPosesAndPoints(const std::vector<Point3d> &points,
+                                                const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                                const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo) {
 
         assert(keyPointInfo.size() == absolutePoses.size());
         assert(!absolutePoses.empty());
@@ -558,33 +558,33 @@ namespace gdr {
         assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
     }
 
-    int BundleAdjuster::getMaxNumberIterations() const {
+    int BundleDepthAdjuster::getMaxNumberIterations() const {
         return iterations;
     }
 
-    int BundleAdjuster::getMaxNumberThreads() const {
+    int BundleDepthAdjuster::getMaxNumberThreads() const {
         return maxNumberTreadsCeres;
     }
 
-    void BundleAdjuster::setMaxNumberIterations(int iterationsNumber) {
+    void BundleDepthAdjuster::setMaxNumberIterations(int iterationsNumber) {
         assert(iterationsNumber >= 0);
         iterations = iterationsNumber;
     }
 
-    void BundleAdjuster::setMaxNumberThreads(int maxNumberThreadsToUse) {
+    void BundleDepthAdjuster::setMaxNumberThreads(int maxNumberThreadsToUse) {
         maxNumberTreadsCeres = maxNumberThreadsToUse;
     }
 
-    ceres::CostFunction *BundleAdjuster::ReprojectionWithDepthError::Create(double newObservedX, double newObservedY,
-                                                                            double newObservedDepth,
-                                                                            double scale,
-                                                                            const CameraRGBD &camera,
-                                                                            double estNormalizedReproj,
-                                                                            double estNormalizedDepth,
-                                                                            double devDividerReproj,
-                                                                            double devDividerDepth,
-                                                                            double medianResReproj,
-                                                                            double medianResDepth) {
+    ceres::CostFunction *BundleDepthAdjuster::ReprojectionWithDepthError::Create(double newObservedX, double newObservedY,
+                                                                                 double newObservedDepth,
+                                                                                 double scale,
+                                                                                 const CameraRGBD &camera,
+                                                                                 double estNormalizedReproj,
+                                                                                 double estNormalizedDepth,
+                                                                                 double devDividerReproj,
+                                                                                 double devDividerDepth,
+                                                                                 double medianResReproj,
+                                                                                 double medianResDepth) {
 
         return (new ceres::AutoDiffCostFunction<ReprojectionWithDepthError, 2, dimPoint, dimPose, dimOrientation>(
                 new ReprojectionWithDepthError(newObservedX, newObservedY, newObservedDepth,
@@ -594,15 +594,15 @@ namespace gdr {
                                                medianResReproj, medianResDepth)));
     }
 
-    BundleAdjuster::ReprojectionWithDepthError::ReprojectionWithDepthError(double newObservedX, double newObservedY,
-                                                                           double newObservedDepth, double scale,
-                                                                           const CameraRGBD &cameraRgbd,
-                                                                           double devNormalizedEstReproj,
-                                                                           double devNormalizedEstDepth,
-                                                                           double devDividerReproj,
-                                                                           double devDividerDepth,
-                                                                           double medianResReproj,
-                                                                           double medianResDepth)
+    BundleDepthAdjuster::ReprojectionWithDepthError::ReprojectionWithDepthError(double newObservedX, double newObservedY,
+                                                                                double newObservedDepth, double scale,
+                                                                                const CameraRGBD &cameraRgbd,
+                                                                                double devNormalizedEstReproj,
+                                                                                double devNormalizedEstDepth,
+                                                                                double devDividerReproj,
+                                                                                double devDividerDepth,
+                                                                                double medianResReproj,
+                                                                                double medianResDepth)
             : observedX(newObservedX),
               observedY(newObservedY),
               observedDepth(newObservedDepth),

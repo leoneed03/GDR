@@ -20,8 +20,8 @@ namespace gdr {
         bool saveDebugImages = false;
 
         std::unique_ptr<ConnectedComponentPoseGraph> connectedComponent;
-        std::unique_ptr<IPointClassifier> pointMatcher;
-        std::unique_ptr<ICloudProjector> cloudProjector;
+        std::unique_ptr<PointClassifier> pointMatcher;
+        std::unique_ptr<CloudProjector> cloudProjector;
 
         std::string pathRelativePosesFile = "relativePosesG2o.txt";
 
