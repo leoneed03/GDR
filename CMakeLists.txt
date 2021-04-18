@@ -148,7 +148,9 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/computationHandlers/ModelCreationHandler.h
     ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/Evaluator.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.h
-    ${PROJECT_SOURCE_DIR}/include/poseGraph/PosesForEvaluation.h)
+    ${PROJECT_SOURCE_DIR}/include/poseGraph/PosesForEvaluation.h
+    ${PROJECT_SOURCE_DIR}/test/reconstructor/TesterReconstruction.h
+)
 
 set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/directoryTraversing/DirectoryReader.cpp
@@ -211,13 +213,17 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/Evaluator.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PosesForEvaluation.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.cpp
+    ${PROJECT_SOURCE_DIR}/test/reconstructor/TesterReconstruction.cpp
 )
 
 add_subdirectory(lib)
 
+add_executable(reconstructorTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/reconstructorTum.cpp)
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
 add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
+add_dependencies(reconstructorTUM GDR_LIB)
+
 
 target_compile_definitions(
   GDR_LIB
@@ -246,6 +252,8 @@ target_include_directories(
          ${Sophus_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS}
   PRIVATE ${OpenGL_INCLUDE_DIR} ${PCL_INCLUDE_DIRS} ${ICPCUDA_INCLUDE_DIRS}
           ${Pangolin_INCLUDE_DIRS} ${GTSAM_INCLUDE_DIRS})
+
+target_link_libraries(reconstructorTUM GDR_LIB)
 
 enable_testing()
 add_subdirectory(test)

@@ -18,6 +18,8 @@ namespace gdr {
         std::string typeOfMeasurement;
         double RMSE, MEAN, MEDIAN, STD, MINERR, MAXERR;
 
+        ErrorInformation() = default;
+
         ErrorInformation(const std::string &nameToSet, const std::string &typeToSet,
                          double rmse, double mean, double median, double std, double minErr, double maxErr) :
                 nameError(nameToSet),
@@ -32,15 +34,6 @@ namespace gdr {
         friend std::ostream &operator<<(const std::ostream &os, const ErrorInformation &info);
     };
 
-    std::ostream &operator<<(const std::ostream &os, const ErrorInformation &info) {
-
-        std::cout << info.nameError << ".rmse   " << info.RMSE << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".mean   " << info.MEAN << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".median " << info.MEDIAN << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".std    " << info.STD << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".min    " << info.MINERR << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".max    " << info.MAXERR << " " << info.typeOfMeasurement << std::endl;
-    }
 
     struct ErrorRotationTranslation {
         int numberOfPosesEvaluated = 0;
@@ -49,11 +42,17 @@ namespace gdr {
         ErrorInformation rotationError;
         ErrorInformation translationError;
 
+        ErrorRotationTranslation() = default;
+
         ErrorRotationTranslation(const ErrorInformation &rotationErrorToSet,
                                  const ErrorInformation &translationErrorToSet) :
                 rotationError(rotationErrorToSet),
                 translationError(translationErrorToSet) {};
+
+        friend std::ostream &operator<<(std::ostream &os, const ErrorRotationTranslation &info);
     };
+
+
 
     class Evaluator {
 
@@ -73,7 +72,10 @@ namespace gdr {
 
         ErrorRotationTranslation evaluateTrajectory(const std::vector<PoseFullInfo> &trajectory,
                                                     int indexFixed = 0,
-                                                    double maxTimeDiff = 0.02) const;
+                                                    bool alignWithUmeyama = false,
+                                                    double maxTimeDiff = 0.02,
+                                                    const std::string &pathOutAlignedGroundTruth = "",
+                                                    const std::string &pathOutAlignedTrajectory = "") const;
     };
 }
 

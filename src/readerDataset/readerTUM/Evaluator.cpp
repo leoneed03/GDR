@@ -7,6 +7,7 @@
 #include "readerDataset/readerTUM/ReaderTum.h"
 #include "readerDataset/readerTUM/ClosestMatchFinder.h"
 
+#include <fstream>
 #include <algorithm>
 
 namespace gdr {
@@ -36,8 +37,10 @@ namespace gdr {
 
     ErrorRotationTranslation Evaluator::evaluateTrajectory(const std::vector<PoseFullInfo> &trajectory,
                                                            int indexFixed,
-                                                           double maxTimeDiff) const {
-
+                                                           bool alignWithUmeyama,
+                                                           double maxTimeDiff,
+                                                           const std::string &pathOutAlignedGroundTruth,
+                                                           const std::string &pathOutAlignedTrajectory) const {
 
         auto setOfPosesFromGroundTruth = poseGroundTruthByTime;
 
@@ -96,6 +99,7 @@ namespace gdr {
             posesMatchedTrajectory.emplace_back(poseTrajectory);
         }
 
+        SE3 transformationAlignmentUmeyama;
         {
 
             // can also check ATE with this alignment:
@@ -107,22 +111,70 @@ namespace gdr {
                 pointsTrajectory.col(point) = posesMatchedTrajectory[point].getTranslation();
             }
 
-            //align trajectories using umeyama + fit (cR+t) to SE3
-            SE3 transformation(Eigen::umeyama(pointsGroundTruth, pointsTrajectory));
+            //align trajectories using umeyama + fit found (cR+t)-transformation to R+t [SE3]
+            transformationAlignmentUmeyama = SE3(Eigen::umeyama(pointsGroundTruth, pointsTrajectory));
         }
 
-        for (auto &pose: posesMatchedGroundTruth) {
-            SE3 alignedGroundTruthPose(fixedPoseGroundTruth.inverse() * pose.getSophusPose());
+        auto posesMatchedGroundTruthAlignedUmeyama(posesMatchedGroundTruth);
 
-            pose = PoseFullInfo(pose.getTimestamp(), alignedGroundTruthPose);
+
+        for (int poseGroundTruthIndex = 0; poseGroundTruthIndex < posesMatchedGroundTruth.size(); ++poseGroundTruthIndex) {
+
+            {
+                auto &pose = posesMatchedGroundTruth[poseGroundTruthIndex];
+                SE3 alignedGroundTruthPoseZeroPose(fixedPoseGroundTruth.inverse() * pose.getSophusPose());
+                pose = PoseFullInfo(pose.getTimestamp(), alignedGroundTruthPoseZeroPose);
+            }
+
+            {
+                auto &poseUmeyama = posesMatchedGroundTruthAlignedUmeyama[poseGroundTruthIndex];
+                SE3 alignedGroundTruthPoseUmeyama(transformationAlignmentUmeyama * poseUmeyama.getSophusPose());
+                poseUmeyama = PoseFullInfo(poseUmeyama.getTimestamp(), alignedGroundTruthPoseUmeyama);
+            }
         }
 
+        // compare with umeyama aligned if the flag is true
+        if (alignWithUmeyama) {
+            std::swap(posesMatchedGroundTruth, posesMatchedGroundTruthAlignedUmeyama);
+        }
+
+        if (!pathOutAlignedGroundTruth.empty()) {
+            std::ofstream outGroundTruthAligned(pathOutAlignedGroundTruth);
+
+            for (const auto &poseAligned: posesMatchedGroundTruth) {
+                outGroundTruthAligned << poseAligned << std::endl;
+            }
+        }
+
+        for (auto &pose: posesMatchedTrajectory) {
+            if (alignWithUmeyama) {
+                pose = PoseFullInfo(pose.getTimestamp(), SE3(pose.getSophusPose()));
+            } else {
+                pose = PoseFullInfo(pose.getTimestamp(), SE3(trajectory[indexFixed].getSophusPose().inverse()
+                                            * pose.getSophusPose()));
+            }
+        }
+
+        if (!pathOutAlignedTrajectory.empty()) {
+            std::ofstream outTrajectoryAligned(pathOutAlignedTrajectory);
+
+            for (const auto &poseAligned: posesMatchedTrajectory) {
+                outTrajectoryAligned << poseAligned << std::endl;
+            }
+        }
         for (int pose = 0; pose < posesMatchedGroundTruth.size(); ++pose) {
 
-            //align both estimated trajectory and groundtruth so indexFixed elements are zeroes
+            //align both estimated trajectory, groundtruth is already aligned
             SE3 alignedGroundTruthPose(posesMatchedGroundTruth[pose].getSophusPose());
-            SE3 alignedTrajectoryPose(trajectory[indexFixed].getSophusPose().inverse()
-                                      * posesMatchedTrajectory[pose].getSophusPose());
+
+            SE3 alignedTrajectoryPose;
+
+            if (alignWithUmeyama) {
+                alignedTrajectoryPose = SE3(posesMatchedTrajectory[pose].getSophusPose());
+            } else {
+                alignedTrajectoryPose = SE3(trajectory[indexFixed].getSophusPose().inverse()
+                                         * posesMatchedTrajectory[pose].getSophusPose());
+            }
 
             std::pair<double, double> errorRotationTranslation =
                     alignedGroundTruthPose.getRotationTranslationErrors(alignedTrajectoryPose);
@@ -160,7 +212,6 @@ namespace gdr {
         double meanRadian = sumErrorRadian / successfulMatchings;
         double meanL2Squared = sumErrorL2Squared / successfulMatchings;
         double meanRadianSquared = sumErrorRadianSquared / successfulMatchings;
-
         double medianL2 = median(errorsL2);
         double medianRadian = median(errorsRadians);
 
@@ -203,7 +254,7 @@ namespace gdr {
     double Evaluator::median(const std::vector<double> &valuesNotSorted) {
 
         auto values(valuesNotSorted);
-        std::sort(values.begin(), values.end());
+        sort(values);
         assert(std::is_sorted(values.begin(), values.end()));
 
         assert(!values.empty());
@@ -217,4 +268,24 @@ namespace gdr {
         }
     }
 
+
+    std::ostream &operator<<(const std::ostream &os, const ErrorInformation &info) {
+
+        std::cout << info.nameError << ".rmse   " << info.RMSE << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".mean   " << info.MEAN << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".median " << info.MEDIAN << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".std    " << info.STD << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".min    " << info.MINERR << " " << info.typeOfMeasurement << std::endl;
+        std::cout << info.nameError << ".max    " << info.MAXERR << " " << info.typeOfMeasurement << std::endl;
+    }
+
+    std::ostream &operator<<(std::ostream &os, const ErrorRotationTranslation &informationErrors) {
+
+        std::cout << informationErrors.rotationError
+                  << "------------------------------------------------------------" << std::endl;
+        std::cout << informationErrors.translationError << std::endl;
+
+        std::cout << "Compared with groundtruth: " << informationErrors.numberOfPosesEvaluated << "/"
+                  << informationErrors.numberOfPosesTrajectory;
+    }
 }
