@@ -13,8 +13,14 @@ namespace gdr {
 
     SparseMatrixd
     TranslationAverager::constructSparseMatrix(const std::vector<TranslationMeasurement> &relativeTranslations,
-                                               const std::vector<SE3> &absolutePoses) {
+                                               const std::vector<SE3> &absolutePoses,
+                                               int indexPoseFixed) {
+
+        assert(indexPoseFixed >= 0 && indexPoseFixed < absolutePoses.size());
+
         int numberOfAbsolutePoses = absolutePoses.size();
+
+        auto matrixSizePoses = absolutePoses.size() - 1;
         int vectorDim = 3;
         std::vector<Tripletd> coefficients;
 
@@ -22,10 +28,13 @@ namespace gdr {
 
             const auto &relativeT = relativeTranslations[i];
 
-            int posLeftPlus = relativeT.getIndexFromToBeTransformed();
-            int posRightMinus = relativeT.getIndexToDestination();
+            int posLeftPlusReal = relativeT.getIndexFromToBeTransformed();
+            int posRightMinusReal = relativeT.getIndexToDestination();
 
-            assert(posLeftPlus < posRightMinus);
+            int posLeftPlus = (posLeftPlusReal <= indexPoseFixed) ? posLeftPlusReal : (posLeftPlusReal - 1);
+            int posRightMinus = (posRightMinusReal <= indexPoseFixed) ? posRightMinusReal : (posRightMinusReal - 1);
+
+            assert(posLeftPlusReal < posRightMinusReal);
             assert(posLeftPlus >= 0);
             assert(posRightMinus < numberOfAbsolutePoses);
 
@@ -33,15 +42,22 @@ namespace gdr {
                 int posRow = 3 * i + counter;
                 int posLeftCol = 3 * posLeftPlus + counter;
                 int posRightCol = 3 * posRightMinus + counter;
-                coefficients.emplace_back(Tripletd(posRow, posLeftCol, 1));
-                coefficients.emplace_back(Tripletd(posRow, posRightCol, -1));
+
+                if (posLeftPlusReal != indexPoseFixed) {
+                    coefficients.emplace_back(Tripletd(posRow, posLeftCol, 1));
+                }
+                if (posRightMinusReal != indexPoseFixed) {
+                    coefficients.emplace_back(Tripletd(posRow, posRightCol, -1));
+                }
             }
         }
-        SparseMatrixd systemSparseMatrix(vectorDim * relativeTranslations.size(), vectorDim * absolutePoses.size());
+
+        SparseMatrixd systemSparseMatrix(vectorDim * relativeTranslations.size(),
+                                         vectorDim * matrixSizePoses);
         systemSparseMatrix.setFromTriplets(coefficients.begin(), coefficients.end());
 
         assert(systemSparseMatrix.rows() / 3 == relativeTranslations.size());
-        assert(systemSparseMatrix.cols() / 3 == absolutePoses.size());
+        assert(systemSparseMatrix.cols() / 3 == absolutePoses.size() - 1);
 
         return systemSparseMatrix;
     }
@@ -94,9 +110,7 @@ namespace gdr {
             std::cout << "NOT SUCCESS" << std::endl;
         }
 
-
         return Vectors3d(solutionL2);
-
     }
 
     SparseMatrixd
@@ -206,48 +220,70 @@ namespace gdr {
     TranslationAverager::recoverTranslationsIRLS(const std::vector<TranslationMeasurement> &relativeTranslations,
                                                  const std::vector<SE3> &absolutePoses,
                                                  const Vectors3d &absoluteTranslations,
+                                                 int indexPoseFixed,
                                                  bool &successIRLS,
                                                  int numOfIterations,
                                                  double epsilonWeightIRLS,
                                                  bool printProgressToCout) {
 
-        std::vector<TranslationMeasurement> relativeTranslationsInversed = getInversedTranslationMeasurements(
-                relativeTranslations,
-                absolutePoses);
+        std::vector<TranslationMeasurement> relativeTranslationsInversed =
+                getInversedTranslationMeasurements(relativeTranslations,
+                                                   absolutePoses);
 
-        SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslationsInversed, absolutePoses);
-        Vectors3d b = constructColumnTermB(relativeTranslationsInversed, absolutePoses);
+        SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslationsInversed,
+                                                           absolutePoses,
+                                                           indexPoseFixed);
+
+        Vectors3d b = constructColumnTermB(relativeTranslationsInversed,
+                                           absolutePoses);
 
         successIRLS = true;
         std::vector<double> weightsId(b.getSize(), 1.0);
-        SparseMatrixd weightMatrixSparse = getWeightMatrixRaw(weightsId, epsilonWeightIRLS);
 
-        return IRLS(systemMatrix, b,
-                    weightMatrixSparse,
-                    absoluteTranslations,
-                    successIRLS,
-                    numOfIterations,
-                    epsilonWeightIRLS,
-                    printProgressToCout);
+        SparseMatrixd weightMatrixSparse = getWeightMatrixRaw(weightsId,
+                                                              epsilonWeightIRLS);
+
+        auto vectorsExcludingFixedRaw = absoluteTranslations.getCopyWithoutVector(indexPoseFixed);
+
+        auto solutionsWithoutPoseFixed = IRLS(systemMatrix,
+                                              b,
+                                              weightMatrixSparse,
+                                              vectorsExcludingFixedRaw,
+                                              successIRLS,
+                                              numOfIterations,
+                                              epsilonWeightIRLS,
+                                              printProgressToCout);
+
+        return solutionsWithoutPoseFixed
+                .getCopyWithInsertedVector(indexPoseFixed,
+                                           Eigen::Vector3d(0, 0, 0));
     }
 
     Vectors3d
     TranslationAverager::recoverTranslations(const std::vector<TranslationMeasurement> &relativeTranslations,
-                                             const std::vector<SE3> &absolutePoses) {
+                                             const std::vector<SE3> &absolutePoses,
+                                             int indexPoseFixed) {
 
-        std::vector<TranslationMeasurement> relativeTranslationsInversed = getInversedTranslationMeasurements(
-                relativeTranslations,
-                absolutePoses);
+        std::vector<TranslationMeasurement> relativeTranslationsInversed =
+                getInversedTranslationMeasurements(relativeTranslations,
+                                                   absolutePoses);
 
-        SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslationsInversed, absolutePoses);
+        SparseMatrixd systemMatrix = constructSparseMatrix(relativeTranslationsInversed,
+                                                           absolutePoses,
+                                                           indexPoseFixed);
+
         Vectors3d b = constructColumnTermB(relativeTranslationsInversed, absolutePoses);
         bool success = true;
         std::vector<double> weightsId(b.getSize(), 1.0);
 
-        // weight 1e016 is not used here because each weight is zero
-        return findLeastSquaresSolution(systemMatrix, b,
-                                        success,
-                                        getWeightMatrixRaw(weightsId,
-                                                           1e-6));
+        // weight 1e-6 is not used here because each weight is zero
+        auto solutionWithoutFixedPose = findLeastSquaresSolution(systemMatrix,
+                                                                 b,
+                                                                 success,
+                                                                 getWeightMatrixRaw(weightsId,
+                                                                                    1e-6));
+
+        return solutionWithoutFixedPose.getCopyWithInsertedVector(indexPoseFixed,
+                                                                  Eigen::Vector3d(0, 0, 0));
     }
 }

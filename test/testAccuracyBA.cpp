@@ -26,15 +26,14 @@ TEST(testBAOptimized, visualizationDesk98) {
 
     std::string assocFile = "assoc.txt";
 
-    double rotErrorTreshold = 0.04;
-    double translationErrorTreshold = 0.04;
+    double rotErrorThreshold = 0.04;
+    double translationErrorThreshold = 0.04;
 
     double minCoefficientOfBiggestComponent = 0.5;
     double coefficientR = 1.2;
     double coefficientT = 1.2;
 
 //    auto results = test::TesterReconstruction::testReconstruction("../../data/desk1_sampled_98_6",
-//                       0.04, 0.04,
 //                       kinectCamera,
 //                       paramsRansacDefault,
 //                       assocFile);
@@ -52,10 +51,10 @@ TEST(testBAOptimized, visualizationDesk98) {
     ASSERT_GE(results.errorBA.numberOfPosesTrajectory,
               results.numberOfPosesInDataset * minCoefficientOfBiggestComponent);
 
-    ASSERT_LE(meanErrorL2BA, translationErrorTreshold);
-    ASSERT_LE(meanErrorL2IRLS, translationErrorTreshold);
-    ASSERT_LE(meanErrorRotBA, rotErrorTreshold);
-    ASSERT_LE(meanErrorRotIRLS, rotErrorTreshold);
+    ASSERT_LE(meanErrorL2BA, translationErrorThreshold);
+    ASSERT_LE(meanErrorL2IRLS, translationErrorThreshold);
+    ASSERT_LE(meanErrorRotBA, rotErrorThreshold);
+    ASSERT_LE(meanErrorRotIRLS, rotErrorThreshold);
 
     ASSERT_LE(meanErrorRotBA, meanErrorRotIRLS * coefficientR);
     ASSERT_LE(meanErrorL2BA, meanErrorL2IRLS * coefficientT);

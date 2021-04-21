@@ -15,9 +15,11 @@
 TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex4SomeOutliers) {
 
     int successfulIterations = 0;
-    int totalIterations = 20;
+    int totalIterations = 40;
 
-    int minSuccessIterations = 12;
+    double coefficientSuccessIterations = 0.6;
+
+    int minSuccessIterations = static_cast<int>(coefficientSuccessIterations * totalIterations);
     double meanErrorTreshold = 1e-2;
 
     std::vector<double> errorsIRLS;
@@ -32,17 +34,18 @@ TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex4SomeO
                 absolutePosesFile);
         std::vector<gdr::SE3> absolutePosesGroundTruth;
 
+        int indexPoseFixed = iterations % absolutePosesInfo.size();
+
         for (const auto &poseGT: absolutePosesInfo) {
             absolutePosesGroundTruth.emplace_back(gdr::SE3(poseGT.getSophusPose()));
         }
-        auto poseGTzero = absolutePosesGroundTruth[0];
+        auto poseGTzero = absolutePosesGroundTruth[indexPoseFixed];
 
         for (auto &poseGT: absolutePosesGroundTruth) {
             poseGT = poseGTzero.inverse() * poseGT;
         }
 
         std::vector<gdr::TranslationMeasurement> relativeTs;
-
 
         std::random_device randomDevice;
         std::mt19937 randomNumberGenerator(randomDevice());
@@ -59,7 +62,6 @@ TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex4SomeO
                     relativeTs.push_back(relPose);
                 }
 
-
                 // add outlier measurements
                 if (indexFrom + 4 == indexTo) {
                     Eigen::Vector3d outlierT;
@@ -73,26 +75,22 @@ TEST(testTranslationAveraging, IRLS19PosesFromFileCorrespondencesPerVertex4SomeO
         }
 
         bool successIRLS = true;
-        std::vector<Eigen::Vector3d> absoluteTranslations = gdr::TranslationAverager::recoverTranslations(relativeTs,
-                                                                                                          absolutePosesGroundTruth).toVectorOfVectors();
+        std::vector<Eigen::Vector3d> absoluteTranslations =
+                gdr::TranslationAverager::recoverTranslations(relativeTs,
+                                                              absolutePosesGroundTruth,
+                                                              indexPoseFixed).toVectorOfVectors();
+        ASSERT_EQ(absoluteTranslations.size(), absolutePosesInfo.size());
+        ASSERT_LE(absoluteTranslations[indexPoseFixed].norm(), std::numeric_limits<double>::epsilon());
+
         std::vector<Eigen::Vector3d> translationsPCG = absoluteTranslations;
         absoluteTranslations = gdr::TranslationAverager::recoverTranslationsIRLS(
                 relativeTs,
                 absolutePosesGroundTruth,
                 absoluteTranslations,
+                indexPoseFixed,
                 successIRLS).toVectorOfVectors();
 
-        assert(absoluteTranslations.size() == absolutePosesInfo.size());
-
-        Eigen::Vector3d translationPCGzero = translationsPCG[0];
-        Eigen::Vector3d translationZero = absoluteTranslations[0];
-
-        for (auto &movedTranslation: absoluteTranslations) {
-            movedTranslation -= translationZero;
-        }
-        for (auto &movedTranslation: translationsPCG) {
-            movedTranslation -= translationPCGzero;
-        }
+        ASSERT_LE(absoluteTranslations[indexPoseFixed].norm(), std::numeric_limits<double>::epsilon());
 
         double sumError = 0;
         double sumErrorPCG = 0;

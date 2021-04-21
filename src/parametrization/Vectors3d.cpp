@@ -19,23 +19,11 @@ namespace gdr {
         }
     }
 
-    Vectors3d::Vectors3d(const std::vector<std::vector<double>> &vectors3d) {
-        vectorsInner = Eigen::VectorXd(dim * vectors3d.size());
-        size = vectors3d.size();
-        for (int vectorIndex = 0; vectorIndex < vectors3d.size(); ++vectorIndex) {
-            for (int toDim = 0; toDim < dim; ++toDim) {
-                vectorsInner[vectorIndex * dim + toDim] = vectors3d[vectorIndex][toDim];
-            }
-        }
-    }
-
     Vectors3d::Vectors3d(const Eigen::VectorXd &vectors3d) {
         assert(vectors3d.rows() % dim == 0);
         vectorsInner = vectors3d;
         size = vectors3d.rows() / 3;
     }
-
-    Vectors3d::Vectors3d() {}
 
     const Eigen::VectorXd &Vectors3d::getVectorRaw() const {
         assert(vectorsInner.rows() % dim == 0);
@@ -44,6 +32,7 @@ namespace gdr {
 
 
     size_t Vectors3d::getSize() const {
+        assert(size == vectorsInner.rows() / dim);
         return size;
     }
 
@@ -81,11 +70,13 @@ namespace gdr {
 
 
     gdr::Vectors3d operator*(const gdr::SparseMatrixClass &matrixOperator, const gdr::Vectors3d &vectors3D) {
-        Eigen::VectorXd rawVectorArg = vectors3D.getVectorRaw();
+        const Eigen::VectorXd &rawVectorArg = vectors3D.getVectorRaw();
 
         const SparseMatrixd &sparseMatrixRaw = matrixOperator.getSparseMatrixd();
         assert(sparseMatrixRaw.cols() == rawVectorArg.rows());
+
         Eigen::VectorXd result = sparseMatrixRaw * rawVectorArg;
+
         return gdr::Vectors3d(result);
     }
 
@@ -94,9 +85,49 @@ namespace gdr {
         return gdr::Vectors3d(result);
     }
 
-    Eigen::Vector3d Vectors3d::operator[](size_t index) {
-        Eigen::Vector3d translationByIndex = getVectorRaw().block<dim, 1>(index * dim, 0);
-        return translationByIndex;
+    Vectors3d Vectors3d::getCopyWithInsertedVector(int indexOfNewElement,
+                                                   const Eigen::Vector3d &element) const {
+        Eigen::VectorXd vectorsWithInserted(dim * (size + 1));
+
+        int elementsToSetBefore = dim * indexOfNewElement;
+
+        assert(vectorsWithInserted.cols() == 1);
+        vectorsWithInserted.block(0, 0, elementsToSetBefore, 1) =
+                vectorsInner.block(0, 0, elementsToSetBefore, 1);
+
+        vectorsWithInserted.block(elementsToSetBefore, 0,
+                                  dim, 1) = element;
+
+        int rowsToCopyAfterFixed = static_cast<int>(vectorsInner.rows()) - elementsToSetBefore;
+
+        vectorsWithInserted.block(elementsToSetBefore + dim, 0,
+                                  rowsToCopyAfterFixed, 1) =
+                vectorsInner.block(elementsToSetBefore, 0,
+                                   rowsToCopyAfterFixed, 1);
+
+        assert(vectorsWithInserted.rows() == vectorsInner.rows() + dim);
+
+        return Vectors3d(vectorsWithInserted);
+    }
+
+    Vectors3d Vectors3d::getCopyWithoutVector(int indexFixed) const {
+        assert(size > 0 && indexFixed < size && indexFixed >= 0);
+
+        Eigen::VectorXd vectorsWithFixed(dim * (size - 1));
+
+        int elementsToSetBefore = dim * indexFixed;
+
+        vectorsWithFixed.block(0, 0, elementsToSetBefore, 1) =
+                vectorsInner.block(0, 0, elementsToSetBefore, 1);
+
+        int rowsToCopyAfterFixed = static_cast<int>(vectorsInner.rows()) - elementsToSetBefore - dim;
+
+        vectorsWithFixed.block(elementsToSetBefore, 0,
+                               rowsToCopyAfterFixed, 1) =
+                vectorsInner.block(elementsToSetBefore + dim, 0,
+                                   rowsToCopyAfterFixed, 1);
+
+        return vectorsWithFixed;
     }
 }
 

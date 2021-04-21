@@ -23,11 +23,9 @@ namespace gdr {
 
         std::vector<double> getVectorOfNorms();
 
-        Vectors3d();
+        Vectors3d() = default;
 
         Vectors3d(const std::vector<Eigen::Vector3d> &vectors3d);
-
-        Vectors3d(const std::vector<std::vector<double>> &vectors3d);
 
         Vectors3d(const Eigen::VectorXd &vectors3d);
 
@@ -41,7 +39,9 @@ namespace gdr {
 
         friend Vectors3d operator-(const Vectors3d &vectors3dLeft, const Vectors3d &vectors3dRight);
 
-        Eigen::Vector3d operator[](size_t index);
+        Vectors3d getCopyWithInsertedVector(int indexOfNewElement, const Eigen::Vector3d &element) const;
+
+        Vectors3d getCopyWithoutVector(int indexFixed) const;
     };
 }
 

@@ -21,7 +21,8 @@ namespace gdr {
     class TranslationAverager {
 
         static SparseMatrixd constructSparseMatrix(const std::vector<TranslationMeasurement> &relativeTranslations,
-                                                   const std::vector<SE3> &absolutePoses);
+                                                   const std::vector<SE3> &absolutePoses,
+                                                   int indexPoseFixed);
 
         static Vectors3d
         constructColumnTermB(const std::vector<TranslationMeasurement> &relativeTranslations,
@@ -61,6 +62,7 @@ namespace gdr {
          * @param absolutePoses contains precomputed SE3 poses where SO3 rotations are already fixed
          *      and translations are not currently utilized
          * @param absoluteTranslations initial solution guess
+         * @param indexPoseFixed is the number of pose with zero coordinates
          * @param successIRLS[out] is true if IRLS did converge
          * @param numOfIterations max number of iterations
          * @param epsilonWeightIRLS is a value w such that all weights in weight matrix are less than 1/w
@@ -70,6 +72,7 @@ namespace gdr {
         recoverTranslationsIRLS(const std::vector<TranslationMeasurement> &relativeTranslations,
                                 const std::vector<SE3> &absolutePoses,
                                 const Vectors3d &absoluteTranslations,
+                                int indexPoseFixed,
                                 bool &successIRLS,
                                 int numOfIterations = 5,
                                 double epsilonWeightIRLS = 1e-6,
@@ -86,7 +89,8 @@ namespace gdr {
          */
         static Vectors3d
         recoverTranslations(const std::vector<TranslationMeasurement> &relativeTranslations,
-                            const std::vector<SE3> &absolutePoses);
+                            const std::vector<SE3> &absolutePoses,
+                            int indexPoseFixed);
     };
 }
 

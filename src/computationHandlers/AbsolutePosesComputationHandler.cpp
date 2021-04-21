@@ -190,7 +190,10 @@ namespace gdr {
 
         std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = TranslationAverager::recoverTranslations(
                 relativeTranslations,
-                absolutePoses).toVectorOfVectors();
+                absolutePoses,
+                indexFixedToZero).toVectorOfVectors();
+
+        assert(optimizedAbsoluteTranslationsIRLS[indexFixedToZero].norm() < std::numeric_limits<double>::epsilon());
 
         bool successIRLS = true;
 
@@ -199,13 +202,10 @@ namespace gdr {
                 relativeTranslations,
                 absolutePoses,
                 optimizedAbsoluteTranslationsIRLS,
+                indexFixedToZero,
                 successIRLS).toVectorOfVectors();
 
-
-        Eigen::Vector3d zeroTranslation = optimizedAbsoluteTranslationsIRLS[indexFixedToZero];
-        for (auto &translation: optimizedAbsoluteTranslationsIRLS) {
-            translation -= zeroTranslation;
-        }
+        assert(optimizedAbsoluteTranslationsIRLS[indexFixedToZero].norm() < std::numeric_limits<double>::epsilon());
 
         assert(getNumberOfPoses() == optimizedAbsoluteTranslationsIRLS.size());
 
