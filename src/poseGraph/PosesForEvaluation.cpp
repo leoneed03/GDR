@@ -32,6 +32,7 @@ namespace gdr {
             os << pose << std::endl;
         }
 
+        return os;
     }
 
     void
@@ -40,7 +41,7 @@ namespace gdr {
         poses = posesToSet;
 
         for (auto &pose: poses) {
-            pose = PoseFullInfo(pose.getTimestamp(), applyFromRight * pose.poseSE3);
+            pose = PoseFullInfo(pose.getTimestamp(), applyFromRight * pose.poseCameraToWorldSE3);
         }
     }
 

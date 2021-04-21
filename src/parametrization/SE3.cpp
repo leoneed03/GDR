@@ -81,6 +81,8 @@ namespace gdr {
         }
 
         os << SO3(pose.getSO3());
+
+        return os;
     }
 
     SE3 SE3::getRandomSE3(double maxTranslation) {

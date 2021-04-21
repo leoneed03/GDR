@@ -12,8 +12,8 @@ namespace gdr {
     PoseFullInfo::PoseFullInfo(double newTimestamp,
                                const Eigen::Quaterniond &orientationQuat,
                                const Eigen::Vector3d &coordinates) : timestamp(newTimestamp) {
-        poseSE3.setTranslation(coordinates);
-        poseSE3.setRotation(Sophus::SO3d(orientationQuat));
+        poseCameraToWorldSE3.setTranslation(coordinates);
+        poseCameraToWorldSE3.setRotation(Sophus::SO3d(orientationQuat));
     }
 
     PoseFullInfo::PoseFullInfo(const std::vector<double> &rawPoseInfoTimestampTranslationOrientation) {
@@ -27,14 +27,14 @@ namespace gdr {
         for (int i = 0; i < 3; ++i) {
             rawTranslation.emplace_back(rawPoseInfoTimestampTranslationOrientation[translationPosStart + i]);
         }
-        poseSE3.setTranslation(Eigen::Map<Eigen::Vector3d>(rawTranslation.data()));
+        poseCameraToWorldSE3.setTranslation(Eigen::Map<Eigen::Vector3d>(rawTranslation.data()));
 
         std::vector<double> rawQuat;
         for (int i = 0; i < 4; ++i) {
             rawQuat.emplace_back(rawPoseInfoTimestampTranslationOrientation[orientationQuatPosStart + i]);
         }
 
-        poseSE3.setRotation(Sophus::SO3d(Eigen::Map<Eigen::Quaterniond>(rawQuat.data())));
+        poseCameraToWorldSE3.setRotation(Sophus::SO3d(Eigen::Map<Eigen::Quaterniond>(rawQuat.data())));
 
     }
 
@@ -49,7 +49,7 @@ namespace gdr {
             os << timeTranslationOrientation.getTranslation()[i] << ' ';
         }
 
-        const auto &orientationQuat = timeTranslationOrientation.poseSE3.getRotationQuatd();
+        const auto &orientationQuat = timeTranslationOrientation.poseCameraToWorldSE3.getRotationQuatd();
         os << orientationQuat.x() << ' '
            << orientationQuat.y() << ' '
            << orientationQuat.z() << ' '
@@ -63,19 +63,23 @@ namespace gdr {
     }
 
     Eigen::Quaterniond PoseFullInfo::getOrientationQuat() const {
-        return poseSE3.getRotationQuatd();
+        return poseCameraToWorldSE3.getRotationQuatd();
     }
 
     Eigen::Vector3d PoseFullInfo::getTranslation() const {
-        return poseSE3.getTranslation();
+        return poseCameraToWorldSE3.getTranslation();
     }
 
     Sophus::SE3d PoseFullInfo::getSophusPose() const {
 
-        return poseSE3.getSE3();
+        return poseCameraToWorldSE3.getSE3();
     }
 
     PoseFullInfo::PoseFullInfo(double newTimestamp, const SE3 &poseSE3ToSet) :
             timestamp(newTimestamp),
-            poseSE3(poseSE3ToSet) {}
+            poseCameraToWorldSE3(poseSE3ToSet) {}
+
+    const SE3 &PoseFullInfo::getPoseCameraToWorldSE3() const {
+        return poseCameraToWorldSE3;
+    }
 }

@@ -8,7 +8,7 @@
 
 int main(int argc, char* argv[]) {
 
-    std::cout << "[path Dataset] [pathOutPoses] [fx] [fy] [cx] [cy] [depthDivider] " <<
+    std::cout << "input args format: [path Dataset] [pathOutPoses] [fx] [fy] [cx] [cy] [depthDivider], " <<
                  "optionally: [fileOutIRLS] [fileOutBA] [fileOutGT]" << std::endl;
     assert(argc == 8 || argc == 11);
 

@@ -91,13 +91,13 @@ namespace gdr {
             std::string rgbShortName = rgbLongName.filename().string();
             std::string dShortName = dLongName.filename().string();
 
-            associatedImages.timeAndPairedDepthByRgb[rgbShortName] = {timeRgb, dShortName};
-            associatedImages.timeAndPairedRgbByDepth[dShortName] = {timeD, rgbShortName};
+            associatedImages.getTimeAndPairedDepthByRgb()[rgbShortName] = {timeRgb, dShortName};
+            associatedImages.getTimeAndPairedRgbByDepth()[dShortName] = {timeD, rgbShortName};
 
         }
 
-        assert(associatedImages.timeAndPairedDepthByRgb.size() == associatedImages.timeAndPairedRgbByDepth.size());
-        assert(!associatedImages.timeAndPairedDepthByRgb.empty());
+        assert(associatedImages.getTimeAndPairedDepthByRgb().size() == associatedImages.getTimeAndPairedRgbByDepth().size());
+        assert(!associatedImages.getTimeAndPairedDepthByRgb().empty());
 
         return associatedImages;
     }

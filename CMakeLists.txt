@@ -214,15 +214,18 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PosesForEvaluation.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.cpp
     ${PROJECT_SOURCE_DIR}/test/reconstructor/TesterReconstruction.cpp
-)
+        src/readerDataset/readerTUM/TrajectoryFilesComparer.cpp include/readerDataset/readerTUM/TrajectoryFilesComparer.h src/parametrization/Reconstructable.cpp include/parametrization/Reconstructable.h src/parametrization/Point2d.cpp include/parametrization/Point2d.h src/parametrization/PointXYZRGBfloatUchar.cpp include/parametrization/PointXYZRGBfloatUchar.h src/parametrization/AssociatedImages.cpp include/parametrization/AssociatedImages.h)
 
 add_subdirectory(lib)
 
 add_executable(reconstructorTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/reconstructorTum.cpp)
+add_executable(visualizerTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/visualizerTum.cpp)
+
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
 add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
 add_dependencies(reconstructorTUM GDR_LIB)
+add_dependencies(visualizerTUM GDR_LIB)
 
 
 target_compile_definitions(
@@ -254,6 +257,7 @@ target_include_directories(
           ${Pangolin_INCLUDE_DIRS} ${GTSAM_INCLUDE_DIRS})
 
 target_link_libraries(reconstructorTUM GDR_LIB)
+target_link_libraries(visualizerTUM GDR_LIB)
 
 enable_testing()
 add_subdirectory(test)

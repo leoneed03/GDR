@@ -56,9 +56,9 @@ namespace gdr {
                         const std::string &groundtruthFileName = "groundtruth.txt");
 
         /**
-         * @param outPutDirectoryPath -- path to the Directory where associated data will be saved
-         * @param maxTimeTreshold -- max time difference between rgb and depth frames to be matched
-         * @param timeOffset -- time offset to be added to all depth timestamps
+         * @param outPutDirectoryPath represents path to the Directory where associated data will be saved
+         * @param maxTimeTreshold is equal to max time difference between rgb and depth frames to be matched
+         * @param timeOffset represents time offset to be added to all depth timestamps
          */
 
         int associateImagePairs(double maxTimeTreshold = 0.02,

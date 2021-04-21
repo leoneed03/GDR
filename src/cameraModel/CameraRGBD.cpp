@@ -106,4 +106,12 @@ namespace gdr {
         return measurementErrorDeviationEstimators;
     }
 
+    void CameraRGBD::setDepthToRgbSe3(const SE3 &depthToRgbToSet) {
+        depthToRgb = depthToRgbToSet;
+    }
+
+    const SE3 &CameraRGBD::getDepthToRgbSe3() const {
+        return depthToRgb;
+    }
+
 }

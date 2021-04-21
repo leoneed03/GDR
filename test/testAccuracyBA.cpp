@@ -3,23 +3,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "computationHandlers/AbsolutePosesComputationHandler.h"
-
 #include <iostream>
 #include <gtest/gtest.h>
 #include <vector>
 #include <chrono>
 
-#include "readerDataset/readerTUM/ReaderTum.h"
-
 #include "computationHandlers/RelativePosesComputationHandler.h"
-#include "computationHandlers/ModelCreationHandler.h"
-
-#include "readerDataset/readerTUM/Evaluator.h"
 
 #include "poseGraph/PosesForEvaluation.h"
 #include "reconstructor/TesterReconstruction.h"
-
 
 TEST(testBAOptimized, visualizationDesk98) {
 

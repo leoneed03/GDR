@@ -11,7 +11,20 @@ namespace gdr {
             poseGraphToBeProcessed(poseGraph) {}
 
     void ModelCreationHandler::visualize() const {
-        SmoothPointCloud::registerPointCloudFromImages(poseGraphToBeProcessed.getPoseVertices(),
+        std::vector<Reconstructable> posesToVisualize;
+
+        for (const auto &poseVertex: poseGraphToBeProcessed.getPoseVertices()) {
+            Reconstructable poseToVisualize(poseVertex.getPathRGBImage(),
+                                            poseVertex.getPathDImage(),
+                                            poseVertex.getCamera());
+            poseToVisualize.setAbsolutePose(poseVertex.getAbsolutePoseSE3());
+
+            posesToVisualize.emplace_back(poseToVisualize);
+        }
+
+        assert(posesToVisualize.size() == poseGraphToBeProcessed.size());
+
+        SmoothPointCloud::registerPointCloudFromImages(posesToVisualize,
                                                        true,
                                                        voxelSizeX,
                                                        voxelSizeY,
@@ -19,8 +32,19 @@ namespace gdr {
     }
 
     int ModelCreationHandler::saveAsPly(const std::string &plyFilePath) const {
+        std::vector<Reconstructable> posesToVisualize;
 
-        SmoothPointCloud::registerPointCloudFromImages(poseGraphToBeProcessed.getPoseVertices(),
+        for (const auto &poseVertex: poseGraphToBeProcessed.getPoseVertices()) {
+            Reconstructable poseToVisualize(poseVertex.getPathRGBImage(),
+                                            poseVertex.getPathDImage(),
+                                            poseVertex.getCamera());
+            poseToVisualize.setAbsolutePose(poseVertex.getAbsolutePoseSE3());
+
+            posesToVisualize.emplace_back(poseToVisualize);
+        }
+
+        assert(posesToVisualize.size() == poseGraphToBeProcessed.size());
+        SmoothPointCloud::registerPointCloudFromImages(posesToVisualize,
                                                        false,
                                                        voxelSizeX,
                                                        voxelSizeY,

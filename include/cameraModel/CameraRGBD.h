@@ -10,6 +10,7 @@
 
 #include "cameraModel/MeasurementErrorDeviationEstimators.h"
 #include "parametrization/Point3d.h"
+#include "parametrization/SE3.h"
 
 namespace gdr {
 
@@ -23,6 +24,8 @@ namespace gdr {
         double depthPixelDivider = 5000.0;
 
         MeasurementErrorDeviationEstimators measurementErrorDeviationEstimators;
+
+        SE3 depthToRgb;
 
 
     public:
@@ -58,6 +61,10 @@ namespace gdr {
         float getCx() const;
 
         float getCy() const;
+
+        void setDepthToRgbSe3(const SE3 &depthToRgbToSet);
+
+        const SE3 &getDepthToRgbSe3() const;
     };
 }
 

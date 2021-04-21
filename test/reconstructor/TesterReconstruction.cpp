@@ -16,6 +16,7 @@ namespace test {
         path.append(suffixString);
         return path.string();
     }
+
     ErrorsOfTrajectoryEstimation TesterReconstruction::testReconstruction(
             const std::string &pathRelativeToData,
             const gdr::CameraRGBD &cameraDefault,
@@ -249,7 +250,6 @@ namespace test {
 
 
         }
-
 
         if (showVisualization3D) {
             gdr::ModelCreationHandler modelCreationHandler(biggestComponent->getPoseGraph());

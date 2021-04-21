@@ -53,8 +53,8 @@ namespace gdr {
 
             AssociatedImages associatedImages = ReaderTUM::readAssocShortFilenameRgbToD(rgbToDassociationFile);
 
-            const auto &rgbSet = associatedImages.timeAndPairedDepthByRgb;
-            const auto &depthSet = associatedImages.timeAndPairedRgbByDepth;
+            const auto &rgbSet = associatedImages.getTimeAndPairedDepthByRgb();
+            const auto &depthSet = associatedImages.getTimeAndPairedRgbByDepth();
 
             std::cout << "sets are rgb, d: " << rgbSet.size() << ' ' << depthSet.size() << std::endl;
             assert(!rgbSet.empty());

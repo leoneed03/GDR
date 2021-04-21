@@ -370,6 +370,14 @@ namespace gdr {
         fs::path outD = outDirRoot;
         outD.append(shortNameDepthDir);
 
+        fs::path rgbTxtPath(outDirRoot);
+        rgbTxtPath.append("rgb.txt");
+        std::ofstream rgbTxtFile(rgbTxtPath.string());
+
+        fs::path depthTxtPath(outDirRoot);
+        depthTxtPath.append("depth.txt");
+        std::ofstream depthTxtFile(depthTxtPath.string());
+
         for (int i = 0; i < associatedImagesRGBAndDepth.size(); ++i) {
 
             if (indicesToSample.find(i) == indicesToSample.end()) {
@@ -389,6 +397,20 @@ namespace gdr {
             fs::path imageDToSave = outD;
             imageDToSave.append(imageD.filename().string());
             fs::copy_file(imageD, imageDToSave);
+            {
+                fs::path rgbFromDatasetRoot = "rgb";
+                std::string imageRgbFilename = imageRGB.filename().string();
+                rgbFromDatasetRoot.append(imageRgbFilename);
+                rgbTxtFile << (imageRgbFilename.substr(0, imageRgbFilename.length() - 4))
+                           << ' ' << rgbFromDatasetRoot.string() << std::endl;
+            }
+            {
+                fs::path depthFromDatasetRoot = "depth";
+                std::string imageDepthFilename = imageD.filename().string();
+                depthFromDatasetRoot.append(imageDepthFilename);
+                depthTxtFile << (imageDepthFilename.substr(0, imageDepthFilename.length() - 4))
+                           << ' ' << depthFromDatasetRoot.string() << std::endl;
+            }
         }
 
         fs::path outGT = outDirRoot;

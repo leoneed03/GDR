@@ -18,10 +18,9 @@ namespace gdr {
 
         int elementsRaw = 8;
         double timestamp;
-        SE3 poseSE3;
+        SE3 poseCameraToWorldSE3;
 
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         PoseFullInfo(double newTimestamp,
                      const SE3 &poseSE3ToSet);
@@ -37,6 +36,8 @@ namespace gdr {
         Eigen::Vector3d getTranslation() const;
 
         Sophus::SE3d getSophusPose() const;
+
+        const SE3 &getPoseCameraToWorldSE3() const;
 
         double getTimestamp() const;
 
