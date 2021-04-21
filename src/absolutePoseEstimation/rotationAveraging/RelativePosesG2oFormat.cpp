@@ -58,5 +58,6 @@ namespace gdr {
             os << noise << std::endl;
         }
 
+        return os;
     }
 }

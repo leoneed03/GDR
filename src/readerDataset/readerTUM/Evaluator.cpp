@@ -269,23 +269,26 @@ namespace gdr {
     }
 
 
-    std::ostream &operator<<(const std::ostream &os, const ErrorInformation &info) {
+    std::ostream &operator<<(std::ostream &os, const ErrorInformation &info) {
 
-        std::cout << info.nameError << ".rmse   " << info.RMSE << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".mean   " << info.MEAN << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".median " << info.MEDIAN << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".std    " << info.STD << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".min    " << info.MINERR << " " << info.typeOfMeasurement << std::endl;
-        std::cout << info.nameError << ".max    " << info.MAXERR << " " << info.typeOfMeasurement << std::endl;
+        os << info.nameError << ".rmse   " << info.RMSE << " " << info.typeOfMeasurement << std::endl;
+        os << info.nameError << ".mean   " << info.MEAN << " " << info.typeOfMeasurement << std::endl;
+        os << info.nameError << ".median " << info.MEDIAN << " " << info.typeOfMeasurement << std::endl;
+        os << info.nameError << ".std    " << info.STD << " " << info.typeOfMeasurement << std::endl;
+        os << info.nameError << ".min    " << info.MINERR << " " << info.typeOfMeasurement << std::endl;
+        os << info.nameError << ".max    " << info.MAXERR << " " << info.typeOfMeasurement << std::endl;
+
+        return os;
     }
 
     std::ostream &operator<<(std::ostream &os, const ErrorRotationTranslation &informationErrors) {
 
-        std::cout << informationErrors.rotationError
+        os << informationErrors.rotationError
                   << "------------------------------------------------------------" << std::endl;
-        std::cout << informationErrors.translationError << std::endl;
+        os << informationErrors.translationError << std::endl;
 
-        std::cout << "Compared with groundtruth: " << informationErrors.numberOfPosesEvaluated << "/"
+        os << "Compared with groundtruth: " << informationErrors.numberOfPosesEvaluated << "/"
                   << informationErrors.numberOfPosesTrajectory;
+        return os;
     }
 }
