@@ -11,6 +11,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(GDR_FLAGS "")
 set(OpenGL_GL_PREFERENCE "LEGACY")
 
+list(APPEND CMAKE_PREFIX_PATH ${CERES_INSTALL_LOCAL})
+
 find_package(TBB REQUIRED)
 find_package(METIS REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -252,10 +254,12 @@ target_link_libraries(
 target_include_directories(
   GDR_LIB
   PUBLIC ${PROJECT_SOURCE_DIR}/include ${EIGEN3_INCLUDE_DIRS}
-         ${Sophus_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS}
+         ${Sophus_INCLUDE_DIRS}
   PRIVATE ${OpenGL_INCLUDE_DIR} ${PCL_INCLUDE_DIRS} ${ICPCUDA_INCLUDE_DIRS}
-          ${Pangolin_INCLUDE_DIRS} ${GTSAM_INCLUDE_DIRS})
-
+          ${CERES_INCLUDE_DIRS} ${Pangolin_INCLUDE_DIRS} ${GTSAM_INCLUDE_DIRS}
+          ${CUDA_INCLUDE_DIRS})
+message("Ceres include: " ${CERES_INCLUDE_DIRS})
+message("Ceres libs: " ${CERES_LIBRARIES})
 target_link_libraries(reconstructorTUM GDR_LIB)
 target_link_libraries(visualizerTUM GDR_LIB)
 

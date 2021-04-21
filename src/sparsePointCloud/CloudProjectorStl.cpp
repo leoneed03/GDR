@@ -313,9 +313,9 @@ namespace gdr {
 
             for (int i = 0; i < linesToDrawDoubled; i += 2) {
                 int indexReal = i;
-                int indexComuted = i + 1;
-                cv::line(imageKeyPoints, keyPointsToShowCV[indexReal].pt, keyPointsToShowCV[indexComuted].pt,
-                         cv::Scalar(0, 255, 0), 1, CV_AA);
+                int indexComputed = i + 1;
+                cv::line(imageKeyPoints, keyPointsToShowCV[indexReal].pt, keyPointsToShowCV[indexComputed].pt,
+                         cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
             }
 
             std::string shortNameImage = std::to_string(imageIndex) + ".png";

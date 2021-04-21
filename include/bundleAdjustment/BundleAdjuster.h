@@ -21,7 +21,7 @@ namespace gdr {
          *
          * @param points contains observed points predicted coordinates
          * @param absolutePoses contains information about cameras predicted SE3 poses and camera intrinsic parameters
-         * @param keyPointInfo for each pose maps from obseerved keypoint index to this keypoint parameters
+         * @param keyPointInfo for each pose maps from observed keypoint index to this keypoint parameters
          * @param fixedPoseNumber is the number of the pose with zero coordinates
          *
          * @returns vector of optimized poses
