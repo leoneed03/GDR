@@ -275,14 +275,13 @@ namespace gdr {
 
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
+
         if (getPrintProgressToCout()) {
             std::cout << "done ceres BA" << std::endl;
             std::cout << summary.FullReport() << std::endl;
-            std::cout << "Is BA USABLE?" << std::endl;
-        }
-        assert(summary.IsSolutionUsable());
+            std::cout << "Is BA USABLE?: " << summary.IsSolutionUsable() << std::endl;
 
-        if (getPrintProgressToCout()) {
+            assert(summary.IsSolutionUsable());
             std::cout << "Threads used " << summary.num_threads_used << std::endl;
         }
 
