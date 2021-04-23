@@ -51,8 +51,8 @@ namespace gdr {
          */
 
         ImageAssociator(const std::string &pathToDirectory,
-                        const std::string &directoryNameRGB = "rgb",
-                        const std::string &directoryNameD = "depth",
+                        const std::string &directoryShortNameRGB = "rgb",
+                        const std::string &directoryShortNameD = "depth",
                         const std::string &groundtruthFileName = "groundtruth.txt");
 
         /**

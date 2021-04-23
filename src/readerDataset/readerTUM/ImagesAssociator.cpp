@@ -16,8 +16,8 @@ namespace gdr {
     namespace fs = boost::filesystem;
 
     ImageAssociator::ImageAssociator(const std::string &pathToDirectory,
-                                     const std::string &directoryNameRGB,
-                                     const std::string &directoryNameD,
+                                     const std::string &directoryShortNameRGB,
+                                     const std::string &directoryShortNameD,
                                      const std::string &groundtruthFileName) :
             pathToDatasetRoot(pathToDirectory) {
 
@@ -36,13 +36,13 @@ namespace gdr {
                 }
             }
 
-            if (it->path().filename().string() == directoryNameRGB) {
+            if (it->path().filename().string() == directoryShortNameRGB) {
                 fs::path rgbImages(it->path());
                 for (fs::directory_iterator imagesEndIt, imagesIt(rgbImages); imagesIt != imagesEndIt; ++imagesIt) {
                     imagesPathsRGB.emplace_back(imagesIt->path().string());
                 }
                 std::sort(imagesPathsRGB.begin(), imagesPathsRGB.end());
-            } else if (it->path().filename().string() == directoryNameD) {
+            } else if (it->path().filename().string() == directoryShortNameD) {
                 fs::path depthImages(it->path());
                 for (fs::directory_iterator imagesEndIt, imagesIt(depthImages); imagesIt != imagesEndIt; ++imagesIt) {
                     imagesPathsD.emplace_back(imagesIt->path().string());

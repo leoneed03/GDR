@@ -32,15 +32,12 @@ namespace gdr {
         assert(minIndex == 0);
         assert(minIndex < maxIndex);
 
-        int numPoses = maxIndex - 1;
 
-
-        for (int i = 0; i < numPoses; ++i) {
+        for (int i = 0; i <= maxIndex; ++i) {
             std::string s1 = "VERTEX_SE3:QUAT ";
             std::string s2 = std::to_string(i) + " 0.000000 0.000000 0.000000 0.0 0.0 0.0 1.0\n";
             os << s1 + s2;
         }
-
 
         std::string noise = "   10000.000000 0.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000 0.000000   10000.000000 0.000000 0.000000   10000.000000 0.000000   10000.000000";
 
