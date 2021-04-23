@@ -159,7 +159,8 @@ namespace gdr {
     std::vector<SE3> BundleDepthAdjuster::optimizePointsAndPoses(const std::vector<Point3d> &points,
                                                                  const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
                                                                  const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfos,
-                                                                 int indexFixed) {
+                                                                 int indexFixed,
+                                                                 bool &success) {
 
         setPosesAndPoints(points, absolutePoses, keyPointInfos);
 

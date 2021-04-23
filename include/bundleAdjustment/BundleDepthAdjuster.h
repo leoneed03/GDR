@@ -25,7 +25,7 @@ namespace gdr {
 
     class BundleDepthAdjuster : public BundleAdjuster {
 
-        bool printProgressToCout = false;
+        bool printProgressToCout = true;
 
         void setPosesAndPoints(const std::vector<Point3d> &points,
                                const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
@@ -40,7 +40,8 @@ namespace gdr {
         std::vector<SE3> optimizePointsAndPoses(const std::vector<Point3d> &points,
                                                 const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
                                                 const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo,
-                                                int indexFixed) override;
+                                                int indexFixed,
+                                                bool &success) override;
 
         std::vector<Point3d> getOptimizedPoints() const override;
 

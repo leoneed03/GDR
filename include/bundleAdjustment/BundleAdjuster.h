@@ -23,13 +23,15 @@ namespace gdr {
          * @param absolutePoses contains information about cameras predicted SE3 poses and camera intrinsic parameters
          * @param keyPointInfo for each pose maps from observed keypoint index to this keypoint parameters
          * @param fixedPoseNumber is the number of the pose with zero coordinates
+         * @param[out] success is true if solution is usable
          *
          * @returns vector of optimized poses
          */
         virtual std::vector<SE3> optimizePointsAndPoses(const std::vector<Point3d> &points,
                                                         const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
                                                         const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo,
-                                                        int fixedPoseNumber) = 0;
+                                                        int fixedPoseNumber,
+                                                        bool &success) = 0;
 
         virtual std::vector<Point3d> getOptimizedPoints() const = 0;
 

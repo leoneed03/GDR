@@ -245,11 +245,15 @@ namespace gdr {
         std::unique_ptr<BundleAdjuster> bundleAdjuster =
                 BundleAdjusterCreator::getBundleAdjuster(BundleAdjusterCreator::BundleAdjustmentType::USE_DEPTH_INFO);
 
+        bool isUsableBA = true;
         std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPoses(observedPoints,
                                                                                  posesAndCameraParams,
                                                                                  cloudProjector->getKeyPointInfoByPoseNumberAndPointClass(),
-                                                                                 indexFixedToZero);
-
+                                                                                 indexFixedToZero,
+                                                                                 isUsableBA);
+        if (!isUsableBA) {
+            std::cerr << "BA solution is not marked usable by nonlinear optimizer, consider using only IRLS solution" << std::endl;
+        }
 
         assert(posesOptimized.size() == getNumberOfPoses());
 
