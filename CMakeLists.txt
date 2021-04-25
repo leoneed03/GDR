@@ -224,12 +224,15 @@ set(GDR_SOURCE_FILES
 add_subdirectory(lib)
 
 add_executable(reconstructorTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/reconstructorTum.cpp)
+add_executable(imageAssociator ${PROJECT_SOURCE_DIR}/test/reconstructor/imageAssociator.cpp)
+
 add_executable(visualizerTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/visualizerTum.cpp)
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
 add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
 add_dependencies(reconstructorTUM GDR_LIB)
+add_dependencies(imageAssociator GDR_LIB)
 add_dependencies(visualizerTUM GDR_LIB)
 
 
@@ -263,6 +266,8 @@ target_include_directories(
           ${CUDA_INCLUDE_DIRS})
 message("Ceres include: " ${CERES_INCLUDE_DIRS})
 message("Ceres libs: " ${CERES_LIBRARIES})
+
+target_link_libraries(imageAssociator GDR_LIB)
 target_link_libraries(reconstructorTUM GDR_LIB)
 target_link_libraries(visualizerTUM GDR_LIB)
 
