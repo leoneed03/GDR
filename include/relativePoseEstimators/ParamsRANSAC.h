@@ -13,7 +13,7 @@ namespace gdr {
 
     public:
         /** min proportion of inliers between matches */
-        double minInlierCoefficient = 0.5;
+        double minInlierCoefficient = 0.6;
 
         /** min number of inliers between matches */
         int minInliersNumber = 15;

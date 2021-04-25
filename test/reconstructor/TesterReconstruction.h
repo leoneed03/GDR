@@ -48,7 +48,8 @@ namespace test {
                 bool printToConsole = false,
                 bool showVisualization3D = false,
                 bool savePointCloudPly = false,
-                const std::vector<int> &gpuDevices = {0});
+                const std::vector<int> &gpuDevices = {0},
+                bool printInfoReport = true);
     };
 }
 

@@ -206,18 +206,12 @@ namespace gdr {
                 return true;
             }
 
-            double scaleKeyPoint;
-            double observedX;
-            double observedY;
             double observedDepth;
 
-            double deviationDividerReproj;
             double deviationDividerDepth;
 
-            double deviationEstimationNormalizedReproj;
             double deviationEstimationNormalizedDepth;
 
-            double medianResidualReproj;
             double medianResidualDepth;
 
             const CameraRGBD &camera;
@@ -233,8 +227,6 @@ namespace gdr {
                               double devNormalizedEstDepth,
                               double devDividerDepth,
                               double medianResDepth);
-
-
         };
 
         struct ReprojectionOnlyResidual {
@@ -275,17 +267,13 @@ namespace gdr {
                 return true;
             }
 
-            double scaleKeyPoint;
             double observedX;
             double observedY;
-            double observedDepth;
+            double scaleKeyPoint;
 
             double deviationDividerReproj;
-            double deviationDividerDepth;
 
             double deviationEstimationNormalizedReproj;
-            double deviationEstimationNormalizedDepth;
-
             double medianResidualReproj;
             double medianResidualDepth;
 
@@ -306,7 +294,6 @@ namespace gdr {
                                      double devNormalizedEstReproj,
                                      double devDividerReproj,
                                      double medianResReproj);
-
 
         };
 

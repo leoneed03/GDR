@@ -79,6 +79,7 @@ int main(int argc, char* argv[]) {
                                                    false,
                                                    false,
                                                    false,
-                                                   {gpuIndex});
+                                                   {gpuIndex},
+                                                   false);
     return 0;
 }

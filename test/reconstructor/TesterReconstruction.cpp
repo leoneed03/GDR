@@ -28,7 +28,8 @@ namespace test {
             bool printToConsole,
             bool showVisualization3D,
             bool savePointCloudPly,
-            const std::vector<int> &gpuDevices) {
+            const std::vector<int> &gpuDevices,
+            bool printFullReport) {
 
         ErrorsOfTrajectoryEstimation errorsOfTrajectoryEstimation;
 
@@ -186,7 +187,7 @@ namespace test {
         double meanErrorRotIRLS = 0;
         double meanErrorL2IRLS = 0;
 
-        {
+        if (!printFullReport) {
             assert(!posesFullInfoBA.empty());
             {
                 auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
@@ -213,9 +214,6 @@ namespace test {
                 errorsOfTrajectoryEstimation.errorBA = informationErrors;
             }
             std::cout << std::endl << std::endl;
-
-        }
-        {
 
             assert(!posesFullInfoIRLS.empty());
 
@@ -248,7 +246,6 @@ namespace test {
                 std::cout << "Trajectory estimated for: " << informationErrors.numberOfPosesTrajectory << "/"
                           << numberOfPosesInDataset << " poses" << std::endl;
             }
-
 
         }
 
