@@ -161,7 +161,8 @@ namespace gdr {
         numberOfThreadsCPU = numberOfThreadsCPUToSet;
     }
 
-    std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::computeRelativePoses() {
+    std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::computeRelativePoses(
+            const std::vector<int> &gpuDeviceIndices) {
 
         if (getPrintInformationCout()) {
             std::cout << "start computing descriptors" << std::endl;
@@ -171,7 +172,7 @@ namespace gdr {
         std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
                 keysDescriptorsAll = siftModule->getKeypoints2DDescriptorsAllImages(
                 correspondenceGraph->getPathsRGB(),
-                {0});
+                gpuDeviceIndices);
 
         const auto &imagesRgb = correspondenceGraph->getPathsRGB();
         const auto &imagesD = correspondenceGraph->getPathsD();
@@ -191,11 +192,11 @@ namespace gdr {
             assert(currentImage < camerasDepthByPoseIndex.size());
 
             VertexPose currentVertex(currentImage,
-                                   camerasDepthByPoseIndex[currentImage],
-                                   keyPointsDepthDescriptor,
-                                   imagesRgb[currentImage],
-                                   imagesD[currentImage],
-                                   timeD);
+                                     camerasDepthByPoseIndex[currentImage],
+                                     keyPointsDepthDescriptor,
+                                     imagesRgb[currentImage],
+                                     imagesD[currentImage],
+                                     timeD);
 
             correspondenceGraph->addVertex(currentVertex);
         }
@@ -215,7 +216,9 @@ namespace gdr {
 
         assert(keyPointsDescriptorsToBeMatched.size() == vertices.size());
         //Sift match
-        correspondenceGraph->setPointMatchesRGB(siftModule->findCorrespondences(keyPointsDescriptorsToBeMatched));
+        correspondenceGraph->setPointMatchesRGB(siftModule->findCorrespondences(
+                keyPointsDescriptorsToBeMatched,
+                gpuDeviceIndices));
 
         correspondenceGraph->decreaseDensity();
         KeyPointMatches allInlierKeyPointMatches;

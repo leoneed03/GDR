@@ -45,24 +45,22 @@ namespace gdr {
 
         std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
         getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
-                                           const std::vector<int> &numOfDevicesForDetectors = {0}) override;
+                                           const std::vector<int> &numOfDevicesForDetectors) override;
 
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
         getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
-                                         const std::vector<int> &numOfDevicesForDetectors = {0});
+                                         const std::vector<int> &numOfDevicesForDetectors);
 
         std::vector<std::vector<Match>>
         findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                            const std::vector<int> &matchDevicesNumbers = {
-                                    0}) override;
+                            const std::vector<int> &matchDevicesNumbers) override;
 
     private:
 
 
         std::vector<tbb::concurrent_vector<Match>>
         findCorrespondencesConcurrent(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                                      const std::vector<int> &matchDevicesNumbers = {
-                                              0});
+                                      const std::vector<int> &matchDevicesNumbers);
 
         static std::vector<std::pair<int, int>>
         getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,

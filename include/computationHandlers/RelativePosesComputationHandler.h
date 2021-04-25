@@ -122,7 +122,9 @@ namespace gdr {
          *      and ICP dense alignment refinement
          * @returns N vectors where i-th vector contains all successfully estimated transformations from i-th pose
          */
-        std::vector<std::vector<RelativeSE3>> computeRelativePoses();
+        std::vector<std::vector<RelativeSE3>> computeRelativePoses(
+                const std::vector<int> &gpuDeviceIndices = {0}
+                );
 
         /**
          * @param[out] componentNumberByPoseIndex -- vector containing each pose's component number

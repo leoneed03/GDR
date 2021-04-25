@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10.0)
 project(GDR)
 
 set(CMAKE_CXX_STANDARD 17)
-set(GCC_MARCH_NATIVE " -march=native")
+set(GCC_MARCH_NATIVE " ")
 set(GCC_COVERAGE_COMPILE_FLAGS " -O3")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${GCC_MARCH_NATIVE}")
@@ -48,7 +48,7 @@ set(Pangolin_LIBRARIES ${Pangolin_INSTALL_DIR}/lib/libpangolin.so)
 
 set(Sophus_INCLUDE_DIRS ${ICPCUDA_third_party}/Sophus)
 
-set(GTSAM_BUILD_NAME mbuild-concurrent-march)
+set(GTSAM_BUILD_NAME mbuild-concurrent)
 
 include(ExternalProject)
 
@@ -67,7 +67,7 @@ ExternalProject_Add(
   BINARY_DIR "${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}"
   CONFIGURE_COMMAND
     cmake .. -DBUILD_SHARED_LIBS=0 -DGTSAM_USE_SYSTEM_EIGEN=1
-    -DGTSAM_BUILD_WITH_MARCH_NATIVE=ON
+    -DGTSAM_BUILD_WITH_MARCH_NATIVE=OFF
     -DCMAKE_INSTALL_PREFIX:PATH=${PROJECT_SOURCE_DIR}/third-party/gtsam/${GTSAM_BUILD_NAME}
   INSTALL_COMMAND make install)
 

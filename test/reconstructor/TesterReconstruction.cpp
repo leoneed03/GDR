@@ -27,7 +27,8 @@ namespace test {
             double timeDiffThreshold,
             bool printToConsole,
             bool showVisualization3D,
-            bool savePointCloudPly) {
+            bool savePointCloudPly,
+            const std::vector<int> &gpuDevices) {
 
         ErrorsOfTrajectoryEstimation errorsOfTrajectoryEstimation;
 

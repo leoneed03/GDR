@@ -249,18 +249,32 @@ namespace gdr {
                 double deviationEstDepthByDepth = (dividerDepth)(keyPointInfo.getDepth(),
                                                                  measurementEstimators.getParameterNoiseModelDepth());
 
-                ceres::CostFunction *cost_function =
+                ceres::CostFunction *cost_function_depth =
                         ReprojectionWithDepthError::Create(observedX, observedY, keyPointInfo.getDepth(),
                                                            keyPointInfo.getScale(),
                                                            cameraModelByPoseNumber[poseIndex],
                                                            sigmaReproj, sigmaDepth,
                                                            deviationEstReprojByScale, deviationEstDepthByDepth,
                                                            medianErrorReprojRaw, medianErrorDepthRaw);
-                problem.AddResidualBlock(cost_function,
-                                         nullptr,
+                ceres::CostFunction *cost_function_reproj =
+                        ReprojectionOnly::Create(observedX, observedY, keyPointInfo.getDepth(),
+                                                 keyPointInfo.getScale(),
+                                                 cameraModelByPoseNumber[poseIndex],
+                                                 sigmaReproj, sigmaDepth,
+                                                 deviationEstReprojByScale, deviationEstDepthByDepth,
+                                                 medianErrorReprojRaw, medianErrorDepthRaw);
+                problem.AddResidualBlock(cost_function_reproj,
+                                         new ceres::TukeyLoss(sigmaReproj),
                                          point.data(),
                                          pose.data(),
                                          orientation.data());
+
+                problem.AddResidualBlock(cost_function_depth,
+                                         new ceres::TukeyLoss(sigmaDepth),
+                                         point.data(),
+                                         pose.data(),
+                                         orientation.data());
+
                 problem.SetParameterization(orientation.data(), quaternionLocalParameterization);
             }
         }
@@ -575,18 +589,19 @@ namespace gdr {
         maxNumberTreadsCeres = maxNumberThreadsToUse;
     }
 
-    ceres::CostFunction *BundleDepthAdjuster::ReprojectionWithDepthError::Create(double newObservedX, double newObservedY,
-                                                                                 double newObservedDepth,
-                                                                                 double scale,
-                                                                                 const CameraRGBD &camera,
-                                                                                 double estNormalizedReproj,
-                                                                                 double estNormalizedDepth,
-                                                                                 double devDividerReproj,
-                                                                                 double devDividerDepth,
-                                                                                 double medianResReproj,
-                                                                                 double medianResDepth) {
+    ceres::CostFunction *
+    BundleDepthAdjuster::ReprojectionWithDepthError::Create(double newObservedX, double newObservedY,
+                                                            double newObservedDepth,
+                                                            double scale,
+                                                            const CameraRGBD &camera,
+                                                            double estNormalizedReproj,
+                                                            double estNormalizedDepth,
+                                                            double devDividerReproj,
+                                                            double devDividerDepth,
+                                                            double medianResReproj,
+                                                            double medianResDepth) {
 
-        return (new ceres::AutoDiffCostFunction<ReprojectionWithDepthError, 2, dimPoint, dimPose, dimOrientation>(
+        return (new ceres::AutoDiffCostFunction<ReprojectionWithDepthError, 1, dimPoint, dimPose, dimOrientation>(
                 new ReprojectionWithDepthError(newObservedX, newObservedY, newObservedDepth,
                                                scale, camera,
                                                estNormalizedReproj, estNormalizedDepth,
@@ -594,7 +609,49 @@ namespace gdr {
                                                medianResReproj, medianResDepth)));
     }
 
-    BundleDepthAdjuster::ReprojectionWithDepthError::ReprojectionWithDepthError(double newObservedX, double newObservedY,
+    ceres::CostFunction *BundleDepthAdjuster::ReprojectionOnly::Create(double newObservedX, double newObservedY,
+                                                                       double newObservedDepth,
+                                                                       double scale,
+                                                                       const CameraRGBD &camera,
+                                                                       double estNormalizedReproj,
+                                                                       double estNormalizedDepth,
+                                                                       double devDividerReproj,
+                                                                       double devDividerDepth,
+                                                                       double medianResReproj,
+                                                                       double medianResDepth) {
+
+        return (new ceres::AutoDiffCostFunction<ReprojectionOnly, 2, dimPoint, dimPose, dimOrientation>(
+                new ReprojectionOnly(newObservedX, newObservedY, newObservedDepth,
+                                     scale, camera,
+                                     estNormalizedReproj, estNormalizedDepth,
+                                     devDividerReproj, devDividerDepth,
+                                     medianResReproj, medianResDepth)));
+    }
+
+    BundleDepthAdjuster::ReprojectionOnly::ReprojectionOnly(double newObservedX,
+                                                            double newObservedY,
+                                                            double newObservedDepth, double scale,
+                                                            const CameraRGBD &cameraRgbd,
+                                                            double devNormalizedEstReproj,
+                                                            double devNormalizedEstDepth,
+                                                            double devDividerReproj,
+                                                            double devDividerDepth,
+                                                            double medianResReproj,
+                                                            double medianResDepth)
+            : observedX(newObservedX),
+              observedY(newObservedY),
+              observedDepth(newObservedDepth),
+              scaleKeyPoint(scale),
+              camera(cameraRgbd),
+              deviationEstimationNormalizedReproj(devNormalizedEstReproj),
+              deviationEstimationNormalizedDepth(devNormalizedEstDepth),
+              deviationDividerReproj(devDividerReproj),
+              deviationDividerDepth(devDividerDepth),
+              medianResidualReproj(medianResReproj),
+              medianResidualDepth(medianResDepth) {}
+
+    BundleDepthAdjuster::ReprojectionWithDepthError::ReprojectionWithDepthError(double newObservedX,
+                                                                                double newObservedY,
                                                                                 double newObservedDepth, double scale,
                                                                                 const CameraRGBD &cameraRgbd,
                                                                                 double devNormalizedEstReproj,

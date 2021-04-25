@@ -25,7 +25,7 @@ namespace gdr {
          */
         virtual std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
         getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
-                                           const std::vector<int> &numOfDevicesForDetectors = {0}) = 0;
+                                           const std::vector<int> &numOfDevicesForDetectors) = 0;
 
         /** Find matches between all image keypoints (pairwise)
          * @param keyPointsDescriptorsByImageIndex contains list of image descriptors
@@ -35,7 +35,7 @@ namespace gdr {
          */
         virtual std::vector<std::vector<Match>>
         findCorrespondences(const std::vector<KeyPointsDescriptors> &keyPointsDescriptorsByImageIndex,
-                            const std::vector<int> &matchDevicesNumbers = {0}) = 0;
+                            const std::vector<int> &matchDevicesNumbers) = 0;
 
         virtual ~FeatureDetectorMatcher() = default;
     };
