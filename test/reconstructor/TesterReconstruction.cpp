@@ -54,7 +54,7 @@ namespace test {
 
 
         std::cout << "start computing relative poses" << std::endl;
-        cgHandler.computeRelativePoses();
+        cgHandler.computeRelativePoses(gpuDevices);
 
         int numberOfPosesInDataset = cgHandler.getNumberOfVertices();
         errorsOfTrajectoryEstimation.numberOfPosesInDataset = numberOfPosesInDataset;

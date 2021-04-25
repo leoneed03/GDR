@@ -250,27 +250,27 @@ namespace gdr {
                                                                  measurementEstimators.getParameterNoiseModelDepth());
 
                 ceres::CostFunction *cost_function_depth =
-                        ReprojectionWithDepthError::Create(observedX, observedY, keyPointInfo.getDepth(),
-                                                           keyPointInfo.getScale(),
-                                                           cameraModelByPoseNumber[poseIndex],
-                                                           sigmaReproj, sigmaDepth,
-                                                           deviationEstReprojByScale, deviationEstDepthByDepth,
-                                                           medianErrorReprojRaw, medianErrorDepthRaw);
+                        DepthOnlyResidual::Create(keyPointInfo.getDepth(),
+                                                  cameraModelByPoseNumber[poseIndex],
+                                                  sigmaDepth,
+                                                  deviationEstDepthByDepth,
+                                                  medianErrorDepthRaw);
                 ceres::CostFunction *cost_function_reproj =
-                        ReprojectionOnly::Create(observedX, observedY, keyPointInfo.getDepth(),
-                                                 keyPointInfo.getScale(),
-                                                 cameraModelByPoseNumber[poseIndex],
-                                                 sigmaReproj, sigmaDepth,
-                                                 deviationEstReprojByScale, deviationEstDepthByDepth,
-                                                 medianErrorReprojRaw, medianErrorDepthRaw);
+                        ReprojectionOnlyResidual::Create(observedX,
+                                                         observedY,
+                                                         keyPointInfo.getScale(),
+                                                         cameraModelByPoseNumber[poseIndex],
+                                                         sigmaReproj,
+                                                         deviationEstReprojByScale,
+                                                         medianErrorReprojRaw);
                 problem.AddResidualBlock(cost_function_reproj,
-                                         new ceres::TukeyLoss(sigmaReproj),
+                                         new ceres::CauchyLoss(sigmaReproj),
                                          point.data(),
                                          pose.data(),
                                          orientation.data());
 
                 problem.AddResidualBlock(cost_function_depth,
-                                         new ceres::TukeyLoss(sigmaDepth),
+                                         new ceres::CauchyLoss(sigmaDepth),
                                          point.data(),
                                          pose.data(),
                                          orientation.data());
@@ -590,85 +590,59 @@ namespace gdr {
     }
 
     ceres::CostFunction *
-    BundleDepthAdjuster::ReprojectionWithDepthError::Create(double newObservedX, double newObservedY,
-                                                            double newObservedDepth,
-                                                            double scale,
-                                                            const CameraRGBD &camera,
-                                                            double estNormalizedReproj,
-                                                            double estNormalizedDepth,
-                                                            double devDividerReproj,
-                                                            double devDividerDepth,
-                                                            double medianResReproj,
-                                                            double medianResDepth) {
+    BundleDepthAdjuster::DepthOnlyResidual::Create(double newObservedDepth,
+                                                   const CameraRGBD &camera,
+                                                   double estNormalizedDepth,
+                                                   double devDividerDepth,
+                                                   double medianResDepth) {
 
-        return (new ceres::AutoDiffCostFunction<ReprojectionWithDepthError, 1, dimPoint, dimPose, dimOrientation>(
-                new ReprojectionWithDepthError(newObservedX, newObservedY, newObservedDepth,
-                                               scale, camera,
-                                               estNormalizedReproj, estNormalizedDepth,
-                                               devDividerReproj, devDividerDepth,
-                                               medianResReproj, medianResDepth)));
+        return (new ceres::AutoDiffCostFunction<DepthOnlyResidual, 1, dimPoint, dimPose, dimOrientation>(
+                new DepthOnlyResidual(newObservedDepth,
+                                      camera,
+                                      estNormalizedDepth,
+                                      devDividerDepth,
+                                      medianResDepth)));
     }
 
-    ceres::CostFunction *BundleDepthAdjuster::ReprojectionOnly::Create(double newObservedX, double newObservedY,
-                                                                       double newObservedDepth,
-                                                                       double scale,
-                                                                       const CameraRGBD &camera,
-                                                                       double estNormalizedReproj,
-                                                                       double estNormalizedDepth,
-                                                                       double devDividerReproj,
-                                                                       double devDividerDepth,
-                                                                       double medianResReproj,
-                                                                       double medianResDepth) {
+    ceres::CostFunction *BundleDepthAdjuster::ReprojectionOnlyResidual::Create(double newObservedX,
+                                                                               double newObservedY,
+                                                                               double scale,
+                                                                               const CameraRGBD &camera,
+                                                                               double estNormalizedReproj,
+                                                                               double devDividerReproj,
+                                                                               double medianResReproj) {
 
-        return (new ceres::AutoDiffCostFunction<ReprojectionOnly, 2, dimPoint, dimPose, dimOrientation>(
-                new ReprojectionOnly(newObservedX, newObservedY, newObservedDepth,
-                                     scale, camera,
-                                     estNormalizedReproj, estNormalizedDepth,
-                                     devDividerReproj, devDividerDepth,
-                                     medianResReproj, medianResDepth)));
+        return (new ceres::AutoDiffCostFunction<ReprojectionOnlyResidual, 2, dimPoint, dimPose, dimOrientation>(
+                new ReprojectionOnlyResidual(newObservedX, newObservedY,
+                                             scale, camera,
+                                             estNormalizedReproj,
+                                             devDividerReproj,
+                                             medianResReproj)));
     }
 
-    BundleDepthAdjuster::ReprojectionOnly::ReprojectionOnly(double newObservedX,
-                                                            double newObservedY,
-                                                            double newObservedDepth, double scale,
-                                                            const CameraRGBD &cameraRgbd,
-                                                            double devNormalizedEstReproj,
-                                                            double devNormalizedEstDepth,
-                                                            double devDividerReproj,
-                                                            double devDividerDepth,
-                                                            double medianResReproj,
-                                                            double medianResDepth)
+    BundleDepthAdjuster::ReprojectionOnlyResidual::ReprojectionOnlyResidual(double newObservedX,
+                                                                            double newObservedY,
+                                                                            double scale,
+                                                                            const CameraRGBD &cameraRgbd,
+                                                                            double devNormalizedEstReproj,
+                                                                            double devDividerReproj,
+                                                                            double medianResReproj)
             : observedX(newObservedX),
               observedY(newObservedY),
-              observedDepth(newObservedDepth),
               scaleKeyPoint(scale),
               camera(cameraRgbd),
               deviationEstimationNormalizedReproj(devNormalizedEstReproj),
-              deviationEstimationNormalizedDepth(devNormalizedEstDepth),
               deviationDividerReproj(devDividerReproj),
-              deviationDividerDepth(devDividerDepth),
-              medianResidualReproj(medianResReproj),
-              medianResidualDepth(medianResDepth) {}
+              medianResidualReproj(medianResReproj) {}
 
-    BundleDepthAdjuster::ReprojectionWithDepthError::ReprojectionWithDepthError(double newObservedX,
-                                                                                double newObservedY,
-                                                                                double newObservedDepth, double scale,
-                                                                                const CameraRGBD &cameraRgbd,
-                                                                                double devNormalizedEstReproj,
-                                                                                double devNormalizedEstDepth,
-                                                                                double devDividerReproj,
-                                                                                double devDividerDepth,
-                                                                                double medianResReproj,
-                                                                                double medianResDepth)
-            : observedX(newObservedX),
-              observedY(newObservedY),
-              observedDepth(newObservedDepth),
-              scaleKeyPoint(scale),
+    BundleDepthAdjuster::DepthOnlyResidual::DepthOnlyResidual(double newObservedDepth,
+                                                              const CameraRGBD &cameraRgbd,
+                                                              double devNormalizedEstDepth,
+                                                              double devDividerDepth,
+                                                              double medianResDepth)
+            : observedDepth(newObservedDepth),
               camera(cameraRgbd),
-              deviationEstimationNormalizedReproj(devNormalizedEstReproj),
               deviationEstimationNormalizedDepth(devNormalizedEstDepth),
-              deviationDividerReproj(devDividerReproj),
               deviationDividerDepth(devDividerDepth),
-              medianResidualReproj(medianResReproj),
               medianResidualDepth(medianResDepth) {}
 }

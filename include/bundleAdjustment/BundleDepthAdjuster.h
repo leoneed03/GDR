@@ -166,7 +166,7 @@ namespace gdr {
         std::vector<std::unordered_map<int, KeyPointInfo>> keyPointInfoByPoseNumberAndPointNumber;
 
 
-        struct ReprojectionWithDepthError {
+        struct DepthOnlyResidual {
 
             template<typename T>
             bool operator()(const T *const point,
@@ -188,18 +188,13 @@ namespace gdr {
                 poseSE3.setQuaternion(orientationQuat);
                 poseSE3.translation() = poseT;
 
-//                std::vector<T> pointRaw = {point[0], point[1], point[2], T(1.0)};
-//                Eigen::Map<const Sophus::Vector<T, 3>> point4d(point);
-//                Sophus::Vector<T, 4> point4d(pointRaw.data());
                 Eigen::Map<const Sophus::Vector<T, 3>> point3d(point);
-//                Sophus::Vector<T, 3> res3 = poseSE3 * point3d;
                 Sophus::Vector<T, 3> pointCameraCoordinates = poseSE3.inverse() * point3d;
                 Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
 
                 T computedX = imageCoordinates[0] / imageCoordinates[2];
                 T computedY = imageCoordinates[1] / imageCoordinates[2];
                 T computedDepth = pointCameraCoordinates[2];
-
 
                 // depth error computation (noise modeled as sigma = a * depth^2 [meters])
                 {
@@ -225,26 +220,24 @@ namespace gdr {
             double medianResidualReproj;
             double medianResidualDepth;
 
-            CameraRGBD camera;
+            const CameraRGBD &camera;
 
-            static ceres::CostFunction *Create(double newObservedX, double newObservedY, double newObservedDepth,
-                                               double scale,
+            static ceres::CostFunction *Create(double newObservedDepth,
                                                const CameraRGBD &camera,
-                                               double estNormalizedReproj, double estNormalizedDepth,
-                                               double devDividerReproj, double devDividerDepth,
-                                               double medianResReproj, double medianResDepth);
+                                               double estNormalizedDepth,
+                                               double devDividerDepth,
+                                               double medianResDepth);
 
-            ReprojectionWithDepthError(double newObservedX, double newObservedY, double newObservedDepth,
-                                       double scale,
-                                       const CameraRGBD &cameraRgbd,
-                                       double devNormalizedEstReproj, double devNormalizedEstDepth,
-                                       double devDividerReproj, double devDividerDepth,
-                                       double medianResReproj, double medianResDepth);
+            DepthOnlyResidual(double newObservedDepth,
+                              const CameraRGBD &cameraRgbd,
+                              double devNormalizedEstDepth,
+                              double devDividerDepth,
+                              double medianResDepth);
 
 
         };
 
-        struct ReprojectionOnly {
+        struct ReprojectionOnlyResidual {
 
             template<typename T>
             bool operator()(const T *const point,
@@ -266,17 +259,12 @@ namespace gdr {
                 poseSE3.setQuaternion(orientationQuat);
                 poseSE3.translation() = poseT;
 
-//                std::vector<T> pointRaw = {point[0], point[1], point[2], T(1.0)};
-//                Eigen::Map<const Sophus::Vector<T, 3>> point4d(point);
-//                Sophus::Vector<T, 4> point4d(pointRaw.data());
                 Eigen::Map<const Sophus::Vector<T, 3>> point3d(point);
-//                Sophus::Vector<T, 3> res3 = poseSE3 * point3d;
                 Sophus::Vector<T, 3> pointCameraCoordinates = poseSE3.inverse() * point3d;
                 Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
 
                 T computedX = imageCoordinates[0] / imageCoordinates[2];
                 T computedY = imageCoordinates[1] / imageCoordinates[2];
-                T computedDepth = pointCameraCoordinates[2];
 
                 T resX = T(observedX) - computedX;
                 T resY = T(observedY) - computedY;
@@ -301,24 +289,27 @@ namespace gdr {
             double medianResidualReproj;
             double medianResidualDepth;
 
-            CameraRGBD camera;
+            const CameraRGBD &camera;
 
-            static ceres::CostFunction *Create(double newObservedX, double newObservedY, double newObservedDepth,
+            static ceres::CostFunction *Create(double newObservedX,
+                                               double newObservedY,
                                                double scale,
                                                const CameraRGBD &camera,
-                                               double estNormalizedReproj, double estNormalizedDepth,
-                                               double devDividerReproj, double devDividerDepth,
-                                               double medianResReproj, double medianResDepth);
+                                               double estNormalizedReproj,
+                                               double devDividerReproj,
+                                               double medianResReproj);
 
-            ReprojectionOnly(double newObservedX, double newObservedY, double newObservedDepth,
-                                       double scale,
-                                       const CameraRGBD &cameraRgbd,
-                                       double devNormalizedEstReproj, double devNormalizedEstDepth,
-                                       double devDividerReproj, double devDividerDepth,
-                                       double medianResReproj, double medianResDepth);
+            ReprojectionOnlyResidual(double newObservedX,
+                                     double newObservedY,
+                                     double scale,
+                                     const CameraRGBD &cameraRgbd,
+                                     double devNormalizedEstReproj,
+                                     double devDividerReproj,
+                                     double medianResReproj);
 
 
         };
+
     public:
         int getMaxNumberIterations() const;
 
