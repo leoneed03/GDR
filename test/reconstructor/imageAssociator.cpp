@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 
     std::set<int> indicesToSample;
 
-    int maxIndex = 3000;
+    int maxIndex = 6000;
 
     if (argc > 4) {
         maxIndex = std::stoi(std::string(argv[4]));
