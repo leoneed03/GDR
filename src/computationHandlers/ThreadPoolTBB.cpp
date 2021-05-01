@@ -3,9 +3,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "computationHandlers/ThreadPool.h"
+#include "computationHandlers/ThreadPoolTBB.h"
 
 namespace gdr {
 
-    ThreadPool::ThreadPool(int numOfThreads) : sheduler(numOfThreads) {}
+    ThreadPoolTBB::ThreadPoolTBB(int numOfThreads) : sheduler(numOfThreads) {}
 }

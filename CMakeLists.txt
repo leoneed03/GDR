@@ -107,7 +107,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/visualization/2D/ImageDrawer.h
     ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleDepthAdjuster.h
     ${PROJECT_SOURCE_DIR}/include/visualization/3D/SmoothPointCloud.h
-    ${PROJECT_SOURCE_DIR}/include/computationHandlers/ThreadPool.h
+    ${PROJECT_SOURCE_DIR}/include/computationHandlers/ThreadPoolTBB.h
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointsDepthDescriptor.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/ConnectedComponent.h
     ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/ImagesAssociator.h
@@ -171,7 +171,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/parametrization/PoseFullInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/Vectors3d.cpp
-    ${PROJECT_SOURCE_DIR}/src/computationHandlers/ThreadPool.cpp
+    ${PROJECT_SOURCE_DIR}/src/computationHandlers/ThreadPoolTBB.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/SO3.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerLogSO3.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/Point3d.cpp

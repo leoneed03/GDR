@@ -7,10 +7,12 @@
 #define GDR_BUNDLEDEPTHADJUSTER_H
 
 #include <vector>
+#include <unordered_map>
+#include <thread>
+
 #include <Eigen/Eigen>
 #include <sophus/se3.hpp>
-#include <unordered_map>
-#include <ceres/ceres.h>
+#include "ceres/ceres.h"
 
 #include "BundleAdjuster.h"
 #include "keyPoints/KeyPointInfo.h"
@@ -69,7 +71,7 @@ namespace gdr {
 
         constexpr static const double factor = 1.4826;
 
-        int maxNumberTreadsCeres = 6;
+        int maxNumberTreadsCeres = std::thread::hardware_concurrency();
         int iterations = 50;
 
         std::function<double(double)> computeInitialScaleByMedian =

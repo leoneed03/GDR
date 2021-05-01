@@ -20,7 +20,8 @@ namespace gdr {
         bool refineRelativePose(const MatchableInfo &poseToBeTransformedICP,
                                 const MatchableInfo &poseDestinationICPModel,
                                 const KeyPointMatches &keyPointMatches,
-                                SE3 &initTransformationSE3) override;
+                                SE3 &initTransformationSE3,
+                                int deviceIndex) override;
     };
 }
 

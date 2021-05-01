@@ -153,6 +153,7 @@ namespace test {
         posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientationByMatches(posesInfoFull,
                                                                                        timestampsToFind,
                                                                                        timeDiffThreshold);
+        std::cout << "found timestamp matches: " << posesInfoFull.size() << std::endl;
         gdr::SE3 fixedPoseGroundTruth(posesInfoFull[0].getSophusPose());
         double minTimeDiff = std::numeric_limits<double>::max();
 
@@ -187,33 +188,43 @@ namespace test {
         double meanErrorRotIRLS = 0;
         double meanErrorL2IRLS = 0;
 
-        if (!printFullReport) {
+        {
             assert(!posesFullInfoBA.empty());
             {
                 auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
                                                                       biggestComponent->getIndexFixedPose(),
                                                                       true);
-                std::cout << "========================BA report[Umeyama ALIGNED]:========================="
-                          << std::endl;
-                std::cout << informationErrors << std::endl;
+                if (printFullReport) {
+                    std::cout << "========================BA report[Umeyama ALIGNED]:========================="
+                              << std::endl;
+                    std::cout << informationErrors << std::endl;
+                }
 
                 errorsOfTrajectoryEstimation.errorAlignedUmeyamaBA = informationErrors;
             }
-            std::cout << "------------------------------------------------------------------------------------"
-                      << std::endl;
+            if (printFullReport) {
+                std::cout << "------------------------------------------------------------------------------------"
+                          << std::endl;
+            }
+
             {
                 auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
                                                                       biggestComponent->getIndexFixedPose(),
                                                                       false);
-                std::cout << "========================BA report[Fixed Pose ALIGNED]:========================="
-                          << std::endl;
-                std::cout << informationErrors << std::endl;
+                if (printFullReport) {
+                    std::cout << "========================BA report[Fixed Pose ALIGNED]:========================="
+                              << std::endl;
+                    std::cout << informationErrors << std::endl;
+                }
                 meanErrorRotBA = informationErrors.rotationError.MEAN;
                 meanErrorL2BA = informationErrors.translationError.MEAN;
 
                 errorsOfTrajectoryEstimation.errorBA = informationErrors;
             }
-            std::cout << std::endl << std::endl;
+
+            if (printFullReport) {
+                std::cout << std::endl << std::endl;
+            }
 
             assert(!posesFullInfoIRLS.empty());
 
@@ -222,22 +233,28 @@ namespace test {
                                                                       biggestComponent->getIndexFixedPose(),
                                                                       true);
 
-                std::cout << "========================IRLS report [Umeyama Aligned]:========================="
-                          << std::endl;
-                std::cout << informationErrors << std::endl;
+                if (printFullReport) {
+                    std::cout << "========================IRLS report [Umeyama Aligned]:========================="
+                              << std::endl;
+                    std::cout << informationErrors << std::endl;
+                }
                 errorsOfTrajectoryEstimation.errorAlignedUmeyamaIRLS = informationErrors;
             }
+            if (printFullReport) {
+                std::cout << "------------------------------------------------------------------------------------"
+                          << std::endl;
+            }
 
-            std::cout << "------------------------------------------------------------------------------------"
-                      << std::endl;
             {
                 auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoIRLS,
                                                                       biggestComponent->getIndexFixedPose(),
                                                                       false);
+                if (printFullReport) {
+                    std::cout << "========================IRLS report [Fixed Pose Aligned]:========================="
+                              << std::endl;
+                    std::cout << informationErrors << std::endl;
+                }
 
-                std::cout << "========================IRLS report [Fixed Pose Aligned]:========================="
-                          << std::endl;
-                std::cout << informationErrors << std::endl;
                 meanErrorL2IRLS = informationErrors.translationError.MEAN;
                 meanErrorRotIRLS = informationErrors.rotationError.MEAN;
 

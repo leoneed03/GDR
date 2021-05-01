@@ -65,7 +65,8 @@ namespace gdr {
         static std::vector<std::pair<int, int>>
         getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                                      const imageDescriptor &keysDescriptors2,
-                                     SiftMatchGPU *matcher);
+                                     SiftMatchGPU *matcher,
+                                     std::vector<int[2]> &matchesToPut);
 
         void siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs);
 

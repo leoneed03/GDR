@@ -24,4 +24,9 @@ namespace gdr {
     int KeyPointMatches::size() const {
         return keyPointMatches.size();
     }
+
+    std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &
+    KeyPointMatches::getKeyPointMatchesVectorRef() {
+        return keyPointMatches;
+    }
 }

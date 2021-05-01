@@ -15,19 +15,22 @@
 
 #include "datasetDescriber/DatasetDescriber.h"
 
+#include "computationHandlers/ThreadPoolTBB.h"
+
 namespace gdr {
 
     class RelativePosesComputationHandler {
 
         bool printInformationConsole = false;
         int numberOfThreadsCPU = 1;
+        int deviceCudaICP = 0;
 
         std::vector<std::pair<double, double>> timestampsRgbDepthAssociated;
         std::unique_ptr<FeatureDetectorMatcher> siftModule;
         std::unique_ptr<EstimatorRelativePoseRobust> relativePoseEstimatorRobust;
         std::unique_ptr<RefinerRelativePose> relativePoseRefiner;
         // unused right now
-        std::unique_ptr<ThreadPool> threadPool;
+        std::unique_ptr<ThreadPoolTBB> threadPool;
         CameraRGBD cameraDefault;
 
         std::vector<CameraRGBD> camerasRgbByPoseIndex;
@@ -154,6 +157,8 @@ namespace gdr {
         const CorrespondenceGraph &getCorrespondenceGraph() const;
 
         void setNumberOfThreadsCPU(int numberOfThreadsCPU);
+
+        void setDeviceCudaICP(int deviceCudaIcpToSet);
     };
 }
 

@@ -16,6 +16,7 @@
 TEST(testBAOptimized, visualizationDesk98) {
 
     gdr::ParamsRANSAC paramsRansacDefault;
+    paramsRansacDefault.setInlierCoeff(0.5);
     paramsRansacDefault.setProjectionUsage(false);
 
     gdr::CameraRGBD structureIoCamera(583, 320, 583, 240);
@@ -33,14 +34,14 @@ TEST(testBAOptimized, visualizationDesk98) {
     double coefficientR = 1.2;
     double coefficientT = 1.2;
 
-//    auto results = test::TesterReconstruction::testReconstruction("../../data/desk1_sampled_98_6",
-//                       kinectCamera,
-//                       paramsRansacDefault,
-//                       assocFile);
-    auto results = test::TesterReconstruction::testReconstruction("../../data/plant_sampled_19_3",
+    auto results = test::TesterReconstruction::testReconstruction("../../data/desk1_sampled_98_6",
                                                                   kinectCamera,
                                                                   paramsRansacDefault,
                                                                   assocFile);
+//    auto results = test::TesterReconstruction::testReconstruction("../../data/plant_sampled_19_3",
+//                                                                  kinectCamera,
+//                                                                  paramsRansacDefault,
+//                                                                  assocFile);
 
     double meanErrorL2BA = results.errorBA.translationError.MEAN;
     double meanErrorRotBA = results.errorBA.rotationError.MEAN;

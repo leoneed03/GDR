@@ -17,11 +17,13 @@ namespace gdr {
         return matchNumbers.size();
     }
 
-    std::pair<int, int> Match::getKeyPointIndexDestinationAndToBeTransformed(int matchPairIndex) const {
+    const std::pair<int, int> &Match::getKeyPointIndexDestinationAndToBeTransformed(int matchPairIndex) const {
         return matchNumbers[matchPairIndex];
     }
 
-    Match::Match(int newFrameNumber, const std::vector<std::pair<int, int>> &newMatchNumbers) :
-            frameNumber(newFrameNumber),
-            matchNumbers(newMatchNumbers) {}
+    Match::Match(int newFrameNumber, std::vector<std::pair<int, int>> &&newMatchNumbers) :
+            frameNumber(newFrameNumber) {
+
+        matchNumbers = std::move(newMatchNumbers);
+    }
 }

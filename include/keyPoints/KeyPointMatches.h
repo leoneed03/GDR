@@ -37,6 +37,8 @@ namespace gdr {
 
         const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getKeyPointMatchesVector() const;
 
+        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getKeyPointMatchesVectorRef();
+
         int size() const;
 
     };

@@ -8,6 +8,7 @@
 
 #include <tbb/parallel_for.h>
 #include <tbb/concurrent_vector.h>
+#include <thread>
 
 #include "readerDataset/readerTUM/ReaderTum.h"
 #include <directoryTraversing/DirectoryReader.h>
@@ -150,7 +151,7 @@ namespace gdr {
         relativePoseRefiner = RefinerRelativePoseCreator::getRefiner(RefinerRelativePoseCreator::RefinerType::ICPCUDA);
 
         //TODO: use multiple threads safely, not one
-        threadPool = std::make_unique<ThreadPool>(1);
+//        threadPool = std::make_unique<ThreadPool>(4);
     }
 
     const CorrespondenceGraph &RelativePosesComputationHandler::getCorrespondenceGraph() const {
@@ -163,6 +164,9 @@ namespace gdr {
 
     std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::computeRelativePoses(
             const std::vector<int> &gpuDeviceIndices) {
+
+        assert(!gpuDeviceIndices.empty());
+        deviceCudaICP = gpuDeviceIndices[0];
 
         if (getPrintInformationCout()) {
             std::cout << "start computing descriptors" << std::endl;
@@ -283,31 +287,34 @@ namespace gdr {
 
                                                     if (success) {
 
-                                                        for (const auto &matchPair: inlierKeyPointMatches.getKeyPointMatchesVector()) {
-                                                            allInlierKeyPointMatchesTBB.emplace_back(matchPair);
+                                                        for (auto &matchPair: inlierKeyPointMatches.getKeyPointMatchesVectorRef()) {
+                                                            allInlierKeyPointMatchesTBB.emplace_back(
+                                                                    std::move(matchPair));
                                                         }
 
                                                         // fill info about relative pairwise transformations Rt
-                                                        transformationMatricesConcurrent[i].push_back(
-                                                                RelativeSE3(
+                                                        transformationMatricesConcurrent[i].emplace_back(
+                                                                std::move(RelativeSE3(
                                                                         frameFromDestination.getIndex(),
                                                                         frameToToBeTransformed.getIndex(),
                                                                         cameraMotion
-                                                                ));
-                                                        transformationMatricesConcurrent[frameToToBeTransformed.getIndex()].push_back(
-                                                                RelativeSE3(
+                                                                )));
+                                                        transformationMatricesConcurrent[frameToToBeTransformed.getIndex()].emplace_back(
+                                                                std::move(RelativeSE3(
                                                                         frameToToBeTransformed.getIndex(),
                                                                         frameFromDestination.getIndex(),
-                                                                        cameraMotion.inverse()));
-                                                    } else {}
+                                                                        cameraMotion.inverse())));
+                                                    }
                                                 });
                           });
 
         std::vector<std::vector<RelativeSE3>> pairwiseTransformations(numberOfVertices);
 
         for (int i = 0; i < transformationMatricesConcurrent.size(); ++i) {
-            for (const auto &transformation: transformationMatricesConcurrent[i]) {
-                pairwiseTransformations[i].emplace_back(transformation);
+            pairwiseTransformations[i].reserve(transformationMatricesConcurrent.size());
+
+            for (auto &transformation: transformationMatricesConcurrent[i]) {
+                pairwiseTransformations[i].emplace_back(std::move(transformation));
             }
         }
 
@@ -598,7 +605,8 @@ namespace gdr {
         refinementSuccess = relativePoseRefiner->refineRelativePose(poseToBeTransformed,
                                                                     poseDestination,
                                                                     KeyPointMatches(),
-                                                                    initEstimationRelPos);
+                                                                    initEstimationRelPos,
+                                                                    deviceCudaICP);
         assert(refinementSuccess);
 
         return 0;
@@ -646,5 +654,9 @@ namespace gdr {
 
     void RelativePosesComputationHandler::setPrintInformationCout(bool printProgressToCout) {
         printInformationConsole = printProgressToCout;
+    }
+
+    void RelativePosesComputationHandler::setDeviceCudaICP(int deviceCudaIcpToSet) {
+        deviceCudaICP = deviceCudaIcpToSet;
     }
 }

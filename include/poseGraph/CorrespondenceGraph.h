@@ -15,7 +15,6 @@
 #include "keyPointDetectionAndMatching/FeatureDetectorMatcher.h"
 #include "absolutePoseEstimation/rotationAveraging/RotationAverager.h"
 #include "parametrization/Vectors3d.h"
-#include "computationHandlers/ThreadPool.h"
 #include "ConnectedComponent.h"
 
 #include "relativePoseEstimators/EstimatorRelativePoseRobust.h"
