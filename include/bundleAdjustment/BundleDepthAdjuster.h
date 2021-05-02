@@ -27,6 +27,8 @@ namespace gdr {
 
     class BundleDepthAdjuster : public BundleAdjuster {
 
+        static constexpr double thresholdInlierDefault = 2.5;
+
         bool printProgressToCout = true;
 
         void setPosesAndPoints(const std::vector<Point3d> &points,
@@ -48,19 +50,6 @@ namespace gdr {
         std::vector<Point3d> getOptimizedPoints() const override;
 
     private:
-        template<class T>
-        static Eigen::Matrix<T, 3, 3> getCameraIntr(T fx, T cx, T fy, T cy) {
-            Eigen::Matrix<T, 3, 3> cameraIntr;
-            cameraIntr.setZero();
-
-            cameraIntr.col(0)[0] = fx;
-            cameraIntr.col(1)[1] = fy;
-            cameraIntr.col(2)[0] = cx;
-            cameraIntr.col(2)[1] = cy;
-            cameraIntr.col(2)[2] = T(1.0);
-            return cameraIntr;
-        }
-
         static const int dimPoint = 3;
         static const int dimPose = 3;
         static const int dimOrientation = 4;
@@ -69,7 +58,7 @@ namespace gdr {
         int n = -1;
         int p = -1;
 
-        constexpr static const double factor = 1.4826;
+        static constexpr double factor = 1.4826;
 
         int maxNumberTreadsCeres = static_cast<int>(std::thread::hardware_concurrency());
         int iterations = 50;
@@ -96,18 +85,13 @@ namespace gdr {
         // tx, ty, tz
         // 0   1   2
         // contains pose parameters being optimized
-        std::vector<std::vector<double>> poseTxTyTzByPoseNumber;
-
-        // size of each vector is 5:
-        // fx, cx, fy, cy, keyPointScale
-        // 0   1   2   3   4
-        std::vector<std::vector<double>> poseFxCxFyCyScaleByPoseNumber;
+        std::vector<std::vector<double>> poseWorldToCameraTxTyTzByPoseNumber;
 
         // size of each vector is 4:
         // qx, qy, qz, qw
         // 0   1   2    3
         // contains camera orientation being optimized
-        std::vector<std::vector<double>> orientationsqxyzwByPoseNumber;
+        std::vector<std::vector<double>> orientationWorldToCameraqxyzwByPoseNumber;
 
         // size should be equal to number of poses
         // contains intrinsics camera parameters
@@ -137,7 +121,7 @@ namespace gdr {
          */
         std::vector<double> getInlierErrors(const std::vector<double> &r_n,
                                             double s_0,
-                                            double thresholdInlier = 2.5);
+                                            double thresholdInlier = thresholdInlierDefault);
 
         /** Compute inlier reprojection errors
          *
@@ -148,7 +132,7 @@ namespace gdr {
          *      second is N2-element vector of normalized depth errors
          */
         std::pair<std::vector<double>, std::vector<double>>
-        getInlierNormalizedErrorsReprojectionAndDepth(double thresholdInlier = 2.5);
+        getInlierNormalizedErrorsReprojectionAndDepth(double thresholdInlier = thresholdInlierDefault);
 
 
         /** Get deviation median based estimation for normalized reprojection (in pixels) and depth errors (in meters)
@@ -156,7 +140,7 @@ namespace gdr {
          * @param threshold is used for inlier residue detection
          * @returns deviation estimations of reprojection and depth errors
          */
-        std::pair<double, double> getSigmaReprojectionAndDepth(double threshold = 2.5);
+        std::pair<double, double> getSigmaReprojectionAndDepth(double threshold = thresholdInlierDefault);
 
 
         Sophus::SE3d getSE3TransformationMatrixByPoseNumber(int poseNumber) const;
@@ -176,13 +160,12 @@ namespace gdr {
                             const T *const orientation,
                             T *residuals) const {
 
-                Sophus::Vector<T, 3> imageCoordinates =
-                        getImageCoordinates<T>(point,
-                                               pose,
-                                               orientation,
-                                               camera);
+                Sophus::Vector<T, 3> pointInLocalCoordinates =
+                        getPointLocalCameraSystemCoordinates<T>(point,
+                                                                pose,
+                                                                orientation);
 
-                T computedDepth = imageCoordinates[2];
+                T& computedDepth = pointInLocalCoordinates[2];
 
                 // depth error computation (noise modeled as sigma = a * depth^2 [meters])
                 {
@@ -218,50 +201,60 @@ namespace gdr {
         };
 
         template<class T>
-        Sophus::Vector<T, 3> static getImageCoordinates(
+        Sophus::Vector<T, 2> static projectUsingIntrinsics(
+                const CameraRGBD &camera,
+                const Sophus::Vector<T, 3> &point) {
+
+            Sophus::Vector<T, 2> projectedPoint;
+
+            projectedPoint[0] = T(camera.getFx()) * point[0] + T(camera.getCx()) * point[2];
+            projectedPoint[1] = T(camera.getFy()) * point[1] + T(camera.getCy()) * point[2];
+
+            projectedPoint[0] /= point[2];
+            projectedPoint[1] /= point[2];
+
+            return projectedPoint;
+        }
+
+        template<class T>
+        Sophus::Vector<T, 3> static getPointLocalCameraSystemCoordinates(
                 const T *const point,
-                const T *const pose,
-                const T *const orientation,
-                const CameraRGBD &cameraIntrinsics) {
+                const T *const poseWorldToCameraTranslation,
+                const T *const poseWorldToCameraOrientation) {
 
-            T fx = T(cameraIntrinsics.getFx());
-            T cx = T(cameraIntrinsics.getCx());
-            T fy = T(cameraIntrinsics.getFy());
-            T cy = T(cameraIntrinsics.getCy());
-
-            Eigen::Map<const Eigen::Quaternion<T>> orientationQuat(orientation);
-            Eigen::Map<const Sophus::Vector<T, 3>> poseT(pose);
-
-            //TODO: do not construct matrix each time
-            Eigen::Matrix<T, 3, 3> cameraIntr = getCameraIntr<T>(fx, cx, fy, cy);
-
-            Sophus::SE3<T> poseSE3;
-            poseSE3.setQuaternion(orientationQuat);
-            poseSE3.translation() = poseT;
+            Eigen::Map<const Sophus::SO3<T>> orientationWtoC(poseWorldToCameraOrientation);
+            Eigen::Map<const Sophus::Vector<T, 3>> translationWtoC(poseWorldToCameraTranslation);
 
             Eigen::Map<const Sophus::Vector<T, 3>> point3d(point);
-            Sophus::Vector<T, 3> pointCameraCoordinates = poseSE3 * point3d;
-            Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
+            Sophus::Vector<T, 3> pointCameraCoordinates = orientationWtoC * point3d + translationWtoC;
 
-            return imageCoordinates;
+            return pointCameraCoordinates;
         }
 
         struct ReprojectionOnlyResidual {
 
             template<typename T>
             bool operator()(const T *const point,
-                            const T *const pose,
-                            const T *const orientation,
+                            const T *const poseTranslationWorldToCamera,
+                            const T *const poseOrientationWorldToCamera,
                             T *residuals) const {
 
-                Sophus::Vector<T, 3> imageCoordinates =
-                        getImageCoordinates<T>(point,
-                                               pose,
-                                               orientation,
-                                               camera);
+                Sophus::Vector<T, 3> pointInLocalCameraCoordinates =
+                        getPointLocalCameraSystemCoordinates<T>(point,
+                                                                poseTranslationWorldToCamera,
+                                                                poseOrientationWorldToCamera);
 
-                T computedX = imageCoordinates[0] / imageCoordinates[2];
-                T computedY = imageCoordinates[1] / imageCoordinates[2];
+                Sophus::Vector<T, 2> pointInImageCoordinatesNormalized =
+                        projectUsingIntrinsics<T>(camera,
+                                                  pointInLocalCameraCoordinates);
+
+
+                Eigen::Map<const Sophus::SO3<T>> orientationWorldToCamera(poseOrientationWorldToCamera);
+                Eigen::Map<const Sophus::Vector<T, 3>> translationWorldToCamera(poseTranslationWorldToCamera);
+                Eigen::Map<const Sophus::Vector<T, 3>> point3d(point);
+
+                T &computedX = pointInImageCoordinatesNormalized[0];
+                T &computedY = pointInImageCoordinatesNormalized[1];
 
                 T resX = T(observedX) - computedX;
                 T resY = T(observedY) - computedY;
