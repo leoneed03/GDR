@@ -43,7 +43,7 @@ namespace gdr {
             }
 
             detector->ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
-            std::cout << "detecting on " << siftGpuFarg << std::endl;
+            std::cout << "detecting on " << numOfDevicesForDetection[i] << std::endl;
 
             auto contextVerified = detector->VerifyContextGL();
             if (contextVerified == 0) {
@@ -165,8 +165,10 @@ namespace gdr {
 
         for (int i = 0; i < matchDevicesNumbers.size(); ++i) {
             matchers.push_back(std::make_unique<SiftMatchGPU>(maxSift));
-            matchers[i]->SetLanguage(SiftMatchGPU::SIFTMATCH_CUDA + matchDevicesNumbers[0]);
-            std::cout << "matching on " << SiftMatchGPU::SIFTMATCH_CUDA + matchDevicesNumbers[0] << std::endl;
+            matchers[i]->SetLanguage(SiftMatchGPU::SIFTMATCH_CUDA + matchDevicesNumbers[i]);
+
+            std::cout << "matching on " << matchDevicesNumbers[i] << std::endl;
+
             auto contextVerified = matchers[i]->VerifyContextGL();
             assert(contextVerified != 0);
         }
