@@ -78,7 +78,7 @@ namespace gdr {
             int pointClassNumber = pointClasses[pointIncrementor];
             std::pair<int, int> poseNumberAndLocalIndex = pointMatcher->getPoseNumberAndLocalIndex(pointIncrementor);
             std::vector<KeyPointInfo> keyPointInfo;
-            keyPointInfo.push_back(
+            keyPointInfo.emplace_back(
                     keyPointInfoByPoseNumAndLocalInd[poseNumberAndLocalIndex.first][poseNumberAndLocalIndex.second]);
             cloudProjector->addPoint(pointClassNumber, keyPointInfo);
         }

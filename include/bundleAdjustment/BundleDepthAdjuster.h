@@ -201,22 +201,6 @@ namespace gdr {
         };
 
         template<class T>
-        Sophus::Vector<T, 2> static projectUsingIntrinsics(
-                const CameraRGBD &camera,
-                const Sophus::Vector<T, 3> &point) {
-
-            Sophus::Vector<T, 2> projectedPoint;
-
-            projectedPoint[0] = T(camera.getFx()) * point[0] + T(camera.getCx()) * point[2];
-            projectedPoint[1] = T(camera.getFy()) * point[1] + T(camera.getCy()) * point[2];
-
-            projectedPoint[0] /= point[2];
-            projectedPoint[1] /= point[2];
-
-            return projectedPoint;
-        }
-
-        template<class T>
         Sophus::Vector<T, 3> static getPointLocalCameraSystemCoordinates(
                 const T *const point,
                 const T *const poseWorldToCameraTranslation,
@@ -245,8 +229,7 @@ namespace gdr {
                                                                 poseOrientationWorldToCamera);
 
                 Sophus::Vector<T, 2> pointInImageCoordinatesNormalized =
-                        projectUsingIntrinsics<T>(camera,
-                                                  pointInLocalCameraCoordinates);
+                        camera.projectUsingIntrinsics<T>(pointInLocalCameraCoordinates);
 
 
                 Eigen::Map<const Sophus::SO3<T>> orientationWorldToCamera(poseOrientationWorldToCamera);

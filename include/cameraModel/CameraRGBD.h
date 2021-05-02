@@ -30,6 +30,20 @@ namespace gdr {
 
     public:
 
+        template<class T>
+        Sophus::Vector<T, 2> projectUsingIntrinsics(const Sophus::Vector<T, 3> &point) const {
+
+            Sophus::Vector<T, 2> projectedPoint;
+
+            projectedPoint[0] = T(getFx()) * point[0] + T(getCx()) * point[2];
+            projectedPoint[1] = T(getFy()) * point[1] + T(getCy()) * point[2];
+
+            projectedPoint[0] /= point[2];
+            projectedPoint[1] /= point[2];
+
+            return projectedPoint;
+        }
+
         void setMeasurementErrorDeviationEstimators(const MeasurementErrorDeviationEstimators &estimators);
 
         const MeasurementErrorDeviationEstimators &getMeasurementErrorDeviationEstimators() const;

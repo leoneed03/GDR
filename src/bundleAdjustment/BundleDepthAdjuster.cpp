@@ -28,8 +28,8 @@ namespace gdr {
                 Sophus::Vector3d localCameraCoordinatesOfPoint = poseTransformation * point3d;
 
                 Sophus::Vector<double, 2> imageCoordinatesNormalized =
-                        projectUsingIntrinsics<double>(camera,
-                                                       localCameraCoordinatesOfPoint);
+                        camera.projectUsingIntrinsics<double>(
+                                localCameraCoordinatesOfPoint);
 
                 double computedX = imageCoordinatesNormalized[0];
                 double computedY = imageCoordinatesNormalized[1];
@@ -111,7 +111,8 @@ namespace gdr {
                 const auto point3d = getPointVector3dByPointGlobalIndex(currPoint);
 
                 Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation * point3d;
-                Sophus::Vector2d imageCoordinatesNormalized = projectUsingIntrinsics<double>(camera, localCameraCoordinatesOfPoint);
+                Sophus::Vector2d imageCoordinatesNormalized =
+                        camera.projectUsingIntrinsics<double>(localCameraCoordinatesOfPoint);
 
                 double computedX = imageCoordinatesNormalized[0];
                 double computedY = imageCoordinatesNormalized[1];

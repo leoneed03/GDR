@@ -80,6 +80,6 @@ int main(int argc, char* argv[]) {
                                                    false,
                                                    false,
                                                    {gpuIndex},
-                                                   false);
+                                                   true);
     return 0;
 }
