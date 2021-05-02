@@ -430,7 +430,7 @@ namespace gdr {
 
             if (errorXyNorm < thresholdInlierReprojection &&
                 errorDepthNorm < thresholdInlierDepth) {
-                inlierIndicesObservingPoses.emplace_back();
+                inlierIndicesObservingPoses.emplace_back(observingPoseNumber);
             }
         }
 
