@@ -180,30 +180,23 @@ namespace gdr {
                                                                pointGuessL2).size();
 
                     if (currentNumberOfInlierObservations > numberOfInlierObservationsMax) {
-                        optimalPointCoordinates[i].setEigenVector3dPointXYZ(pointGuessL2);
-
+                        //L2 solution is already set in optimalPointCoordinates, only need to update inlier counter
                         numberOfInlierObservationsMax = currentNumberOfInlierObservations;
-
                     }
 
                 } else {
                     currentNumberOfInlierObservations = getPoseNumbersOfInlierObservations(i,
                                                                                            pointGuess).size();
 
-                    if (currentNumberOfInlierObservations > numberOfInlierObservationsMax) {
-                        optimalPointCoordinates[i].setEigenVector3dPointXYZ(pointGuess);
+                    //counter being equal to 1 means point is probably an outlier, keep L2 solution
+                    if (currentNumberOfInlierObservations > numberOfInlierObservationsMax
+                        && currentNumberOfInlierObservations > 1) {
 
+                        optimalPointCoordinates[i].setEigenVector3dPointXYZ(pointGuess);
                         numberOfInlierObservationsMax = currentNumberOfInlierObservations;
                     }
                 }
             }
-
-            if (numberOfInlierObservationsMax <= 0) {
-                optimalPointCoordinates[i].setEigenVector3dPointXYZ(pointGuessL2);
-                std::cerr << "Impossible situation, check point coordinates projections computation" << std::endl;
-            }
-
-            assert(numberOfInlierObservationsMax > 0);
         }
 
         for (int i = 0; i < pointsSize; ++i) {
