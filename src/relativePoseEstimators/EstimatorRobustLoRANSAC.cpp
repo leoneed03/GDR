@@ -191,7 +191,9 @@ namespace gdr {
 
         int numberInliersOptimal = totalProjectionErrorsAndInlierIndices.size();
 
-        estimationSuccess = numberInliersOptimal > inlierCoeff * toBeTransformedPoints.cols();
+        estimationSuccess = (numberInliersOptimal > inlierCoeff * toBeTransformedPoints.cols())
+                            && (numberInliersOptimal >= paramsLoRansac.getInlierNumber());
+
 
         inlierIndices.clear();
         inlierIndices.reserve(totalProjectionErrorsAndInlierIndices.size());
@@ -200,7 +202,6 @@ namespace gdr {
             inlierIndices.emplace_back(inlierErrorAndIndex.second);
         }
 
-        std::swap(inlierIndices, inlierIndices);
         return optimalSE3Transformation;
     }
 

@@ -62,47 +62,51 @@ namespace gdr {
         assert(width == poseDestinationICPModel.getImagePixelWidth());
 
         const auto &cameraRgbdOfToBeTransformed = poseToBeTransformedICP.getCameraRGB();
-        ICPOdometry icpOdom(width, height);
 
-        cudaDeviceProp prop;
-        cudaGetDeviceProperties(&prop, deviceIndex);
-        std::string dev(prop.name);
+        {
+            std::unique_lock<std::mutex> deviceLockForICP(deviceCudaLock);
+            ICPOdometry icpOdom(width, height);
 
-        int threads = 224;
-        int blocks = 96;
+            cudaDeviceProp prop;
+            cudaGetDeviceProperties(&prop, deviceIndex);
+            std::string dev(prop.name);
 
-        pangolin::ManagedImage<unsigned short> firstData(width, height);
-        pangolin::ManagedImage<unsigned short> secondData(width, height);
+            int threads = 224;
+            int blocks = 96;
 
-        pangolin::Image<unsigned short> imageICP(firstData.w, firstData.h,
-                                                 firstData.pitch,
-                                                 (unsigned short *) firstData.ptr);
-        pangolin::Image<unsigned short> imageICPModel(secondData.w, secondData.h,
-                                                      secondData.pitch,
-                                                      (unsigned short *) secondData.ptr);
+            pangolin::ManagedImage<unsigned short> firstData(width, height);
+            pangolin::ManagedImage<unsigned short> secondData(width, height);
 
-        loadDepthImage(imageICPModel, poseDestinationICPModel.getPathImageD(),
-                       cameraRgbdDestination.getDepthPixelDivider(),
-                       width, height);
-        loadDepthImage(imageICP, poseToBeTransformedICP.getPathImageD(),
-                       cameraRgbdOfToBeTransformed.getDepthPixelDivider(),
-                       width, height);
+            pangolin::Image<unsigned short> imageICP(firstData.w, firstData.h,
+                                                     firstData.pitch,
+                                                     (unsigned short *) firstData.ptr);
+            pangolin::Image<unsigned short> imageICPModel(secondData.w, secondData.h,
+                                                          secondData.pitch,
+                                                          (unsigned short *) secondData.ptr);
 
-        icpOdom.initICPModel(imageICPModel.ptr, cameraIntrinsicsDestination);
-        icpOdom.initICP(imageICP.ptr, cameraIntrinsicsToBeTransformed);
+            loadDepthImage(imageICPModel, poseDestinationICPModel.getPathImageD(),
+                           cameraRgbdDestination.getDepthPixelDivider(),
+                           width, height);
+            loadDepthImage(imageICP, poseToBeTransformedICP.getPathImageD(),
+                           cameraRgbdOfToBeTransformed.getDepthPixelDivider(),
+                           width, height);
 
-        Sophus::SE3d relativeSE3_Rt = initTransformationSE3.getSE3();
+            icpOdom.initICPModel(imageICPModel.ptr, cameraIntrinsicsDestination);
+            icpOdom.initICP(imageICP.ptr, cameraIntrinsicsToBeTransformed);
 
-        int iterationsLevel0 = 10;
-        int iterationsLevel1 = 5;
-        int iterationsLevel2 = 4;
+            Sophus::SE3d relativeSE3_Rt = initTransformationSE3.getSE3();
 
-        icpOdom.getIncrementalTransformation(relativeSE3_Rt,
-                                             true,
-                                             threads, blocks,
-                                             iterationsLevel0, iterationsLevel1, iterationsLevel2);
+            int iterationsLevel0 = 5;
+            int iterationsLevel1 = 5;
+            int iterationsLevel2 = 10;
 
-        initTransformationSE3 = SE3(relativeSE3_Rt);
+            icpOdom.getIncrementalTransformation(relativeSE3_Rt,
+                                                 true,
+                                                 threads, blocks,
+                                                 iterationsLevel0, iterationsLevel1, iterationsLevel2);
+
+            initTransformationSE3 = SE3(relativeSE3_Rt);
+        }
 
         return true;
     }

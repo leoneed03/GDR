@@ -422,6 +422,8 @@ namespace gdr {
 
         if (!success) {
             return cR_t_umeyama;
+        } else {
+            assert(inliersAgain.size() >= paramsRansac.getInlierNumber());
         }
 
         auto inlierMatchesCorrespondingKeypointsLoRansac = findInlierPointCorrespondences(vertexFromDestDestination,
@@ -454,12 +456,13 @@ namespace gdr {
         if (ransacInliers > ICPinliers) {
             // ICP did not refine the relative pose -- return umeyama result
             cR_t_umeyama = relativePoseLoRANSAC;
-
         } else {
             cR_t_umeyama = refinedByICPRelativePose;
+
             if (getPrintInformationCout()) {
                 std::cout << "REFINED________________________________________________" << std::endl;
             }
+
             std::swap(inlierMatchesCorrespondingKeypointsAfterRefinement, inlierMatchesCorrespondingKeypointsLoRansac);
         }
 

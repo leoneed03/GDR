@@ -11,10 +11,13 @@
 #include "keyPoints/KeyPointMatches.h"
 #include "poseGraph/VertexPose.h"
 
+#include <mutex>
+
 namespace gdr {
 
     class ICPCUDA : public RefinerRelativePose {
 
+        std::mutex deviceCudaLock;
     public:
 
         bool refineRelativePose(const MatchableInfo &poseToBeTransformedICP,
