@@ -23,9 +23,9 @@ namespace gdr {
                 int currPoint = keyPointInfosByPose.first;
                 const auto &camera = cameraModelByPoseNumber[currPose];
                 const auto poseTransformation = getSE3TransformationMatrixByPoseNumber(currPose);
-                const auto point3d = getPointVector4dByPointGlobalIndex(currPoint);
+                const auto point3d = getPointVector3dByPointGlobalIndex(currPoint);
 
-                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation.inverse().matrix3x4() * point3d;
+                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation * point3d;
                 Eigen::Vector3d imageCoordinates = camera.getIntrinsicsMatrix3x3() * localCameraCoordinatesOfPoint;
 
                 double computedX = imageCoordinates[0] / imageCoordinates[2];
@@ -103,8 +103,9 @@ namespace gdr {
                 int currPoint = keyPointInfosByPose.first;
                 const auto &camera = cameraModelByPoseNumber[currPose];
                 const auto poseTransformation = getSE3TransformationMatrixByPoseNumber(currPose);
-                const auto point3d = getPointVector4dByPointGlobalIndex(currPoint);
-                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation.inverse().matrix3x4() * point3d;
+                const auto point3d = getPointVector3dByPointGlobalIndex(currPoint);
+
+                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation * point3d;
                 Eigen::Vector3d imageCoordinates = camera.getIntrinsicsMatrix3x3() * localCameraCoordinatesOfPoint;
                 double computedX = imageCoordinates[0] / imageCoordinates[2];
                 double computedY = imageCoordinates[1] / imageCoordinates[2];
@@ -157,12 +158,12 @@ namespace gdr {
     }
 
     std::vector<SE3> BundleDepthAdjuster::optimizePointsAndPoses(const std::vector<Point3d> &points,
-                                                                 const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                                                 const std::vector<std::pair<SE3, CameraRGBD>> &posesCameraToWorld,
                                                                  const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfos,
                                                                  int indexFixed,
                                                                  bool &success) {
 
-        setPosesAndPoints(points, absolutePoses, keyPointInfos);
+        setPosesAndPoints(points, posesCameraToWorld, keyPointInfos);
 
         if (getPrintProgressToCout()) {
             std::cout << "entered BA depth optimization" << std::endl;
@@ -296,9 +297,10 @@ namespace gdr {
             std::cout << summary.FullReport() << std::endl;
             std::cout << "Is BA USABLE?: " << summary.IsSolutionUsable() << std::endl;
 
-            assert(summary.IsSolutionUsable());
             std::cout << "Threads used " << summary.num_threads_used << std::endl;
         }
+
+        assert(summary.IsSolutionUsable() && "ceres marked solution as unusable");
 
         std::pair<std::vector<double>, std::vector<double>> errorsReprojDepthRawAfter =
                 getNormalizedErrorsReprojectionAndDepth(false);
@@ -360,7 +362,7 @@ namespace gdr {
             poseCurrent.setQuaternion(orientation);
             poseCurrent.translation() = translation;
 
-            posesOptimized.emplace_back(SE3(poseCurrent));
+            posesOptimized.emplace_back(SE3(poseCurrent).inverse());
         }
 
         return posesOptimized;
@@ -509,12 +511,12 @@ namespace gdr {
 
                 const auto &camera = cameraModelByPoseNumber[currPose];
                 const auto poseTransformation = getSE3TransformationMatrixByPoseNumber(currPose);
-                const auto point3d = getPointVector4dByPointGlobalIndex(currPoint);
+                const auto point3d = getPointVector3dByPointGlobalIndex(currPoint);
                 const auto observedPoint3d = camera.getCoordinates3D(keyPointInfo.getX(),
                                                                      keyPointInfo.getY(),
                                                                      keyPointInfo.getDepth());
 
-                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation.inverse().matrix3x4() * point3d;
+                Eigen::Vector3d localCameraCoordinatesOfPoint = poseTransformation * point3d;
                 auto difference3D = localCameraCoordinatesOfPoint - observedPoint3d;
 
                 errorsL2.emplace_back(difference3D.norm());
@@ -535,14 +537,14 @@ namespace gdr {
     }
 
     void BundleDepthAdjuster::setPosesAndPoints(const std::vector<Point3d> &points,
-                                                const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                                const std::vector<std::pair<SE3, CameraRGBD>> &posesCameraToWorld,
                                                 const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo) {
 
-        assert(keyPointInfo.size() == absolutePoses.size());
-        assert(!absolutePoses.empty());
+        assert(keyPointInfo.size() == posesCameraToWorld.size());
+        assert(!posesCameraToWorld.empty());
 
         for (const auto &point: points) {
-            pointsXYZbyIndex.push_back(point.getVectorPointXYZ());
+            pointsXYZbyIndex.emplace_back(point.getVectorPointXYZ());
         }
 
         for (const auto &mapIntInfo: keyPointInfo) {
@@ -553,23 +555,30 @@ namespace gdr {
         }
         keyPointInfoByPoseNumberAndPointNumber = keyPointInfo;
 
-        for (const auto &pose: absolutePoses) {
-            const auto &translation = pose.first.getTranslation();
-            const auto &rotationQuat = pose.first.getRotationQuatd();
+        for (const auto &pose: posesCameraToWorld) {
+
+            Sophus::SE3d poseWorldToCamera;
+            poseWorldToCamera.setQuaternion(pose.first.getRotationQuatd());
+            poseWorldToCamera.translation() = pose.first.getTranslation();
+            poseWorldToCamera = poseWorldToCamera.inverse();
+
+            const auto &translation = poseWorldToCamera.translation();
+            const auto &rotationQuat = poseWorldToCamera.unit_quaternion();
             const auto &cameraIntr = pose.second;
+
             poseTxTyTzByPoseNumber.push_back({translation[0], translation[1], translation[2]});
             poseFxCxFyCyScaleByPoseNumber.push_back({cameraIntr.getFx(), cameraIntr.getCx(),
                                                      cameraIntr.getFy(), cameraIntr.getCy()});
             orientationsqxyzwByPoseNumber.push_back(
                     {rotationQuat.x(), rotationQuat.y(), rotationQuat.z(), rotationQuat.w()});
 
-            cameraModelByPoseNumber.push_back(pose.second);
+            cameraModelByPoseNumber.emplace_back(pose.second);
             assert(poseTxTyTzByPoseNumber[poseTxTyTzByPoseNumber.size() - 1].size() == dimPose);
         }
 
         assert(pointsXYZbyIndex.size() == points.size());
         assert(keyPointInfo.size() == keyPointInfoByPoseNumberAndPointNumber.size());
-        assert(absolutePoses.size() == poseTxTyTzByPoseNumber.size());
+        assert(posesCameraToWorld.size() == poseTxTyTzByPoseNumber.size());
     }
 
     int BundleDepthAdjuster::getMaxNumberIterations() const {

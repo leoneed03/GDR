@@ -30,7 +30,7 @@ namespace gdr {
         bool printProgressToCout = true;
 
         void setPosesAndPoints(const std::vector<Point3d> &points,
-                               const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                               const std::vector<std::pair<SE3, CameraRGBD>> &posesCameraToWorld,
                                const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo);
 
     public:
@@ -40,7 +40,7 @@ namespace gdr {
         void setPrintProgressToCout(bool printProgress);
 
         std::vector<SE3> optimizePointsAndPoses(const std::vector<Point3d> &points,
-                                                const std::vector<std::pair<SE3, CameraRGBD>> &absolutePoses,
+                                                const std::vector<std::pair<SE3, CameraRGBD>> &posesCameraToWorld,
                                                 const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo,
                                                 int indexFixed,
                                                 bool &success) override;
@@ -71,7 +71,7 @@ namespace gdr {
 
         constexpr static const double factor = 1.4826;
 
-        int maxNumberTreadsCeres = std::thread::hardware_concurrency();
+        int maxNumberTreadsCeres = static_cast<int>(std::thread::hardware_concurrency());
         int iterations = 50;
 
         std::function<double(double)> computeInitialScaleByMedian =
@@ -176,27 +176,13 @@ namespace gdr {
                             const T *const orientation,
                             T *residuals) const {
 
-                T fx = T(camera.getFx());
-                T cx = T(camera.getCx());
-                T fy = T(camera.getFy());
-                T cy = T(camera.getCy());
+                Sophus::Vector<T, 3> imageCoordinates =
+                        getImageCoordinates<T>(point,
+                                               pose,
+                                               orientation,
+                                               camera);
 
-                Eigen::Map<const Eigen::Quaternion<T>> orientationQuat(orientation);
-                Eigen::Map<const Sophus::Vector<T, 3>> poseT(pose);
-
-                Eigen::Matrix<T, 3, 3> cameraIntr = getCameraIntr<T>(fx, cx, fy, cy);
-
-                Sophus::SE3<T> poseSE3;
-                poseSE3.setQuaternion(orientationQuat);
-                poseSE3.translation() = poseT;
-
-                Eigen::Map<const Sophus::Vector<T, 3>> point3d(point);
-                Sophus::Vector<T, 3> pointCameraCoordinates = poseSE3.inverse() * point3d;
-                Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
-
-                T computedX = imageCoordinates[0] / imageCoordinates[2];
-                T computedY = imageCoordinates[1] / imageCoordinates[2];
-                T computedDepth = pointCameraCoordinates[2];
+                T computedDepth = imageCoordinates[2];
 
                 // depth error computation (noise modeled as sigma = a * depth^2 [meters])
                 {
@@ -231,6 +217,35 @@ namespace gdr {
                               double medianResDepth);
         };
 
+        template<class T>
+        Sophus::Vector<T, 3> static getImageCoordinates(
+                const T *const point,
+                const T *const pose,
+                const T *const orientation,
+                const CameraRGBD &cameraIntrinsics) {
+
+            T fx = T(cameraIntrinsics.getFx());
+            T cx = T(cameraIntrinsics.getCx());
+            T fy = T(cameraIntrinsics.getFy());
+            T cy = T(cameraIntrinsics.getCy());
+
+            Eigen::Map<const Eigen::Quaternion<T>> orientationQuat(orientation);
+            Eigen::Map<const Sophus::Vector<T, 3>> poseT(pose);
+
+            //TODO: do not construct matrix each time
+            Eigen::Matrix<T, 3, 3> cameraIntr = getCameraIntr<T>(fx, cx, fy, cy);
+
+            Sophus::SE3<T> poseSE3;
+            poseSE3.setQuaternion(orientationQuat);
+            poseSE3.translation() = poseT;
+
+            Eigen::Map<const Sophus::Vector<T, 3>> point3d(point);
+            Sophus::Vector<T, 3> pointCameraCoordinates = poseSE3 * point3d;
+            Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
+
+            return imageCoordinates;
+        }
+
         struct ReprojectionOnlyResidual {
 
             template<typename T>
@@ -239,23 +254,11 @@ namespace gdr {
                             const T *const orientation,
                             T *residuals) const {
 
-                T fx = T(camera.getFx());
-                T cx = T(camera.getCx());
-                T fy = T(camera.getFy());
-                T cy = T(camera.getCy());
-
-                Eigen::Map<const Eigen::Quaternion<T>> orientationQuat(orientation);
-                Eigen::Map<const Sophus::Vector<T, 3>> poseT(pose);
-
-                Eigen::Matrix<T, 3, 3> cameraIntr = getCameraIntr<T>(fx, cx, fy, cy);
-
-                Sophus::SE3<T> poseSE3;
-                poseSE3.setQuaternion(orientationQuat);
-                poseSE3.translation() = poseT;
-
-                Eigen::Map<const Sophus::Vector<T, 3>> point3d(point);
-                Sophus::Vector<T, 3> pointCameraCoordinates = poseSE3.inverse() * point3d;
-                Sophus::Vector<T, 3> imageCoordinates = cameraIntr * pointCameraCoordinates;
+                Sophus::Vector<T, 3> imageCoordinates =
+                        getImageCoordinates<T>(point,
+                                               pose,
+                                               orientation,
+                                               camera);
 
                 T computedX = imageCoordinates[0] / imageCoordinates[2];
                 T computedY = imageCoordinates[1] / imageCoordinates[2];
