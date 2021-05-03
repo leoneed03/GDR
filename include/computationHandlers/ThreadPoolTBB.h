@@ -15,7 +15,7 @@ namespace gdr {
 
         tbb::task_scheduler_init sheduler;
     public:
-        ThreadPoolTBB(int numOfThreads);
+        explicit ThreadPoolTBB(int numOfThreads);
 
         ThreadPoolTBB() = default;
 

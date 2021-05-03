@@ -38,21 +38,24 @@ namespace test {
 
         gdr::DatasetStructure datasetStructure = gdr::ReaderTUM::getDatasetStructure(datasetPath.string(),
                                                                                      assocFile);
+        std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph;
+        int numberOfPosesInDataset = 0;
 
-        gdr::RelativePosesComputationHandler cgHandler(datasetStructure,
-                                                       gdr::DatasetCameraDescriber(cameraDefault),
-                                                       paramsRansac);
+        {
+            gdr::RelativePosesComputationHandler cgHandler(datasetStructure,
+                                                           gdr::DatasetCameraDescriber(cameraDefault),
+                                                           paramsRansac);
 
 
-        std::cout << "start computing relative poses" << std::endl;
-        cgHandler.computeRelativePoses(gpuDevices);
+            std::cout << "start computing relative poses" << std::endl;
+            cgHandler.computeRelativePoses(gpuDevices);
+            cgHandler.printTimeBenchmarkInfo();
 
-        int numberOfPosesInDataset = cgHandler.getNumberOfVertices();
-        errorsOfTrajectoryEstimation.numberOfPosesInDataset = numberOfPosesInDataset;
+            numberOfPosesInDataset = cgHandler.getNumberOfVertices();
+            errorsOfTrajectoryEstimation.numberOfPosesInDataset = numberOfPosesInDataset;
 
-        std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph =
-                cgHandler.splitGraphToConnectedComponents();
-
+            connectedComponentsPoseGraph = cgHandler.splitGraphToConnectedComponents();
+        }
 
         if (printToConsole) {
 
@@ -88,7 +91,8 @@ namespace test {
         std::vector<gdr::SE3> irlsPoses = biggestComponent->getPosesSE3();
 
         {
-            std::string outputNameIRLS = gdr::DirectoryReader::appendPathSuffix(fullOutPath, outputShortFileNames.posesIRLS);
+            std::string outputNameIRLS = gdr::DirectoryReader::appendPathSuffix(fullOutPath,
+                                                                                outputShortFileNames.posesIRLS);
 
             std::cout << "IRLS poses written to: " << outputNameIRLS << std::endl;
             std::ofstream posesIRLS(outputNameIRLS);
@@ -111,7 +115,8 @@ namespace test {
             posesBA << biggestComponent->getPosesForEvaluation();
         }
 
-        std::string absolutePosesGroundTruth = gdr::DirectoryReader::appendPathSuffix(pathRelativeToData, "groundtruth.txt");
+        std::string absolutePosesGroundTruth = gdr::DirectoryReader::appendPathSuffix(pathRelativeToData,
+                                                                                      "groundtruth.txt");
         std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
                 absolutePosesGroundTruth);
 

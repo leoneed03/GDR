@@ -88,15 +88,13 @@ namespace gdr {
         assert(!gpuDeviceIndices.empty());
         deviceCudaICP = gpuDeviceIndices[0];
 
-        if (getPrintInformationCout()) {
-            std::cout << "start computing descriptors" << std::endl;
-        }
-
+        timeStartDescriptors = std::chrono::high_resolution_clock::now();
         //sift detect
         std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
                 keysDescriptorsAll = siftModule->getKeypoints2DDescriptorsAllImages(
                 correspondenceGraph->getPathsRGB(),
                 gpuDeviceIndices);
+        timeEndDescriptors = std::chrono::high_resolution_clock::now();
 
         const auto &imagesRgb = correspondenceGraph->getPathsRGB();
         const auto &imagesD = correspondenceGraph->getPathsD();
@@ -144,21 +142,26 @@ namespace gdr {
         ImageRetriever imageRetriever(correspondenceGraph->getNumberOfPoses());
         imageRetriever.markAllPairsToBeCompared();
 
+        timeStartMatching = std::chrono::high_resolution_clock::now();
         //Sift match
-        correspondenceGraph->setPointMatchesRGB(siftModule->findCorrespondences(
-                keyPointsDescriptorsToBeMatched,
-                imageRetriever,
-                gpuDeviceIndices));
+        correspondenceGraph->setPointMatchesRGB(
+                siftModule->findCorrespondences(keyPointsDescriptorsToBeMatched,
+                                                imageRetriever,
+                                                gpuDeviceIndices));
+        timeEndMatching = std::chrono::high_resolution_clock::now();
 
         correspondenceGraph->decreaseDensity();
         KeyPointMatches allInlierKeyPointMatches;
+
+        timeStartRelativePoses = std::chrono::high_resolution_clock::now();
         auto relativePoses = findTransformationRtMatrices(allInlierKeyPointMatches);
+        timeEndRelativePoses = std::chrono::high_resolution_clock::now();
+
         assert(!allInlierKeyPointMatches.getKeyPointMatchesVector().empty());
         correspondenceGraph->setInlierPointMatches(allInlierKeyPointMatches);
-
         correspondenceGraph->setRelativePoses(relativePoses);
+
         std::string poseFile = getPathRelativePose();
-//        correspondenceGraph->printRelativePosesFile(poseFile);
 
         return relativePoses;
     }
@@ -587,5 +590,24 @@ namespace gdr {
 
     void RelativePosesComputationHandler::setDeviceCudaICP(int deviceCudaIcpToSet) {
         deviceCudaICP = deviceCudaIcpToSet;
+    }
+
+
+    void RelativePosesComputationHandler::printTimeBenchmarkInfo() const {
+
+        std::chrono::duration<double> timeDetect = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndDescriptors - timeStartDescriptors);
+        std::chrono::duration<double> timeMatch = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndMatching - timeStartMatching);
+        std::chrono::duration<double> timeRelativePoseICP = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndRelativePoses - timeStartRelativePoses);
+
+
+        std::cout << "    TIMER INFO:" << std::endl;
+        std::cout << "          SIFT detect: " << timeDetect.count() << std::endl;
+        std::cout << "          SIFT match: " << timeMatch.count() << std::endl;
+        std::cout << "          relative poses umayama + ICP: " << timeRelativePoseICP.count() << std::endl;
+        std::cout << std::endl;
+
     }
 }

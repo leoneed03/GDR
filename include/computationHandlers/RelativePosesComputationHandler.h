@@ -19,10 +19,23 @@
 
 #include "datasetDescriber/DatasetStructure.h"
 
+#include <chrono>
+
 namespace gdr {
 
     class RelativePosesComputationHandler {
 
+    public:
+        std::chrono::high_resolution_clock::time_point timeStartDescriptors;
+        std::chrono::high_resolution_clock::time_point timeStartMatching;
+        std::chrono::high_resolution_clock::time_point timeStartRelativePoses;
+
+
+        std::chrono::high_resolution_clock::time_point timeEndDescriptors;
+        std::chrono::high_resolution_clock::time_point timeEndMatching;
+        std::chrono::high_resolution_clock::time_point timeEndRelativePoses;
+
+    private:
         bool printInformationConsole = false;
         int numberOfThreadsCPU = 1;
         int deviceCudaICP = 0;
@@ -109,6 +122,7 @@ namespace gdr {
                 KeyPointMatches &allInlierKeyPointMatches) const;
 
     public:
+
         bool getPrintInformationCout() const;
 
         void setPrintInformationCout(bool printProgressToCout);
@@ -160,6 +174,8 @@ namespace gdr {
         void setNumberOfThreadsCPU(int numberOfThreadsCPU);
 
         void setDeviceCudaICP(int deviceCudaIcpToSet);
+
+        void printTimeBenchmarkInfo() const;
     };
 }
 

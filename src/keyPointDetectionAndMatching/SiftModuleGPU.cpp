@@ -184,18 +184,11 @@ namespace gdr {
             return matches;
         }
 
-        int numberPoseFromLess = 0;
-        int numberPoseToBigger = 1;
-        std::mutex counterMutex;
-
         std::vector<std::thread> threads(matchDevicesNumbers.size());
         for (int i = 0; i < threads.size(); ++i) {
 
             threads[i] = std::thread(getNumbersOfMatchesOnePair,
-                                     std::ref(numberPoseFromLess),
-                                     std::ref(numberPoseToBigger),
                                      std::ref(verticesToBeMatched),
-                                     std::ref(counterMutex),
                                      std::ref(matches),
                                      matchers[i].get(),
                                      std::ref(imageRetriever));
@@ -212,10 +205,7 @@ namespace gdr {
         return matches;
     }
 
-    void SiftModuleGPU::getNumbersOfMatchesOnePair(int &indexFrom,
-                                                   int &indexTo,
-                                                   const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                                                   std::mutex &counterMutex,
+    void SiftModuleGPU::getNumbersOfMatchesOnePair(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                    std::vector<tbb::concurrent_vector<Match>> &matches,
                                                    SiftMatchGPU *matcher,
                                                    ImageRetriever &imageRetriever) {
@@ -223,49 +213,24 @@ namespace gdr {
         std::vector<int[2]> matchesToPut;
 
         while (true) {
-            int localIndexFrom = -1;
-            int localIndexTo = -1;
 
-            {
-                std::unique_lock<std::mutex> counterLock(counterMutex);
+            std::pair<int, int> indexFromLessAndToBiggerFromImageRetriever;
+            bool existsPairToMatch = imageRetriever.tryGetSimilarImagesPair(
+                    indexFromLessAndToBiggerFromImageRetriever);
 
-                std::pair<int, int> indexFromLessAndToBiggerFromImageRetriever;
-                bool existsPairToMatch = imageRetriever.tryGetSimilarImagesPair(indexFromLessAndToBiggerFromImageRetriever);
-                std::cout << " matching pair is found: [" << existsPairToMatch << "]: "
-                << indexFromLessAndToBiggerFromImageRetriever.first << " & " << indexFromLessAndToBiggerFromImageRetriever.second << std::endl;
-
-                const int &indexFromLessIR = indexFromLessAndToBiggerFromImageRetriever.first;
-                const int &indexToBiggerIR = indexFromLessAndToBiggerFromImageRetriever.second;
-
-                if (existsPairToMatch) {
-                    assert(indexFromLessIR < indexToBiggerIR);
-                    assert(indexFromLessIR >= 0 && indexToBiggerIR < verticesToBeMatched.size());
-                }
-                assert(indexFrom < indexTo);
-
-                if (indexTo >= matches.size()) {
-                    ++indexFrom;
-                    indexTo = indexFrom + 1;
-                }
-                if (indexFrom >= matches.size() || indexTo >= matches.size()) {
-                    assert(!existsPairToMatch);
-                    return;
-                }
-                assert(existsPairToMatch);
-                assert(indexFrom < indexTo);
-                assert(indexFromLessIR < indexToBiggerIR);
-
-                assert(indexFromLessIR == indexFrom);
-                assert(indexToBiggerIR == indexTo);
-
-                localIndexFrom = indexFrom;
-                localIndexTo = indexTo;
-
-                ++indexTo;
+            if (!existsPairToMatch) {
+                return;
             }
 
-            int sizeFrom = verticesToBeMatched[localIndexFrom].getKeyPoints().size();
-            int sizeTo = verticesToBeMatched[localIndexTo].getKeyPoints().size();
+            int localIndexFromLess = indexFromLessAndToBiggerFromImageRetriever.first;
+            int localIndexToBigger = indexFromLessAndToBiggerFromImageRetriever.second;
+
+            assert(localIndexFromLess < localIndexToBigger);
+            assert(localIndexFromLess >= 0 && localIndexToBigger < verticesToBeMatched.size());
+            assert(localIndexFromLess < localIndexToBigger);
+
+            int sizeFrom = verticesToBeMatched[localIndexFromLess].getKeyPoints().size();
+            int sizeTo = verticesToBeMatched[localIndexToBigger].getKeyPoints().size();
 
             int sizeToBeMatchedMax = std::min(sizeFrom, sizeTo);
 
@@ -276,14 +241,14 @@ namespace gdr {
             }
 
             std::vector<std::pair<int, int>> matchingNumbers = getNumbersOfMatchesKeypoints(
-                    std::make_pair(verticesToBeMatched[localIndexFrom].getKeyPoints(),
-                                   verticesToBeMatched[localIndexFrom].getDescriptors()),
-                    std::make_pair(verticesToBeMatched[localIndexTo].getKeyPoints(),
-                                   verticesToBeMatched[localIndexTo].getDescriptors()),
+                    std::make_pair(verticesToBeMatched[localIndexFromLess].getKeyPoints(),
+                                   verticesToBeMatched[localIndexFromLess].getDescriptors()),
+                    std::make_pair(verticesToBeMatched[localIndexToBigger].getKeyPoints(),
+                                   verticesToBeMatched[localIndexToBigger].getDescriptors()),
                     matcher,
                     matchesToPut);
 
-            matches[localIndexFrom].emplace_back(std::move(gdr::Match(localIndexTo, std::move(matchingNumbers))));
+            matches[localIndexFromLess].emplace_back(std::move(gdr::Match(localIndexToBigger, std::move(matchingNumbers))));
         }
     }
 
@@ -299,7 +264,9 @@ namespace gdr {
             Eigen::Map<Eigen::VectorXf> descriptor(
                     descriptors.data() + descriptorNumber * descriptorLength,
                     descriptorLength);
+
             const float norm = descriptor.lpNorm<1>();
+
             descriptor = descriptor / norm;
             descriptor = descriptor.array().sqrt();
         }

@@ -85,10 +85,7 @@ namespace gdr {
                                         std::mutex &output,
                                         bool normalizeRootL1 = true);
 
-        static void getNumbersOfMatchesOnePair(int &indexFrom,
-                                               int &indexTo,
-                                               const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                                               std::mutex &counterMutex,
+        static void getNumbersOfMatchesOnePair(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                std::vector<tbb::concurrent_vector<Match>> &matches,
                                                SiftMatchGPU *matcher,
                                                ImageRetriever &imageRetriever);

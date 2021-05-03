@@ -162,7 +162,8 @@ namespace gdr {
             Eigen::Vector3d pointGuessL2 = indexedPoints[i].getEigenVector3dPointXYZ();
 
             for (int iterationPointRansac = -1;
-                 iterationPointRansac <= numberOfIterationsRansacPerPoint; ++iterationPointRansac) {
+                 iterationPointRansac <= std::min(numberOfIterationsRansacPerPoint, numOfObservingPoses);
+                 ++iterationPointRansac) {
 
                 int observingPoseNumberRandom = distrib(randomNumberGenerator);
                 assert(observingPoseNumberRandom >= 0 &&
@@ -173,8 +174,7 @@ namespace gdr {
                 int currentNumberOfInlierObservations = 0;
 
                 if (iterationPointRansac == -1) {
-
-
+                    
                     currentNumberOfInlierObservations =
                             getPoseNumbersOfInlierObservations(i,
                                                                pointGuessL2).size();
