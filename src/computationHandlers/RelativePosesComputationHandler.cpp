@@ -25,7 +25,7 @@ namespace gdr {
 
     namespace fs = boost::filesystem;
 
-    RelativePosesComputationHandler::RelativePosesComputationHandler(const DatasetCameraDescriber &datasetDescriber,
+    RelativePosesComputationHandler::RelativePosesComputationHandler(const DatasetDescriber &datasetDescriber,
                                                                      const ParamsRANSAC &paramsRansacToSet) :
             paramsRansac(paramsRansacToSet),
             cameraDefault(datasetDescriber.getDefaultCamera()) {

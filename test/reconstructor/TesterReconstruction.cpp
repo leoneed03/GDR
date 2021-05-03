@@ -43,8 +43,8 @@ namespace test {
 
         {
             gdr::RelativePosesComputationHandler cgHandler(
-                    gdr::DatasetCameraDescriber(datasetStructure,
-                                                cameraDefault),
+                    gdr::DatasetDescriber(datasetStructure,
+                                          cameraDefault),
                     paramsRansac);
 
 

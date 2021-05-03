@@ -13,7 +13,7 @@
 
 #include "relativePoseEstimators/InlierCounter.h"
 
-#include "datasetDescriber/DatasetCameraDescriber.h"
+#include "datasetDescriber/DatasetDescriber.h"
 
 #include "computationHandlers/ThreadPoolTBB.h"
 
@@ -138,7 +138,7 @@ namespace gdr {
          * @param datasetDescriber contains information about paths to RGB and D images, timestamps and camera intrinsics
          * @param cameraDefault camera intrinsics used by default for all cameras
          */
-        RelativePosesComputationHandler(const DatasetCameraDescriber &datasetDescriber,
+        RelativePosesComputationHandler(const DatasetDescriber &datasetDescriber,
                                         const ParamsRANSAC &paramsRansac = ParamsRANSAC());
 
         /** Compute SE3 relative poses between all poses with LoRANSAC keypoint based procedure

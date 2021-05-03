@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#ifndef GDR_DATASETCAMERADESCRIBER_H
-#define GDR_DATASETCAMERADESCRIBER_H
+#ifndef GDR_DATASETDESCRIBER_H
+#define GDR_DATASETDESCRIBER_H
 
 #include <map>
 #include <string>
@@ -14,7 +14,7 @@
 #include "cameraModel/CameraRGBD.h"
 
 namespace gdr {
-    class DatasetCameraDescriber {
+    class DatasetDescriber {
 
         DatasetStructure datasetStructure;
 
@@ -27,8 +27,8 @@ namespace gdr {
 
         const DatasetStructure &getDatasetStructure() const;
 
-        DatasetCameraDescriber(const DatasetStructure &datasetStructure,
-                               const CameraRGBD &defaultCameraRgbd);
+        DatasetDescriber(const DatasetStructure &datasetStructure,
+                         const CameraRGBD &defaultCameraRgbd);
 
         void addCameraRgb(const std::string &filenameRgb, const CameraRGBD &camera);
 

@@ -3,27 +3,27 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "datasetDescriber/DatasetCameraDescriber.h"
+#include "datasetDescriber/DatasetDescriber.h"
 
 namespace gdr {
 
-    DatasetCameraDescriber::DatasetCameraDescriber(const DatasetStructure &datasetStructureToSet,
-                                                   const CameraRGBD &defaultCameraRgbd) :
+    DatasetDescriber::DatasetDescriber(const DatasetStructure &datasetStructureToSet,
+                                       const CameraRGBD &defaultCameraRgbd) :
             defaultCamera(defaultCameraRgbd),
             datasetStructure(datasetStructureToSet) {}
 
-    void DatasetCameraDescriber::addCameraRgb(const std::string &filenameRgb,
-                                              const CameraRGBD &camera) {
+    void DatasetDescriber::addCameraRgb(const std::string &filenameRgb,
+                                        const CameraRGBD &camera) {
 
         cameraModelByImageRGBFilename[filenameRgb] = camera;
     }
 
-    void DatasetCameraDescriber::addCameraDepth(const std::string &filenameDepth, const CameraRGBD &camera) {
+    void DatasetDescriber::addCameraDepth(const std::string &filenameDepth, const CameraRGBD &camera) {
 
         cameraModelByImageDFilename[filenameDepth] = camera;
     }
 
-    const CameraRGBD &DatasetCameraDescriber::findCameraRgb(const std::string &filenameRgb, bool &found) const {
+    const CameraRGBD &DatasetDescriber::findCameraRgb(const std::string &filenameRgb, bool &found) const {
 
         const auto &camerasMap = cameraModelByImageRGBFilename;
         auto foundCamera = camerasMap.find(filenameRgb);
@@ -35,7 +35,7 @@ namespace gdr {
         return foundCamera->second;
     }
 
-    const CameraRGBD &DatasetCameraDescriber::findCameraDepth(const std::string &filenameDepth, bool &found) const {
+    const CameraRGBD &DatasetDescriber::findCameraDepth(const std::string &filenameDepth, bool &found) const {
 
         const auto &camerasMap = cameraModelByImageDFilename;
         auto foundCamera = camerasMap.find(filenameDepth);
@@ -47,11 +47,11 @@ namespace gdr {
         return foundCamera->second;
     }
 
-    const CameraRGBD &DatasetCameraDescriber::getDefaultCamera() const {
+    const CameraRGBD &DatasetDescriber::getDefaultCamera() const {
         return defaultCamera;
     }
 
-    const DatasetStructure &DatasetCameraDescriber::getDatasetStructure() const {
+    const DatasetStructure &DatasetDescriber::getDatasetStructure() const {
         return datasetStructure;
     }
 
