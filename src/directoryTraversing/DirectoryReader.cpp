@@ -26,4 +26,11 @@ namespace gdr {
         return images;
     }
 
+    std::string DirectoryReader::appendPathSuffix(const std::string &pathString, const std::string &suffixString) {
+        fs::path path(pathString);
+
+        path.append(suffixString);
+        return path.string();
+    }
+
 }

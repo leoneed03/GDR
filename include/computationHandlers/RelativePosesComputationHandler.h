@@ -13,9 +13,11 @@
 
 #include "relativePoseEstimators/InlierCounter.h"
 
-#include "datasetDescriber/DatasetDescriber.h"
+#include "datasetDescriber/DatasetCameraDescriber.h"
 
 #include "computationHandlers/ThreadPoolTBB.h"
+
+#include "datasetDescriber/DatasetStructure.h"
 
 namespace gdr {
 
@@ -116,9 +118,8 @@ namespace gdr {
          * @param pathToImageDirectoryD path to directory with N depth images
          * @param cameraDefault camera intrinsics used by default for all cameras
          */
-        RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
-                                        const std::string &pathToImageDirectoryD,
-                                        const DatasetDescriber &datasetDescriber,
+        RelativePosesComputationHandler(const DatasetStructure &datasetStructure,
+                                        const DatasetCameraDescriber &datasetDescriber,
                                         const ParamsRANSAC &paramsRansac = ParamsRANSAC());
 
         /** Compute SE3 relative poses between all poses with LoRANSAC keypoint based procedure

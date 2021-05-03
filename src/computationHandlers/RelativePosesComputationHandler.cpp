@@ -24,94 +24,17 @@ namespace gdr {
 
     namespace fs = boost::filesystem;
 
-    RelativePosesComputationHandler::RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
-                                                                     const std::string &pathToImageDirectoryD,
-                                                                     const DatasetDescriber &datasetDescriber,
+    RelativePosesComputationHandler::RelativePosesComputationHandler(const DatasetStructure &datasetStructure,
+                                                                     const DatasetCameraDescriber &datasetDescriber,
                                                                      const ParamsRANSAC &paramsRansacToSet) :
             paramsRansac(paramsRansacToSet),
             cameraDefault(datasetDescriber.getDefaultCamera()) {
 
-        auto rgbImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(pathToImageDirectoryRGB);
-        auto depthImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(pathToImageDirectoryD);
+        const auto &rgbImagesAll = datasetStructure.pathsImagesRgb;
+        const auto &depthImagesAll = datasetStructure.pathsImagesDepth;
+        const auto &timeStampsRgbDepth = datasetStructure.timestampsRgbDepth;
 
-        assert(!rgbImagesAll.empty());
-        assert(!depthImagesAll.empty());
-
-        std::vector<std::pair<double, double>> timeStampsRgbDepth;
-
-        const auto &rgbToDassociationFile = datasetDescriber.getAssociationRgbToDepthFile();
-
-        if (rgbToDassociationFile.empty()) {
-            assert(rgbImagesAll.size() == depthImagesAll.size()
-                   && "without assoc.txt file number of RGB and D frames should be equal");
-
-            for (int timeStep = 0; timeStep < rgbImagesAll.size(); ++timeStep) {
-                timeStampsRgbDepth.emplace_back(
-                        std::make_pair(static_cast<double>(timeStep), static_cast<double>(timeStep)));
-            }
-
-        } else {
-
-            AssociatedImages associatedImages = ReaderTUM::readAssocShortFilenameRgbToD(rgbToDassociationFile);
-
-            const auto &rgbSet = associatedImages.getTimeAndPairedDepthByRgb();
-            const auto &depthSet = associatedImages.getTimeAndPairedRgbByDepth();
-
-            std::cout << "sets are rgb, d: " << rgbSet.size() << ' ' << depthSet.size() << std::endl;
-            assert(!rgbSet.empty());
-            assert(depthSet.size() == depthSet.size());
-
-            auto iteratorByRgb = rgbSet.begin();
-            auto iteratorByDepth = depthSet.begin();
-
-            while (iteratorByRgb != rgbSet.end()
-                   && iteratorByDepth != depthSet.end()) {
-                const std::string &rgbShortName = iteratorByRgb->first;
-                const std::string &depthShortName = iteratorByDepth->first;
-
-                assert(rgbShortName == iteratorByDepth->second.second);
-                assert(depthShortName == iteratorByRgb->second.second);
-
-                double timeRgb = iteratorByRgb->second.first;
-                double timeD = iteratorByDepth->second.first;
-                timeStampsRgbDepth.emplace_back(std::make_pair(timeRgb, timeD));
-
-                ++iteratorByDepth;
-                ++iteratorByRgb;
-            }
-
-            std::vector<std::string> rgbImagesAssociated;
-            std::vector<std::string> depthImagesAssociated;
-
-            for (const auto &rgbFrame: rgbImagesAll) {
-                fs::path rgbPath(rgbFrame);
-                std::string nameToFind = rgbPath.filename().string();
-
-                if (rgbSet.find(nameToFind) != rgbSet.end()) {
-                    rgbImagesAssociated.emplace_back(rgbPath.string());
-                }
-            }
-
-            for (const auto &depthFrame: depthImagesAll) {
-                fs::path depthPath(depthFrame);
-
-                if (depthSet.find(depthPath.filename().string()) != depthSet.end()) {
-                    depthImagesAssociated.emplace_back(depthPath.string());
-                }
-            }
-
-            std::cout << "sizes timestamps, rgb, depth "
-                      << timeStampsRgbDepth.size() << ' '
-                      << rgbImagesAssociated.size() << ' '
-                      << depthImagesAssociated.size() << std::endl;
-            assert(timeStampsRgbDepth.size() == rgbImagesAssociated.size());
-            assert(rgbImagesAssociated.size() == depthImagesAssociated.size());
-            assert(!rgbImagesAssociated.empty());
-
-            rgbImagesAll = rgbImagesAssociated;
-            depthImagesAll = depthImagesAssociated;
-        }
-
+        assert(rgbImagesAll.size() == depthImagesAll.size());
         assert(std::is_sorted(rgbImagesAll.begin(), rgbImagesAll.end()));
         assert(std::is_sorted(depthImagesAll.begin(), depthImagesAll.end()));
 
@@ -149,9 +72,6 @@ namespace gdr {
                 EstimatorRelativePoseRobustCreator::EstimatorMinimal::UMEYAMA,
                 EstimatorRelativePoseRobustCreator::EstimatorScalable::UMEYAMA);
         relativePoseRefiner = RefinerRelativePoseCreator::getRefiner(RefinerRelativePoseCreator::RefinerType::ICPCUDA);
-
-        //TODO: use multiple threads safely, not one
-//        threadPool = std::make_unique<ThreadPool>(4);
     }
 
     const CorrespondenceGraph &RelativePosesComputationHandler::getCorrespondenceGraph() const {

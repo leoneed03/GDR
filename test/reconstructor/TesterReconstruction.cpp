@@ -3,19 +3,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
+#include "directoryTraversing/DirectoryReader.h"
 #include "TesterReconstruction.h"
+
+#include "readerDataset/readerTUM/ReaderTum.h"
 #include "boost/filesystem.hpp"
 
 namespace test {
 
     namespace fs = boost::filesystem;
-
-    std::string appendPathSuffix(const std::string &pathString, const std::string &suffixString) {
-        fs::path path(pathString);
-
-        path.append(suffixString);
-        return path.string();
-    }
 
     ErrorsOfTrajectoryEstimation TesterReconstruction::testReconstruction(
             const std::string &pathRelativeToData,
@@ -40,17 +36,11 @@ namespace test {
         const fs::path datasetPath(pathRelativeToData);
         std::string shortDatasetName = datasetPath.filename().string();
 
+        gdr::DatasetStructure datasetStructure = gdr::ReaderTUM::getDatasetStructure(datasetPath.string(),
+                                                                                     assocFile);
 
-        std::string pathRGB = appendPathSuffix(pathRelativeToData, "rgb");
-
-        std::string pathD = appendPathSuffix(pathRelativeToData, "depth");
-
-        std::string pathAssoc = (!assocFile.empty()) ? (appendPathSuffix(pathRelativeToData, assocFile))
-                                                     : (assocFile);
-
-        gdr::RelativePosesComputationHandler cgHandler(pathRGB,
-                                                       pathD,
-                                                       gdr::DatasetDescriber(cameraDefault, pathAssoc),
+        gdr::RelativePosesComputationHandler cgHandler(datasetStructure,
+                                                       gdr::DatasetCameraDescriber(cameraDefault),
                                                        paramsRansac);
 
 
@@ -98,7 +88,7 @@ namespace test {
         std::vector<gdr::SE3> irlsPoses = biggestComponent->getPosesSE3();
 
         {
-            std::string outputNameIRLS = appendPathSuffix(fullOutPath, outputShortFileNames.posesIRLS);
+            std::string outputNameIRLS = gdr::DirectoryReader::appendPathSuffix(fullOutPath, outputShortFileNames.posesIRLS);
 
             std::cout << "IRLS poses written to: " << outputNameIRLS << std::endl;
             std::ofstream posesIRLS(outputNameIRLS);
@@ -113,7 +103,7 @@ namespace test {
 
         {
             std::string outputNameBA =
-                    appendPathSuffix(fullOutPath, outputShortFileNames.posesBA);
+                    gdr::DirectoryReader::appendPathSuffix(fullOutPath, outputShortFileNames.posesBA);
             std::ofstream posesBA(outputNameBA);
 
 
@@ -121,7 +111,7 @@ namespace test {
             posesBA << biggestComponent->getPosesForEvaluation();
         }
 
-        std::string absolutePosesGroundTruth = appendPathSuffix(pathRelativeToData, "groundtruth.txt");
+        std::string absolutePosesGroundTruth = gdr::DirectoryReader::appendPathSuffix(pathRelativeToData, "groundtruth.txt");
         std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
                 absolutePosesGroundTruth);
 
@@ -172,7 +162,7 @@ namespace test {
 
         {
             std::string outputNameGroundTruth =
-                    appendPathSuffix(fullOutPath, outputShortFileNames.posesGroundTruth);
+                    gdr::DirectoryReader::appendPathSuffix(fullOutPath, outputShortFileNames.posesGroundTruth);
             std::ofstream groundTruthPoses(outputNameGroundTruth);
             groundTruthPoses << gdr::PosesForEvaluation(
                     posesInfoFull,

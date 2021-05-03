@@ -149,7 +149,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointMatches.h
     ${PROJECT_SOURCE_DIR}/include/cameraModel/MeasurementErrorDeviationEstimators.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/PoseGraph.h
-    ${PROJECT_SOURCE_DIR}/include/datasetDescriber/DatasetDescriber.h
+        ${PROJECT_SOURCE_DIR}/include/datasetDescriber/DatasetCameraDescriber.h
     ${PROJECT_SOURCE_DIR}/include/computationHandlers/ModelCreationHandler.h
     ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/Evaluator.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.h
@@ -213,13 +213,13 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointMatches.cpp
     ${PROJECT_SOURCE_DIR}/src/cameraModel/MeasurementErrorDeviationEstimators.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PoseGraph.cpp
-    ${PROJECT_SOURCE_DIR}/src/datasetDescriber/DatasetDescriber.cpp
+        ${PROJECT_SOURCE_DIR}/src/datasetDescriber/DatasetCameraDescriber.cpp
     ${PROJECT_SOURCE_DIR}/src/computationHandlers/ModelCreationHandler.cpp
     ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/Evaluator.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PosesForEvaluation.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.cpp
     ${PROJECT_SOURCE_DIR}/test/reconstructor/TesterReconstruction.cpp
-        src/readerDataset/readerTUM/TrajectoryFilesComparer.cpp include/readerDataset/readerTUM/TrajectoryFilesComparer.h src/parametrization/Reconstructable.cpp include/parametrization/Reconstructable.h src/parametrization/Point2d.cpp include/parametrization/Point2d.h src/parametrization/PointXYZRGBfloatUchar.cpp include/parametrization/PointXYZRGBfloatUchar.h src/parametrization/AssociatedImages.cpp include/parametrization/AssociatedImages.h)
+        src/readerDataset/readerTUM/TrajectoryFilesComparer.cpp include/readerDataset/readerTUM/TrajectoryFilesComparer.h src/parametrization/Reconstructable.cpp include/parametrization/Reconstructable.h src/parametrization/Point2d.cpp include/parametrization/Point2d.h src/parametrization/PointXYZRGBfloatUchar.cpp include/parametrization/PointXYZRGBfloatUchar.h src/parametrization/AssociatedImages.cpp include/parametrization/AssociatedImages.h include/datasetDescriber/DatasetStructure.h)
 
 add_subdirectory(lib)
 

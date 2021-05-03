@@ -14,6 +14,9 @@ namespace gdr {
     class DirectoryReader {
     public:
         static std::vector<std::string> readPathsToImagesFromDirectorySorted(const std::string &pathToDirectory);
+
+        static std::string appendPathSuffix(const std::string &pathString,
+                                            const std::string &suffixString);
     };
 }
 
