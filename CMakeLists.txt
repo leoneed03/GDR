@@ -219,7 +219,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PosesForEvaluation.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.cpp
     ${PROJECT_SOURCE_DIR}/test/reconstructor/TesterReconstruction.cpp
-        src/readerDataset/readerTUM/TrajectoryFilesComparer.cpp include/readerDataset/readerTUM/TrajectoryFilesComparer.h src/parametrization/Reconstructable.cpp include/parametrization/Reconstructable.h src/parametrization/Point2d.cpp include/parametrization/Point2d.h src/parametrization/PointXYZRGBfloatUchar.cpp include/parametrization/PointXYZRGBfloatUchar.h src/parametrization/AssociatedImages.cpp include/parametrization/AssociatedImages.h include/datasetDescriber/DatasetStructure.h)
+        src/readerDataset/readerTUM/TrajectoryFilesComparer.cpp include/readerDataset/readerTUM/TrajectoryFilesComparer.h src/parametrization/Reconstructable.cpp include/parametrization/Reconstructable.h src/parametrization/Point2d.cpp include/parametrization/Point2d.h src/parametrization/PointXYZRGBfloatUchar.cpp include/parametrization/PointXYZRGBfloatUchar.h src/parametrization/AssociatedImages.cpp include/parametrization/AssociatedImages.h include/datasetDescriber/DatasetStructure.h include/keyPointDetectionAndMatching/ImageRetriever.cpp include/keyPointDetectionAndMatching/ImageRetriever.h)
 
 add_subdirectory(lib)
 

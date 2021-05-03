@@ -19,6 +19,7 @@
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
 #include "FeatureDetectorMatcher.h"
+#include "keyPointDetectionAndMatching/ImageRetriever.h"
 
 namespace gdr {
 
@@ -53,6 +54,7 @@ namespace gdr {
 
         std::vector<std::vector<Match>>
         findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
+                            ImageRetriever &imageRetriever,
                             const std::vector<int> &matchDevicesNumbers) override;
 
     private:
@@ -60,6 +62,7 @@ namespace gdr {
 
         std::vector<tbb::concurrent_vector<Match>>
         findCorrespondencesConcurrent(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
+                                      ImageRetriever &imageRetriever,
                                       const std::vector<int> &matchDevicesNumbers);
 
         static std::vector<std::pair<int, int>>
@@ -87,7 +90,8 @@ namespace gdr {
                                                const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                std::mutex &counterMutex,
                                                std::vector<tbb::concurrent_vector<Match>> &matches,
-                                               SiftMatchGPU *matcher);
+                                               SiftMatchGPU *matcher,
+                                               ImageRetriever &imageRetriever);
     };
 }
 

@@ -12,6 +12,8 @@
 #include "keyPointDetectionAndMatching/Match.h"
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
+#include "keyPointDetectionAndMatching/ImageRetriever.h"
+
 namespace gdr {
 
     /** KeyPoint SIFT detector and matcher */
@@ -30,11 +32,13 @@ namespace gdr {
         /** Find matches between all image keypoints (pairwise)
          * @param keyPointsDescriptorsByImageIndex contains list of image descriptors
          *      with information about detected keypoints
+         * @param imageRetriever contains information about image pairs to matc
          * @param matchDevicesNumbers device indices used for multiple GPU instances, should be different
          * @returns vector where i-th element contains information about matched keypoints of the i-th image
          */
         virtual std::vector<std::vector<Match>>
         findCorrespondences(const std::vector<KeyPointsDescriptors> &keyPointsDescriptorsByImageIndex,
+                            ImageRetriever &imageRetriever,
                             const std::vector<int> &matchDevicesNumbers) = 0;
 
         virtual ~FeatureDetectorMatcher() = default;

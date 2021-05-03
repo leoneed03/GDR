@@ -139,9 +139,15 @@ namespace gdr {
         }
 
         assert(keyPointsDescriptorsToBeMatched.size() == vertices.size());
+        assert(correspondenceGraph->getNumberOfPoses() > 0);
+
+        ImageRetriever imageRetriever(correspondenceGraph->getNumberOfPoses());
+        imageRetriever.markAllPairsToBeCompared();
+
         //Sift match
         correspondenceGraph->setPointMatchesRGB(siftModule->findCorrespondences(
                 keyPointsDescriptorsToBeMatched,
+                imageRetriever,
                 gpuDeviceIndices));
 
         correspondenceGraph->decreaseDensity();

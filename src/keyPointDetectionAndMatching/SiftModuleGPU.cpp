@@ -145,8 +145,13 @@ namespace gdr {
 
     std::vector<std::vector<Match>>
     SiftModuleGPU::findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
+                                       ImageRetriever &imageRetriever,
                                        const std::vector<int> &matchDevicesNumbers) {
-        auto matches = findCorrespondencesConcurrent(verticesToBeMatched, matchDevicesNumbers);
+
+
+        auto matches = findCorrespondencesConcurrent(verticesToBeMatched,
+                                                     imageRetriever,
+                                                     matchDevicesNumbers);
         std::vector<std::vector<Match>> resultMatches(matches.size());
 
         for (int i = 0; i < matches.size(); ++i) {
@@ -159,6 +164,7 @@ namespace gdr {
 
     std::vector<tbb::concurrent_vector<Match>>
     SiftModuleGPU::findCorrespondencesConcurrent(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
+                                                 ImageRetriever &imageRetriever,
                                                  const std::vector<int> &matchDevicesNumbers) {
 
         std::vector<std::unique_ptr<SiftMatchGPU>> matchers;
@@ -191,7 +197,8 @@ namespace gdr {
                                      std::ref(verticesToBeMatched),
                                      std::ref(counterMutex),
                                      std::ref(matches),
-                                     matchers[i].get());
+                                     matchers[i].get(),
+                                     std::ref(imageRetriever));
         }
 
         for (auto &thread: threads) {
@@ -210,7 +217,8 @@ namespace gdr {
                                                    const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                    std::mutex &counterMutex,
                                                    std::vector<tbb::concurrent_vector<Match>> &matches,
-                                                   SiftMatchGPU *matcher) {
+                                                   SiftMatchGPU *matcher,
+                                                   ImageRetriever &imageRetriever) {
 
         std::vector<int[2]> matchesToPut;
 
@@ -218,26 +226,43 @@ namespace gdr {
             int localIndexFrom = -1;
             int localIndexTo = -1;
 
-            counterMutex.lock();
+            {
+                std::unique_lock<std::mutex> counterLock(counterMutex);
 
-            assert(indexFrom < indexTo);
+                std::pair<int, int> indexFromLessAndToBiggerFromImageRetriever;
+                bool existsPairToMatch = imageRetriever.tryGetSimilarImagesPair(indexFromLessAndToBiggerFromImageRetriever);
+                std::cout << " matching pair is found: [" << existsPairToMatch << "]: "
+                << indexFromLessAndToBiggerFromImageRetriever.first << " & " << indexFromLessAndToBiggerFromImageRetriever.second << std::endl;
 
-            if (indexTo >= matches.size()) {
-                ++indexFrom;
-                indexTo = indexFrom + 1;
+                const int &indexFromLessIR = indexFromLessAndToBiggerFromImageRetriever.first;
+                const int &indexToBiggerIR = indexFromLessAndToBiggerFromImageRetriever.second;
+
+                if (existsPairToMatch) {
+                    assert(indexFromLessIR < indexToBiggerIR);
+                    assert(indexFromLessIR >= 0 && indexToBiggerIR < verticesToBeMatched.size());
+                }
+                assert(indexFrom < indexTo);
+
+                if (indexTo >= matches.size()) {
+                    ++indexFrom;
+                    indexTo = indexFrom + 1;
+                }
+                if (indexFrom >= matches.size() || indexTo >= matches.size()) {
+                    assert(!existsPairToMatch);
+                    return;
+                }
+                assert(existsPairToMatch);
+                assert(indexFrom < indexTo);
+                assert(indexFromLessIR < indexToBiggerIR);
+
+                assert(indexFromLessIR == indexFrom);
+                assert(indexToBiggerIR == indexTo);
+
+                localIndexFrom = indexFrom;
+                localIndexTo = indexTo;
+
+                ++indexTo;
             }
-            if (indexFrom >= matches.size() || indexTo >= matches.size()) {
-                counterMutex.unlock();
-                return;
-            }
-            assert(indexFrom < indexTo);
-
-
-            localIndexFrom = indexFrom;
-            localIndexTo = indexTo;
-
-            ++indexTo;
-            counterMutex.unlock();
 
             int sizeFrom = verticesToBeMatched[localIndexFrom].getKeyPoints().size();
             int sizeTo = verticesToBeMatched[localIndexTo].getKeyPoints().size();
