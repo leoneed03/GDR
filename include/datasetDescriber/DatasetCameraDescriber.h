@@ -9,10 +9,14 @@
 #include <map>
 #include <string>
 
+#include "datasetDescriber/DatasetStructure.h"
+
 #include "cameraModel/CameraRGBD.h"
 
 namespace gdr {
     class DatasetCameraDescriber {
+
+        DatasetStructure datasetStructure;
 
         std::map<std::string, CameraRGBD> cameraModelByImageRGBFilename;
         std::map<std::string, CameraRGBD> cameraModelByImageDFilename;
@@ -21,7 +25,10 @@ namespace gdr {
 
     public:
 
-        DatasetCameraDescriber(const CameraRGBD &defaultCameraRgbd);
+        const DatasetStructure &getDatasetStructure() const;
+
+        DatasetCameraDescriber(const DatasetStructure &datasetStructure,
+                               const CameraRGBD &defaultCameraRgbd);
 
         void addCameraRgb(const std::string &filenameRgb, const CameraRGBD &camera);
 

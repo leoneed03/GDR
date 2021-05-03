@@ -19,16 +19,18 @@
 #include "relativePoseRefinement/RefinerRelativePoseCreator.h"
 
 #include "computationHandlers/RelativePosesComputationHandler.h"
+#include "computationHandlers/TimerClockNow.h"
 
 namespace gdr {
 
     namespace fs = boost::filesystem;
 
-    RelativePosesComputationHandler::RelativePosesComputationHandler(const DatasetStructure &datasetStructure,
-                                                                     const DatasetCameraDescriber &datasetDescriber,
+    RelativePosesComputationHandler::RelativePosesComputationHandler(const DatasetCameraDescriber &datasetDescriber,
                                                                      const ParamsRANSAC &paramsRansacToSet) :
             paramsRansac(paramsRansacToSet),
             cameraDefault(datasetDescriber.getDefaultCamera()) {
+
+        const auto &datasetStructure = datasetDescriber.getDatasetStructure();
 
         const auto &rgbImagesAll = datasetStructure.pathsImagesRgb;
         const auto &depthImagesAll = datasetStructure.pathsImagesDepth;
@@ -88,23 +90,25 @@ namespace gdr {
         assert(!gpuDeviceIndices.empty());
         deviceCudaICP = gpuDeviceIndices[0];
 
-        timeStartDescriptors = std::chrono::high_resolution_clock::now();
+        timeStartDescriptors = timerGetClockTimeNow();
         //sift detect
         std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
                 keysDescriptorsAll = siftModule->getKeypoints2DDescriptorsAllImages(
                 correspondenceGraph->getPathsRGB(),
                 gpuDeviceIndices);
-        timeEndDescriptors = std::chrono::high_resolution_clock::now();
+        timeEndDescriptors = timerGetClockTimeNow();
 
         const auto &imagesRgb = correspondenceGraph->getPathsRGB();
         const auto &imagesD = correspondenceGraph->getPathsD();
 
         for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
 
+            assert(currentImage >= 0 && currentImage < camerasDepthByPoseIndex.size());
+
             keyPointsDepthDescriptor keyPointsDepthDescriptor = keyPointsDepthDescriptor::filterKeypointsByKnownDepth(
                     keysDescriptorsAll[currentImage],
                     imagesD[currentImage],
-                    cameraDefault.getDepthPixelDivider());
+                    camerasDepthByPoseIndex[currentImage].getDepthPixelDivider());
 
             double timeRgb = timestampsRgbDepthAssociated[currentImage].first;
             double timeD = timestampsRgbDepthAssociated[currentImage].second;
@@ -142,20 +146,20 @@ namespace gdr {
         ImageRetriever imageRetriever(correspondenceGraph->getNumberOfPoses());
         imageRetriever.markAllPairsToBeCompared();
 
-        timeStartMatching = std::chrono::high_resolution_clock::now();
+        timeStartMatching = timerGetClockTimeNow();
         //Sift match
         correspondenceGraph->setPointMatchesRGB(
                 siftModule->findCorrespondences(keyPointsDescriptorsToBeMatched,
                                                 imageRetriever,
                                                 gpuDeviceIndices));
-        timeEndMatching = std::chrono::high_resolution_clock::now();
+        timeEndMatching = timerGetClockTimeNow();
 
         correspondenceGraph->decreaseDensity();
         KeyPointMatches allInlierKeyPointMatches;
 
-        timeStartRelativePoses = std::chrono::high_resolution_clock::now();
+        timeStartRelativePoses = timerGetClockTimeNow();
         auto relativePoses = findTransformationRtMatrices(allInlierKeyPointMatches);
-        timeEndRelativePoses = std::chrono::high_resolution_clock::now();
+        timeEndRelativePoses = timerGetClockTimeNow();
 
         assert(!allInlierKeyPointMatches.getKeyPointMatchesVector().empty());
         correspondenceGraph->setInlierPointMatches(allInlierKeyPointMatches);
@@ -608,6 +612,5 @@ namespace gdr {
         std::cout << "          SIFT match: " << timeMatch.count() << std::endl;
         std::cout << "          relative poses umayama + ICP: " << timeRelativePoseICP.count() << std::endl;
         std::cout << std::endl;
-
     }
 }

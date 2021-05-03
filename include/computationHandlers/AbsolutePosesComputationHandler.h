@@ -6,6 +6,7 @@
 #ifndef GDR_ABSOLUTEPOSESCOMPUTATIONHANDLER_H
 #define GDR_ABSOLUTEPOSESCOMPUTATIONHANDLER_H
 
+#include <chrono>
 #include <memory>
 
 #include "absolutePoseEstimation/rotationAveraging/RotationMeasurement.h"
@@ -16,6 +17,20 @@ namespace gdr {
 
     class AbsolutePosesComputationHandler {
 
+
+    public:
+        std::chrono::high_resolution_clock::time_point timeStartRotationAveraging;
+        std::chrono::high_resolution_clock::time_point timeStartRobustRotationOptimization;
+        std::chrono::high_resolution_clock::time_point timeStartTranslationAveraging;
+        std::chrono::high_resolution_clock::time_point timeStartBundleAdjustment;
+
+
+        std::chrono::high_resolution_clock::time_point timeEndRotationAveraging;
+        std::chrono::high_resolution_clock::time_point timeEndRobustRotationOptimization;
+        std::chrono::high_resolution_clock::time_point timeEndTranslationAveraging;
+        std::chrono::high_resolution_clock::time_point timeEndBundleAdjustment;
+
+    private:
         bool printProgressToConsole = false;
         bool saveDebugImages = false;
 
@@ -71,6 +86,8 @@ namespace gdr {
         PosesForEvaluation getPosesForEvaluation(const SE3 &fixedPose) const;
 
         std::vector<RotationMeasurement> getRelativeRotationsVector() const;
+
+        void printTimeBenchmarkInfo() const;
     };
 }
 

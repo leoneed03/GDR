@@ -45,7 +45,7 @@ namespace gdr {
         std::unique_ptr<EstimatorRelativePoseRobust> relativePoseEstimatorRobust;
         std::unique_ptr<RefinerRelativePose> relativePoseRefiner;
         // unused right now
-        std::unique_ptr<ThreadPoolTBB> threadPool;
+        ThreadPoolTBB threadPool;
         CameraRGBD cameraDefault;
 
         std::vector<CameraRGBD> camerasRgbByPoseIndex;
@@ -64,6 +64,7 @@ namespace gdr {
         /**
          * @param destinationPoints, transformedPoints aligned pointclouds
          * @param cameraIntrinsics cameraParameters of not destination pose
+         *
          * @returns vector i-th element represents OX and OY reprojection errors for i-th point
          */
         static std::vector<std::pair<double, double>> getReprojectionErrorsXY(const Eigen::Matrix4Xd &destinationPoints,
@@ -74,6 +75,7 @@ namespace gdr {
          * @param vertexFrom is a vertex number relative transformation from is computed
          * @param vertexInList is a vertex number in vertexFrom's adjacency list (transformation "destination" vertex)
          * @param transformation is relative SE3 transformation between poses
+         *
          * @returns information about matched keypoints
          */
         KeyPointMatches
@@ -89,6 +91,8 @@ namespace gdr {
          * @param[in, out] initEstimationRelPos represents initial robust relative pose estimation,
          *      also stores refined estimation
          * @param[out] refinementSuccess true if refinement was successful
+         *
+         * @returns 0 if refinement was successful
          */
         int refineRelativePose(const VertexPose &vertexToBeTransformed,
                                const VertexPose &vertexDestination,
@@ -104,6 +108,8 @@ namespace gdr {
          *      {observing pose vertexIndex, keypoint index in pose's keypoint list, information about keypoint itself}
          * @param success[out] is true if estimation was successful
          * @param showMatchesOnImages[in] is true if keypoint matches should be visualized
+         *
+         * @returns SE3 optimal transformation
          */
         SE3
         getTransformationRtMatrixTwoImages(int vertexFromDestOrigin,
@@ -116,6 +122,7 @@ namespace gdr {
          * @param[out] list of all inlier keypoint matches
          *      each vector is size 2 and i={0,1}-th element contains information about point from image:
          *      {observing pose vertexIndex, keypoint index in pose's keypoint list, information about keypoint itself}
+         *
          * @returns N vectors where i-th vector contains all successfully estimated transformations from i-th pose
          */
         std::vector<std::vector<RelativeSE3>> findTransformationRtMatrices(
@@ -128,12 +135,10 @@ namespace gdr {
         void setPrintInformationCout(bool printProgressToCout);
 
         /**
-         * @param pathToImageDirectoryRGB path to directory with N colour images
-         * @param pathToImageDirectoryD path to directory with N depth images
+         * @param datasetDescriber contains information about paths to RGB and D images, timestamps and camera intrinsics
          * @param cameraDefault camera intrinsics used by default for all cameras
          */
-        RelativePosesComputationHandler(const DatasetStructure &datasetStructure,
-                                        const DatasetCameraDescriber &datasetDescriber,
+        RelativePosesComputationHandler(const DatasetCameraDescriber &datasetDescriber,
                                         const ParamsRANSAC &paramsRansac = ParamsRANSAC());
 
         /** Compute SE3 relative poses between all poses with LoRANSAC keypoint based procedure

@@ -148,7 +148,6 @@ namespace gdr {
                                        ImageRetriever &imageRetriever,
                                        const std::vector<int> &matchDevicesNumbers) {
 
-
         auto matches = findCorrespondencesConcurrent(verticesToBeMatched,
                                                      imageRetriever,
                                                      matchDevicesNumbers);
@@ -159,6 +158,8 @@ namespace gdr {
                 resultMatches[i].emplace_back(match);
             }
         }
+
+        std::cout << "finish matching" << std::endl;
         return resultMatches;
     }
 

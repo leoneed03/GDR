@@ -281,7 +281,6 @@ namespace gdr {
         datasetDescriberTum.pathsImagesRgb = rgbImagesAll;
         datasetDescriberTum.pathsImagesDepth = depthImagesAll;
         datasetDescriberTum.timestampsRgbDepth = timeStampsRgbDepth;
-        datasetDescriberTum.pathAssocFileFull = rgbToDassociationFile;
 
         assert(timeStampsRgbDepth.size() == rgbImagesAll.size());
 

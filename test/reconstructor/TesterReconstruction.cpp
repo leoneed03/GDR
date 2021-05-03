@@ -42,9 +42,10 @@ namespace test {
         int numberOfPosesInDataset = 0;
 
         {
-            gdr::RelativePosesComputationHandler cgHandler(datasetStructure,
-                                                           gdr::DatasetCameraDescriber(cameraDefault),
-                                                           paramsRansac);
+            gdr::RelativePosesComputationHandler cgHandler(
+                    gdr::DatasetCameraDescriber(datasetStructure,
+                                                cameraDefault),
+                    paramsRansac);
 
 
             std::cout << "start computing relative poses" << std::endl;
@@ -104,6 +105,8 @@ namespace test {
 
 
         std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
+
+        biggestComponent->printTimeBenchmarkInfo();
 
         {
             std::string outputNameBA =

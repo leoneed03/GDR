@@ -7,8 +7,10 @@
 
 namespace gdr {
 
-    DatasetCameraDescriber::DatasetCameraDescriber(const CameraRGBD &defaultCameraRgbd) :
-            defaultCamera(defaultCameraRgbd){}
+    DatasetCameraDescriber::DatasetCameraDescriber(const DatasetStructure &datasetStructureToSet,
+                                                   const CameraRGBD &defaultCameraRgbd) :
+            defaultCamera(defaultCameraRgbd),
+            datasetStructure(datasetStructureToSet) {}
 
     void DatasetCameraDescriber::addCameraRgb(const std::string &filenameRgb,
                                               const CameraRGBD &camera) {
@@ -47,6 +49,10 @@ namespace gdr {
 
     const CameraRGBD &DatasetCameraDescriber::getDefaultCamera() const {
         return defaultCamera;
+    }
+
+    const DatasetStructure &DatasetCameraDescriber::getDatasetStructure() const {
+        return datasetStructure;
     }
 
 }

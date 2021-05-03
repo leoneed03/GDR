@@ -18,6 +18,7 @@
 #include "sparsePointCloud/ProjectableInfo.h"
 
 #include "computationHandlers/AbsolutePosesComputationHandler.h"
+#include "computationHandlers/TimerClockNow.h"
 
 namespace gdr {
 
@@ -111,6 +112,7 @@ namespace gdr {
 
     std::vector<SO3> AbsolutePosesComputationHandler::performRotationAveraging() {
 
+        timeStartRotationAveraging = timerGetClockTimeNow();
         std::vector<SO3> absoluteRotations = RotationAverager::shanonAveraging(
                 getRelativeRotationsVector(),
                 getPathRelativePoseFile(),
@@ -119,6 +121,8 @@ namespace gdr {
         for (int i = 0; i < getNumberOfPoses(); ++i) {
             connectedComponent->setRotation(i, SO3(absoluteRotations[i].getRotationSophus()));
         }
+
+        timeEndRotationAveraging = timerGetClockTimeNow();
 
         return absoluteRotations;
     }
@@ -150,6 +154,7 @@ namespace gdr {
             }
         }
 
+        timeStartRobustRotationOptimization = timerGetClockTimeNow();
         std::unique_ptr<RotationRobustOptimizer> rotationOptimizer =
                 RotationRobustOptimizerCreator::getRefiner(
                         RotationRobustOptimizerCreator::RobustParameterType::DEFAULT);
@@ -158,6 +163,7 @@ namespace gdr {
                 rotationOptimizer->getOptimizedOrientation(shonanOptimizedAbsolutePoses,
                                                            relativeRotationsAfterICP,
                                                            connectedComponent->getPoseIndexWithMaxConnectivity());
+        timeEndRobustRotationOptimization = timerGetClockTimeNow();
 
         assert(getNumberOfPoses() == optimizedPosesRobust.size());
 
@@ -188,6 +194,8 @@ namespace gdr {
             }
         }
 
+        timeStartTranslationAveraging = timerGetClockTimeNow();
+
         std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = TranslationAverager::recoverTranslations(
                 relativeTranslations,
                 absolutePoses,
@@ -204,6 +212,8 @@ namespace gdr {
                 optimizedAbsoluteTranslationsIRLS,
                 indexFixedToZero,
                 successIRLS).toVectorOfVectors();
+
+        timeEndTranslationAveraging = timerGetClockTimeNow();
 
         assert(optimizedAbsoluteTranslationsIRLS[indexFixedToZero].norm() < std::numeric_limits<double>::epsilon());
 
@@ -242,6 +252,8 @@ namespace gdr {
                                                                                maxNumberOfPointsToShow);
         }
 
+        timeStartBundleAdjustment = timerGetClockTimeNow();
+
         std::unique_ptr<BundleAdjuster> bundleAdjuster =
                 BundleAdjusterCreator::getBundleAdjuster(BundleAdjusterCreator::BundleAdjustmentType::USE_DEPTH_INFO);
 
@@ -254,6 +266,8 @@ namespace gdr {
         if (!isUsableBA) {
             std::cerr << "BA solution is not marked usable by nonlinear optimizer, consider using only IRLS solution" << std::endl;
         }
+
+        timeEndBundleAdjustment = timerGetClockTimeNow();
 
         assert(posesOptimized.size() == getNumberOfPoses());
 
@@ -416,5 +430,24 @@ namespace gdr {
 
     std::string AbsolutePosesComputationHandler::getPathRelativePoseFile() const {
         return pathRelativePosesFile;
+    }
+
+    void AbsolutePosesComputationHandler::printTimeBenchmarkInfo() const {
+        std::chrono::duration<double> timeRotationAveraging = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndRotationAveraging - timeStartRotationAveraging);
+        std::chrono::duration<double> timeRotationRobust = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndRobustRotationOptimization - timeStartRobustRotationOptimization);
+        std::chrono::duration<double> timeTranslationAveraging = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndTranslationAveraging - timeStartTranslationAveraging);
+        std::chrono::duration<double> timeBundleAdjustment = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndBundleAdjustment - timeStartBundleAdjustment);
+
+
+        std::cout << "    TIMER INFO:" << std::endl;
+        std::cout << "          Rotation Averaging: " << timeRotationAveraging.count() << std::endl;
+        std::cout << "          Robust Rotation Optimization: " << timeRotationRobust.count() << std::endl;
+        std::cout << "          Translation Averaging: " << timeTranslationAveraging.count() << std::endl;
+        std::cout << "          Bundle Adjustment: " << timeBundleAdjustment.count() << std::endl;
+        std::cout << std::endl;
     }
 }

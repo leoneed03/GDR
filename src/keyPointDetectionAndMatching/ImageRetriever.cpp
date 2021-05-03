@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-#include "ImageRetriever.h"
+#include "keyPointDetectionAndMatching/ImageRetriever.h"
 
 namespace gdr {
 

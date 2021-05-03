@@ -18,7 +18,6 @@ namespace gdr {
         explicit ThreadPoolTBB(int numOfThreads);
 
         ThreadPoolTBB() = default;
-
     };
 }
 
