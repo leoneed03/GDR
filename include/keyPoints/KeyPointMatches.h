@@ -15,6 +15,15 @@ namespace gdr {
 
     using keyPointImageAndLocalPointIndexAndKeyPointInfo = std::pair<std::pair<int, int>, KeyPointInfo>;
 
+    /** Stores information about matched keypoint pairs between images
+     *
+     * keyPointMatches contains N vectors for N matched keypoint pairs
+     *      each pair is stored as vector where each element represents one keypoint as pair
+     *          first pair element: {imageIndex, keypoint local index in image decriptor},
+     *          second pair element: {KeyPointInfo: information about keypoint's image coordinates,
+     *                                          depth in meters and scale, orietation}
+     *      first stored point is from transformed image and second -- from destination image
+     */
     using KeyPointMatches =
     std::vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
             keyPointImageAndLocalPointIndexAndKeyPointInfo>>;
