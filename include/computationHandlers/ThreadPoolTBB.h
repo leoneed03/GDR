@@ -17,6 +17,7 @@ namespace gdr {
     public:
         explicit ThreadPoolTBB(int numOfThreads);
 
+//        ThreadPoolTBB() : sheduler(1) {};
         ThreadPoolTBB() = default;
     };
 }

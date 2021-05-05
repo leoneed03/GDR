@@ -41,6 +41,7 @@ namespace test {
         std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph;
         int numberOfPosesInDataset = 0;
 
+        std::stringstream benchmarkInfoRelativePoses;
         {
             gdr::RelativePosesComputationHandler cgHandler(
                     gdr::DatasetDescriber(datasetStructure,
@@ -50,13 +51,15 @@ namespace test {
 
             std::cout << "start computing relative poses" << std::endl;
             cgHandler.computeRelativePoses(gpuDevices);
-            cgHandler.printTimeBenchmarkInfo();
+            benchmarkInfoRelativePoses = cgHandler.getTimeBenchmarkInfo();
 
             numberOfPosesInDataset = cgHandler.getNumberOfVertices();
             errorsOfTrajectoryEstimation.numberOfPosesInDataset = numberOfPosesInDataset;
 
             connectedComponentsPoseGraph = cgHandler.splitGraphToConnectedComponents();
         }
+
+        std::cout << benchmarkInfoRelativePoses.str();
 
         if (printToConsole) {
 
@@ -106,7 +109,7 @@ namespace test {
 
         std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
-        biggestComponent->printTimeBenchmarkInfo();
+        std::stringstream benchmarkTimeInfoAbsolutePoses = biggestComponent->printTimeBenchmarkInfo();
 
         {
             std::string outputNameBA =
@@ -274,6 +277,8 @@ namespace test {
             modelCreationHandler.saveAsPly("test.ply");
         }
 
+        std::cout << benchmarkInfoRelativePoses.str();
+        std::cout << benchmarkTimeInfoAbsolutePoses.str() << std::endl;
 
         return errorsOfTrajectoryEstimation;
     }

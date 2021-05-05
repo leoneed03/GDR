@@ -32,6 +32,7 @@ namespace gdr {
                                         const MatchableInfo &poseDestination,
                                         const KeyPointMatches &keyPointMatches,
                                         SE3 &initTransformationSE3,
+                                        double &durationSeconds,
                                         int deviceIndex) = 0;
 
         virtual ~RefinerRelativePose() = default;

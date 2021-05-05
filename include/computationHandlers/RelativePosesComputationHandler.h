@@ -30,10 +30,12 @@ namespace gdr {
         std::chrono::high_resolution_clock::time_point timeStartMatching;
         std::chrono::high_resolution_clock::time_point timeStartRelativePoses;
 
-
         std::chrono::high_resolution_clock::time_point timeEndDescriptors;
         std::chrono::high_resolution_clock::time_point timeEndMatching;
         std::chrono::high_resolution_clock::time_point timeEndRelativePoses;
+
+        mutable std::mutex timeMutex;
+        mutable volatile double timeCountSecondsTotalICP = 0.0;
 
     private:
         bool printInformationConsole = false;
@@ -44,7 +46,7 @@ namespace gdr {
         std::unique_ptr<FeatureDetectorMatcher> siftModule;
         std::unique_ptr<EstimatorRelativePoseRobust> relativePoseEstimatorRobust;
         std::unique_ptr<RefinerRelativePose> relativePoseRefiner;
-        // unused right now
+
         ThreadPoolTBB threadPool;
         CameraRGBD cameraDefault;
 
@@ -138,7 +140,7 @@ namespace gdr {
          * @param datasetDescriber contains information about paths to RGB and D images, timestamps and camera intrinsics
          * @param cameraDefault camera intrinsics used by default for all cameras
          */
-        RelativePosesComputationHandler(const DatasetDescriber &datasetDescriber,
+        explicit RelativePosesComputationHandler(const DatasetDescriber &datasetDescriber,
                                         const ParamsRANSAC &paramsRansac = ParamsRANSAC());
 
         /** Compute SE3 relative poses between all poses with LoRANSAC keypoint based procedure
@@ -180,7 +182,7 @@ namespace gdr {
 
         void setDeviceCudaICP(int deviceCudaIcpToSet);
 
-        void printTimeBenchmarkInfo() const;
+        std::stringstream getTimeBenchmarkInfo() const;
     };
 }
 

@@ -24,6 +24,7 @@ namespace gdr {
                                 const MatchableInfo &poseDestinationICPModel,
                                 const KeyPointMatches &keyPointMatches,
                                 SE3 &initTransformationSE3,
+                                double &durationSeconds,
                                 int deviceIndex) override;
     };
 }

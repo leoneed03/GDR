@@ -538,11 +538,20 @@ namespace gdr {
                                       vertexDestination.getPathDImage(),
                                       vertexDestination.getKeyPoints2D(),
                                       vertexDestination.getCamera());
+
+        double durationICP = 0.0;
         refinementSuccess = relativePoseRefiner->refineRelativePose(poseToBeTransformed,
                                                                     poseDestination,
                                                                     KeyPointMatches(),
                                                                     initEstimationRelPos,
+                                                                    durationICP,
                                                                     deviceCudaICP);
+
+        {
+            std::unique_lock<std::mutex> lockTime(timeMutex);
+            timeCountSecondsTotalICP += durationICP;
+        }
+
         assert(refinementSuccess);
 
         return 0;
@@ -597,7 +606,7 @@ namespace gdr {
     }
 
 
-    void RelativePosesComputationHandler::printTimeBenchmarkInfo() const {
+    std::stringstream RelativePosesComputationHandler::getTimeBenchmarkInfo() const {
 
         std::chrono::duration<double> timeDetect = std::chrono::duration_cast<std::chrono::duration<double>>(
                 timeEndDescriptors - timeStartDescriptors);
@@ -607,10 +616,15 @@ namespace gdr {
                 timeEndRelativePoses - timeStartRelativePoses);
 
 
-        std::cout << "    TIMER INFO:" << std::endl;
-        std::cout << "          SIFT detect: " << timeDetect.count() << std::endl;
-        std::cout << "          SIFT match: " << timeMatch.count() << std::endl;
-        std::cout << "          relative poses umayama + ICP: " << timeRelativePoseICP.count() << std::endl;
-        std::cout << std::endl;
+        std::stringstream resultTimeInfo;
+
+        resultTimeInfo << "    TIMER INFO:" << std::endl;
+        resultTimeInfo << "          SIFT detect: " << timeDetect.count() << std::endl;
+        resultTimeInfo << "          SIFT match: " << timeMatch.count() << std::endl;
+        resultTimeInfo << "          relative poses umeyama + ICP : " << timeRelativePoseICP.count() << std::endl;
+        resultTimeInfo << "              umeyama: " << timeRelativePoseICP.count() - timeCountSecondsTotalICP << std::endl;
+        resultTimeInfo << "              ICP: " << timeCountSecondsTotalICP << std::endl;
+
+        return resultTimeInfo;
     }
 }

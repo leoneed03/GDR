@@ -13,7 +13,7 @@
 
 namespace gdr {
 
-    /** Store information about matched keypoints between two images */
+    /** Stores information about matched keypoints between two images */
     class KeyPointMatches {
 
         std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> keyPointMatches;

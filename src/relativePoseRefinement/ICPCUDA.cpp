@@ -9,6 +9,8 @@
 
 #include "relativePoseRefinement/ICPCUDA.h"
 
+#include "computationHandlers/TimerClockNow.h"
+
 namespace gdr {
 
     int loadDepthImage(pangolin::Image<unsigned short> &imageDepth,
@@ -41,6 +43,7 @@ namespace gdr {
                                      const MatchableInfo &poseDestinationICPModel,
                                      const KeyPointMatches &keyPointMatches,
                                      SE3 &initTransformationSE3,
+                                     double &durationSeconds,
                                      int deviceIndex) {
 
         const CameraRGBD &cameraRgbdToBeTransformed = poseToBeTransformedICP.getCameraRGB();
@@ -65,6 +68,8 @@ namespace gdr {
 
         {
             std::unique_lock<std::mutex> deviceLockForICP(deviceCudaLock);
+            std::chrono::high_resolution_clock::time_point timeStartCurrentICP = timerGetClockTimeNow();
+
             ICPOdometry icpOdom(width, height);
 
             cudaDeviceProp prop;
@@ -106,6 +111,11 @@ namespace gdr {
                                                  iterationsLevel0, iterationsLevel1, iterationsLevel2);
 
             initTransformationSE3 = SE3(relativeSE3_Rt);
+
+            std::chrono::high_resolution_clock::time_point timeEndCurrentICP = timerGetClockTimeNow();
+            std::chrono::duration<double> timeIntervalCurrentICP =
+                    std::chrono::duration_cast<std::chrono::duration<double>>(timeEndCurrentICP - timeStartCurrentICP);
+            durationSeconds = timeIntervalCurrentICP.count();
         }
 
         return true;

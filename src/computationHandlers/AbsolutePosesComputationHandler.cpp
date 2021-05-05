@@ -432,7 +432,7 @@ namespace gdr {
         return pathRelativePosesFile;
     }
 
-    void AbsolutePosesComputationHandler::printTimeBenchmarkInfo() const {
+    std::stringstream AbsolutePosesComputationHandler::printTimeBenchmarkInfo() const {
         std::chrono::duration<double> timeRotationAveraging = std::chrono::duration_cast<std::chrono::duration<double>>(
                 timeEndRotationAveraging - timeStartRotationAveraging);
         std::chrono::duration<double> timeRotationRobust = std::chrono::duration_cast<std::chrono::duration<double>>(
@@ -442,12 +442,13 @@ namespace gdr {
         std::chrono::duration<double> timeBundleAdjustment = std::chrono::duration_cast<std::chrono::duration<double>>(
                 timeEndBundleAdjustment - timeStartBundleAdjustment);
 
+        std::stringstream benchmarkTimeInfo;
 
-        std::cout << "    TIMER INFO:" << std::endl;
-        std::cout << "          Rotation Averaging: " << timeRotationAveraging.count() << std::endl;
-        std::cout << "          Robust Rotation Optimization: " << timeRotationRobust.count() << std::endl;
-        std::cout << "          Translation Averaging: " << timeTranslationAveraging.count() << std::endl;
-        std::cout << "          Bundle Adjustment: " << timeBundleAdjustment.count() << std::endl;
-        std::cout << std::endl;
+        benchmarkTimeInfo << "          Rotation Averaging: " << timeRotationAveraging.count() << std::endl;
+        benchmarkTimeInfo << "          Robust Rotation Optimization: " << timeRotationRobust.count() << std::endl;
+        benchmarkTimeInfo << "          Translation Averaging: " << timeTranslationAveraging.count() << std::endl;
+        benchmarkTimeInfo << "          Bundle Adjustment: " << timeBundleAdjustment.count() << std::endl;
+
+        return benchmarkTimeInfo;
     }
 }

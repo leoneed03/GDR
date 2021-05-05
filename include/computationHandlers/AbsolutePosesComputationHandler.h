@@ -87,7 +87,7 @@ namespace gdr {
 
         std::vector<RotationMeasurement> getRelativeRotationsVector() const;
 
-        void printTimeBenchmarkInfo() const;
+        std::stringstream printTimeBenchmarkInfo() const;
     };
 }
 
