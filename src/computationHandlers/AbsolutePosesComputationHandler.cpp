@@ -43,12 +43,13 @@ namespace gdr {
         cloudProjector->setCameraPoses(posesForCloudProjector);
 
         const auto &matchesBetweenPoints = connectedComponent->getInlierObservedPoints();
-        for (const auto &vectorOfMatches: matchesBetweenPoints.getKeyPointMatchesVector()) {
+        for (const auto &vectorOfMatches: matchesBetweenPoints) {
 
             std::vector<std::pair<int, int>> poseAndLocalIndices;
-            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
-                poseAndLocalIndices.push_back(fullPointInfo.first);
-            }
+            poseAndLocalIndices.push_back(vectorOfMatches.first.first);
+            poseAndLocalIndices.push_back(vectorOfMatches.second.first);
+
+            //TODO: use pair
             pointMatcher->insertPointsWithNewClasses(poseAndLocalIndices);
         }
 
@@ -58,9 +59,11 @@ namespace gdr {
                 keyPointInfoByPoseNumAndLocalInd(pointMatcher->getNumberOfPoses());
 
 
-        for (const auto &vectorOfMatches: matchesBetweenPoints.getKeyPointMatchesVector()) {
+        for (const auto &vectorOfMatches: matchesBetweenPoints) {
 
-            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
+            for (int i = 0; i < 2; ++i) {
+                const auto& fullPointInfo = (i == 0) ? (vectorOfMatches.first) : (vectorOfMatches.second);
+
                 const auto &poseNumAndLocalInd = fullPointInfo.first;
                 const auto &foundIt = keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].find(
                         poseNumAndLocalInd.second);
@@ -264,7 +267,8 @@ namespace gdr {
                                                                                  indexFixedToZero,
                                                                                  isUsableBA);
         if (!isUsableBA) {
-            std::cerr << "BA solution is not marked usable by nonlinear optimizer, consider using only IRLS solution" << std::endl;
+            std::cerr << "BA solution is not marked usable by nonlinear optimizer, consider using only IRLS solution"
+                      << std::endl;
         }
 
         timeEndBundleAdjustment = timerGetClockTimeNow();

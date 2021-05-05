@@ -20,9 +20,9 @@ namespace gdr {
 
     int SmoothPointCloud::registerPointCloudFromImages(const std::vector<Reconstructable> &posesToBeRegistered,
                                                        bool showVisualization,
-                                                       float voxelSizeX,
-                                                       float voxelSizeY,
-                                                       float voxelSixeZ,
+                                                       double voxelSizeX,
+                                                       double voxelSizeY,
+                                                       double voxelSixeZ,
                                                        const std::string &pathPlyToSave,
                                                        const std::string &screenshotPath) {
 

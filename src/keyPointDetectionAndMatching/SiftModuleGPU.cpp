@@ -266,7 +266,7 @@ namespace gdr {
                     descriptors.data() + descriptorNumber * descriptorLength,
                     descriptorLength);
 
-            const float norm = descriptor.lpNorm<1>();
+            const double norm = descriptor.lpNorm<1>();
 
             descriptor = descriptor / norm;
             descriptor = descriptor.array().sqrt();

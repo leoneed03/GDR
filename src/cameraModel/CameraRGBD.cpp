@@ -7,7 +7,7 @@
 
 namespace gdr {
 
-    CameraRGBD::CameraRGBD(float fx1, float cx1, float fy1, float cy1) : fx(fx1), fy(fy1), cx(cx1), cy(cy1) {}
+    CameraRGBD::CameraRGBD(double fx1, double cx1, double fy1, double cy1) : fx(fx1), fy(fy1), cx(cx1), cy(cy1) {}
 
     Eigen::Matrix3Xd CameraRGBD::getIntrinsicsMatrix3x4() const {
         Eigen::Matrix3Xd intrinsicsMatrix(3, 4);
@@ -48,19 +48,19 @@ namespace gdr {
         return coordinates3D;
     }
 
-    float CameraRGBD::getFx() const {
+    double CameraRGBD::getFx() const {
         return fx;
     }
 
-    float CameraRGBD::getFy() const {
+    double CameraRGBD::getFy() const {
         return fy;
     }
 
-    float CameraRGBD::getCx() const {
+    double CameraRGBD::getCx() const {
         return cx;
     }
 
-    float CameraRGBD::getCy() const {
+    double CameraRGBD::getCy() const {
         return cy;
     }
 

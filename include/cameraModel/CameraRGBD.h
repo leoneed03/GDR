@@ -16,10 +16,10 @@ namespace gdr {
 
     class CameraRGBD {
 
-        float fx = 525.0;
-        float fy = 525.0;
-        float cx = 319.5;
-        float cy = 239.5;
+        double fx = 525.0;
+        double fy = 525.0;
+        double cx = 319.5;
+        double cy = 239.5;
 
         double depthPixelDivider = 5000.0;
 
@@ -54,7 +54,7 @@ namespace gdr {
 
         void setDepthPixelDivider(double divider);
 
-        CameraRGBD(float fx, float cx, float fy, float cy);
+        CameraRGBD(double fx, double cx, double fy, double cy);
 
         Eigen::Matrix3Xd getIntrinsicsMatrix3x4() const;
 
@@ -68,13 +68,13 @@ namespace gdr {
 
         Eigen::Matrix4Xd getPointCloudXYZ1BeforeProjection(const std::vector<Point3d> &pointsFromImageXYZ) const;
 
-        float getFx() const;
+        double getFx() const;
 
-        float getFy() const;
+        double getFy() const;
 
-        float getCx() const;
+        double getCx() const;
 
-        float getCy() const;
+        double getCy() const;
 
         void setDepthToRgbSe3(const SE3 &depthToRgbToSet);
 

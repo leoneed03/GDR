@@ -161,7 +161,7 @@ namespace gdr {
         auto relativePoses = findTransformationRtMatrices(allInlierKeyPointMatches);
         timeEndRelativePoses = timerGetClockTimeNow();
 
-        assert(!allInlierKeyPointMatches.getKeyPointMatchesVector().empty());
+        assert(!allInlierKeyPointMatches.empty());
         correspondenceGraph->setInlierPointMatches(allInlierKeyPointMatches);
         correspondenceGraph->setRelativePoses(relativePoses);
 
@@ -184,7 +184,8 @@ namespace gdr {
         int numberOfVertices = getNumberOfVertices();
         tbb::concurrent_vector<tbb::concurrent_vector<RelativeSE3>> transformationMatricesConcurrent(numberOfVertices);
 
-        tbb::concurrent_vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> allInlierKeyPointMatchesTBB;
+        tbb::concurrent_vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
+                keyPointImageAndLocalPointIndexAndKeyPointInfo>> allInlierKeyPointMatchesTBB;
 
         const auto &vertices = correspondenceGraph->getVertices();
         const auto &keyPointMatches = correspondenceGraph->getKeyPointMatches();
@@ -220,7 +221,7 @@ namespace gdr {
 
                                                     if (success) {
 
-                                                        for (auto &matchPair: inlierKeyPointMatches.getKeyPointMatchesVectorRef()) {
+                                                        for (auto &matchPair: inlierKeyPointMatches) {
                                                             allInlierKeyPointMatchesTBB.emplace_back(
                                                                     std::move(matchPair));
                                                         }
@@ -251,17 +252,13 @@ namespace gdr {
             }
         }
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> allKeyPointsToSet;
+        allInlierKeyPointMatches.clear();
 
-        allKeyPointsToSet.reserve(allInlierKeyPointMatchesTBB.size());
+        allInlierKeyPointMatches.reserve(allInlierKeyPointMatchesTBB.size());
         for (const auto &matchPair: allInlierKeyPointMatchesTBB) {
-            allKeyPointsToSet.emplace_back(matchPair);
+            allInlierKeyPointMatches.emplace_back(matchPair);
         }
-        assert(allInlierKeyPointMatchesTBB.size() == allKeyPointsToSet.size());
-
-        allInlierKeyPointMatches.setKeyPointMatches(allKeyPointsToSet);
-
-        assert(allInlierKeyPointMatches.getKeyPointMatchesVector().size() == allInlierKeyPointMatchesTBB.size());
+        assert(allInlierKeyPointMatchesTBB.size() == allInlierKeyPointMatches.size());
 
         return pairwiseTransformations;
     }
@@ -369,7 +366,7 @@ namespace gdr {
         SE3 refinedByICPRelativePose = relativePoseLoRANSAC;
         refineRelativePose(vertices[vertexToBeTransformed],
                            vertices[vertexFromDestDestination],
-                           KeyPointMatches(keyPointMatches),
+                           keyPointMatches,
                            refinedByICPRelativePose,
                            successRefine);
 
@@ -401,7 +398,7 @@ namespace gdr {
 
 
         std::vector<std::pair<int, int>> matchesForVisualization;
-        keyPointMatches = inlierMatchesCorrespondingKeypointsLoRansac;
+        std::swap(keyPointMatches, inlierMatchesCorrespondingKeypointsLoRansac);
         const auto &poseFrom = vertices[vertexFromDestDestination];
         const auto &poseTo = vertices[vertexToBeTransformed];
 
@@ -439,7 +436,8 @@ namespace gdr {
                                                                     int vertexInList,
                                                                     const SE3 &transformation) const {
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
+        std::vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
+                keyPointImageAndLocalPointIndexAndKeyPointInfo>> correspondencesBetweenTwoImages;
         const auto &match = correspondenceGraph->getMatch(vertexFrom, vertexInList);
         const auto &vertices = correspondenceGraph->getVertices();
         int minSize = match.getSize();
@@ -501,7 +499,8 @@ namespace gdr {
 
         Eigen::Matrix4Xd transformedPoints = transformation.getSE3().matrix() * toBeTransformedPoints;
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondences;
+        std::vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
+                keyPointImageAndLocalPointIndexAndKeyPointInfo>> inlierCorrespondences;
         std::vector<std::pair<double, int>> reprojectionInlierErrors = inlierCounter.calculateInlierProjectionErrors(
                 toBeTransformedPoints,
                 destinationPoints,
@@ -520,7 +519,7 @@ namespace gdr {
 
         assert(reprojectionInlierErrors.size() == inlierCorrespondences.size());
 
-        return KeyPointMatches(inlierCorrespondences);
+        return inlierCorrespondences;
     }
 
     int RelativePosesComputationHandler::refineRelativePose(const VertexPose &vertexToBeTransformed,

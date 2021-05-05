@@ -100,20 +100,22 @@ namespace gdr {
         }
 
         //fill information about observed points with local pose indices
-        std::vector<std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>>>
+        std::vector<std::vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
+                keyPointImageAndLocalPointIndexAndKeyPointInfo>>>
                 inlierCorrespondencesPointsInsideComponentByComponentNumber(components.size());
 
-        for (const auto &pairOfMatchedKeyPoints: correspondenceGraph.getInlierObservedPoints().getKeyPointMatchesVector()) {
-            assert(pairOfMatchedKeyPoints.size() == 2);
-            int globalPoseIndexFirst = pairOfMatchedKeyPoints[0].first.first;
-            int globalPoseIndexSecond = pairOfMatchedKeyPoints[1].first.first;
+        for (const auto &pairOfMatchedKeyPoints: correspondenceGraph.getInlierObservedPoints()) {
+
+            int globalPoseIndexFirst = pairOfMatchedKeyPoints.first.first.first;
+            int globalPoseIndexSecond = pairOfMatchedKeyPoints.second.first.first;
 
             int localPoseIndexFirst = componentNumberAndLocalIndexByPoseGlobalIndex[globalPoseIndexFirst].second;
             int localPoseIndexSecond = componentNumberAndLocalIndexByPoseGlobalIndex[globalPoseIndexSecond].second;
             int componentNumber = componentNumberByPose[globalPoseIndexFirst];
 
-            const auto &pairFirst = pairOfMatchedKeyPoints[0];
-            const auto &pairSecond = pairOfMatchedKeyPoints[1];
+            const auto &pairFirst = pairOfMatchedKeyPoints.first;
+            const auto &pairSecond = pairOfMatchedKeyPoints.second;
+
             KeyPointInfo keyPointInfoFirst = pairFirst.second;
             keyPointInfoFirst.setObservingPoseNumber(localPoseIndexFirst);
             KeyPointInfo keyPointInfoSecond = pairSecond.second;
@@ -158,7 +160,7 @@ namespace gdr {
             connectedComponents.emplace_back(std::make_unique<
                     ConnectedComponentPoseGraph>(connectedComponentsVertices[componentNumber],
                                                  edgesOfComponentsByComponentsNumber[componentNumber],
-                                                 inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber],
+                                                 KeyPointMatches(inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber]),
                                                  componentNumber));
         }
         assert(addedVertices == correspondenceGraph.getNumberOfPoses());
