@@ -19,6 +19,7 @@
 #include "keyPoints/KeyPoint2DAndDepth.h"
 
 #include "FeatureDetectorMatcher.h"
+#include "keyPointDetectionAndMatching/ImageRetriever.h"
 
 namespace gdr {
 
@@ -45,29 +46,30 @@ namespace gdr {
 
         std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
         getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
-                                           const std::vector<int> &numOfDevicesForDetectors = {0}) override;
+                                           const std::vector<int> &numOfDevicesForDetectors) override;
 
         std::vector<std::pair<std::vector<SiftGPU::SiftKeypoint>, std::vector<float>>>
         getKeypointsDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
-                                         const std::vector<int> &numOfDevicesForDetectors = {0});
+                                         const std::vector<int> &numOfDevicesForDetectors);
 
         std::vector<std::vector<Match>>
         findCorrespondences(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                            const std::vector<int> &matchDevicesNumbers = {
-                                    0}) override;
+                            ImageRetriever &imageRetriever,
+                            const std::vector<int> &matchDevicesNumbers) override;
 
     private:
 
 
         std::vector<tbb::concurrent_vector<Match>>
         findCorrespondencesConcurrent(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                                      const std::vector<int> &matchDevicesNumbers = {
-                                              0});
+                                      ImageRetriever &imageRetriever,
+                                      const std::vector<int> &matchDevicesNumbers);
 
         static std::vector<std::pair<int, int>>
         getNumbersOfMatchesKeypoints(const imageDescriptor &keysDescriptors1,
                                      const imageDescriptor &keysDescriptors2,
-                                     SiftMatchGPU *matcher);
+                                     SiftMatchGPU *matcher,
+                                     std::vector<int[2]> &matchesToPut);
 
         void siftParseParams(SiftGPU *sift, std::vector<char *> &siftGpuArgs);
 
@@ -83,12 +85,10 @@ namespace gdr {
                                         std::mutex &output,
                                         bool normalizeRootL1 = true);
 
-        static void getNumbersOfMatchesOnePair(int &indexFrom,
-                                               int &indexTo,
-                                               const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
-                                               std::mutex &counterMutex,
+        static void getNumbersOfMatchesOnePair(const std::vector<KeyPointsDescriptors> &verticesToBeMatched,
                                                std::vector<tbb::concurrent_vector<Match>> &matches,
-                                               SiftMatchGPU *matcher);
+                                               SiftMatchGPU *matcher,
+                                               ImageRetriever &imageRetriever);
     };
 }
 

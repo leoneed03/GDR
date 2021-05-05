@@ -3,8 +3,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "readerDataset/readerTUM/TrajectoryFilesComparer.h"
+#include "computationHandlers/ThreadPoolTBB.h"
 
 namespace gdr {
 
+    ThreadPoolTBB::ThreadPoolTBB(int numOfThreads) : sheduler(numOfThreads) {}
 }

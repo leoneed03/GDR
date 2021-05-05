@@ -3,9 +3,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "computationHandlers/ThreadPool.h"
+#ifndef GDR_TIMERCLOCKNOW_H
+#define GDR_TIMERCLOCKNOW_H
+
+#include <chrono>
 
 namespace gdr {
-
-    ThreadPool::ThreadPool(int numOfThreads) : sheduler(numOfThreads) {}
+        std::chrono::high_resolution_clock::time_point timerGetClockTimeNow();
 }
+
+
+#endif

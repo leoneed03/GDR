@@ -36,7 +36,8 @@ namespace gdr {
         return indexedPoints[pointNumber3d];
     }
 
-    std::vector<std::pair<int, KeyPointInfo>> CloudProjectorStl::getKeyPointsIndicesAndInfoByPose(int poseNumber) const {
+    std::vector<std::pair<int, KeyPointInfo>>
+    CloudProjectorStl::getKeyPointsIndicesAndInfoByPose(int poseNumber) const {
 
         assert(poseNumber >= 0 && poseNumber < getPoseNumber());
 
@@ -45,7 +46,7 @@ namespace gdr {
         std::vector<std::pair<int, KeyPointInfo>> resultKeyPointsObserved;
 
         for (const auto &pairIndexInfo: keyPointInfoByPose[poseNumber]) {
-            resultKeyPointsObserved.push_back(pairIndexInfo);
+            resultKeyPointsObserved.emplace_back(pairIndexInfo);
         }
 
         return resultKeyPointsObserved;
@@ -75,6 +76,7 @@ namespace gdr {
         numbersOfPosesObservingSpecificPoint = std::vector<std::vector<int>>(pointsSize);
 
         int posesSize = getPoseNumber();
+
         for (int i = 0; i < posesSize; ++i) {
             for (const auto &observedPoints: keyPointInfoByPose[i]) {
 
@@ -95,37 +97,17 @@ namespace gdr {
                 assert(i == poses[i].getIndex());
                 assert(i == currentInfoBeforeProjection.getObservingPoseNumber());
 
-                Eigen::Vector4d localCoordinatesBeforeProjection =
-                        poses[i].getCamera().getCoordinatesBeforeProjectionXYZ1(newX, newY, newZ);
-                Eigen::Vector4d globalCoordinates =
-                        poses[i].getPoseSE3().getSE3().matrix() * localCoordinatesBeforeProjection;
+                Eigen::Vector3d localCoordinatesBeforeProjection =
+                        poses[i].getCamera().getCoordinates3D(newX, newY, newZ);
+
+                Eigen::Vector3d globalCoordinates =
+                        poses[i].getPoseSE3().getSE3() * localCoordinatesBeforeProjection;
+
                 assert(currentPointIndex < computedCoordinatesByPointIndex.size());
                 assert(currentPointIndex >= 0);
                 assert(computedCoordinatesByPointIndex.size() == pointsSize);
 
-                Eigen::Vector3d coordinates3d = globalCoordinates.block<3, 1>(0, 0);
-                for (int count = 0; count < 3; ++count) {
-                    assert(std::abs(coordinates3d[count] - globalCoordinates[count]) < 1e-15);
-                }
-                computedCoordinatesByPointIndex[currentPointIndex].push_back(coordinates3d);
-
-                const auto &camera = poses[i].getCamera();
-                auto cameraIntr = camera.getIntrinsicsMatrix3x4();
-                Eigen::Vector3d projected = cameraIntr * localCoordinatesBeforeProjection;
-                double projectedX = projected[0] / projected[2];
-                double projectedY = projected[1] / projected[2];
-
-                bool okX = std::abs(projectedX - currentInfoBeforeProjection.getX()) < 1e-10;
-                bool okY = std::abs(projectedY - currentInfoBeforeProjection.getY()) < 1e-10;
-
-                if (!okX || !okY) {
-                    std::cout << "error is (abs): " << std::abs(projectedX - currentInfoBeforeProjection.getX())
-                              << std::endl;
-                    std::cout << projectedX << " vs " << currentInfoBeforeProjection.getX() << std::endl;
-                    std::cout << projectedY << " vs " << currentInfoBeforeProjection.getY() << std::endl;
-                }
-                assert(okX);
-                assert(okY);
+                computedCoordinatesByPointIndex[currentPointIndex].emplace_back(std::move(globalCoordinates));
             }
         }
 
@@ -146,6 +128,7 @@ namespace gdr {
         assert(pointIndexObseredByMaxPoses > -1);
 
         for (int i = 0; i < computedCoordinatesByPointIndex.size(); ++i) {
+
             Eigen::Vector3d sumCoordinates;
             sumCoordinates.setZero();
 
@@ -163,9 +146,65 @@ namespace gdr {
             indexedPoints[i].setEigenVector3dPointXYZ(sumCoordinates);
         }
 
+        //try to refine point coordinates using ransac
+        std::random_device randomDevice;
+        std::mt19937 randomNumberGenerator(randomDevice());
+
+        int numberOfIterationsRansacPerPoint = 15;
+        std::vector<Point3d> optimalPointCoordinates(indexedPoints);
+
+        for (int i = 0; i < computedCoordinatesByPointIndex.size(); ++i) {
+
+            int numberOfInlierObservationsMax = 0;
+
+            int numOfObservingPoses = numbersOfPosesObservingSpecificPoint[i].size();
+            std::uniform_int_distribution<> distrib(0, numOfObservingPoses - 1);
+            Eigen::Vector3d pointGuessL2 = indexedPoints[i].getEigenVector3dPointXYZ();
+
+            for (int iterationPointRansac = -1;
+                 iterationPointRansac <= std::min(numberOfIterationsRansacPerPoint, numOfObservingPoses);
+                 ++iterationPointRansac) {
+
+                int observingPoseNumberRandom = distrib(randomNumberGenerator);
+                assert(observingPoseNumberRandom >= 0 &&
+                       observingPoseNumberRandom < computedCoordinatesByPointIndex[i].size());
+
+                const Eigen::Vector3d &pointGuess = computedCoordinatesByPointIndex[i][observingPoseNumberRandom];
+
+                int currentNumberOfInlierObservations = 0;
+
+                if (iterationPointRansac == -1) {
+                    
+                    currentNumberOfInlierObservations =
+                            getPoseNumbersOfInlierObservations(i,
+                                                               pointGuessL2).size();
+
+                    if (currentNumberOfInlierObservations > numberOfInlierObservationsMax) {
+                        //L2 solution is already set in optimalPointCoordinates, only need to update inlier counter
+                        numberOfInlierObservationsMax = currentNumberOfInlierObservations;
+                    }
+
+                } else {
+                    currentNumberOfInlierObservations = getPoseNumbersOfInlierObservations(i,
+                                                                                           pointGuess).size();
+
+                    //counter being equal to 1 means point is probably an outlier, keep L2 solution
+                    if (currentNumberOfInlierObservations > numberOfInlierObservationsMax
+                        && currentNumberOfInlierObservations > 1) {
+
+                        optimalPointCoordinates[i].setEigenVector3dPointXYZ(pointGuess);
+                        numberOfInlierObservationsMax = currentNumberOfInlierObservations;
+                    }
+                }
+            }
+        }
+
         for (int i = 0; i < pointsSize; ++i) {
             assert(indexedPoints[i].getIndex() == i);
         }
+
+        std::swap(indexedPoints, optimalPointCoordinates);
+
         return indexedPoints;
     }
 
@@ -348,6 +387,54 @@ namespace gdr {
     void CloudProjectorStl::setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) {
         poses = cameraPoses;
         keyPointInfoByPose = std::vector<std::unordered_map<int, KeyPointInfo>>(cameraPoses.size());
+    }
+
+    std::vector<int> CloudProjectorStl::getPoseNumbersOfInlierObservations(int indexPoint,
+                                                                           const Eigen::Vector3d &pointCoordinatesGuess) const {
+
+        std::vector<int> inlierIndicesObservingPoses;
+
+        for (int ind = 0; ind < numbersOfPosesObservingSpecificPoint[indexPoint].size(); ++ind) {
+
+            int observingPoseNumber = numbersOfPosesObservingSpecificPoint[indexPoint][ind];
+            const auto &poseCtoW = poses[observingPoseNumber];
+
+            const CameraRGBD &cameraRgbd = poseCtoW.getCamera();
+            const auto &poseCameratoWorldSE3 = poseCtoW.getPoseSE3();
+            const KeyPointInfo &keyPointInfo = keyPointInfoByPose[observingPoseNumber].find(indexPoint)->second;
+
+
+            Eigen::Vector3d pointInLocalCameraCoordinates =
+                    poseCameratoWorldSE3.getSE3().inverse() * pointCoordinatesGuess;
+
+            Sophus::Vector2d projectedXY = cameraRgbd.projectUsingIntrinsics<double>(pointInLocalCameraCoordinates);
+            Sophus::Vector2d errorsXY = projectedXY - Sophus::Vector2d(keyPointInfo.getX(), keyPointInfo.getY());
+
+            double errorXyNorm = errorsXY.norm();
+            double errorDepthNorm = std::abs(pointInLocalCameraCoordinates[2] - keyPointInfo.getDepth());
+
+            const auto &measurementEstimators = cameraRgbd
+                    .getMeasurementErrorDeviationEstimators();
+            double reprojectionParameter = measurementEstimators.getParameterNoiseModelReprojection();
+            double depthParameter = measurementEstimators.getParameterNoiseModelDepth();
+
+            double thresholdInlierReprojection = measurementEstimators
+                                                         .getDividerReprojectionEstimator()(
+                                                                 keyPointInfo.getScale(),
+                                                                 reprojectionParameter) * sigmaMultiplierReprojection;
+
+            double thresholdInlierDepth = measurementEstimators
+                                                  .getDividerDepthErrorEstimator()(
+                                                          keyPointInfo.getDepth(),
+                                                          depthParameter) * sigmaMultiplierDepth;
+
+            if (errorXyNorm < thresholdInlierReprojection &&
+                errorDepthNorm < thresholdInlierDepth) {
+                inlierIndicesObservingPoses.emplace_back(observingPoseNumber);
+            }
+        }
+
+        return inlierIndicesObservingPoses;
     }
 
 }

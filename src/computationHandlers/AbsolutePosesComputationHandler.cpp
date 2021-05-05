@@ -18,6 +18,7 @@
 #include "sparsePointCloud/ProjectableInfo.h"
 
 #include "computationHandlers/AbsolutePosesComputationHandler.h"
+#include "computationHandlers/TimerClockNow.h"
 
 namespace gdr {
 
@@ -42,12 +43,12 @@ namespace gdr {
         cloudProjector->setCameraPoses(posesForCloudProjector);
 
         const auto &matchesBetweenPoints = connectedComponent->getInlierObservedPoints();
-        for (const auto &vectorOfMatches: matchesBetweenPoints.getKeyPointMatchesVector()) {
+        for (const auto &vectorOfMatches: matchesBetweenPoints) {
 
             std::vector<std::pair<int, int>> poseAndLocalIndices;
-            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
-                poseAndLocalIndices.push_back(fullPointInfo.first);
-            }
+            poseAndLocalIndices.push_back(vectorOfMatches.first.first);
+            poseAndLocalIndices.push_back(vectorOfMatches.second.first);
+
             pointMatcher->insertPointsWithNewClasses(poseAndLocalIndices);
         }
 
@@ -57,9 +58,11 @@ namespace gdr {
                 keyPointInfoByPoseNumAndLocalInd(pointMatcher->getNumberOfPoses());
 
 
-        for (const auto &vectorOfMatches: matchesBetweenPoints.getKeyPointMatchesVector()) {
+        for (const auto &vectorOfMatches: matchesBetweenPoints) {
 
-            for (const std::pair<std::pair<int, int>, KeyPointInfo> &fullPointInfo: vectorOfMatches) {
+            for (int i = 0; i < 2; ++i) {
+                const auto& fullPointInfo = (i == 0) ? (vectorOfMatches.first) : (vectorOfMatches.second);
+
                 const auto &poseNumAndLocalInd = fullPointInfo.first;
                 const auto &foundIt = keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].find(
                         poseNumAndLocalInd.second);
@@ -78,7 +81,7 @@ namespace gdr {
             int pointClassNumber = pointClasses[pointIncrementor];
             std::pair<int, int> poseNumberAndLocalIndex = pointMatcher->getPoseNumberAndLocalIndex(pointIncrementor);
             std::vector<KeyPointInfo> keyPointInfo;
-            keyPointInfo.push_back(
+            keyPointInfo.emplace_back(
                     keyPointInfoByPoseNumAndLocalInd[poseNumberAndLocalIndex.first][poseNumberAndLocalIndex.second]);
             cloudProjector->addPoint(pointClassNumber, keyPointInfo);
         }
@@ -111,6 +114,7 @@ namespace gdr {
 
     std::vector<SO3> AbsolutePosesComputationHandler::performRotationAveraging() {
 
+        timeStartRotationAveraging = timerGetClockTimeNow();
         std::vector<SO3> absoluteRotations = RotationAverager::shanonAveraging(
                 getRelativeRotationsVector(),
                 getPathRelativePoseFile(),
@@ -119,6 +123,8 @@ namespace gdr {
         for (int i = 0; i < getNumberOfPoses(); ++i) {
             connectedComponent->setRotation(i, SO3(absoluteRotations[i].getRotationSophus()));
         }
+
+        timeEndRotationAveraging = timerGetClockTimeNow();
 
         return absoluteRotations;
     }
@@ -150,6 +156,7 @@ namespace gdr {
             }
         }
 
+        timeStartRobustRotationOptimization = timerGetClockTimeNow();
         std::unique_ptr<RotationRobustOptimizer> rotationOptimizer =
                 RotationRobustOptimizerCreator::getRefiner(
                         RotationRobustOptimizerCreator::RobustParameterType::DEFAULT);
@@ -158,6 +165,7 @@ namespace gdr {
                 rotationOptimizer->getOptimizedOrientation(shonanOptimizedAbsolutePoses,
                                                            relativeRotationsAfterICP,
                                                            connectedComponent->getPoseIndexWithMaxConnectivity());
+        timeEndRobustRotationOptimization = timerGetClockTimeNow();
 
         assert(getNumberOfPoses() == optimizedPosesRobust.size());
 
@@ -188,6 +196,8 @@ namespace gdr {
             }
         }
 
+        timeStartTranslationAveraging = timerGetClockTimeNow();
+
         std::vector<Eigen::Vector3d> optimizedAbsoluteTranslationsIRLS = TranslationAverager::recoverTranslations(
                 relativeTranslations,
                 absolutePoses,
@@ -204,6 +214,8 @@ namespace gdr {
                 optimizedAbsoluteTranslationsIRLS,
                 indexFixedToZero,
                 successIRLS).toVectorOfVectors();
+
+        timeEndTranslationAveraging = timerGetClockTimeNow();
 
         assert(optimizedAbsoluteTranslationsIRLS[indexFixedToZero].norm() < std::numeric_limits<double>::epsilon());
 
@@ -242,14 +254,23 @@ namespace gdr {
                                                                                maxNumberOfPointsToShow);
         }
 
+        timeStartBundleAdjustment = timerGetClockTimeNow();
+
         std::unique_ptr<BundleAdjuster> bundleAdjuster =
                 BundleAdjusterCreator::getBundleAdjuster(BundleAdjusterCreator::BundleAdjustmentType::USE_DEPTH_INFO);
 
+        bool isUsableBA = true;
         std::vector<SE3> posesOptimized = bundleAdjuster->optimizePointsAndPoses(observedPoints,
                                                                                  posesAndCameraParams,
                                                                                  cloudProjector->getKeyPointInfoByPoseNumberAndPointClass(),
-                                                                                 indexFixedToZero);
+                                                                                 indexFixedToZero,
+                                                                                 isUsableBA);
+        if (!isUsableBA) {
+            std::cerr << "BA solution is not marked usable by nonlinear optimizer, consider using only IRLS solution"
+                      << std::endl;
+        }
 
+        timeEndBundleAdjustment = timerGetClockTimeNow();
 
         assert(posesOptimized.size() == getNumberOfPoses());
 
@@ -412,5 +433,25 @@ namespace gdr {
 
     std::string AbsolutePosesComputationHandler::getPathRelativePoseFile() const {
         return pathRelativePosesFile;
+    }
+
+    std::stringstream AbsolutePosesComputationHandler::printTimeBenchmarkInfo() const {
+        std::chrono::duration<double> timeRotationAveraging = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndRotationAveraging - timeStartRotationAveraging);
+        std::chrono::duration<double> timeRotationRobust = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndRobustRotationOptimization - timeStartRobustRotationOptimization);
+        std::chrono::duration<double> timeTranslationAveraging = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndTranslationAveraging - timeStartTranslationAveraging);
+        std::chrono::duration<double> timeBundleAdjustment = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndBundleAdjustment - timeStartBundleAdjustment);
+
+        std::stringstream benchmarkTimeInfo;
+
+        benchmarkTimeInfo << "          Rotation Averaging: " << timeRotationAveraging.count() << std::endl;
+        benchmarkTimeInfo << "          Robust Rotation Optimization: " << timeRotationRobust.count() << std::endl;
+        benchmarkTimeInfo << "          Translation Averaging: " << timeTranslationAveraging.count() << std::endl;
+        benchmarkTimeInfo << "          Bundle Adjustment: " << timeBundleAdjustment.count() << std::endl;
+
+        return benchmarkTimeInfo;
     }
 }

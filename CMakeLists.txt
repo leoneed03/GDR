@@ -3,9 +3,12 @@ cmake_minimum_required(VERSION 3.10.0)
 project(GDR)
 
 set(CMAKE_CXX_STANDARD 17)
+set(GCC_MARCH_NATIVE " ")
 set(GCC_COVERAGE_COMPILE_FLAGS " -O3")
 
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${GCC_MARCH_NATIVE}")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${GCC_MARCH_NATIVE}")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(GDR_FLAGS "")
@@ -104,7 +107,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/visualization/2D/ImageDrawer.h
     ${PROJECT_SOURCE_DIR}/include/bundleAdjustment/BundleDepthAdjuster.h
     ${PROJECT_SOURCE_DIR}/include/visualization/3D/SmoothPointCloud.h
-    ${PROJECT_SOURCE_DIR}/include/computationHandlers/ThreadPool.h
+    ${PROJECT_SOURCE_DIR}/include/computationHandlers/ThreadPoolTBB.h
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointsDepthDescriptor.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/ConnectedComponent.h
     ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/ImagesAssociator.h
@@ -146,7 +149,7 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPointMatches.h
     ${PROJECT_SOURCE_DIR}/include/cameraModel/MeasurementErrorDeviationEstimators.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/PoseGraph.h
-    ${PROJECT_SOURCE_DIR}/include/datasetDescriber/DatasetDescriber.h
+        ${PROJECT_SOURCE_DIR}/include/datasetDescriber/DatasetDescriber.h
     ${PROJECT_SOURCE_DIR}/include/computationHandlers/ModelCreationHandler.h
     ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/Evaluator.h
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.h
@@ -168,7 +171,7 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/parametrization/PoseFullInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationMeasurement.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/Vectors3d.cpp
-    ${PROJECT_SOURCE_DIR}/src/computationHandlers/ThreadPool.cpp
+    ${PROJECT_SOURCE_DIR}/src/computationHandlers/ThreadPoolTBB.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/SO3.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RotationRobustOptimizerLogSO3.cpp
     ${PROJECT_SOURCE_DIR}/src/parametrization/Point3d.cpp
@@ -207,26 +210,28 @@ set(GDR_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/parametrization/SparseMatrixClass.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativeRotationError.cpp
     ${PROJECT_SOURCE_DIR}/src/readerDataset/readerBundleFusion/ReaderBundleFusion.cpp
-    ${PROJECT_SOURCE_DIR}/src/keyPoints/KeyPointMatches.cpp
-    ${PROJECT_SOURCE_DIR}/src/cameraModel/MeasurementErrorDeviationEstimators.cpp
+        ${PROJECT_SOURCE_DIR}/src/cameraModel/MeasurementErrorDeviationEstimators.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PoseGraph.cpp
-    ${PROJECT_SOURCE_DIR}/src/datasetDescriber/DatasetDescriber.cpp
+        ${PROJECT_SOURCE_DIR}/src/datasetDescriber/DatasetDescriber.cpp
     ${PROJECT_SOURCE_DIR}/src/computationHandlers/ModelCreationHandler.cpp
     ${PROJECT_SOURCE_DIR}/src/readerDataset/readerTUM/Evaluator.cpp
     ${PROJECT_SOURCE_DIR}/src/poseGraph/PosesForEvaluation.cpp
     ${PROJECT_SOURCE_DIR}/src/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.cpp
     ${PROJECT_SOURCE_DIR}/test/reconstructor/TesterReconstruction.cpp
-        src/readerDataset/readerTUM/TrajectoryFilesComparer.cpp include/readerDataset/readerTUM/TrajectoryFilesComparer.h src/parametrization/Reconstructable.cpp include/parametrization/Reconstructable.h src/parametrization/Point2d.cpp include/parametrization/Point2d.h src/parametrization/PointXYZRGBfloatUchar.cpp include/parametrization/PointXYZRGBfloatUchar.h src/parametrization/AssociatedImages.cpp include/parametrization/AssociatedImages.h)
+        include/readerDataset/readerTUM/TrajectoryFilesComparer.h src/parametrization/Reconstructable.cpp include/parametrization/Reconstructable.h src/parametrization/Point2d.cpp include/parametrization/Point2d.h src/parametrization/PointXYZRGBfloatUchar.cpp include/parametrization/PointXYZRGBfloatUchar.h src/parametrization/AssociatedImages.cpp include/parametrization/AssociatedImages.h include/datasetDescriber/DatasetStructure.h src/keyPointDetectionAndMatching/ImageRetriever.cpp include/keyPointDetectionAndMatching/ImageRetriever.h src/computationHandlers/TimerClockNow.cpp include/computationHandlers/TimerClockNow.h)
 
 add_subdirectory(lib)
 
 add_executable(reconstructorTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/reconstructorTum.cpp)
+add_executable(imageAssociator ${PROJECT_SOURCE_DIR}/test/reconstructor/imageAssociator.cpp)
+
 add_executable(visualizerTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/visualizerTum.cpp)
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
 
 add_dependencies(GDR_LIB siftgpu icpCuda gtsam)
 add_dependencies(reconstructorTUM GDR_LIB)
+add_dependencies(imageAssociator GDR_LIB)
 add_dependencies(visualizerTUM GDR_LIB)
 
 
@@ -260,6 +265,8 @@ target_include_directories(
           ${CUDA_INCLUDE_DIRS})
 message("Ceres include: " ${CERES_INCLUDE_DIRS})
 message("Ceres libs: " ${CERES_LIBRARIES})
+
+target_link_libraries(imageAssociator GDR_LIB)
 target_link_libraries(reconstructorTUM GDR_LIB)
 target_link_libraries(visualizerTUM GDR_LIB)
 

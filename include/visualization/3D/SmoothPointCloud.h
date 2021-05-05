@@ -15,9 +15,9 @@ namespace gdr {
         //TODO: store pointCloud as tree-like structure
         static int registerPointCloudFromImages(const std::vector<Reconstructable> &posesToBeRegistered,
                                                 bool showVisualization = false,
-                                                float voxelSizeX = 0.01,
-                                                float voxelSizeY = 0.01,
-                                                float voxelSixeZ = 0.01,
+                                                double voxelSizeX = 0.01,
+                                                double voxelSizeY = 0.01,
+                                                double voxelSixeZ = 0.01,
                                                 const std::string &pathPlyToSave = "",
                                                 const std::string &screenshotPath = "");
     };

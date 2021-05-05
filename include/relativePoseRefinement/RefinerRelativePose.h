@@ -24,12 +24,16 @@ namespace gdr {
          * @param poseDestinationICPModel contains colour and depth information about destination pose
          * @param keyPointMatches contains matched keypoint indices between two colour images
          * @param initTransformationSE3 initial SE3 relative pose estimation
+         * @param deviceIndex is the CUDA device number to use
+         *
          * @returns true if refinement process has converged
          */
         virtual bool refineRelativePose(const MatchableInfo &poseToBeTransformed,
                                         const MatchableInfo &poseDestination,
                                         const KeyPointMatches &keyPointMatches,
-                                        SE3 &initTransformationSE3) = 0;
+                                        SE3 &initTransformationSE3,
+                                        double &durationSeconds,
+                                        int deviceIndex) = 0;
 
         virtual ~RefinerRelativePose() = default;
     };

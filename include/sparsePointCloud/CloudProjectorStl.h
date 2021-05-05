@@ -23,6 +23,9 @@ namespace gdr {
 
     class CloudProjectorStl : public CloudProjector {
 
+        std::vector<int> getPoseNumbersOfInlierObservations(int indexPoint,
+                                                            const Eigen::Vector3d &pointCoordinatesGuess) const;
+
     public:
 
         void setCameraPoses(const std::vector<ProjectableInfo> &cameraPoses) override;
@@ -50,6 +53,7 @@ namespace gdr {
 
     private:
         int maxPointIndex = -1;
+
         std::vector<Point3d> indexedPoints;
         std::vector<ProjectableInfo> poses;
 
@@ -60,6 +64,9 @@ namespace gdr {
 
         /** j-th vector contains pose numbers observing j-keypoint */
         std::vector<std::vector<int>> numbersOfPosesObservingSpecificPoint;
+
+        double sigmaMultiplierReprojection = 2.5;
+        double sigmaMultiplierDepth = 2.5;
 
         const Point3d &getPointByIndex3d(int pointNumber3d) const;
 

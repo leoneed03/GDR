@@ -16,10 +16,10 @@ namespace gdr {
 
     class CameraRGBD {
 
-        float fx = 525.0;
-        float fy = 525.0;
-        float cx = 319.5;
-        float cy = 239.5;
+        double fx = 525.0;
+        double fy = 525.0;
+        double cx = 319.5;
+        double cy = 239.5;
 
         double depthPixelDivider = 5000.0;
 
@@ -29,6 +29,20 @@ namespace gdr {
 
 
     public:
+
+        template<class T>
+        Sophus::Vector<T, 2> projectUsingIntrinsics(const Sophus::Vector<T, 3> &point) const {
+
+            Sophus::Vector<T, 2> projectedPoint;
+
+            projectedPoint[0] = T(getFx()) * point[0] + T(getCx()) * point[2];
+            projectedPoint[1] = T(getFy()) * point[1] + T(getCy()) * point[2];
+
+            projectedPoint[0] /= point[2];
+            projectedPoint[1] /= point[2];
+
+            return projectedPoint;
+        }
 
         void setMeasurementErrorDeviationEstimators(const MeasurementErrorDeviationEstimators &estimators);
 
@@ -40,7 +54,7 @@ namespace gdr {
 
         void setDepthPixelDivider(double divider);
 
-        CameraRGBD(float fx, float cx, float fy, float cy);
+        CameraRGBD(double fx, double cx, double fy, double cy);
 
         Eigen::Matrix3Xd getIntrinsicsMatrix3x4() const;
 
@@ -54,13 +68,13 @@ namespace gdr {
 
         Eigen::Matrix4Xd getPointCloudXYZ1BeforeProjection(const std::vector<Point3d> &pointsFromImageXYZ) const;
 
-        float getFx() const;
+        double getFx() const;
 
-        float getFy() const;
+        double getFy() const;
 
-        float getCx() const;
+        double getCx() const;
 
-        float getCy() const;
+        double getCy() const;
 
         void setDepthToRgbSe3(const SE3 &depthToRgbToSet);
 

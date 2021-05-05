@@ -13,33 +13,20 @@
 
 namespace gdr {
 
-    /** Store information about matched keypoints between two images */
-    class KeyPointMatches {
+    using keyPointImageAndLocalPointIndexAndKeyPointInfo = std::pair<std::pair<int, int>, KeyPointInfo>;
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> keyPointMatches;
-
-    public:
-        /**
-         *
-         * @param keyPointMatches contains N vectors for N matched keypoint pairs
-         *      each pair is stored as vector where each element represents one keypoint as pair
-         *          first pair element: {imageIndex, keypoint local index in image decriptor},
-         *          second pair element: {KeyPointInfo: information about keypoint's image coordinates,
-         *                                          depth in meters and scale, orietation}
-         *      first stored point is from transformed image and second -- from destination image
-         */
-        KeyPointMatches(const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &keyPointMatches);
-
-        KeyPointMatches() = default;
-
-        void setKeyPointMatches(
-                const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &keyPointMatchesToSet);
-
-        const std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> &getKeyPointMatchesVector() const;
-
-        int size() const;
-
-    };
+    /** Stores information about matched keypoint pairs between images
+     *
+     * keyPointMatches contains N vectors for N matched keypoint pairs
+     *      each pair is stored as vector where each element represents one keypoint as pair
+     *          first pair element: {imageIndex, keypoint local index in image decriptor},
+     *          second pair element: {KeyPointInfo: information about keypoint's image coordinates,
+     *                                          depth in meters and scale, orietation}
+     *      first stored point is from transformed image and second -- from destination image
+     */
+    using KeyPointMatches =
+    std::vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
+            keyPointImageAndLocalPointIndexAndKeyPointInfo>>;
 }
 
 

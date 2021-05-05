@@ -11,12 +11,14 @@
 
 namespace gdr {
 
-    class ThreadPool {
+    class ThreadPoolTBB {
 
         tbb::task_scheduler_init sheduler;
     public:
-        ThreadPool(int numOfThreads);
+        explicit ThreadPoolTBB(int numOfThreads);
 
+//        ThreadPoolTBB() : sheduler(1) {};
+        ThreadPoolTBB() = default;
     };
 }
 

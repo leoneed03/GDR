@@ -47,7 +47,9 @@ namespace test {
                 double timeDiffThreshold = 0.02,
                 bool printToConsole = false,
                 bool showVisualization3D = false,
-                bool savePointCloudPly = false);
+                bool savePointCloudPly = false,
+                const std::vector<int> &gpuDevices = {0},
+                bool printInfoReport = true);
     };
 }
 

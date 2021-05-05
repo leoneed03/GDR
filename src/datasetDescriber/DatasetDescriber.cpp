@@ -7,10 +7,10 @@
 
 namespace gdr {
 
-    DatasetDescriber::DatasetDescriber(const CameraRGBD &defaultCameraRgbd,
-                                       std::string associationFileRgbToDepth) :
+    DatasetDescriber::DatasetDescriber(const DatasetStructure &datasetStructureToSet,
+                                       const CameraRGBD &defaultCameraRgbd) :
             defaultCamera(defaultCameraRgbd),
-            associationRgbToDepthFile(associationFileRgbToDepth) {}
+            datasetStructure(datasetStructureToSet) {}
 
     void DatasetDescriber::addCameraRgb(const std::string &filenameRgb,
                                         const CameraRGBD &camera) {
@@ -51,7 +51,8 @@ namespace gdr {
         return defaultCamera;
     }
 
-    const std::string &DatasetDescriber::getAssociationRgbToDepthFile() const {
-        return associationRgbToDepthFile;
+    const DatasetStructure &DatasetDescriber::getDatasetStructure() const {
+        return datasetStructure;
     }
+
 }

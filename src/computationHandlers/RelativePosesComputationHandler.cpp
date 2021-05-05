@@ -8,6 +8,7 @@
 
 #include <tbb/parallel_for.h>
 #include <tbb/concurrent_vector.h>
+#include <thread>
 
 #include "readerDataset/readerTUM/ReaderTum.h"
 #include <directoryTraversing/DirectoryReader.h>
@@ -18,99 +19,24 @@
 #include "relativePoseRefinement/RefinerRelativePoseCreator.h"
 
 #include "computationHandlers/RelativePosesComputationHandler.h"
+#include "computationHandlers/TimerClockNow.h"
 
 namespace gdr {
 
     namespace fs = boost::filesystem;
 
-    RelativePosesComputationHandler::RelativePosesComputationHandler(const std::string &pathToImageDirectoryRGB,
-                                                                     const std::string &pathToImageDirectoryD,
-                                                                     const DatasetDescriber &datasetDescriber,
+    RelativePosesComputationHandler::RelativePosesComputationHandler(const DatasetDescriber &datasetDescriber,
                                                                      const ParamsRANSAC &paramsRansacToSet) :
             paramsRansac(paramsRansacToSet),
             cameraDefault(datasetDescriber.getDefaultCamera()) {
 
-        auto rgbImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(pathToImageDirectoryRGB);
-        auto depthImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(pathToImageDirectoryD);
+        const auto &datasetStructure = datasetDescriber.getDatasetStructure();
 
-        assert(!rgbImagesAll.empty());
-        assert(!depthImagesAll.empty());
+        const auto &rgbImagesAll = datasetStructure.pathsImagesRgb;
+        const auto &depthImagesAll = datasetStructure.pathsImagesDepth;
+        const auto &timeStampsRgbDepth = datasetStructure.timestampsRgbDepth;
 
-        std::vector<std::pair<double, double>> timeStampsRgbDepth;
-
-        const auto &rgbToDassociationFile = datasetDescriber.getAssociationRgbToDepthFile();
-
-        if (rgbToDassociationFile.empty()) {
-            assert(rgbImagesAll.size() == depthImagesAll.size()
-                   && "without assoc.txt file number of RGB and D frames should be equal");
-
-            for (int timeStep = 0; timeStep < rgbImagesAll.size(); ++timeStep) {
-                timeStampsRgbDepth.emplace_back(
-                        std::make_pair(static_cast<double>(timeStep), static_cast<double>(timeStep)));
-            }
-
-        } else {
-
-            AssociatedImages associatedImages = ReaderTUM::readAssocShortFilenameRgbToD(rgbToDassociationFile);
-
-            const auto &rgbSet = associatedImages.getTimeAndPairedDepthByRgb();
-            const auto &depthSet = associatedImages.getTimeAndPairedRgbByDepth();
-
-            std::cout << "sets are rgb, d: " << rgbSet.size() << ' ' << depthSet.size() << std::endl;
-            assert(!rgbSet.empty());
-            assert(depthSet.size() == depthSet.size());
-
-            auto iteratorByRgb = rgbSet.begin();
-            auto iteratorByDepth = depthSet.begin();
-
-            while (iteratorByRgb != rgbSet.end()
-                   && iteratorByDepth != depthSet.end()) {
-                const std::string &rgbShortName = iteratorByRgb->first;
-                const std::string &depthShortName = iteratorByDepth->first;
-
-                assert(rgbShortName == iteratorByDepth->second.second);
-                assert(depthShortName == iteratorByRgb->second.second);
-
-                double timeRgb = iteratorByRgb->second.first;
-                double timeD = iteratorByDepth->second.first;
-                timeStampsRgbDepth.emplace_back(std::make_pair(timeRgb, timeD));
-
-                ++iteratorByDepth;
-                ++iteratorByRgb;
-            }
-
-            std::vector<std::string> rgbImagesAssociated;
-            std::vector<std::string> depthImagesAssociated;
-
-            for (const auto &rgbFrame: rgbImagesAll) {
-                fs::path rgbPath(rgbFrame);
-                std::string nameToFind = rgbPath.filename().string();
-
-                if (rgbSet.find(nameToFind) != rgbSet.end()) {
-                    rgbImagesAssociated.emplace_back(rgbPath.string());
-                }
-            }
-
-            for (const auto &depthFrame: depthImagesAll) {
-                fs::path depthPath(depthFrame);
-
-                if (depthSet.find(depthPath.filename().string()) != depthSet.end()) {
-                    depthImagesAssociated.emplace_back(depthPath.string());
-                }
-            }
-
-            std::cout << "sizes timestamps, rgb, depth "
-                      << timeStampsRgbDepth.size() << ' '
-                      << rgbImagesAssociated.size() << ' '
-                      << depthImagesAssociated.size() << std::endl;
-            assert(timeStampsRgbDepth.size() == rgbImagesAssociated.size());
-            assert(rgbImagesAssociated.size() == depthImagesAssociated.size());
-            assert(!rgbImagesAssociated.empty());
-
-            rgbImagesAll = rgbImagesAssociated;
-            depthImagesAll = depthImagesAssociated;
-        }
-
+        assert(rgbImagesAll.size() == depthImagesAll.size());
         assert(std::is_sorted(rgbImagesAll.begin(), rgbImagesAll.end()));
         assert(std::is_sorted(depthImagesAll.begin(), depthImagesAll.end()));
 
@@ -148,9 +74,6 @@ namespace gdr {
                 EstimatorRelativePoseRobustCreator::EstimatorMinimal::UMEYAMA,
                 EstimatorRelativePoseRobustCreator::EstimatorScalable::UMEYAMA);
         relativePoseRefiner = RefinerRelativePoseCreator::getRefiner(RefinerRelativePoseCreator::RefinerType::ICPCUDA);
-
-        //TODO: use multiple threads safely, not one
-        threadPool = std::make_unique<ThreadPool>(1);
     }
 
     const CorrespondenceGraph &RelativePosesComputationHandler::getCorrespondenceGraph() const {
@@ -161,27 +84,31 @@ namespace gdr {
         numberOfThreadsCPU = numberOfThreadsCPUToSet;
     }
 
-    std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::computeRelativePoses() {
+    std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::computeRelativePoses(
+            const std::vector<int> &gpuDeviceIndices) {
 
-        if (getPrintInformationCout()) {
-            std::cout << "start computing descriptors" << std::endl;
-        }
+        assert(!gpuDeviceIndices.empty());
+        deviceCudaICP = gpuDeviceIndices[0];
 
+        timeStartDescriptors = timerGetClockTimeNow();
         //sift detect
         std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
                 keysDescriptorsAll = siftModule->getKeypoints2DDescriptorsAllImages(
                 correspondenceGraph->getPathsRGB(),
-                {0});
+                gpuDeviceIndices);
+        timeEndDescriptors = timerGetClockTimeNow();
 
         const auto &imagesRgb = correspondenceGraph->getPathsRGB();
         const auto &imagesD = correspondenceGraph->getPathsD();
 
         for (int currentImage = 0; currentImage < keysDescriptorsAll.size(); ++currentImage) {
 
+            assert(currentImage >= 0 && currentImage < camerasDepthByPoseIndex.size());
+
             keyPointsDepthDescriptor keyPointsDepthDescriptor = keyPointsDepthDescriptor::filterKeypointsByKnownDepth(
                     keysDescriptorsAll[currentImage],
                     imagesD[currentImage],
-                    cameraDefault.getDepthPixelDivider());
+                    camerasDepthByPoseIndex[currentImage].getDepthPixelDivider());
 
             double timeRgb = timestampsRgbDepthAssociated[currentImage].first;
             double timeD = timestampsRgbDepthAssociated[currentImage].second;
@@ -191,11 +118,11 @@ namespace gdr {
             assert(currentImage < camerasDepthByPoseIndex.size());
 
             VertexPose currentVertex(currentImage,
-                                   camerasDepthByPoseIndex[currentImage],
-                                   keyPointsDepthDescriptor,
-                                   imagesRgb[currentImage],
-                                   imagesD[currentImage],
-                                   timeD);
+                                     camerasDepthByPoseIndex[currentImage],
+                                     keyPointsDepthDescriptor,
+                                     imagesRgb[currentImage],
+                                     imagesD[currentImage],
+                                     timeD);
 
             correspondenceGraph->addVertex(currentVertex);
         }
@@ -214,18 +141,31 @@ namespace gdr {
         }
 
         assert(keyPointsDescriptorsToBeMatched.size() == vertices.size());
+        assert(correspondenceGraph->getNumberOfPoses() > 0);
+
+        ImageRetriever imageRetriever(correspondenceGraph->getNumberOfPoses());
+        imageRetriever.markAllPairsToBeCompared();
+
+        timeStartMatching = timerGetClockTimeNow();
         //Sift match
-        correspondenceGraph->setPointMatchesRGB(siftModule->findCorrespondences(keyPointsDescriptorsToBeMatched));
+        correspondenceGraph->setPointMatchesRGB(
+                siftModule->findCorrespondences(keyPointsDescriptorsToBeMatched,
+                                                imageRetriever,
+                                                gpuDeviceIndices));
+        timeEndMatching = timerGetClockTimeNow();
 
         correspondenceGraph->decreaseDensity();
         KeyPointMatches allInlierKeyPointMatches;
-        auto relativePoses = findTransformationRtMatrices(allInlierKeyPointMatches);
-        assert(!allInlierKeyPointMatches.getKeyPointMatchesVector().empty());
-        correspondenceGraph->setInlierPointMatches(allInlierKeyPointMatches);
 
+        timeStartRelativePoses = timerGetClockTimeNow();
+        auto relativePoses = findTransformationRtMatrices(allInlierKeyPointMatches);
+        timeEndRelativePoses = timerGetClockTimeNow();
+
+        assert(!allInlierKeyPointMatches.empty());
+        correspondenceGraph->setInlierPointMatches(allInlierKeyPointMatches);
         correspondenceGraph->setRelativePoses(relativePoses);
+
         std::string poseFile = getPathRelativePose();
-//        correspondenceGraph->printRelativePosesFile(poseFile);
 
         return relativePoses;
     }
@@ -244,7 +184,8 @@ namespace gdr {
         int numberOfVertices = getNumberOfVertices();
         tbb::concurrent_vector<tbb::concurrent_vector<RelativeSE3>> transformationMatricesConcurrent(numberOfVertices);
 
-        tbb::concurrent_vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> allInlierKeyPointMatchesTBB;
+        tbb::concurrent_vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
+                keyPointImageAndLocalPointIndexAndKeyPointInfo>> allInlierKeyPointMatchesTBB;
 
         const auto &vertices = correspondenceGraph->getVertices();
         const auto &keyPointMatches = correspondenceGraph->getKeyPointMatches();
@@ -280,45 +221,44 @@ namespace gdr {
 
                                                     if (success) {
 
-                                                        for (const auto &matchPair: inlierKeyPointMatches.getKeyPointMatchesVector()) {
-                                                            allInlierKeyPointMatchesTBB.emplace_back(matchPair);
+                                                        for (auto &matchPair: inlierKeyPointMatches) {
+                                                            allInlierKeyPointMatchesTBB.emplace_back(
+                                                                    std::move(matchPair));
                                                         }
 
                                                         // fill info about relative pairwise transformations Rt
-                                                        transformationMatricesConcurrent[i].push_back(
-                                                                RelativeSE3(
+                                                        transformationMatricesConcurrent[i].emplace_back(
+                                                                std::move(RelativeSE3(
                                                                         frameFromDestination.getIndex(),
                                                                         frameToToBeTransformed.getIndex(),
                                                                         cameraMotion
-                                                                ));
-                                                        transformationMatricesConcurrent[frameToToBeTransformed.getIndex()].push_back(
-                                                                RelativeSE3(
+                                                                )));
+                                                        transformationMatricesConcurrent[frameToToBeTransformed.getIndex()].emplace_back(
+                                                                std::move(RelativeSE3(
                                                                         frameToToBeTransformed.getIndex(),
                                                                         frameFromDestination.getIndex(),
-                                                                        cameraMotion.inverse()));
-                                                    } else {}
+                                                                        cameraMotion.inverse())));
+                                                    }
                                                 });
                           });
 
         std::vector<std::vector<RelativeSE3>> pairwiseTransformations(numberOfVertices);
 
         for (int i = 0; i < transformationMatricesConcurrent.size(); ++i) {
-            for (const auto &transformation: transformationMatricesConcurrent[i]) {
-                pairwiseTransformations[i].emplace_back(transformation);
+            pairwiseTransformations[i].reserve(transformationMatricesConcurrent.size());
+
+            for (auto &transformation: transformationMatricesConcurrent[i]) {
+                pairwiseTransformations[i].emplace_back(std::move(transformation));
             }
         }
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> allKeyPointsToSet;
+        allInlierKeyPointMatches.clear();
 
-        allKeyPointsToSet.reserve(allInlierKeyPointMatchesTBB.size());
+        allInlierKeyPointMatches.reserve(allInlierKeyPointMatchesTBB.size());
         for (const auto &matchPair: allInlierKeyPointMatchesTBB) {
-            allKeyPointsToSet.emplace_back(matchPair);
+            allInlierKeyPointMatches.emplace_back(matchPair);
         }
-        assert(allInlierKeyPointMatchesTBB.size() == allKeyPointsToSet.size());
-
-        allInlierKeyPointMatches.setKeyPointMatches(allKeyPointsToSet);
-
-        assert(allInlierKeyPointMatches.getKeyPointMatchesVector().size() == allInlierKeyPointMatchesTBB.size());
+        assert(allInlierKeyPointMatchesTBB.size() == allInlierKeyPointMatches.size());
 
         return pairwiseTransformations;
     }
@@ -412,6 +352,8 @@ namespace gdr {
 
         if (!success) {
             return cR_t_umeyama;
+        } else {
+            assert(inliersAgain.size() >= paramsRansac.getInlierNumber());
         }
 
         auto inlierMatchesCorrespondingKeypointsLoRansac = findInlierPointCorrespondences(vertexFromDestDestination,
@@ -424,7 +366,7 @@ namespace gdr {
         SE3 refinedByICPRelativePose = relativePoseLoRANSAC;
         refineRelativePose(vertices[vertexToBeTransformed],
                            vertices[vertexFromDestDestination],
-                           KeyPointMatches(keyPointMatches),
+                           keyPointMatches,
                            refinedByICPRelativePose,
                            successRefine);
 
@@ -444,18 +386,19 @@ namespace gdr {
         if (ransacInliers > ICPinliers) {
             // ICP did not refine the relative pose -- return umeyama result
             cR_t_umeyama = relativePoseLoRANSAC;
-
         } else {
             cR_t_umeyama = refinedByICPRelativePose;
+
             if (getPrintInformationCout()) {
                 std::cout << "REFINED________________________________________________" << std::endl;
             }
+
             std::swap(inlierMatchesCorrespondingKeypointsAfterRefinement, inlierMatchesCorrespondingKeypointsLoRansac);
         }
 
 
         std::vector<std::pair<int, int>> matchesForVisualization;
-        keyPointMatches = inlierMatchesCorrespondingKeypointsLoRansac;
+        std::swap(keyPointMatches, inlierMatchesCorrespondingKeypointsLoRansac);
         const auto &poseFrom = vertices[vertexFromDestDestination];
         const auto &poseTo = vertices[vertexToBeTransformed];
 
@@ -493,7 +436,8 @@ namespace gdr {
                                                                     int vertexInList,
                                                                     const SE3 &transformation) const {
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> correspondencesBetweenTwoImages;
+        std::vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
+                keyPointImageAndLocalPointIndexAndKeyPointInfo>> correspondencesBetweenTwoImages;
         const auto &match = correspondenceGraph->getMatch(vertexFrom, vertexInList);
         const auto &vertices = correspondenceGraph->getVertices();
         int minSize = match.getSize();
@@ -555,7 +499,8 @@ namespace gdr {
 
         Eigen::Matrix4Xd transformedPoints = transformation.getSE3().matrix() * toBeTransformedPoints;
 
-        std::vector<std::vector<std::pair<std::pair<int, int>, KeyPointInfo>>> inlierCorrespondences;
+        std::vector<std::pair<keyPointImageAndLocalPointIndexAndKeyPointInfo,
+                keyPointImageAndLocalPointIndexAndKeyPointInfo>> inlierCorrespondences;
         std::vector<std::pair<double, int>> reprojectionInlierErrors = inlierCounter.calculateInlierProjectionErrors(
                 toBeTransformedPoints,
                 destinationPoints,
@@ -574,7 +519,7 @@ namespace gdr {
 
         assert(reprojectionInlierErrors.size() == inlierCorrespondences.size());
 
-        return KeyPointMatches(inlierCorrespondences);
+        return inlierCorrespondences;
     }
 
     int RelativePosesComputationHandler::refineRelativePose(const VertexPose &vertexToBeTransformed,
@@ -592,10 +537,20 @@ namespace gdr {
                                       vertexDestination.getPathDImage(),
                                       vertexDestination.getKeyPoints2D(),
                                       vertexDestination.getCamera());
+
+        double durationICP = 0.0;
         refinementSuccess = relativePoseRefiner->refineRelativePose(poseToBeTransformed,
                                                                     poseDestination,
                                                                     KeyPointMatches(),
-                                                                    initEstimationRelPos);
+                                                                    initEstimationRelPos,
+                                                                    durationICP,
+                                                                    deviceCudaICP);
+
+        {
+            std::unique_lock<std::mutex> lockTime(timeMutex);
+            timeCountSecondsTotalICP += durationICP;
+        }
+
         assert(refinementSuccess);
 
         return 0;
@@ -643,5 +598,32 @@ namespace gdr {
 
     void RelativePosesComputationHandler::setPrintInformationCout(bool printProgressToCout) {
         printInformationConsole = printProgressToCout;
+    }
+
+    void RelativePosesComputationHandler::setDeviceCudaICP(int deviceCudaIcpToSet) {
+        deviceCudaICP = deviceCudaIcpToSet;
+    }
+
+
+    std::stringstream RelativePosesComputationHandler::getTimeBenchmarkInfo() const {
+
+        std::chrono::duration<double> timeDetect = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndDescriptors - timeStartDescriptors);
+        std::chrono::duration<double> timeMatch = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndMatching - timeStartMatching);
+        std::chrono::duration<double> timeRelativePoseICP = std::chrono::duration_cast<std::chrono::duration<double>>(
+                timeEndRelativePoses - timeStartRelativePoses);
+
+
+        std::stringstream resultTimeInfo;
+
+        resultTimeInfo << "    TIMER INFO:" << std::endl;
+        resultTimeInfo << "          SIFT detect: " << timeDetect.count() << std::endl;
+        resultTimeInfo << "          SIFT match: " << timeMatch.count() << std::endl;
+        resultTimeInfo << "          relative poses umeyama + ICP : " << timeRelativePoseICP.count() << std::endl;
+        resultTimeInfo << "              umeyama: " << timeRelativePoseICP.count() - timeCountSecondsTotalICP << std::endl;
+        resultTimeInfo << "              ICP: " << timeCountSecondsTotalICP << std::endl;
+
+        return resultTimeInfo;
     }
 }

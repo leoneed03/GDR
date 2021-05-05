@@ -18,9 +18,9 @@ namespace gdr {
     ConnectedComponentPoseGraph::ConnectedComponentPoseGraph(
             const std::vector<VertexPose> &absolutePosesToSet,
             const std::vector<std::vector<RelativeSE3>> &edgesLocalIndicesRelativePoses,
-            const KeyPointMatches &newInlierPointCorrespondences,
+            const KeyPointMatches &inlierPointCorrespondencesToSet,
             int componentNumberToSet) :
-            inlierPointCorrespondences(newInlierPointCorrespondences),
+            inlierPointCorrespondences(inlierPointCorrespondencesToSet),
             componentNumber(componentNumberToSet) {
 
         poseGraph = PoseGraph(absolutePosesToSet, edgesLocalIndicesRelativePoses);

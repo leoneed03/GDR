@@ -9,22 +9,26 @@
 #include <map>
 #include <string>
 
+#include "datasetDescriber/DatasetStructure.h"
+
 #include "cameraModel/CameraRGBD.h"
 
 namespace gdr {
     class DatasetDescriber {
+
+        DatasetStructure datasetStructure;
 
         std::map<std::string, CameraRGBD> cameraModelByImageRGBFilename;
         std::map<std::string, CameraRGBD> cameraModelByImageDFilename;
 
         CameraRGBD defaultCamera;
 
-        std::string associationRgbToDepthFile;
-
     public:
 
-        DatasetDescriber(const CameraRGBD &defaultCameraRgbd,
-                         std::string associationFileRgbToDepth = "");
+        const DatasetStructure &getDatasetStructure() const;
+
+        DatasetDescriber(const DatasetStructure &datasetStructure,
+                         const CameraRGBD &defaultCameraRgbd);
 
         void addCameraRgb(const std::string &filenameRgb, const CameraRGBD &camera);
 
@@ -35,8 +39,6 @@ namespace gdr {
         const CameraRGBD &findCameraDepth(const std::string &filenameDepth, bool &found) const;
 
         const CameraRGBD &getDefaultCamera() const;
-
-        const std::string &getAssociationRgbToDepthFile() const;
 
     };
 }

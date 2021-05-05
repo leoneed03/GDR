@@ -3,19 +3,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
+#include "directoryTraversing/DirectoryReader.h"
 #include "TesterReconstruction.h"
+
+#include "readerDataset/readerTUM/ReaderTum.h"
 #include "boost/filesystem.hpp"
 
 namespace test {
 
     namespace fs = boost::filesystem;
-
-    std::string appendPathSuffix(const std::string &pathString, const std::string &suffixString) {
-        fs::path path(pathString);
-
-        path.append(suffixString);
-        return path.string();
-    }
 
     ErrorsOfTrajectoryEstimation TesterReconstruction::testReconstruction(
             const std::string &pathRelativeToData,
@@ -27,7 +23,9 @@ namespace test {
             double timeDiffThreshold,
             bool printToConsole,
             bool showVisualization3D,
-            bool savePointCloudPly) {
+            bool savePointCloudPly,
+            const std::vector<int> &gpuDevices,
+            bool printFullReport) {
 
         ErrorsOfTrajectoryEstimation errorsOfTrajectoryEstimation;
 
@@ -38,29 +36,30 @@ namespace test {
         const fs::path datasetPath(pathRelativeToData);
         std::string shortDatasetName = datasetPath.filename().string();
 
+        gdr::DatasetStructure datasetStructure = gdr::ReaderTUM::getDatasetStructure(datasetPath.string(),
+                                                                                     assocFile);
+        std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph;
+        int numberOfPosesInDataset = 0;
 
-        std::string pathRGB = appendPathSuffix(pathRelativeToData, "rgb");
-
-        std::string pathD = appendPathSuffix(pathRelativeToData, "depth");
-
-        std::string pathAssoc = (!assocFile.empty()) ? (appendPathSuffix(pathRelativeToData, assocFile))
-                                                     : (assocFile);
-
-        gdr::RelativePosesComputationHandler cgHandler(pathRGB,
-                                                       pathD,
-                                                       gdr::DatasetDescriber(cameraDefault, pathAssoc),
-                                                       paramsRansac);
+        std::stringstream benchmarkInfoRelativePoses;
+        {
+            gdr::RelativePosesComputationHandler cgHandler(
+                    gdr::DatasetDescriber(datasetStructure,
+                                          cameraDefault),
+                    paramsRansac);
 
 
-        std::cout << "start computing relative poses" << std::endl;
-        cgHandler.computeRelativePoses();
+            std::cout << "start computing relative poses" << std::endl;
+            cgHandler.computeRelativePoses(gpuDevices);
+            benchmarkInfoRelativePoses = cgHandler.getTimeBenchmarkInfo();
 
-        int numberOfPosesInDataset = cgHandler.getNumberOfVertices();
-        errorsOfTrajectoryEstimation.numberOfPosesInDataset = numberOfPosesInDataset;
+            numberOfPosesInDataset = cgHandler.getNumberOfVertices();
+            errorsOfTrajectoryEstimation.numberOfPosesInDataset = numberOfPosesInDataset;
 
-        std::vector<std::unique_ptr<gdr::AbsolutePosesComputationHandler>> connectedComponentsPoseGraph =
-                cgHandler.splitGraphToConnectedComponents();
+            connectedComponentsPoseGraph = cgHandler.splitGraphToConnectedComponents();
+        }
 
+        std::cout << benchmarkInfoRelativePoses.str();
 
         if (printToConsole) {
 
@@ -96,7 +95,8 @@ namespace test {
         std::vector<gdr::SE3> irlsPoses = biggestComponent->getPosesSE3();
 
         {
-            std::string outputNameIRLS = appendPathSuffix(fullOutPath, outputShortFileNames.posesIRLS);
+            std::string outputNameIRLS = gdr::DirectoryReader::appendPathSuffix(fullOutPath,
+                                                                                outputShortFileNames.posesIRLS);
 
             std::cout << "IRLS poses written to: " << outputNameIRLS << std::endl;
             std::ofstream posesIRLS(outputNameIRLS);
@@ -109,9 +109,11 @@ namespace test {
 
         std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
+        std::stringstream benchmarkTimeInfoAbsolutePoses = biggestComponent->printTimeBenchmarkInfo();
+
         {
             std::string outputNameBA =
-                    appendPathSuffix(fullOutPath, outputShortFileNames.posesBA);
+                    gdr::DirectoryReader::appendPathSuffix(fullOutPath, outputShortFileNames.posesBA);
             std::ofstream posesBA(outputNameBA);
 
 
@@ -119,7 +121,8 @@ namespace test {
             posesBA << biggestComponent->getPosesForEvaluation();
         }
 
-        std::string absolutePosesGroundTruth = appendPathSuffix(pathRelativeToData, "groundtruth.txt");
+        std::string absolutePosesGroundTruth = gdr::DirectoryReader::appendPathSuffix(pathRelativeToData,
+                                                                                      "groundtruth.txt");
         std::vector<gdr::PoseFullInfo> posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientation(
                 absolutePosesGroundTruth);
 
@@ -151,6 +154,7 @@ namespace test {
         posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientationByMatches(posesInfoFull,
                                                                                        timestampsToFind,
                                                                                        timeDiffThreshold);
+        std::cout << "found timestamp matches: " << posesInfoFull.size() << std::endl;
         gdr::SE3 fixedPoseGroundTruth(posesInfoFull[0].getSophusPose());
         double minTimeDiff = std::numeric_limits<double>::max();
 
@@ -169,7 +173,7 @@ namespace test {
 
         {
             std::string outputNameGroundTruth =
-                    appendPathSuffix(fullOutPath, outputShortFileNames.posesGroundTruth);
+                    gdr::DirectoryReader::appendPathSuffix(fullOutPath, outputShortFileNames.posesGroundTruth);
             std::ofstream groundTruthPoses(outputNameGroundTruth);
             groundTruthPoses << gdr::PosesForEvaluation(
                     posesInfoFull,
@@ -191,30 +195,37 @@ namespace test {
                 auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
                                                                       biggestComponent->getIndexFixedPose(),
                                                                       true);
-                std::cout << "========================BA report[Umeyama ALIGNED]:========================="
-                          << std::endl;
-                std::cout << informationErrors << std::endl;
+                if (printFullReport) {
+                    std::cout << "========================BA report[Umeyama ALIGNED]:========================="
+                              << std::endl;
+                    std::cout << informationErrors << std::endl;
+                }
 
                 errorsOfTrajectoryEstimation.errorAlignedUmeyamaBA = informationErrors;
             }
-            std::cout << "------------------------------------------------------------------------------------"
-                      << std::endl;
+            if (printFullReport) {
+                std::cout << "------------------------------------------------------------------------------------"
+                          << std::endl;
+            }
+
             {
                 auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoBA,
                                                                       biggestComponent->getIndexFixedPose(),
                                                                       false);
-                std::cout << "========================BA report[Fixed Pose ALIGNED]:========================="
-                          << std::endl;
-                std::cout << informationErrors << std::endl;
+                if (printFullReport) {
+                    std::cout << "========================BA report[Fixed Pose ALIGNED]:========================="
+                              << std::endl;
+                    std::cout << informationErrors << std::endl;
+                }
                 meanErrorRotBA = informationErrors.rotationError.MEAN;
                 meanErrorL2BA = informationErrors.translationError.MEAN;
 
                 errorsOfTrajectoryEstimation.errorBA = informationErrors;
             }
-            std::cout << std::endl << std::endl;
 
-        }
-        {
+            if (printFullReport) {
+                std::cout << std::endl << std::endl;
+            }
 
             assert(!posesFullInfoIRLS.empty());
 
@@ -223,22 +234,28 @@ namespace test {
                                                                       biggestComponent->getIndexFixedPose(),
                                                                       true);
 
-                std::cout << "========================IRLS report [Umeyama Aligned]:========================="
-                          << std::endl;
-                std::cout << informationErrors << std::endl;
+                if (printFullReport) {
+                    std::cout << "========================IRLS report [Umeyama Aligned]:========================="
+                              << std::endl;
+                    std::cout << informationErrors << std::endl;
+                }
                 errorsOfTrajectoryEstimation.errorAlignedUmeyamaIRLS = informationErrors;
             }
+            if (printFullReport) {
+                std::cout << "------------------------------------------------------------------------------------"
+                          << std::endl;
+            }
 
-            std::cout << "------------------------------------------------------------------------------------"
-                      << std::endl;
             {
                 auto informationErrors = evaluator.evaluateTrajectory(posesFullInfoIRLS,
                                                                       biggestComponent->getIndexFixedPose(),
                                                                       false);
+                if (printFullReport) {
+                    std::cout << "========================IRLS report [Fixed Pose Aligned]:========================="
+                              << std::endl;
+                    std::cout << informationErrors << std::endl;
+                }
 
-                std::cout << "========================IRLS report [Fixed Pose Aligned]:========================="
-                          << std::endl;
-                std::cout << informationErrors << std::endl;
                 meanErrorL2IRLS = informationErrors.translationError.MEAN;
                 meanErrorRotIRLS = informationErrors.rotationError.MEAN;
 
@@ -247,7 +264,6 @@ namespace test {
                 std::cout << "Trajectory estimated for: " << informationErrors.numberOfPosesTrajectory << "/"
                           << numberOfPosesInDataset << " poses" << std::endl;
             }
-
 
         }
 
@@ -261,6 +277,8 @@ namespace test {
             modelCreationHandler.saveAsPly("test.ply");
         }
 
+        std::cout << benchmarkInfoRelativePoses.str();
+        std::cout << benchmarkTimeInfoAbsolutePoses.str() << std::endl;
 
         return errorsOfTrajectoryEstimation;
     }

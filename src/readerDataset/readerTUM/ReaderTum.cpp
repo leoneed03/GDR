@@ -6,10 +6,13 @@
 #include <fstream>
 #include <set>
 
+#include "directoryTraversing/DirectoryReader.h"
+
 #include "readerDataset/readerTUM/ReaderTum.h"
 #include "readerDataset/readerTUM/ClosestMatchFinder.h"
 
 #include "boost/filesystem.hpp"
+
 
 namespace gdr {
 
@@ -96,7 +99,8 @@ namespace gdr {
 
         }
 
-        assert(associatedImages.getTimeAndPairedDepthByRgb().size() == associatedImages.getTimeAndPairedRgbByDepth().size());
+        assert(associatedImages.getTimeAndPairedDepthByRgb().size() ==
+               associatedImages.getTimeAndPairedRgbByDepth().size());
         assert(!associatedImages.getTimeAndPairedDepthByRgb().empty());
 
         return associatedImages;
@@ -177,6 +181,110 @@ namespace gdr {
             auto timeString = name.substr(0, name.length() - 4);
             outputFile << timeString << ' ' << path.string() << std::endl;
         }
+    }
+
+
+    DatasetStructure
+    ReaderTUM::getDatasetStructure(const std::string &pathToDataset,
+                                   const std::string &assocShortFilename) {
+
+        DatasetStructure datasetDescriberTum;
+
+
+        auto rgbImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(
+                DirectoryReader::appendPathSuffix(pathToDataset, "rgb"));
+        auto depthImagesAll = DirectoryReader::readPathsToImagesFromDirectorySorted(
+                DirectoryReader::appendPathSuffix(pathToDataset, "depth"));
+
+        assert(!rgbImagesAll.empty());
+        assert(!depthImagesAll.empty());
+
+        std::vector<std::pair<double, double>> timeStampsRgbDepth;
+
+        const auto &rgbToDassociationFile =
+                (!assocShortFilename.empty()) ? (DirectoryReader::appendPathSuffix(pathToDataset, assocShortFilename))
+                                              : (assocShortFilename);
+
+        if (rgbToDassociationFile.empty()) {
+            assert(rgbImagesAll.size() == depthImagesAll.size()
+                   && "without assoc.txt file number of RGB and D frames should be equal");
+
+            for (int timeStep = 0; timeStep < rgbImagesAll.size(); ++timeStep) {
+                timeStampsRgbDepth.emplace_back(
+                        std::make_pair(static_cast<double>(timeStep), static_cast<double>(timeStep)));
+            }
+
+        } else {
+
+            AssociatedImages associatedImages = ReaderTUM::readAssocShortFilenameRgbToD(rgbToDassociationFile);
+
+            const auto &rgbSet = associatedImages.getTimeAndPairedDepthByRgb();
+            const auto &depthSet = associatedImages.getTimeAndPairedRgbByDepth();
+
+            std::cout << "sets are rgb, d: " << rgbSet.size() << ' ' << depthSet.size() << std::endl;
+            assert(!rgbSet.empty());
+            assert(depthSet.size() == depthSet.size());
+
+            auto iteratorByRgb = rgbSet.begin();
+            auto iteratorByDepth = depthSet.begin();
+
+            while (iteratorByRgb != rgbSet.end()
+                   && iteratorByDepth != depthSet.end()) {
+                const std::string &rgbShortName = iteratorByRgb->first;
+                const std::string &depthShortName = iteratorByDepth->first;
+
+                assert(rgbShortName == iteratorByDepth->second.second);
+                assert(depthShortName == iteratorByRgb->second.second);
+
+                double timeRgb = iteratorByRgb->second.first;
+                double timeD = iteratorByDepth->second.first;
+                timeStampsRgbDepth.emplace_back(std::make_pair(timeRgb, timeD));
+
+                ++iteratorByDepth;
+                ++iteratorByRgb;
+            }
+
+            std::vector<std::string> rgbImagesAssociated;
+            std::vector<std::string> depthImagesAssociated;
+
+            for (const auto &rgbFrame: rgbImagesAll) {
+                fs::path rgbPath(rgbFrame);
+                std::string nameToFind = rgbPath.filename().string();
+
+                if (rgbSet.find(nameToFind) != rgbSet.end()) {
+                    rgbImagesAssociated.emplace_back(rgbPath.string());
+                }
+            }
+
+            for (const auto &depthFrame: depthImagesAll) {
+                fs::path depthPath(depthFrame);
+
+                if (depthSet.find(depthPath.filename().string()) != depthSet.end()) {
+                    depthImagesAssociated.emplace_back(depthPath.string());
+                }
+            }
+
+            std::cout << "sizes timestamps, rgb, depth "
+                      << timeStampsRgbDepth.size() << ' '
+                      << rgbImagesAssociated.size() << ' '
+                      << depthImagesAssociated.size() << std::endl;
+            assert(timeStampsRgbDepth.size() == rgbImagesAssociated.size());
+            assert(rgbImagesAssociated.size() == depthImagesAssociated.size());
+            assert(!rgbImagesAssociated.empty());
+
+            rgbImagesAll = rgbImagesAssociated;
+            depthImagesAll = depthImagesAssociated;
+        }
+
+        assert(rgbImagesAll.size() == depthImagesAll.size());
+
+        datasetDescriberTum.pathsImagesRgb = rgbImagesAll;
+        datasetDescriberTum.pathsImagesDepth = depthImagesAll;
+        datasetDescriberTum.timestampsRgbDepth = timeStampsRgbDepth;
+
+        assert(timeStampsRgbDepth.size() == rgbImagesAll.size());
+
+        return datasetDescriberTum;
     }
 
 }

@@ -12,6 +12,8 @@
 #include "parametrization/PoseFullInfo.h"
 #include "parametrization/AssociatedImages.h"
 
+#include "datasetDescriber/DatasetStructure.h"
+
 namespace gdr {
 
     class ReaderTUM {
@@ -29,6 +31,10 @@ namespace gdr {
 
         static void createRgbOrDepthTxt(const std::string &pathToImages,
                                         const std::string &pathToCreatedFileDirectory);
+
+        static DatasetStructure getDatasetStructure(
+                const std::string &pathToDataset,
+                const std::string &assocShortFilename);
     };
 }
 
