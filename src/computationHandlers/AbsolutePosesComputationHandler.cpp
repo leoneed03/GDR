@@ -49,7 +49,6 @@ namespace gdr {
             poseAndLocalIndices.push_back(vectorOfMatches.first.first);
             poseAndLocalIndices.push_back(vectorOfMatches.second.first);
 
-            //TODO: use pair
             pointMatcher->insertPointsWithNewClasses(poseAndLocalIndices);
         }
 
