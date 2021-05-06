@@ -21,8 +21,8 @@ namespace gdr {
         static std::vector<SO3>
         shanonAveraging(
                 const std::vector<RotationMeasurement> &relativeRotations,
-                const std::string &pathToRelativeRotationsOut,
                 int indexPoseFixed,
+                const std::string &pathToRelativeRotationsOut = "default_relative_rotations_file.txt",
                 int maxDimension = 10,
                 bool printProgressToConsole = false);
 

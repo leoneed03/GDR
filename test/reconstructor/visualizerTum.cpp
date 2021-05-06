@@ -41,7 +41,6 @@ int main(int argc, char *argv[]) {
 
     auto associatedImages = gdr::ReaderTUM::readAssocShortFilenameRgbToD(assocFilePath.string());
 
-
     std::map<double, std::pair<std::string, std::string>> rgbAndDepthNamesByDepthTime = associatedImages.getMapFromDepthTimestampToRgbAndDepthFilename();
 
     assert(!rgbAndDepthNamesByDepthTime.empty());
@@ -70,6 +69,11 @@ int main(int argc, char *argv[]) {
                 (rgbAndDepthNamesByDepthTime, timestamp);
 
         assert(foundClosestImageInfo != rgbAndDepthNamesByDepthTime.end());
+
+        if (std::abs(foundClosestImageInfo->first - timestamp) > 0.02) {
+            continue;
+        }
+
         assert(std::abs(foundClosestImageInfo->first - timestamp) < 0.02);
 
         fs::path pathFullRgb = datasetPath;
@@ -80,22 +84,27 @@ int main(int argc, char *argv[]) {
         pathFullDepth.append("depth");
         pathFullDepth.append(foundClosestImageInfo->second.second);
 
+        gdr::CameraRGBD cameraRgbdFr1(517.3, 318.6, 516.5, 255.3);
+        gdr::CameraRGBD cameraRgbdFr3(535.4, 320.1,539.2,  247.6);
+        gdr::CameraRGBD cameraRgbdFr2(520.9, 325.1, 521.0, 249.7);
+
+        const auto& cameraRgbd = cameraRgbdFr1;
+
         gdr::Reconstructable poseToVisualize(pathFullRgb.string(),
                                              pathFullDepth.string(),
-                                             gdr::CameraRGBD());
+                                             cameraRgbd);
         poseToVisualize.setAbsolutePose(poseZero.inverse() * poseCameraToWorldSE3);
 
         posesToVisualize.emplace_back(poseToVisualize);
     }
 
     gdr::SmoothPointCloud::registerPointCloudFromImages(posesToVisualize,
-                                                        true,
+                                                        false,
                                                         0.005,
                                                         0.005,
                                                         0.005,
                                                         "",
-                                                        "");
+                                                        "screenshot.png");
 
     return 0;
 }
-

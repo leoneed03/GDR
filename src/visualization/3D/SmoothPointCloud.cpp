@@ -66,11 +66,13 @@ namespace gdr {
 
             int v1(0);
             viewer->createViewPort(0.0, 0.0, 1.0, 1.0, v1);
-            viewer->setBackgroundColor(0, 0, 0, v1);
+            int intens = 255;
+            viewer->setBackgroundColor(intens, intens, intens, v1);
             pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(input_cloud);
 
             viewer->addPointCloud<pcl::PointXYZRGB>(input_cloud, rgb, "for screenshot", v1);
 
+            std::cout << "saving screenshot to " << screenshotPath << std::endl;
             viewer->saveScreenshot(screenshotPath);
         }
 

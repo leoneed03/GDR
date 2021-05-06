@@ -16,8 +16,8 @@ namespace gdr {
 
     std::vector<SO3> RotationAverager::shanonAveraging(
             const std::vector<RotationMeasurement> &relativeRotations,
-            const std::string &pathToRelativeRotationsOut,
             int indexPoseFixed,
+            const std::string &pathToRelativeRotationsOut,
             int maxDimension,
             bool printProgressToConsole) {
 

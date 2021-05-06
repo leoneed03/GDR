@@ -117,8 +117,8 @@ namespace gdr {
         timeStartRotationAveraging = timerGetClockTimeNow();
         std::vector<SO3> absoluteRotations = RotationAverager::shanonAveraging(
                 getRelativeRotationsVector(),
-                getPathRelativePoseFile(),
-                getIndexFixedPose());
+                getIndexFixedPose(),
+                getPathRelativePoseFile());
 
         for (int i = 0; i < getNumberOfPoses(); ++i) {
             connectedComponent->setRotation(i, SO3(absoluteRotations[i].getRotationSophus()));

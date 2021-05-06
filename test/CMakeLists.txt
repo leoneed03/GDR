@@ -1,4 +1,4 @@
-set(TESTS testAccuracyBA testTranslationAveraging testLoRANSAC)
+set(TESTS testAccuracyBA testRotationAveraging testRotationRobustOptimization testTranslationAveraging testLoRANSAC)
 
 foreach(TEST ${TESTS})
   add_executable(${TEST} ${TEST}.cpp)
