@@ -22,7 +22,7 @@ namespace gdr {
 
         std::vector<std::unique_ptr<SiftGPU>> detectorsSift;
         for (const auto &device: numOfDevicesForDetection) {
-            detectorsSift.push_back(std::make_unique<SiftGPU>());
+            detectorsSift.push_back(std::move(std::make_unique<SiftGPU>()));
         }
 
         for (int i = 0; i < numOfDevicesForDetection.size(); ++i) {
@@ -43,7 +43,6 @@ namespace gdr {
             }
 
             detector->ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
-            std::cout << "detecting on " << numOfDevicesForDetection[i] << std::endl;
 
             auto contextVerified = detector->VerifyContextGL();
             if (contextVerified == 0) {
@@ -159,7 +158,6 @@ namespace gdr {
             }
         }
 
-        std::cout << "finish matching" << std::endl;
         return resultMatches;
     }
 
@@ -171,10 +169,8 @@ namespace gdr {
         std::vector<std::unique_ptr<SiftMatchGPU>> matchers;
 
         for (int i = 0; i < matchDevicesNumbers.size(); ++i) {
-            matchers.push_back(std::make_unique<SiftMatchGPU>(maxSift));
+            matchers.push_back(std::move(std::make_unique<SiftMatchGPU>(maxSift)));
             matchers[i]->SetLanguage(SiftMatchGPU::SIFTMATCH_CUDA + matchDevicesNumbers[i]);
-
-            std::cout << "matching on " << matchDevicesNumbers[i] << std::endl;
 
             auto contextVerified = matchers[i]->VerifyContextGL();
             assert(contextVerified != 0);
@@ -249,7 +245,8 @@ namespace gdr {
                     matcher,
                     matchesToPut);
 
-            matches[localIndexFromLess].emplace_back(std::move(gdr::Match(localIndexToBigger, std::move(matchingNumbers))));
+            matches[localIndexFromLess].emplace_back(
+                    std::move(gdr::Match(localIndexToBigger, std::move(matchingNumbers))));
         }
     }
 

@@ -20,7 +20,6 @@
 #include "parametrization/SE3.h"
 #include "parametrization/Point3d.h"
 #include "parametrization/PoseFullInfo.h"
-#include "optimization/lossFunctions/LossFunctions.h"
 #include "statistics/RobustEstimators.h"
 
 namespace gdr {
@@ -29,7 +28,7 @@ namespace gdr {
 
         static constexpr double thresholdInlierDefault = 2.5;
 
-        bool printProgressToCout = true;
+        bool printProgressToCout = false;
 
         void setPosesAndPoints(const std::vector<Point3d> &points,
                                const std::vector<std::pair<SE3, CameraRGBD>> &posesCameraToWorld,
@@ -54,7 +53,6 @@ namespace gdr {
         static const int dimPose = 3;
         static const int dimOrientation = 4;
 
-        // TODO: learn what these parameters are used for in MAD estimators
         int n = -1;
         int p = -1;
 
@@ -165,7 +163,7 @@ namespace gdr {
                                                                 pose,
                                                                 orientation);
 
-                T& computedDepth = pointInLocalCoordinates[2];
+                T &computedDepth = pointInLocalCoordinates[2];
 
                 // depth error computation (noise modeled as sigma = a * depth^2 [meters])
                 {

@@ -57,7 +57,7 @@ class GlobalUtil;
 class SiftParam
 {
 public:
-	float*		_sigma;
+	float*		_sigma = NULL;
 	float		_sigma_skip0; // 
 	float		_sigma_skip1; //
 	

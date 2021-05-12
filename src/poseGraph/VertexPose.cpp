@@ -105,19 +105,19 @@ namespace gdr {
     }
 
     VertexPose::VertexPose(int newIndex,
-                       const CameraRGBD &newCameraRgbd,
-                       const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
-                       const std::string &newPathRGB,
-                       const std::string &newPathD,
-                       double timestampToSet) : index(newIndex),
-                                                initialIndex(newIndex),
-                                                cameraRgbd(newCameraRgbd),
-                                                keypoints(keyPointsDepthDescriptor.getKeyPointsKnownDepth()),
-                                                descriptors(keyPointsDepthDescriptor.getDescriptorsKnownDepth()),
-                                                depths(keyPointsDepthDescriptor.getDepths()),
-                                                pathToRGBimage(newPathRGB),
-                                                pathToDimage(newPathD),
-                                                timestamp(timestampToSet) {}
+                           const CameraRGBD &newCameraRgbd,
+                           const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
+                           const std::string &newPathRGB,
+                           const std::string &newPathD,
+                           double timestampToSet) : index(newIndex),
+                                                    initialIndex(newIndex),
+                                                    cameraRgbd(newCameraRgbd),
+                                                    keypoints(keyPointsDepthDescriptor.getKeyPointsKnownDepth()),
+                                                    descriptors(keyPointsDepthDescriptor.getDescriptorsKnownDepth()),
+                                                    depths(keyPointsDepthDescriptor.getDepths()),
+                                                    pathToRGBimage(newPathRGB),
+                                                    pathToDimage(newPathD),
+                                                    timestamp(timestampToSet) {}
 
     void VertexPose::setIndex(int newIndex) {
         index = newIndex;

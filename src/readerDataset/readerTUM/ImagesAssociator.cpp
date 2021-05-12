@@ -97,10 +97,10 @@ namespace gdr {
             assert(numberImagesD == imageNamByTimestampD.size());
 
             double timestampToLookFor = shortNameRGBAndTime.second;
-            auto closestMatchImageDepth = ClosestMatchFinder::findClosestKeyMatch<double, std::string>(
+            auto closestMatchImageDepth = findClosestKeyMatch<double, std::string>(
                     imageNamByTimestampD,
                     timestampToLookFor);
-            auto exactMatchImageRGB = ClosestMatchFinder::findClosestKeyMatch<double, std::string>(
+            auto exactMatchImageRGB = findClosestKeyMatch<double, std::string>(
                     imageNamByTimestampRGB,
                     timestampToLookFor
             );
@@ -288,8 +288,8 @@ namespace gdr {
         }
 
         for (const auto &timestamp: timestamps) {
-            auto closestMatch = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(poseInfoByTimestamps,
-                                                                                              timestamp);
+            auto closestMatch = findClosestKeyMatch<double, PoseFullInfo>(poseInfoByTimestamps,
+                                                                          timestamp);
             if (closestMatch == poseInfoByTimestamps.end()) {
                 std::cout << " did not find timestamp [FOUND END ?!] " << timestamp << std::endl;
                 ++notFoundCounter;
@@ -409,7 +409,7 @@ namespace gdr {
                 std::string imageDepthFilename = imageD.filename().string();
                 depthFromDatasetRoot.append(imageDepthFilename);
                 depthTxtFile << (imageDepthFilename.substr(0, imageDepthFilename.length() - 4))
-                           << ' ' << depthFromDatasetRoot.string() << std::endl;
+                             << ' ' << depthFromDatasetRoot.string() << std::endl;
             }
         }
 
@@ -461,7 +461,7 @@ namespace gdr {
         assert(!setOfPosesGT.empty());
 
         for (const auto &timestamp: timestamps) {
-            auto foundPoseGT = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(
+            auto foundPoseGT = findClosestKeyMatch<double, PoseFullInfo>(
                     setOfPosesGT, timestamp);
 
             assert(foundPoseGT != setOfPosesGT.end());

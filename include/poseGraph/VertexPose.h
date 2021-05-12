@@ -73,11 +73,11 @@ namespace gdr {
         const SE3 &getAbsolutePoseSE3() const;
 
         VertexPose(int index,
-                 const CameraRGBD &cameraRgbd,
-                 const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
-                 const std::string &pathRGB,
-                 const std::string &pathD,
-                 double timestamp);
+                   const CameraRGBD &cameraRgbd,
+                   const keyPointsDepthDescriptor &keyPointsDepthDescriptor,
+                   const std::string &pathRGB,
+                   const std::string &pathD,
+                   double timestamp);
 
         double getTimestamp() const;
 

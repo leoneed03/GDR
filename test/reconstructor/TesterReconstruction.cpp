@@ -48,8 +48,9 @@ namespace test {
                                           cameraDefault),
                     paramsRansac);
 
-
-            std::cout << "start computing relative poses" << std::endl;
+            if (printToConsole) {
+                std::cout << "start computing relative poses" << std::endl;
+            }
             cgHandler.computeRelativePoses(gpuDevices);
             benchmarkInfoRelativePoses = cgHandler.getTimeBenchmarkInfo();
 
@@ -59,7 +60,6 @@ namespace test {
             connectedComponentsPoseGraph = cgHandler.splitGraphToConnectedComponents();
         }
 
-        std::cout << benchmarkInfoRelativePoses.str();
 
         if (printToConsole) {
 
@@ -77,13 +77,20 @@ namespace test {
         biggestComponent->setRelativePosesFilePath("relativeRotationsFile_0.txt");
 
         const auto &poseFixed = biggestComponent->getVertices()[biggestComponent->getIndexFixedPose()];
-        std::cout << "perform rotation averaging" << std::endl;
+
+        if (printToConsole) {
+            std::cout << "perform rotation averaging" << std::endl;
+        }
         std::vector<gdr::SO3> computedAbsoluteOrientationsNoRobust = biggestComponent->performRotationAveraging();
 
-        std::cout << "perform rotation robust optimization" << std::endl;
+        if (printToConsole) {
+            std::cout << "perform rotation robust optimization" << std::endl;
+        }
         std::vector<gdr::SO3> computedAbsoluteOrientationsRobust = biggestComponent->performRotationRobustOptimization();
 
-        std::cout << "perform translation averaging" << std::endl;
+        if (printToConsole) {
+            std::cout << "perform translation averaging" << std::endl;
+        }
         std::vector<Eigen::Vector3d> computedAbsoluteTranslationsIRLS = biggestComponent->performTranslationAveraging();
 
         std::string fullOutPath;
@@ -97,15 +104,17 @@ namespace test {
         {
             std::string outputNameIRLS = gdr::DirectoryReader::appendPathSuffix(fullOutPath,
                                                                                 outputShortFileNames.posesIRLS);
-
-            std::cout << "IRLS poses written to: " << outputNameIRLS << std::endl;
+            if (printToConsole) {
+                std::cout << "IRLS poses written to: " << outputNameIRLS << std::endl;
+            }
             std::ofstream posesIRLS(outputNameIRLS);
 
             posesIRLS << biggestComponent->getPosesForEvaluation();
         }
 
-        std::cout << "perform Bundle Adjustment" << std::endl;
-
+        if (printToConsole) {
+            std::cout << "perform Bundle Adjustment" << std::endl;
+        }
 
         std::vector<gdr::SE3> bundleAdjustedPoses = biggestComponent->performBundleAdjustmentUsingDepth();
 
@@ -116,8 +125,10 @@ namespace test {
                     gdr::DirectoryReader::appendPathSuffix(fullOutPath, outputShortFileNames.posesBA);
             std::ofstream posesBA(outputNameBA);
 
+            if (printToConsole) {
+                std::cout << "BA poses written to: " << outputNameBA << std::endl;
+            }
 
-            std::cout << "BA poses written to: " << outputNameBA << std::endl;
             posesBA << biggestComponent->getPosesForEvaluation();
         }
 
@@ -154,7 +165,9 @@ namespace test {
         posesInfoFull = gdr::ReaderTUM::getPoseInfoTimeTranslationOrientationByMatches(posesInfoFull,
                                                                                        timestampsToFind,
                                                                                        timeDiffThreshold);
-        std::cout << "found timestamp matches: " << posesInfoFull.size() << std::endl;
+        if (printToConsole) {
+            std::cout << "found timestamp matches: " << posesInfoFull.size() << std::endl;
+        }
         gdr::SE3 fixedPoseGroundTruth(posesInfoFull[0].getSophusPose());
         double minTimeDiff = std::numeric_limits<double>::max();
 
@@ -261,8 +274,10 @@ namespace test {
 
                 errorsOfTrajectoryEstimation.errorIRLS = informationErrors;
 
-                std::cout << "Trajectory estimated for: " << informationErrors.numberOfPosesTrajectory << "/"
-                          << numberOfPosesInDataset << " poses" << std::endl;
+                if (printFullReport) {
+                    std::cout << "Trajectory estimated for: " << informationErrors.numberOfPosesTrajectory << "/"
+                              << numberOfPosesInDataset << " poses" << std::endl;
+                }
             }
 
         }
@@ -277,8 +292,10 @@ namespace test {
             modelCreationHandler.saveAsPly("test.ply");
         }
 
-        std::cout << benchmarkInfoRelativePoses.str();
-        std::cout << benchmarkTimeInfoAbsolutePoses.str() << std::endl;
+        if (printFullReport) {
+            std::cout << benchmarkInfoRelativePoses.str();
+            std::cout << benchmarkTimeInfoAbsolutePoses.str() << std::endl;
+        }
 
         return errorsOfTrajectoryEstimation;
     }

@@ -61,7 +61,7 @@ namespace gdr {
         std::vector<double> errorsL2Squared;
         std::vector<double> errorsRadiansSquared;
 
-        auto closestMatchToFixedZero = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(
+        auto closestMatchToFixedZero = findClosestKeyMatch<double, PoseFullInfo>(
                 setOfPosesFromGroundTruth, trajectory[indexFixed].getTimestamp()
         );
         assert(closestMatchToFixedZero != setOfPosesFromGroundTruth.end());
@@ -79,7 +79,7 @@ namespace gdr {
 
         for (const auto &poseTrajectory: trajectory) {
 
-            auto closestMatch = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(
+            auto closestMatch = findClosestKeyMatch<double, PoseFullInfo>(
                     setOfPosesFromGroundTruth, poseTrajectory.getTimestamp()
             );
             assert(closestMatch != setOfPosesFromGroundTruth.end());
@@ -118,7 +118,8 @@ namespace gdr {
         auto posesMatchedGroundTruthAlignedUmeyama(posesMatchedGroundTruth);
 
 
-        for (int poseGroundTruthIndex = 0; poseGroundTruthIndex < posesMatchedGroundTruth.size(); ++poseGroundTruthIndex) {
+        for (int poseGroundTruthIndex = 0;
+             poseGroundTruthIndex < posesMatchedGroundTruth.size(); ++poseGroundTruthIndex) {
 
             {
                 auto &pose = posesMatchedGroundTruth[poseGroundTruthIndex];
@@ -151,7 +152,7 @@ namespace gdr {
                 pose = PoseFullInfo(pose.getTimestamp(), SE3(pose.getSophusPose()));
             } else {
                 pose = PoseFullInfo(pose.getTimestamp(), SE3(trajectory[indexFixed].getSophusPose().inverse()
-                                            * pose.getSophusPose()));
+                                                             * pose.getSophusPose()));
             }
         }
 
@@ -173,7 +174,7 @@ namespace gdr {
                 alignedTrajectoryPose = SE3(posesMatchedTrajectory[pose].getSophusPose());
             } else {
                 alignedTrajectoryPose = SE3(trajectory[indexFixed].getSophusPose().inverse()
-                                         * posesMatchedTrajectory[pose].getSophusPose());
+                                            * posesMatchedTrajectory[pose].getSophusPose());
             }
 
             std::pair<double, double> errorRotationTranslation =
@@ -284,11 +285,11 @@ namespace gdr {
     std::ostream &operator<<(std::ostream &os, const ErrorRotationTranslation &informationErrors) {
 
         os << informationErrors.rotationError
-                  << "------------------------------------------------------------" << std::endl;
+           << "------------------------------------------------------------" << std::endl;
         os << informationErrors.translationError << std::endl;
 
         os << "Compared with groundtruth: " << informationErrors.numberOfPosesEvaluated << "/"
-                  << informationErrors.numberOfPosesTrajectory;
+           << informationErrors.numberOfPosesTrajectory;
         return os;
     }
 }

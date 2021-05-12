@@ -61,7 +61,7 @@ namespace gdr {
         for (const auto &vectorOfMatches: matchesBetweenPoints) {
 
             for (int i = 0; i < 2; ++i) {
-                const auto& fullPointInfo = (i == 0) ? (vectorOfMatches.first) : (vectorOfMatches.second);
+                const auto &fullPointInfo = (i == 0) ? (vectorOfMatches.first) : (vectorOfMatches.second);
 
                 const auto &poseNumAndLocalInd = fullPointInfo.first;
                 const auto &foundIt = keyPointInfoByPoseNumAndLocalInd[poseNumAndLocalInd.first].find(

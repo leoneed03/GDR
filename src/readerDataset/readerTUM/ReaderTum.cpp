@@ -134,8 +134,8 @@ namespace gdr {
         assert(!timestampsSearchable.empty() && "check that groundtruth poses file is not empty");
 
         for (const auto &timestampToFind: timestamps) {
-            auto iterFound = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(timestampsSearchable,
-                                                                                           timestampToFind);
+            auto iterFound = findClosestKeyMatch<double, PoseFullInfo>(timestampsSearchable,
+                                                                       timestampToFind);
             assert(iterFound != timestampsSearchable.end());
 
             if (std::abs(iterFound->first - timestampToFind) < timeDifTreshold) {
@@ -221,7 +221,6 @@ namespace gdr {
             const auto &rgbSet = associatedImages.getTimeAndPairedDepthByRgb();
             const auto &depthSet = associatedImages.getTimeAndPairedRgbByDepth();
 
-            std::cout << "sets are rgb, d: " << rgbSet.size() << ' ' << depthSet.size() << std::endl;
             assert(!rgbSet.empty());
             assert(depthSet.size() == depthSet.size());
 
@@ -264,10 +263,6 @@ namespace gdr {
                 }
             }
 
-            std::cout << "sizes timestamps, rgb, depth "
-                      << timeStampsRgbDepth.size() << ' '
-                      << rgbImagesAssociated.size() << ' '
-                      << depthImagesAssociated.size() << std::endl;
             assert(timeStampsRgbDepth.size() == rgbImagesAssociated.size());
             assert(rgbImagesAssociated.size() == depthImagesAssociated.size());
             assert(!rgbImagesAssociated.empty());

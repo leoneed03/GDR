@@ -12,7 +12,6 @@ namespace gdr {
 
 
     struct SmoothPointCloud {
-        //TODO: store pointCloud as tree-like structure
         static int registerPointCloudFromImages(const std::vector<Reconstructable> &posesToBeRegistered,
                                                 bool showVisualization = false,
                                                 double voxelSizeX = 0.01,

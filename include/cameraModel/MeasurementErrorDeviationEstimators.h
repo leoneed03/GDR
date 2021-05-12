@@ -35,9 +35,9 @@ namespace gdr {
                 const std::function<double(double, double)> &dividerReprojectionErrorEstimator,
                 const std::function<double(double, double)> &dividerDepthErrorEstimator);
 
-        const std::function<double(double, double)>& getDividerDepthErrorEstimator() const;
+        const std::function<double(double, double)> &getDividerDepthErrorEstimator() const;
 
-        const std::function<double(double, double)>& getDividerReprojectionEstimator() const;
+        const std::function<double(double, double)> &getDividerReprojectionEstimator() const;
 
         void setParameterNoiseModelReprojection(double paramReproj);
 

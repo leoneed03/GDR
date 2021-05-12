@@ -53,7 +53,6 @@ namespace gdr {
     };
 
 
-
     class Evaluator {
 
         std::vector<PoseFullInfo> posesGroundTruth;

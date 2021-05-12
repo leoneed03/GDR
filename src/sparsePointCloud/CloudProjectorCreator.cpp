@@ -13,5 +13,4 @@ namespace gdr {
 
         return std::make_unique<CloudProjectorStl>();
     }
-
 }

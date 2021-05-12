@@ -36,8 +36,8 @@ namespace gdr {
             const std::string &rgbName = pairedInfo.first;
 
             timestampToRgbDepthNames.emplace(std::make_pair(timeToInsert,
-                                                           std::make_pair(rgbName,
-                                                                          depthName)));
+                                                            std::make_pair(rgbName,
+                                                                           depthName)));
         }
 
         return timestampToRgbDepthNames;

@@ -17,7 +17,6 @@ namespace gdr {
         rotationInner = Sophus::SO3d::fitToSO3(rotationEigenQuat.normalized().toRotationMatrix());
     }
 
-
     Eigen::Vector3d SO3::getLog() const {
         return rotationInner.log();
     }
