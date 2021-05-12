@@ -39,7 +39,6 @@ namespace gdr {
 
     private:
         bool printInformationConsole = false;
-        int numberOfThreadsCPU = 1;
         int deviceCudaICP = 0;
 
         std::vector<std::pair<double, double>> timestampsRgbDepthAssociated;
@@ -141,7 +140,7 @@ namespace gdr {
          * @param cameraDefault camera intrinsics used by default for all cameras
          */
         explicit RelativePosesComputationHandler(const DatasetDescriber &datasetDescriber,
-                                        const ParamsRANSAC &paramsRansac = ParamsRANSAC());
+                                                 const ParamsRANSAC &paramsRansac = ParamsRANSAC());
 
         /** Compute SE3 relative poses between all poses with LoRANSAC keypoint based procedure
          *      and ICP dense alignment refinement
@@ -149,7 +148,7 @@ namespace gdr {
          */
         std::vector<std::vector<RelativeSE3>> computeRelativePoses(
                 const std::vector<int> &gpuDeviceIndices = {0}
-                );
+        );
 
         /**
          * @param[out] componentNumberByPoseIndex -- vector containing each pose's component number
@@ -177,8 +176,6 @@ namespace gdr {
         int getNumberOfVertices() const;
 
         const CorrespondenceGraph &getCorrespondenceGraph() const;
-
-        void setNumberOfThreadsCPU(int numberOfThreadsCPU);
 
         void setDeviceCudaICP(int deviceCudaIcpToSet);
 

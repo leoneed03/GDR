@@ -245,7 +245,8 @@ namespace gdr {
                     matcher,
                     matchesToPut);
 
-            matches[localIndexFromLess].emplace_back(std::move(gdr::Match(localIndexToBigger, std::move(matchingNumbers))));
+            matches[localIndexFromLess].emplace_back(
+                    std::move(gdr::Match(localIndexToBigger, std::move(matchingNumbers))));
         }
     }
 

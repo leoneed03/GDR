@@ -135,7 +135,7 @@ namespace gdr {
 
         for (const auto &timestampToFind: timestamps) {
             auto iterFound = findClosestKeyMatch<double, PoseFullInfo>(timestampsSearchable,
-                                                                                           timestampToFind);
+                                                                       timestampToFind);
             assert(iterFound != timestampsSearchable.end());
 
             if (std::abs(iterFound->first - timestampToFind) < timeDifTreshold) {

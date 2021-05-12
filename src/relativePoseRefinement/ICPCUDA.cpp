@@ -101,9 +101,9 @@ namespace gdr {
 
             Sophus::SE3d relativeSE3_Rt = initTransformationSE3.getSE3();
 
-            int iterationsLevel0 = 5;
-            int iterationsLevel1 = 5;
-            int iterationsLevel2 = 10;
+            int iterationsLevel0 = 0;
+            int iterationsLevel1 = 0;
+            int iterationsLevel2 = 6;
 
             icpOdom.getIncrementalTransformation(relativeSE3_Rt,
                                                  true,

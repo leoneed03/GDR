@@ -80,10 +80,6 @@ namespace gdr {
         return *correspondenceGraph;
     }
 
-    void RelativePosesComputationHandler::setNumberOfThreadsCPU(int numberOfThreadsCPUToSet) {
-        numberOfThreadsCPU = numberOfThreadsCPUToSet;
-    }
-
     std::vector<std::vector<RelativeSE3>> RelativePosesComputationHandler::computeRelativePoses(
             const std::vector<int> &gpuDeviceIndices) {
 
@@ -621,7 +617,8 @@ namespace gdr {
         resultTimeInfo << "          SIFT detect: " << timeDetect.count() << std::endl;
         resultTimeInfo << "          SIFT match: " << timeMatch.count() << std::endl;
         resultTimeInfo << "          relative poses umeyama + ICP : " << timeRelativePoseICP.count() << std::endl;
-        resultTimeInfo << "              umeyama: " << timeRelativePoseICP.count() - timeCountSecondsTotalICP << std::endl;
+        resultTimeInfo << "              umeyama: " << timeRelativePoseICP.count() - timeCountSecondsTotalICP
+                       << std::endl;
         resultTimeInfo << "              ICP: " << timeCountSecondsTotalICP << std::endl;
 
         return resultTimeInfo;

@@ -160,7 +160,8 @@ namespace gdr {
             connectedComponents.emplace_back(std::make_unique<
                     ConnectedComponentPoseGraph>(connectedComponentsVertices[componentNumber],
                                                  edgesOfComponentsByComponentsNumber[componentNumber],
-                                                 KeyPointMatches(inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber]),
+                                                 KeyPointMatches(
+                                                         inlierCorrespondencesPointsInsideComponentByComponentNumber[componentNumber]),
                                                  componentNumber));
         }
         assert(addedVertices == correspondenceGraph.getNumberOfPoses());

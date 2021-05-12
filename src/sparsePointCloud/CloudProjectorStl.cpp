@@ -174,7 +174,7 @@ namespace gdr {
                 int currentNumberOfInlierObservations = 0;
 
                 if (iterationPointRansac == -1) {
-                    
+
                     currentNumberOfInlierObservations =
                             getPoseNumbersOfInlierObservations(i,
                                                                pointGuessL2).size();

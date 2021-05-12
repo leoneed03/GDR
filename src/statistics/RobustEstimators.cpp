@@ -12,7 +12,7 @@
 namespace gdr {
 
     double RobustEstimators::getQuantile(const std::vector<double> &values,
-                                       double quantile) {
+                                         double quantile) {
         std::vector<double> valuesToSort = values;
 
         assert(quantile >= 0.0 && quantile <= 1.0);

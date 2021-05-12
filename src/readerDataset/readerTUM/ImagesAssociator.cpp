@@ -289,7 +289,7 @@ namespace gdr {
 
         for (const auto &timestamp: timestamps) {
             auto closestMatch = findClosestKeyMatch<double, PoseFullInfo>(poseInfoByTimestamps,
-                                                                                              timestamp);
+                                                                          timestamp);
             if (closestMatch == poseInfoByTimestamps.end()) {
                 std::cout << " did not find timestamp [FOUND END ?!] " << timestamp << std::endl;
                 ++notFoundCounter;
@@ -409,7 +409,7 @@ namespace gdr {
                 std::string imageDepthFilename = imageD.filename().string();
                 depthFromDatasetRoot.append(imageDepthFilename);
                 depthTxtFile << (imageDepthFilename.substr(0, imageDepthFilename.length() - 4))
-                           << ' ' << depthFromDatasetRoot.string() << std::endl;
+                             << ' ' << depthFromDatasetRoot.string() << std::endl;
             }
         }
 

@@ -21,7 +21,8 @@ namespace gdr {
         int findFirst(const boost::dynamic_bitset<> &bs);
 
         int findNext(const boost::dynamic_bitset<> &bs,
-                      int index);
+                     int index);
+
     public:
 
         void setPairToBeCompared(int indexFromLess, int indexToBigger);

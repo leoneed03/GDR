@@ -9,7 +9,7 @@
 #include <chrono>
 
 namespace gdr {
-        std::chrono::high_resolution_clock::time_point timerGetClockTimeNow();
+    std::chrono::high_resolution_clock::time_point timerGetClockTimeNow();
 }
 
 

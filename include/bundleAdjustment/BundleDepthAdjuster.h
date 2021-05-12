@@ -20,7 +20,6 @@
 #include "parametrization/SE3.h"
 #include "parametrization/Point3d.h"
 #include "parametrization/PoseFullInfo.h"
-#include "optimization/lossFunctions/LossFunctions.h"
 #include "statistics/RobustEstimators.h"
 
 namespace gdr {
@@ -164,7 +163,7 @@ namespace gdr {
                                                                 pose,
                                                                 orientation);
 
-                T& computedDepth = pointInLocalCoordinates[2];
+                T &computedDepth = pointInLocalCoordinates[2];
 
                 // depth error computation (noise modeled as sigma = a * depth^2 [meters])
                 {

@@ -26,7 +26,7 @@ namespace gdr {
 
         int getSize() const;
 
-        const std::pair<int, int>& getKeyPointIndexDestinationAndToBeTransformed(int matchPairIndex) const;
+        const std::pair<int, int> &getKeyPointIndexDestinationAndToBeTransformed(int matchPairIndex) const;
 
         Match(int newFrameNumber,
               std::vector<std::pair<int, int>> &&newMatchNumbers);

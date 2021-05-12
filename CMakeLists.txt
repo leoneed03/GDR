@@ -112,7 +112,6 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/PointClassifier.h
     ${PROJECT_SOURCE_DIR}/include/sparsePointCloud/CloudProjector.h
     ${PROJECT_SOURCE_DIR}/include/keyPoints/KeyPoint2DAndDepth.h
-    ${PROJECT_SOURCE_DIR}/include/optimization/lossFunctions/LossFunctions.h
     ${PROJECT_SOURCE_DIR}/include/keyPointDetectionAndMatching/FeatureDetectorMatcher.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorNPoints.h
     ${PROJECT_SOURCE_DIR}/include/relativePoseEstimators/EstimatorRobustLoRANSAC.h
@@ -146,7 +145,6 @@ set(GDR_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/include/absolutePoseEstimation/rotationAveraging/RelativePosesG2oFormat.h
     ${PROJECT_SOURCE_DIR}/include/poseGraph/PosesForEvaluation.h
     ${PROJECT_SOURCE_DIR}/test/reconstructor/TesterReconstruction.h
-    ${PROJECT_SOURCE_DIR}/include/readerDataset/readerTUM/TrajectoryFilesComparer.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/Reconstructable.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/Point2d.h
     ${PROJECT_SOURCE_DIR}/include/parametrization/PointXYZRGBfloatUchar.h
@@ -227,7 +225,6 @@ add_subdirectory(lib)
 
 add_executable(reconstructorTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/reconstructorTum.cpp)
 add_executable(imageAssociator ${PROJECT_SOURCE_DIR}/test/reconstructor/imageAssociator.cpp)
-
 add_executable(visualizerTUM ${PROJECT_SOURCE_DIR}/test/reconstructor/visualizerTum.cpp)
 
 add_library(GDR_LIB SHARED ${GDR_SOURCE_FILES} ${GDR_HEADER_FILES})
