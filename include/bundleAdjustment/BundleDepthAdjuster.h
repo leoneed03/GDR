@@ -54,7 +54,6 @@ namespace gdr {
         static const int dimPose = 3;
         static const int dimOrientation = 4;
 
-        // TODO: learn what these parameters are used for in MAD estimators
         int n = -1;
         int p = -1;
 

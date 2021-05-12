@@ -22,7 +22,7 @@ namespace gdr {
 
         std::vector<std::unique_ptr<SiftGPU>> detectorsSift;
         for (const auto &device: numOfDevicesForDetection) {
-            detectorsSift.push_back(std::make_unique<SiftGPU>());
+            detectorsSift.push_back(std::move(std::make_unique<SiftGPU>()));
         }
 
         for (int i = 0; i < numOfDevicesForDetection.size(); ++i) {
@@ -171,7 +171,7 @@ namespace gdr {
         std::vector<std::unique_ptr<SiftMatchGPU>> matchers;
 
         for (int i = 0; i < matchDevicesNumbers.size(); ++i) {
-            matchers.push_back(std::make_unique<SiftMatchGPU>(maxSift));
+            matchers.push_back(std::move(std::make_unique<SiftMatchGPU>(maxSift)));
             matchers[i]->SetLanguage(SiftMatchGPU::SIFTMATCH_CUDA + matchDevicesNumbers[i]);
 
             std::cout << "matching on " << matchDevicesNumbers[i] << std::endl;

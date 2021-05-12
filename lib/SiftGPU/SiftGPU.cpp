@@ -128,7 +128,9 @@ void SiftGPUEX::RandomizeColor()
 
 SiftGPU::~SiftGPU()
 {
-	if(_pyramid) delete _pyramid; 
+	if(_pyramid) delete _pyramid;
+	//experimental
+	if(_sigma) delete _sigma;
 	delete _texImage;
 	delete _list;
     delete[] _imgpath;
