@@ -31,13 +31,7 @@ TEST(testBAOptimized, visualizationDesk98) {
     double translationErrorThreshold = 0.04;
 
     double minCoefficientOfBiggestComponent = 0.5;
-    double coefficientR = 1.2;
-    double coefficientT = 1.2;
 
-//    auto results = test::TesterReconstruction::testReconstruction("../../data/desk1_sampled_98_6",
-//                                                                  kinectCamera,
-//                                                                  paramsRansacDefault,
-//                                                                  assocFile);
     auto results = test::TesterReconstruction::testReconstruction("../../data/plant_sampled_19_3",
                                                                   kinectCamera,
                                                                   paramsRansacDefault,
@@ -56,9 +50,6 @@ TEST(testBAOptimized, visualizationDesk98) {
     ASSERT_LE(meanErrorL2IRLS, translationErrorThreshold);
     ASSERT_LE(meanErrorRotBA, rotErrorThreshold);
     ASSERT_LE(meanErrorRotIRLS, rotErrorThreshold);
-
-    ASSERT_LE(meanErrorRotBA, meanErrorRotIRLS * coefficientR);
-    ASSERT_LE(meanErrorL2BA, meanErrorL2IRLS * coefficientT);
 
 }
 
