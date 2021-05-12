@@ -1,6 +1,6 @@
 Global Depth Reconstructor
 ===============================================
-![Image of Yaktocat](https://drive.google.com/uc?export=view&id=1GC3GDO4HylncCDziv9ANbkMy_F1a4iMH)
+![Image of Yaktocat](https://drive.google.com/uc?export=view&id=1WmM7qdrttJB5Q4JwEqPjyocGnnrkTVo3)
 
 You are free to use this code in non-commercial applications (Please take a look at [LICENSE](LICENSE)).
 
