@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
         const auto &poseCameraToWorldSE3 = poseTrajectory.getPoseCameraToWorldSE3();
         double timestamp = poseTrajectory.getTimestamp();
 
-        auto foundClosestImageInfo = gdr::ClosestMatchFinder::findClosestKeyMatch<double, std::pair<std::string, std::string>>
+        auto foundClosestImageInfo = gdr::findClosestKeyMatch<double, std::pair<std::string, std::string>>
                 (rgbAndDepthNamesByDepthTime, timestamp);
 
         assert(foundClosestImageInfo != rgbAndDepthNamesByDepthTime.end());

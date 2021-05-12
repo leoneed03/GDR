@@ -61,7 +61,7 @@ namespace gdr {
         std::vector<double> errorsL2Squared;
         std::vector<double> errorsRadiansSquared;
 
-        auto closestMatchToFixedZero = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(
+        auto closestMatchToFixedZero = findClosestKeyMatch<double, PoseFullInfo>(
                 setOfPosesFromGroundTruth, trajectory[indexFixed].getTimestamp()
         );
         assert(closestMatchToFixedZero != setOfPosesFromGroundTruth.end());
@@ -79,7 +79,7 @@ namespace gdr {
 
         for (const auto &poseTrajectory: trajectory) {
 
-            auto closestMatch = ClosestMatchFinder::findClosestKeyMatch<double, PoseFullInfo>(
+            auto closestMatch = findClosestKeyMatch<double, PoseFullInfo>(
                     setOfPosesFromGroundTruth, poseTrajectory.getTimestamp()
             );
             assert(closestMatch != setOfPosesFromGroundTruth.end());

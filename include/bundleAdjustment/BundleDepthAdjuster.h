@@ -29,7 +29,7 @@ namespace gdr {
 
         static constexpr double thresholdInlierDefault = 2.5;
 
-        bool printProgressToCout = true;
+        bool printProgressToCout = false;
 
         void setPosesAndPoints(const std::vector<Point3d> &points,
                                const std::vector<std::pair<SE3, CameraRGBD>> &posesCameraToWorld,
