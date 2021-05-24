@@ -30,7 +30,11 @@ sudo apt install libmetis-dev
 
 ## Project
 
+Building process was tested on Ubuntu 18.04 and g++-7 with g++-5 as alternative (see sudo update-alternatives --install ...)
+Take a look at travis.yml for some hints if needed
+
 ```bash
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake ..
