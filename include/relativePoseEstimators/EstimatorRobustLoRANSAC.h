@@ -15,8 +15,6 @@ namespace gdr {
 
     class EstimatorRobustLoRANSAC : public EstimatorRelativePoseRobust {
 
-        bool printProgressToCout = false;
-
         InlierCounter inlierCounter;
         ParamsRANSAC paramsLoRansac;
 
@@ -32,10 +30,6 @@ namespace gdr {
     public:
         EstimatorRobustLoRANSAC(const InlierCounter &inlierCounterToSet,
                                 const ParamsRANSAC &paramsRansacToSet);
-
-        bool getPrintProgressToCout() const;
-
-        void setPrintProgressToCout(bool printProgress);
 
         /**
          *

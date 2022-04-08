@@ -23,8 +23,7 @@ namespace gdr {
                 const std::vector<RotationMeasurement> &relativeRotations,
                 int indexPoseFixed,
                 const std::string &pathToRelativeRotationsOut = "default_relative_rotations_file.txt",
-                int maxDimension = 10,
-                bool printProgressToConsole = false);
+                int maxDimension = 10);
 
     };
 }

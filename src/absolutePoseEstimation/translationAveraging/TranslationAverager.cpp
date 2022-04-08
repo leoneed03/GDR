@@ -107,7 +107,6 @@ namespace gdr {
 
         if (lscg.info() != Eigen::Success) {
             success = false;
-            std::cout << "NOT SUCCESS" << std::endl;
         }
 
         return Vectors3d(solutionL2);
@@ -143,8 +142,7 @@ namespace gdr {
                               const Vectors3d &translationsGuess,
                               bool &success,
                               int numOfIterations,
-                              double epsilonIRLS,
-                              bool printProgressToCout) {
+                              double epsilonIRLS) {
 
         success = false;
 
@@ -174,11 +172,6 @@ namespace gdr {
 
             if ((residuals.getVectorRaw() - prevResiduals.getVectorRaw()).norm() <
                 std::numeric_limits<double>::epsilon()) {
-
-                if (printProgressToCout) {
-                    std::cout << "IRLS CONVERGED, iteration: " << iteration << std::endl;
-                }
-
                 return bestSolutionAbsoluteTranslations;
             }
             weightDiagonalMatrix = getWeightMatrixRaw(residuals.getVectorOfNorms(), epsilonIRLS);
@@ -223,8 +216,7 @@ namespace gdr {
                                                  int indexPoseFixed,
                                                  bool &successIRLS,
                                                  int numOfIterations,
-                                                 double epsilonWeightIRLS,
-                                                 bool printProgressToCout) {
+                                                 double epsilonWeightIRLS) {
 
         std::vector<TranslationMeasurement> relativeTranslationsInversed =
                 getInversedTranslationMeasurements(relativeTranslations,
@@ -251,8 +243,7 @@ namespace gdr {
                                               vectorsExcludingFixedRaw,
                                               successIRLS,
                                               numOfIterations,
-                                              epsilonWeightIRLS,
-                                              printProgressToCout);
+                                              epsilonWeightIRLS);
 
         return solutionsWithoutPoseFixed
                 .getCopyWithInsertedVector(indexPoseFixed,

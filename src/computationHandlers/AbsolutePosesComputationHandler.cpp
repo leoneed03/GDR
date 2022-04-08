@@ -265,10 +265,6 @@ namespace gdr {
                                                                                  cloudProjector->getKeyPointInfoByPoseNumberAndPointClass(),
                                                                                  indexFixedToZero,
                                                                                  isUsableBA);
-        if (!isUsableBA) {
-            std::cerr << "BA solution is not marked usable by nonlinear optimizer, consider using only IRLS solution"
-                      << std::endl;
-        }
 
         timeEndBundleAdjustment = timerGetClockTimeNow();
 
@@ -297,10 +293,7 @@ namespace gdr {
             std::string pathToRGBDirectoryToSave = "shownResiduals";
             boost::filesystem::path pathToRemove(pathToRGBDirectoryToSave);
 
-            std::cout << "path [" << pathToRemove.string() << "]" << " exists? Answer: "
-                      << boost::filesystem::exists(pathToRemove) << std::endl;
             boost::filesystem::remove_all(pathToRemove);
-            std::cout << "removed from " << pathToRemove.string() << std::endl;
             boost::filesystem::create_directories(pathToRemove);
 
 
@@ -337,12 +330,6 @@ namespace gdr {
                 cv::imwrite(pathToSave.string(), stitchedImage);
             }
 
-            std::cout << "BETTER #median error: " << counterMedianErrorGotBetter
-                      << " vs WORSE: " << counterMedianErrorGotWorse << " of total " << counterSumMedianError
-                      << std::endl;
-            std::cout << "percentage better median error is "
-                      << 1.0 * counterMedianErrorGotBetter / counterSumMedianError << std::endl;
-
             assert(counterMedianErrorGotWorse + counterMedianErrorGotBetter == counterSumMedianError);
         }
 
@@ -369,16 +356,8 @@ namespace gdr {
         return saveDebugImages;
     }
 
-    bool AbsolutePosesComputationHandler::getPrintProgressToCout() const {
-        return printProgressToConsole;
-    }
-
     void AbsolutePosesComputationHandler::setSaveDebugImages(bool saveImages) {
         saveDebugImages = saveImages;
-    }
-
-    void AbsolutePosesComputationHandler::setPrintProgressToCout(bool printProgress) {
-        printProgressToConsole = printProgress;
     }
 
     std::vector<double> AbsolutePosesComputationHandler::getPosesTimestamps() const {

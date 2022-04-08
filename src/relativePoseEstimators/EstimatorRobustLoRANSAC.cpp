@@ -120,11 +120,6 @@ namespace gdr {
 
             if (numInliers > totalNumberInliers && numInliers >= minPointNumberEstimator) {
 
-                if (getPrintProgressToCout()) {
-                    std::cout << "3 point NEW estimator got better results: " << numInliers
-                              << " vs old " << totalNumberInliers << std::endl;
-                }
-
                 optimalSE3Transformation = cR_t_umeyama_3_points;
                 totalNumberInliers = numInliers;
 
@@ -142,12 +137,6 @@ namespace gdr {
                 int numberInliersLocallyOptimized = errorsInliersLocOpt.size();
 
                 if (numberInliersLocallyOptimized >= totalNumberInliers) {
-
-                    if (getPrintProgressToCout()) {
-                        std::cout << "    LOCALLY optimized on inliers " <<
-                                  numberInliersLocallyOptimized << " vs " << totalNumberInliers
-                                  << std::endl;
-                    }
 
                     optimalSE3Transformation = locallyOptimizedRt;
                     totalNumberInliers = numberInliersLocallyOptimized;
@@ -167,11 +156,6 @@ namespace gdr {
                     int numberInliersTwiceLocallyOptimizedTwice = errorsInliersLocOptTwice.size();
 
                     if (numberInliersTwiceLocallyOptimizedTwice > totalNumberInliers) {
-                        if (getPrintProgressToCout()) {
-                            std::cout << "                   TWICE optimized on inliers " <<
-                                      numberInliersTwiceLocallyOptimizedTwice << " vs " << totalNumberInliers
-                                      << std::endl;
-                        }
 
                         optimalSE3Transformation = twiceLocallyOptimizedRt;
                         totalNumberInliers = numberInliersTwiceLocallyOptimizedTwice;
@@ -220,14 +204,6 @@ namespace gdr {
                 cameraIntrDestination,
                 estimationSuccess,
                 inlierIndices);
-    }
-
-    bool EstimatorRobustLoRANSAC::getPrintProgressToCout() const {
-        return printProgressToCout;
-    }
-
-    void EstimatorRobustLoRANSAC::setPrintProgressToCout(bool printProgress) {
-        printProgressToCout = printProgress;
     }
 
     EstimatorRobustLoRANSAC::EstimatorRobustLoRANSAC(const InlierCounter &inlierCounterToSet,

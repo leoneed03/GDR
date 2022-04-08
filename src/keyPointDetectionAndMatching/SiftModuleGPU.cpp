@@ -5,7 +5,6 @@
 
 #include <thread>
 #include <mutex>
-#include <iostream>
 
 #include "keyPointDetectionAndMatching/KeyPointsAndDescriptors.h"
 #include "keyPointDetectionAndMatching/SiftModuleGPU.h"
@@ -45,10 +44,6 @@ namespace gdr {
             detector->ParseParam(siftGpuArgs.size(), siftGpuArgs.data());
 
             auto contextVerified = detector->VerifyContextGL();
-            if (contextVerified == 0) {
-                std::cout << "_____________________________________________________detection context not verified"
-                          << std::endl;
-            }
             assert(contextVerified != 0);
         }
 
@@ -300,17 +295,5 @@ namespace gdr {
                    keyPointsAndDescriptorsAllImages[imageNumber].first.size() * descriptorLength);
         }
         return keyPointsAndDescriptorsAllImages;
-    }
-
-    void SiftModuleGPU::setPrintDebug(const SiftModuleGPU::PrintDebug &printDebug) {
-        whatToPrint = printDebug;
-    }
-
-    const SiftModuleGPU::PrintDebug &SiftModuleGPU::getPrintDebug() const {
-        return whatToPrint;
-    }
-
-    bool SiftModuleGPU::printAllInformation() const {
-        return whatToPrint == PrintDebug::EVERYTHING;
     }
 }

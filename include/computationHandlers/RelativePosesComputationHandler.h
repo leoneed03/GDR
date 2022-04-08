@@ -38,7 +38,6 @@ namespace gdr {
         mutable volatile double timeCountSecondsTotalICP = 0.0;
 
     private:
-        bool printInformationConsole = false;
         int deviceCudaICP = 0;
 
         std::vector<std::pair<double, double>> timestampsRgbDepthAssociated;

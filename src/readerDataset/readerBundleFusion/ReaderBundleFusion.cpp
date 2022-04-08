@@ -26,7 +26,6 @@ namespace gdr {
             return IMAGE_TYPES::DEPTH;
         }
 
-        std::cout << filename << " of size " << filename.length() << std::endl;
         if (filename.length() >= 17) {
             if (filename.substr(13, 4) == "pose") {
                 return IMAGE_TYPES::POSE;
@@ -51,7 +50,6 @@ namespace gdr {
 
 
         fs::path bundleFusionRoot(pathToBundleFusionDataset);
-        std::cout << "traversing " << bundleFusionRoot.string() << std::endl;
         std::vector<std::string> pathsToRGB;
         std::vector<std::string> pathsToD;
         std::vector<std::string> pathsToPoses;
@@ -114,8 +112,6 @@ namespace gdr {
     void ReaderBundleFusion::createFileTxt(const std::vector<std::string> &pathsToImages,
                                            const std::string &imageType) {
 
-        std::cout << "creating " << imageType << std::endl;
-
         fs::path tumDirTxt(pathToSaveLikeTumDataset);
         tumDirTxt.append(imageType + ".txt");
         std::ofstream output(tumDirTxt.string());
@@ -141,7 +137,6 @@ namespace gdr {
                 if (imageType == "depth") {
 
                     image = cv::imread(pathToImageString, cv::IMREAD_GRAYSCALE);
-                    std::cout << "dividing depth!" << std::endl;
                     int w = 640;
                     int h = 480;
                     assert(image.cols == w);
@@ -162,7 +157,6 @@ namespace gdr {
                     }
                 } else {
                     image = cv::imread(pathToImageString);
-                    std::cout << "read rgb" << std::endl;
                 }
                 assert(!image.empty());
                 cv::imwrite(imageCurrentPath.string(), image);
@@ -189,8 +183,7 @@ namespace gdr {
         }
 
         Eigen::Map<const Eigen::Matrix<double, 4, 4, Eigen::RowMajor>> matrixSE3(m4.data());
-        std::cout << "\n for " << fileName << std::endl;
-        std::cout << matrixSE3 << std::endl;
+
         for (int i = 0; i < 3; ++i) {
             assert(matrixSE3.col(i)[3] == 0.0);
         }

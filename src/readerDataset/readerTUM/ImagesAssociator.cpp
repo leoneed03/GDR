@@ -23,7 +23,6 @@ namespace gdr {
 
         fs::path path(pathToDirectory);
         for (fs::directory_iterator end_dir_it, it(path); it != end_dir_it; ++it) {
-            std::cout << it->path().filename().string() << std::endl;
             if (it->path().filename().string() == "rgb.txt") {
                 timestampByImageNameRGB = getTimestampsByImageName(it->path().string());
                 for (const auto &nameAndTime: timestampByImageNameRGB) {
@@ -112,7 +111,6 @@ namespace gdr {
             }
 
             if (std::abs(closestMatchImageDepth->first - timestampToLookFor) > 0.02) {
-                std::cout << "STOP! " << counter << std::endl;
                 ++notFoundCounter;
                 continue;
             }
@@ -135,32 +133,18 @@ namespace gdr {
             imageNamByTimestampD.erase(closestMatchImageDepth);
             timestampByImageNameRGB.erase(foundNameRGB);
             timestampByImageNameD.erase(foundNameD);
-
-            // pair found successfully
-
-            std::cout.precision(std::numeric_limits<double>::max_digits10);
-            std::cout << "looking for " << timestampToLookFor << " (time) "
-                      << shortNameRGBAndTime.first << std::endl;
         }
-
-        std::cout << "not found: " << notFoundCounter << " of " << counter << std::endl;
 
         double maxDiff = -1;
 
         assert(associatedImagesRGBAndDepth.size() == associatedTimestampsRGBAndDepth.size());
         for (int i = 0; i < associatedImagesRGBAndDepth.size(); ++i) {
-            std::cout << "      paired: \t" << associatedImagesRGBAndDepth[i].first
-                      << " == \t" << associatedImagesRGBAndDepth[i].second << "\n time: "
-                      << " \t" << associatedTimestampsRGBAndDepth[i].first << " & \t"
-                      << associatedTimestampsRGBAndDepth[i].second << "\n";
             double timeDiff = std::abs(
                     associatedTimestampsRGBAndDepth[i].first - associatedTimestampsRGBAndDepth[i].second);
             assert(timeDiff < maxTimeTreshold);
             maxDiff = std::max(maxDiff, timeDiff);
 
         }
-        std::cout << "paired successfully " << associatedTimestampsRGBAndDepth.size() << " of " << counter << std::endl;
-        std::cout << " max diff is " << maxDiff << std::endl;
 
         fs::path pathToGT = fs::path(pathToDatasetRoot);
         pathToGT.append(groundtruthFileName);
@@ -175,8 +159,6 @@ namespace gdr {
         associatedGroundTruthInfo = getAssociatedPoseInfo(pathToGT.string(),
                                                           timestampsOfChosenRGB,
                                                           foundTimestampsRGB);
-
-        std::cout << "end..." << std::endl;
 
         std::vector<std::pair<std::string, std::string>> newAssociatedImageNamesRGBAndD;
         std::vector<std::pair<double, double>> newAssociatedTimestampsRGBAndD;
@@ -203,8 +185,6 @@ namespace gdr {
             assert(std::abs(timeDiff) < maxTimeTreshold);
         }
 
-        std::cout << "this is max error between new GT timestamps and RGB timestamps" << std::endl;
-        std::cout << "totally matched pairs: " << associatedGroundTruthInfo.size() << std::endl;
         return 0;
     }
 
@@ -291,13 +271,10 @@ namespace gdr {
             auto closestMatch = findClosestKeyMatch<double, PoseFullInfo>(poseInfoByTimestamps,
                                                                           timestamp);
             if (closestMatch == poseInfoByTimestamps.end()) {
-                std::cout << " did not find timestamp [FOUND END ?!] " << timestamp << std::endl;
                 ++notFoundCounter;
                 continue;
             }
             if (std::abs(closestMatch->first - timestamp) > maxTimeTreshold) {
-                std::cout << " did not find timestamp " << timestamp
-                          << " closest is " << closestMatch->first << std::endl;
                 ++notFoundCounter;
                 continue;
             }
@@ -306,10 +283,6 @@ namespace gdr {
             foundTimestamps.insert(timestamp);
             absolutePosesFoundByTimestamps.emplace_back(closestMatch->second);
         }
-
-        std::cout << " GT found poses size is " << absolutePosesFoundByTimestamps.size()
-                  << " timestamps size is " << timestamps.size() << std::endl;
-        std::cout << "did not find matches for " << notFoundCounter << std::endl;
 
         double maxTimeDiff = -1;
 
@@ -327,7 +300,6 @@ namespace gdr {
             assert(timeDiff < maxTimeTreshold);
             ++indexInAbsolutePoses;
         }
-        std::cout << "Should be almost zero " << maxTimeDiff << std::endl;
         assert(maxTimeDiff < maxTimeTreshold);
         std::swap(foundTimestamps, putFoundTimestamps);
         return absolutePosesFoundByTimestamps;
