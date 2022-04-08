@@ -38,12 +38,6 @@ namespace gdr {
 
     public:
 
-        void setPrintDebug(const PrintDebug &printDebug);
-
-        const PrintDebug &getPrintDebug() const;
-
-        bool printAllInformation() const;
-
         std::vector<std::pair<std::vector<KeyPoint2DAndDepth>, std::vector<float>>>
         getKeypoints2DDescriptorsAllImages(const std::vector<std::string> &pathsToImages,
                                            const std::vector<int> &numOfDevicesForDetectors) override;

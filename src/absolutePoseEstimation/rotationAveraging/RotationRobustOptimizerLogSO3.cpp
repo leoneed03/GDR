@@ -55,14 +55,9 @@ namespace gdr {
 
         ceres::Solver::Options options;
         options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-        options.minimizer_progress_to_stdout = printProgressToConsole;
+        options.minimizer_progress_to_stdout = false;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
-
-        if (printProgressToConsole) {
-            std::cout << "done ceres robust rotation optimization" << std::endl;
-            std::cout << summary.FullReport() << "\n";
-        }
 
         assert(summary.IsSolutionUsable());
 
@@ -73,13 +68,5 @@ namespace gdr {
         }
 
         return optimizedOrientations;
-    }
-
-    bool RotationRobustOptimizerLogSO3::getPrintToConsole() const {
-        return printProgressToConsole;
-    }
-
-    void RotationRobustOptimizerLogSO3::setPrintProgressToConsole(bool printToConsoleToSet) {
-        printProgressToConsole = printToConsoleToSet;
     }
 }

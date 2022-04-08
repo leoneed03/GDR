@@ -31,7 +31,6 @@ namespace gdr {
         std::chrono::high_resolution_clock::time_point timeEndBundleAdjustment;
 
     private:
-        bool printProgressToConsole = false;
         bool saveDebugImages = false;
 
         std::unique_ptr<ConnectedComponentPoseGraph> connectedComponent;
@@ -48,11 +47,7 @@ namespace gdr {
 
         bool getSaveDebugImages() const;
 
-        bool getPrintProgressToCout() const;
-
         void setSaveDebugImages(bool saveImages);
-
-        void setPrintProgressToCout(bool printProgress);
 
         explicit AbsolutePosesComputationHandler(
                 std::unique_ptr<ConnectedComponentPoseGraph> &connectedComponentPoseGraph);

@@ -374,21 +374,11 @@ namespace gdr {
         int ransacInliers = inliersAgain.size();
         int ICPinliers = inlierMatchesCorrespondingKeypointsAfterRefinement.size();
 
-        if (getPrintInformationCout()) {
-            std::cout << "              ransac got " << ransacInliers << "/" << toBeTransformedPoints.cols()
-                      << " vs " << ICPinliers << std::endl;
-        }
-
         if (ransacInliers > ICPinliers) {
             // ICP did not refine the relative pose -- return umeyama result
             cR_t_umeyama = relativePoseLoRANSAC;
         } else {
             cR_t_umeyama = refinedByICPRelativePose;
-
-            if (getPrintInformationCout()) {
-                std::cout << "REFINED________________________________________________" << std::endl;
-            }
-
             std::swap(inlierMatchesCorrespondingKeypointsAfterRefinement, inlierMatchesCorrespondingKeypointsLoRansac);
         }
 
@@ -586,14 +576,6 @@ namespace gdr {
 
     void RelativePosesComputationHandler::bfsDrawToFile(const std::string &outFile) {
         GraphTraverser::bfsDrawToFile(*correspondenceGraph, outFile);
-    }
-
-    bool RelativePosesComputationHandler::getPrintInformationCout() const {
-        return printInformationConsole;
-    }
-
-    void RelativePosesComputationHandler::setPrintInformationCout(bool printProgressToCout) {
-        printInformationConsole = printProgressToCout;
     }
 
     void RelativePosesComputationHandler::setDeviceCudaICP(int deviceCudaIcpToSet) {

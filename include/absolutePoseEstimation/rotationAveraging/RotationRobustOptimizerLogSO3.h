@@ -23,7 +23,6 @@ namespace gdr {
 
         std::vector<SO3> orientations;
         std::vector<RotationMeasurement> relativeRotations;
-        bool printProgressToConsole = false;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -31,10 +30,6 @@ namespace gdr {
         std::vector<SO3> getOptimizedOrientation(const std::vector<SO3> &orientations,
                                                  const std::vector<RotationMeasurement> &pairWiseRotations,
                                                  int indexFixed) override;
-
-        bool getPrintToConsole() const;
-
-        void setPrintProgressToConsole(bool printToConsoleToSet);
     };
 }
 

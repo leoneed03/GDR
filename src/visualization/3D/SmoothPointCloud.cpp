@@ -71,8 +71,6 @@ namespace gdr {
             pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(input_cloud);
 
             viewer->addPointCloud<pcl::PointXYZRGB>(input_cloud, rgb, "for screenshot", v1);
-
-            std::cout << "saving screenshot to " << screenshotPath << std::endl;
             viewer->saveScreenshot(screenshotPath);
         }
 

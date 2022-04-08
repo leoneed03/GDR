@@ -18,8 +18,7 @@ namespace gdr {
             const std::vector<RotationMeasurement> &relativeRotations,
             int indexPoseFixed,
             const std::string &pathToRelativeRotationsOut,
-            int maxDimension,
-            bool printProgressToConsole) {
+            int maxDimension) {
 
 
         std::ofstream outRelRotations(pathToRelativeRotationsOut);
@@ -34,9 +33,6 @@ namespace gdr {
         gtsam::Values::shared_ptr posesInFile;
         gtsam::Values poses;
         {
-            if (printProgressToConsole) {
-                std::cout << "Shonan Averaging: " << pathToRelativeRotationsOut << std::endl;
-            }
 
             gtsam::ShonanAveraging3 shonan(pathToRelativeRotationsOut);
             auto initial = shonan.initializeRandomly(rng);

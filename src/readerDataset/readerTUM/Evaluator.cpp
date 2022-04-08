@@ -89,9 +89,6 @@ namespace gdr {
             double poseTimestamp = poseTrajectory.getTimestamp();
 
             if (std::abs(foundTimestamp - poseTimestamp) > maxTimeDiff) {
-                std::cout.precision(std::numeric_limits<double>::max_digits10);
-                std::cout << "found timestamp " << foundTimestamp
-                          << " while looking for " << poseTimestamp << std::endl;
                 continue;
             }
 

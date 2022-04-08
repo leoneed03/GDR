@@ -28,17 +28,11 @@ namespace gdr {
 
         static constexpr double thresholdInlierDefault = 2.5;
 
-        bool printProgressToCout = false;
-
         void setPosesAndPoints(const std::vector<Point3d> &points,
                                const std::vector<std::pair<SE3, CameraRGBD>> &posesCameraToWorld,
                                const std::vector<std::unordered_map<int, KeyPointInfo>> &keyPointInfo);
 
     public:
-
-        bool getPrintProgressToCout() const;
-
-        void setPrintProgressToCout(bool printProgress);
 
         std::vector<SE3> optimizePointsAndPoses(const std::vector<Point3d> &points,
                                                 const std::vector<std::pair<SE3, CameraRGBD>> &posesCameraToWorld,
